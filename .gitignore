@@ -1,0 +1,54 @@
+# ── Java / Gradle ───────────────────────────────────────────────
+.gradle/
+build/
+**/build/
+*.class
+# Keep the committed wrapper, but ignore any local gradle dist cache.
+# (We intentionally DO commit gradle/wrapper/gradle-wrapper.jar and gradlew.)
+
+# ── Python ──────────────────────────────────────────────────────
+.venv/
+**/.venv/
+venv/
+env/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Node / web-gui ──────────────────────────────────────────────
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+npm-debug.log*
+.npm/
+
+# ── Claude Code ─────────────────────────────────────────────────
+# Local-only, per-machine overrides. The SHARED settings.json IS committed.
+.claude/settings.local.json
+
+# ── Secrets / env (never commit) ────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.keystore
+secrets/
+*.secret
+
+# ── OS / editor cruft ───────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+*.swp
+*.swo
+.idea/
+.vscode/
+*.iml

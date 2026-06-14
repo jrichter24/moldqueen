@@ -1,0 +1,13 @@
+{
+  "name": "moldqueen-web-gui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Very light browser control panel for the moldqueen excavator (vanilla JS + minimal Node server, no framework).",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

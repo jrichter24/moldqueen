@@ -1,0 +1,4 @@
+# bt-core runtime needs no third-party packages yet: the real radio worker will
+# talk to the kernel directly via the stdlib socket module (AF_BLUETOOTH /
+# BTPROTO_HCI). Dev/test tooling only for now.
+pytest>=8,<9
