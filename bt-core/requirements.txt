@@ -1,4 +1,10 @@
-# bt-core runtime needs no third-party packages yet: the real radio worker will
-# talk to the kernel directly via the stdlib socket module (AF_BLUETOOTH /
-# BTPROTO_HCI). Dev/test tooling only for now.
+# bt-core dependencies.
+#
+# The mk4web control service uses one runtime dep: a pure-Python WebSocket server.
+# (stdlib has no WebSocket server; `websockets` is the minimal, dependency-free
+# choice.) The radio is driven by shelling out to `hcitool` for now; a future
+# worker may talk raw HCI via the stdlib `socket` module (AF_BLUETOOTH/BTPROTO_HCI).
+websockets>=12,<14
+
+# Dev/test tooling.
 pytest>=8,<9

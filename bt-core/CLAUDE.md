@@ -79,6 +79,53 @@ The full write-up + the verified codec are committed under
 **No radio bring-up is wired into the `radio_worker` yet** — the proven method
 lives in [`reference/`](reference/) and needs porting into the worker.
 
+## mk4web — the MK4 control webservice
+
+[`mk4web/`](mk4web/) is the working control service. **The WebSocket API is the
+product**; the web page is just its first client (a console/AI brain uses the same
+API). It reuses the verified codec (`mk4web/mouldking_crypt.py`, identical to
+`reference/`) — the crypt is **not** reinvented.
+
+**Two processes, talking over a local Unix socket** (`/tmp/moldqueen_mk4.sock`):
+
+- **`broadcaster.py`** — owns the radio + authoritative state (12 nibbles =
+  3 slots × 4 channels, default `0x8` neutral) and an explicit **lifecycle**:
+  **IDLE** (advertising off) → **CONNECTING** (broadcasts the MK4 connect telegram)
+  → **READY** (broadcasts ONE motion telegram reflecting state, ~5/sec via the
+  200 ms adv interval, on hci1 / `0xFFF0`). Motion is applied only in READY.
+  **SAFETY:** if the API process disconnects → reset to IDLE (advertising off, neutral).
+- **`api.py`** — WebSocket server + serves the page; **owns/drives the lifecycle**,
+  forwards transitions + motion to the broadcaster, pushes state to clients.
+  **SAFETY:** on a client disconnect (or no clients) it commands NEUTRAL.
+
+**WebSocket API:** `{"cmd":"setup","action":"connect"|"ready"|"reset"}` (lifecycle),
+`{"cmd":"set","slot":0-2,"channel":0-3,"value":-7..7}` (motion, honored only in
+READY), `{"cmd":"stop"}`, `{"cmd":"state"}`. Server pushes
+`{"type":"lifecycle","state":…}` and `{"type":"state","slots":[[v×4]×3]}`.
+**Value→nibble map:** `nibble = 0x8 + value` (`-7..+7` → `0x1..0xF`; `0`=`0x8`
+neutral, `+7`=`0xF`, `-7`=`0x1`). The web client uses **press-and-hold** Forward/
+Reverse buttons (release/leave → neutral; several can be held at once) at a
+selectable speed; controls are locked until READY.
+
+Run (from `bt-core/`, in the venv):
+```bash
+python -m mk4web.broadcaster --dry-run   # log telegrams, transmit NOTHING (start here)
+python -m mk4web.broadcaster             # live: drives the dongle (needs hci1 up, bluetoothd masked)
+python -m mk4web.api                      # web page http://<pi>:8080/ , API ws://<pi>:8765
+```
+
+### Slots — guided manually (auto-detect unsolved)
+- A hub's **slot** (which nibble block it obeys) is set by its **physical button**
+  and **resets to slot 0 on power-cycle**. The **Setup panel guides this** (Connect →
+  user buttons one hub to two fast flashes = slot 1 → Ready), because the service
+  can't see the LED flash state — only the user can. The user confirms the hubs are
+  on different slots before READY.
+- **TODO / unsolved:** *automatic* slot detection/assignment. For now it is the
+  guided manual flow above.
+- **Boxes are exchangeable**; mapping *slot → friendly name → physical box* is a
+  **later UX step** — the UI labels by SLOT + channel only, no device-identity guessing.
+- **One dongle, one telegram drives all slots at once** — no second radio needed.
+
 ## Current state — PLACEHOLDER
 
 [`radio_worker.py`](radio_worker.py) does **no BLE yet**. It reads newline-framed

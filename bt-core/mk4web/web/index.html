@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>moldqueen — MK4 control</title>
+  <script>window.MK4_WS_PORT = __WS_PORT__;</script>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background:#15171c; color:#e8e8e8; margin:0; padding:1rem;
+           -webkit-user-select:none; user-select:none; touch-action:manipulation; }
+    h1 { font-size:1.05rem; margin:.2rem 0 .8rem; }
+    .badge { font-size:.8rem; padding:.12rem .5rem; border-radius:.3rem; vertical-align:middle; }
+    .ok{background:#1d4023;color:#43d17a} .bad{background:#43201d;color:#e06b5a} .mid{background:#3a3320;color:#d8c170}
+    #setup { border:1px solid #2a2e36; border-radius:.5rem; padding:.8rem 1rem; margin:.4rem 0 1rem; background:#191c22; }
+    #setup h2 { font-size:.9rem; margin:0 0 .4rem; color:#9fb0c8; }
+    #setupMsg { font-size:.9rem; line-height:1.4; color:#d6dde6; }
+    #setupBtns { margin-top:.7rem; display:flex; gap:.5rem; flex-wrap:wrap; }
+    button { font: inherit; color:#e8e8e8; background:#23262d; border:1px solid #3a3f49; border-radius:.4rem;
+             padding:.4rem .8rem; cursor:pointer; }
+    button:active { background:#30343d; }
+    button:disabled { opacity:.4; cursor:not-allowed; }
+    .act { background:#1d3a4d; border-color:#2f6f93; }
+    #speedRow { margin:.3rem 0 1rem; font-size:.9rem; color:#c8c8c8; display:flex; align-items:center; gap:.6rem; }
+    .slot { border:1px solid #2a2e36; border-radius:.5rem; padding:.5rem .7rem; margin:.5rem 0; }
+    .slot h2 { font-size:.9rem; margin:.1rem 0 .5rem; color:#9fb0c8; }
+    .ch { display:grid; grid-template-columns:4rem 1fr 1fr 2.4rem; align-items:center; gap:.5rem; margin:.35rem 0; }
+    .ch label { font-size:.85rem; color:#c8c8c8; }
+    .hold { padding:.7rem; font-weight:600; border-radius:.45rem; }
+    .rev { background:#2a2233; } .fwd { background:#1f2e22; }
+    .hold.held { background:#3563a8; border-color:#5b8fd6; }
+    .val { text-align:center; font-variant-numeric:tabular-nums; }
+    #controls.locked { opacity:.45; pointer-events:none; }
+    #stop { width:100%; margin-top:1rem; padding:1rem; font-size:1.3rem; font-weight:700;
+            background:#7a1d1d; border-color:#a33; color:#fff; border-radius:.6rem; }
+    #stop:active { background:#9b2525; }
+    .note { color:#7a8595; font-size:.78rem; margin-top:.8rem; }
+  </style>
+</head>
+<body>
+  <h1>🦾 moldqueen — MK4 control
+    <span id="wsBadge" class="badge bad">connecting…</span>
+    <span id="lcBadge" class="badge mid">IDLE</span>
+  </h1>
+
+  <div id="setup">
+    <h2>Setup</h2>
+    <div id="setupMsg"></div>
+    <div id="setupBtns"></div>
+  </div>
+
+  <div id="speedRow">
+    Speed
+    <input type="range" id="speed" min="1" max="7" step="1" value="5" style="width:10rem">
+    <span id="speedVal" class="val">5</span> / 7
+  </div>
+
+  <div id="controls" class="locked"></div>
+
+  <button id="stop">■ STOP (all neutral)</button>
+
+  <p class="note">
+    Hold Forward/Reverse to drive; release snaps that channel to neutral. Several can
+    be held at once. Slots are set by each hub's physical button and reset on
+    power-cycle — the Setup panel guides it. Labels are SLOT + channel only.
+  </p>
+  <script src="/app.js"></script>
+</body>
+</html>
