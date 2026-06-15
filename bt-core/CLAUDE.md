@@ -52,35 +52,32 @@ The real worker needs raw HCI access, so when radio work begins you must:
 BlueZ tooling is already installed for inspection/bring-up later:
 `bluetoothctl`, `hciconfig`, `btmgmt`, `btmon`.
 
-## Verified radio findings (scratch — not yet integrated here)
+## Verified radio findings — MK4 protocol, two-hub control WORKING
 
-Radio bring-up and a working MK6.0 control path have been **proven manually** in
-a scratch area outside this repo: `~/scratch/mk-refs/`. The real `radio_worker`
-should be built to match this. Key facts established there:
+The control protocol is solved and **two-hub simultaneous control is confirmed**.
+The full write-up + the verified codec are committed under
+[`reference/`](reference/): `CONNECT_PROCEDURE.md`, `channel_map.md`,
+`mouldking_crypt.py`, `mk4_test.py`. The real `radio_worker` should match these.
 
-- **Telegrams** are manufacturer-specific BLE adverts, company id **0xFFF0**,
-  built by `MouldKingCrypt` (from `mkconnect-python`). Broadcast via raw HCI
-  (`hcitool -i <hciN> cmd 0x08 0x0006/0x0008/0x000a`); `bluetoothd` must be
-  **stopped and masked** first (it is dbus/socket-activated — mask + kill, see
-  scratch notes).
-- **Use the USB dongle (hci1) as the reliable radio.** The onboard UART radio
-  (hci0) corrupts frames in bursts *at the connect/enable transition* — exactly
-  when the handshake latches — so it's unreliable for binding. Power is marginal
-  (`get_throttled=0x50000`, under-voltage occurred); a proper 5 V/3 A PSU is wanted.
-- **Connect procedure (device 0):** cold-boot the hub (defaults to device 0),
-  **do not press the button**, broadcast the generic connect telegram at ~200 ms,
-  dwell ~15 s so the hub latches from the telegram alone (LED fast → long flash),
-  then send motion telegrams. The button only *cycles the device id*; pressing it
-  de-synced the hub from device-0-addressed telegrams.
-- **OPEN / UNSOLVED:** reliably binding **hub B as device 1** without the fragile
-  button step (cold-boot always defaults to device 0). Two-hub simultaneous
-  control is not yet achievable. See the open-question section in the scratch doc.
+- **Protocol: MK4 12-channel nibble** (company id **0xFFF0**). Motion telegram raw
+  = `7d ae 18 <6 channel bytes> 82` (`0x8` nibble = neutral; `>0x8`/`<0x8` =
+  direction); connect = `ad ae 18 80 80 80 f3 52`. These are OUR hubs' exact
+  app-captured bytes; `mouldking_crypt.py` reproduces them (verified, 13/13 tests).
+- **One telegram drives all hubs at once** — 12 nibbles = 3 slots × 4 channels
+  (slot 0 = ch0–3, slot 1 = ch4–7, slot 2 = ch8–11). A hub's slot is set by its
+  physical button (1/2/3 flashes). Multi-hub precondition: hubs on different slots.
+  **No** per-hub device byte, **no** MK6 device-0/1, **no** second radio needed.
+- **Confirmed two-hub move:** one telegram with `ch0=0xb` (arm box → shovel) +
+  `ch4=0xb` (track box → left track) moved both hubs at once on hci1.
+- **Radios:** hci1 = Realtek `00:A6:44:02:21:25`, hci2 = TP-Link `6C:4C:BC:87:D0:83`;
+  onboard hci0 (Broadcom UART) is unreliable → to be disabled (`dtoverlay=disable-bt`).
+  5 V/3 A PSU installed. `bluetoothd` must be **stopped + masked**; broadcast via
+  raw HCI (`hcitool -i <hciN> cmd 0x08 0x0006/0x0008/0x000a`).
+- The earlier **MK6.0 device-0/1 model was a dead end and is SUPERSEDED** (see the
+  appendix in `reference/CONNECT_PROCEDURE.md`).
 
-Reference docs in scratch: **`CONNECT_PROCEDURE.md`** (the verified recipe + exact
-on-air bytes), **`channel_map.md`** (channel → function), and
-**`first_motor_test.py`** (the tool that generates/broadcasts the telegrams).
-
-**No radio bring-up is wired into this repo yet** — it lives only in scratch.
+**No radio bring-up is wired into the `radio_worker` yet** — the proven method
+lives in [`reference/`](reference/) and needs porting into the worker.
 
 ## Current state — PLACEHOLDER
 
