@@ -1,5 +1,7 @@
 # Mould King 13112 — channel map (MK4 12-channel nibble protocol)
 
+> Working snapshot. **Canonical map: [`../../docs/PROJECT.md`](../../docs/PROJECT.md) §5.**
+
 Confirmed by capturing + decoding the official **MK+tech** app and by our own
 transmits. These are **OUR hubs' exact app-captured bytes**.
 

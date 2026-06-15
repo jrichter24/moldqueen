@@ -1,82 +1,69 @@
 # moldqueen
 
-Control a **Mould King 13112 RC excavator** (a building-block model) from a
-Raspberry Pi, and later add a camera, a TOF sensor, and a local AI.
+Control a **Mould King 13112 RC excavator** from a Raspberry Pi (then add a camera,
+TOF sensor, and a local AI brain that drives it via the same API).
 
-## How the model is actually controlled (read this first)
+📖 **Full canonical reference: [`docs/PROJECT.md`](docs/PROJECT.md).** This file is
+the terse must-knows for next session; PROJECT.md wins on any disagreement.
 
-The excavator keeps its **two stock battery/Bluetooth hubs** in place. These hubs
-are **not** driven over a normal BLE GATT connection. They are driven by
-**broadcasting crafted BLE advertising packets** ("telegrams"): each telegram is
-built with an encoding/crypto step and is **addressed per hub** (device 0 and
-device 1).
+## Must-know facts
 
-To control **both hubs flawlessly and simultaneously**, we use **one radio per
-hub** — broadcasting is connectionless, so two hubs sharing one adapter would
-fight over airtime:
+- **Protocol = MK4 12-channel NIBBLE** (NOT MK6.0 — every MK6 / "device 0/1" /
+  promotion note is **SUPERSEDED**). Control = broadcasting manufacturer-specific
+  BLE adverts, company **`0xFFF0`**. Motion telegram raw `7d ae 18 <6 channel
+  bytes> 82`; connect `ad ae 18 80 80 80 f3 52`. `0x8` nibble = neutral; `>0x8` /
+  `<0x8` = direction.
+- **One telegram = 12 nibbles = 3 slots × 4 channels, drives ALL hubs at once** —
+  no per-device addressing, **one radio is enough.** A hub's slot is set by its
+  physical button (1/2/3 flashes = slot 0/1/2; resets to slot 0 on power-cycle).
+- **Use the USB dongles, not the onboard radio.** hci1 = Realtek
+  `00:A6:44:02:21:25` (control); hci2 = TP-Link `6C:4C:BC:87:D0:83` (spare). Onboard
+  hci0 (Broadcom UART) corrupts frames at the connect transition → disable it
+  (`dtoverlay=disable-bt`). Needs a solid **5 V/3 A PSU** (under-voltage caused
+  failures). `bluetoothd` must be **stopped + masked**; raw HCI needs root/caps.
+- **Codec verified:** `bt-core/reference/mouldking_crypt.py` (`encode`/`decode`)
+  reproduces the app's bytes exactly (13/13 tests). Do NOT reinvent the crypt.
+- **Confirmed channel map:** slot 0 = arm/bucket box (**ch0 = shovel**); slot 1 =
+  track box (**ch4 = left track**). Rest UNMAPPED. **Two-hub simultaneous CONFIRMED.**
 
-- **hci0** — the Pi's onboard Bluetooth — drives **hub A**.
-- **hci1** — a USB BLE dongle (added later) — drives **hub B**.
+## The working software: `bt-core/mk4web/`
 
-## The three components (one repo)
+The control stack is the **`bt-core/mk4web/`** Python webservice: a **broadcaster**
+(owns the radio + 12-nibble state, lifecycle IDLE→CONNECTING→READY, auto-neutral
+safety) + an **API** (the **WebSocket API `:8765` is the product**; serves the web
+page `:8080`; AsyncAPI spec at `/asyncapi.yaml`). The web page is the first client;
+a console/AI brain will use the same API. Run from `bt-core/` in the venv:
 
-| Folder | Language | Bound to hardware? | Responsibility |
-|--------|----------|--------------------|----------------|
-| [`java-core/`](java-core/) | Java + Gradle | **No** | Build telegrams (encoding/crypto, channel→speed mapping over −7..+7, the rolling counter) and orchestrate multiple hubs. Pure bytes + logic. Fully unit-testable. **No BLE.** |
-| [`bt-core/`](bt-core/) | Python | **Yes** | Thin "radio worker" processes, one per adapter, that take payload bytes and continuously advertise them via **raw HCI sockets** (`AF_BLUETOOTH` / `BTPROTO_HCI`), each bound to a specific `hci` index. **The only code that touches the radios.** |
-| [`web-gui/`](web-gui/) | Vanilla JS + minimal Node | No | A very light browser control panel to drive the excavator. Talks to java-core (wiring TBD). |
+```bash
+python -m mk4web.broadcaster --dry-run    # logs telegrams, no transmit (start here)
+sudo python -m mk4web.broadcaster          # live (needs hci1 up, bluetoothd masked)
+python -m mk4web.api                        # http://<pi>:8080/  ,  ws://<pi>:8765
+```
+GUI cold-start: **Connect → button one hub to slot 1 → Ready → drive.** Detail in
+[`bt-core/CLAUDE.md`](bt-core/CLAUDE.md).
 
-Data flow: **web-gui** → **java-core** (emits payload bytes) → **bt-core** worker
-(re-broadcasts those bytes on its adapter until handed new bytes).
+## Components (one repo)
 
-## The hardware-independence rule (java-core)
+- **[`bt-core/`](bt-core/)** — Python; the radios + the `mk4web` control service.
+  **The only code that touches the radios.**
+- **[`java-core/`](java-core/)** — empty Java scaffold. The old "java-core builds
+  telegrams" plan is **SUPERSEDED** (telegrams are built in Python). **Decision:**
+  future API client (a JVM brain) OR retire. Not on the control path.
+- **[`web-gui/`](web-gui/)** — original Node scaffold, superseded by mk4web's page.
 
-**java-core must never depend on Pi-only things.** No BLE, no HCI, no
-`/dev`, no platform assumptions. It emits and consumes plain bytes + logic only.
-It may later be developed on a Windows PC and the built artifact deployed to the
-Pi, so it has to stay portable. All radio-specific code lives in **bt-core**, full
-stop. If you ever feel tempted to import a BLE/socket thing into java-core, that
-code belongs in bt-core instead.
+## Open problems (see `docs/PROJECT.md` §8)
 
-The boundary between java-core and bt-core is intentionally simple: java-core
-emits payload bytes; a worker re-broadcasts them. The exact IPC/protocol is
-**TBD — keep it pluggable, don't over-design it yet.**
-
-## First milestone
-
-**One telegram out of `hci0` makes one motor move.** Everything here is
-scaffolding in service of that — keep it minimal.
-
-## The dev/runtime box
-
-A **Raspberry Pi 3B (aarch64, 1 GB RAM)**. It is the radio appliance and, for now,
-the dev box. Hardware constraints are real:
-
-- It is a **weak JVM build machine** — Gradle is slow here (first `java-core`
-  build was ~2.5 min). See [`java-core/CLAUDE.md`](java-core/CLAUDE.md).
-- The radios need privileges (`root` or `cap_net_raw,cap_net_admin`) and
-  `bluetoothd` must be stopped so it doesn't grab the adapter. See
-  [`bt-core/CLAUDE.md`](bt-core/CLAUDE.md). **No radio is configured or brought
-  up yet.**
-
-## Build / test / run, per component
-
-- **java-core:** `cd java-core && ./gradlew test`
-- **bt-core:** `cd bt-core && source .venv/bin/activate && pytest`
-- **web-gui:** `cd web-gui && npm start` → http://localhost:8080/
+Finish the channel map · slot auto-detection (unsolved) · box-identity UX
+(unsolved) · console/AI client of the WS API (TODO) · disable onboard BT ·
+camera/sensors/AI (future).
 
 ## Conventions
 
-- **Keep the hardware boundary clean:** radio code → bt-core only; java-core stays
-  portable.
-- **Small, clear commits.** Conventional-style messages are welcome
-  (`feat:`, `fix:`, `docs:`, `chore:`).
-- Prefer **minimal dependencies** everywhere — this Pi has little RAM.
-- **Secrets never get committed** (`.env`, keys). See `.gitignore`.
-- There is **no git remote yet** — that's a deliberate, later decision.
+Small, clear conventional commits (`feat:`/`fix:`/`docs:`/`chore:`). Minimal
+dependencies (1 GB Pi). Secrets never committed (`.gitignore`). **No git remote
+yet** — deliberate, later decision.
 
-## Toolchains (verified on this Pi)
+## Toolchains (on this Pi)
 
-JDK 21 (`openjdk-21-jdk-headless`), Node.js 20 LTS + npm, Python 3.13 + venv,
-BlueZ 5.82 (`bluetoothctl`, `hciconfig`, `btmgmt`, `btmon`) — installed and ready,
-radios untouched.
+JDK 21, Node 20 LTS, Python 3.13 + venv, BlueZ 5.82 (`bluetoothctl`, `hciconfig`,
+`btmgmt`, `btmon`). The bt-core venv has `websockets`.
