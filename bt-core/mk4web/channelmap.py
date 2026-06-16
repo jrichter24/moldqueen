@@ -25,7 +25,7 @@ def _placeholder_map():
     fns = {}
     for i, f in enumerate(FUNCTIONS):
         title = f.replace("_", " ").title()
-        fns[f] = {"slot": i // 4, "channel": i % 4, "invert": False,
+        fns[f] = {"slot": i // 4, "channel": i % 4, "invert": False, "max": 7,
                   "label_en": title, "label_de": title, "confirmed": False}
     return {"version": 1, "functions": fns}
 
@@ -86,6 +86,10 @@ def validate(mp):
             errs.append(f"{f}: channel must be an integer 0-3")
         if not isinstance(a.get("invert"), bool):
             errs.append(f"{f}: invert must be true/false")
+        if "max" in a:
+            mx = a["max"]
+            if not isinstance(mx, int) or isinstance(mx, bool) or not (1 <= mx <= 7):
+                errs.append(f"{f}: max must be an integer 1-7")
         for k in ("label_en", "label_de"):
             if k in a and not isinstance(a[k], str):
                 errs.append(f"{f}: {k} must be text")
