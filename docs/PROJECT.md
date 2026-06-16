@@ -255,7 +255,7 @@ moldqueen/
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── CLAUDE.md                  # terse must-knows (points here)
 ├── config/channel_map.json    # persisted DEFAULT channel map (function → slot/channel/…)
-├── assets/                    # excavator.jpg, moldqueen_dashboard_v2.png, wizard/step*.png
+├── assets/                    # moldqueen_banner.png, moldqueen_icon.png, excavator_icon.png, moldqueen_dashboard_v2.png, wizard/
 ├── scripts/                   # start.sh / check.sh (preflight + launch)
 ├── bt-core/
 │   ├── CLAUDE.md              # bt-core must-knows

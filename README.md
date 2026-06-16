@@ -1,4 +1,4 @@
-# 🦾 moldqueen
+<h1><img src="assets/moldqueen_icon.png" alt="" height="34" align="top"> moldqueen</h1>
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Python 3.13](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
@@ -8,7 +8,7 @@
 **Drive a [Mould King 13112](https://www.mouldking.com/) RC excavator from a Raspberry Pi — over a reverse-engineered BLE protocol, through a clean WebSocket API.**
 
 <p align="center">
-  <img src="assets/excavator.jpg" alt="Mould King 13112 RC crawler excavator (the model this project controls)" width="640">
+  <img src="assets/moldqueen_banner.png" alt="moldqueen — Mould King 13112 RC excavator control" width="760">
 </p>
 
 `moldqueen` turns a Lego-compatible building-block excavator (two stock
@@ -420,7 +420,7 @@ moldqueen/
 ├── docs/PROJECT.md            # canonical project reference (read this)
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── config/channel_map.json    # persisted default channel map (function → slot/channel/…)
-├── assets/                    # excavator.jpg, moldqueen_dashboard_v2.png, wizard/step*.png
+├── assets/                    # moldqueen_banner.png, moldqueen_icon.png, excavator_icon.png, moldqueen_dashboard_v2.png, wizard/
 ├── scripts/                   # start.sh / check.sh — preflight + launch (no system changes)
 ├── bt-core/                   # Python — the radios + the control service
 │   ├── mk4web/                # broadcaster · api · telegram · channelmap · mouldking_crypt · config
