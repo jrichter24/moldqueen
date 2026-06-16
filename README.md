@@ -21,9 +21,10 @@ camera, a TOF sensor, and a local AI brain that drives the machine through the
 same API.
 
 > **Status:** ✅ **core goal achieved** — *two hubs driven simultaneously from a
-> single telegram on a single radio.* Working webservice with a cold-start GUI and
-> joystick controls. 🔜 Next: finish the channel map, slot auto-detection, an
-> AI/console client, then camera + sensors.
+> single telegram on a single radio.* Working webservice + a **landscape dashboard**
+> GUI (served at `/`) with drag-joysticks, a connection wizard, and an in-GUI
+> **channel-assignment** tool over a configurable channel map. 🔜 Next: a RAW
+> slot/channel page, finish the channel map, an AI/console client, then camera + sensors.
 
 ## Disclaimer
 
@@ -82,8 +83,13 @@ README is the tour; PROJECT.md is the source of truth.
   blocks set moves both boxes at the same time. No per-device addressing, no second
   dongle required.
 - **A real service, not a script.** A `broadcaster` (owns the radio, holds state,
-  auto-neutral safety) + a `WebSocket API` (the product) + a thin web client +
-  an **AsyncAPI 3.0 spec**.
+  auto-neutral safety) + a `WebSocket API` (the product) + an **AsyncAPI 3.0 spec**.
+- **A landscape dashboard GUI** (the landing page). Controls bind to **functions**
+  via a **configurable channel map** (persisted default + live overrides); drag-
+  joysticks for tracks/arms, a **connection wizard** for cold-start, and a built-in
+  **channel-assignment** tool (drive a control → see which motor moves → assign it,
+  with per-function max speed + reverse trim + invert + EN/DE labels). Responsive:
+  top-bar on desktop, left-sidebar on mobile.
 - **Safety first.** Disconnect / no-clients / API-death → motors go **neutral**.
   A dry-run mode logs every telegram and transmits nothing.
 
@@ -234,40 +240,44 @@ sudo python -m mk4web.broadcaster          # starts IDLE — no transmit until "
 python -m mk4web.api
 ```
 
-**Cold-start flow** in the browser at `http://<pi-ip>:8080/`:
+**Cold-start flow** — open the dashboard at `http://<pi-ip>:8080/` and press
+**Connect** to launch the wizard:
 
-1. Power-cycle both hubs (each shows one long flash).
-2. **Connect** → hubs fast-flash.
+1. Power on both hubs (each shows one long flash) → **Next**.
+2. *Connecting…* → hubs fast-flash.
 3. Press **one** hub's button to **two** fast flashes (→ slot 1); leave the other
    on one flash (→ slot 0). *(Different slots are required for independent control.)*
-4. **Ready** → hold the Forward/Reverse buttons to drive; release snaps to stop;
-   **STOP** = all neutral.
+4. **Ready** → controls unlock. Drag a joystick to drive (release snaps to stop);
+   **STOP** (or Space/Esc) = all neutral.
 
 All ports/HCI are env-overridable (`MK4_HCI`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, … —
 see [`bt-core/mk4web/config.py`](bt-core/mk4web/config.py)).
 
-### The dashboard
+### Dashboard & controls
 
-**`/`** (alias **`/dashboard`**) is a **landscape excavator dashboard** laid out over
-an HMI background (see [`docs/mould_king_13112_hmi_layout_spec.md`](docs/mould_king_13112_hmi_layout_spec.md)).
-Controls bind to **functions** (left/right track, arm lift, front arm, rotation,
-bucket) via a **configurable channel map**, not raw channels. Tracks + arm functions
-are **proportional drag joysticks** (drag = speed, release snaps to neutral); rotation
-and bucket are press-and-hold buttons. A **connection wizard** walks the cold-start
-(power on → connect → assign slots → ready). A built-in **Settings** overlay is the
-**channel-assignment tool**: drag/Test a control, see which motor moves, set its
-slot/channel + max speed + reverse-trim + invert, with a separate **Labels** page
-(EN/DE) — **Save** (this session) or **Promote** (save as the new default in
-[`config/channel_map.json`](config/channel_map.json)). Also a session-only
-**device-0/1 hub swap**, **EN/DE** toggle, and fullscreen.
+**`/`** (alias **`/dashboard`**) is the **landscape excavator dashboard** — the
+primary landing page — laid out over an HMI background (see
+[`docs/mould_king_13112_hmi_layout_spec.md`](docs/mould_king_13112_hmi_layout_spec.md)).
 
-*(The old dummy simple page is retired; a dedicated RAW slot/channel page will
-replace it. Raw `set`/`stop` remain in the API.)*
+- **Controls bind to functions** (left/right track, arm lift, front arm, rotation,
+  bucket) via a **configurable channel map**, not raw channels. Tracks + arm
+  functions are **proportional drag joysticks** (drag = speed, release snaps to
+  neutral); rotation and bucket are press-and-hold buttons.
+- **Connection wizard** — a centered modal walks the cold-start (power on → connect
+  → assign slots → ready), with media slots and EN/DE text.
+- **Settings** (centered overlay) = the **channel-assignment tool**: drag/Test a
+  control, see which motor moves, set its slot/channel + max speed + reverse-trim +
+  invert; a separate **Labels** page (EN/DE); **Save** (this session) or **Promote**
+  (save as the new default in [`config/channel_map.json`](config/channel_map.json)).
+  Plus a session-only **device-0/1 hub swap**.
+- **Responsive shell** — viewport-fit (no page scroll); the menu is a **top bar on
+  desktop, a left sidebar on mobile** (portrait *and* landscape); **EN/DE** toggle,
+  fullscreen, and **STOP** are always reachable.
 
 The channel map has a persisted **server default** and a **client active** map
 (default + overrides); the **server** resolves `function → (slot, channel, value)`
-so the broadcaster stays dumb. Drive by function over the API:
-`{"cmd":"drive","function":"left_track","value":6}`.
+so the broadcaster stays dumb. *(The old dummy simple page is retired; a dedicated
+RAW slot/channel page will replace it — raw `set`/`stop` remain in the API.)*
 
 ### Running as a service (optional)
 
@@ -289,8 +299,13 @@ contract: **[`bt-core/mk4web/asyncapi.yaml`](bt-core/mk4web/asyncapi.yaml)** (As
 { "cmd": "setup", "action": "connect" }              // IDLE → CONNECTING
 { "cmd": "setup", "action": "ready"   }              // CONNECTING → READY
 { "cmd": "setup", "action": "reset"   }              // → IDLE (all neutral)
-{ "cmd": "set", "slot": 1, "channel": 0, "value": 5 } // motion; honored only in READY
+{ "cmd": "drive", "function": "left_track", "value": 6 } // motion BY FUNCTION (READY only)
+{ "cmd": "set", "slot": 1, "channel": 0, "value": 5 } // raw motion by slot/channel (READY only)
 { "cmd": "stop" }                                     // all neutral (any state)
+{ "cmd": "map", "action": "get" }                     // get the channel map
+{ "cmd": "map", "action": "set",     "map": { … } }   // set the session ACTIVE map
+{ "cmd": "map", "action": "swap",    "value": true }  // session device-0/1 (slot 0↔1) swap
+{ "cmd": "map", "action": "promote", "map": { … } }   // persist a map as the DEFAULT
 { "cmd": "state" }                                    // re-send current state
 ```
 
@@ -298,25 +313,39 @@ contract: **[`bt-core/mk4web/asyncapi.yaml`](bt-core/mk4web/asyncapi.yaml)** (As
 
 ```jsonc
 { "type": "lifecycle", "state": "READY" }            // on connect + every transition
-{ "type": "state", "slots": [[0,0,0,0],[5,0,0,0],[0,0,0,0]] }  // 3 slots × 4 signed values
+{ "type": "state", "slots": [[0,0,0,0],[6,0,0,0],[0,0,0,0]] }  // 3 slots × 4 signed values
+{ "type": "map", "default": { … }, "active": { … }, "device_swap": false }
+{ "type": "mapresult", "action": "set", "ok": true, "errors": [] }
 ```
 
-`value` is `-7..+7` (mapped to a nibble); `slot` is `0..2`, `channel` is `0..3`.
+`drive` names a **function**; the **server** resolves it to `(slot, channel, value)`
+against the active map (applying invert, device-swap, and a per-function
+`reverse_scale` trim) so the broadcaster stays dumb. `value` is `-7..+7`; `slot`
+`0..2`, `channel` `0..3`. Full contract: [`asyncapi.yaml`](bt-core/mk4web/asyncapi.yaml).
 
 ## Channel map
 
-Confirmed by our own transmits (the rest is an open sweep; boxes/slots are
-swappable, so this is *per current setup*):
+The **function → (slot, channel)** map is **data**, not hardcoded: a persisted
+default in [`config/channel_map.json`](config/channel_map.json), editable live in the
+GUI. Six functions, each `{slot, channel, invert, max, reverse_scale, label_en,
+label_de}`. The server resolves `drive` against the **active** map (default + the
+client's overrides; `promote` saves a map as the new default). Current default —
+only `bucket` and `left_track` are transmit-confirmed, the rest are placeholders to
+sweep:
 
-| Slot | Box | Channel | Function |
-|------|-----|---------|----------|
-| 0 | arm/bucket | **ch0** | shovel / bucket ✅ |
-| 0 | arm/bucket | ch1–3 | turntable / boom / arm — *unmapped* |
-| 1 | track | **ch4** | left track ✅ |
-| 1 | track | ch5–7 | right track + … — *unmapped* |
+| Function | Slot | Ch | Global nibble | Status |
+|----------|------|----|--------------:|--------|
+| **bucket** (shovel) | 0 | 0 | ch0 | ✅ confirmed |
+| front_arm | 0 | 1 | ch1 | placeholder |
+| rotation | 0 | 2 | ch2 | placeholder |
+| arm_lift | 0 | 3 | ch3 | placeholder |
+| **left_track** | 1 | 0 | ch4 | ✅ confirmed (inverted) |
+| right_track | 1 | 2 | ch6 | placeholder |
 
 **Two-hub simultaneous, confirmed:** one telegram with `ch0` *and* `ch4` set moved
-both boxes at once.
+both boxes at once. Assign/confirm the rest in **Settings → Test** (drive a control,
+watch which motor moves, set its slot/channel). `reverse_scale` (default 1.0) trims
+reverse speed to match forward; `max` caps a function's top speed.
 
 ## How the protocol was reverse-engineered
 
@@ -370,11 +399,17 @@ forces neutral, and if the API process dies the broadcaster drops to **IDLE**.
 ```
 moldqueen/
 ├── docs/PROJECT.md            # canonical project reference (read this)
+│   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
+├── config/channel_map.json    # persisted default channel map (function → slot/channel/…)
+├── assets/                    # excavator.jpg, moldqueen_dashboard.png, wizard/step*.png
+├── scripts/                   # start.sh / check.sh — preflight + launch (no system changes)
 ├── bt-core/                   # Python — the radios + the control service
-│   ├── mk4web/                # broadcaster + api + web client + asyncapi.yaml
+│   ├── mk4web/                # broadcaster · api · telegram · channelmap · mouldking_crypt · config
+│   │   ├── asyncapi.yaml       #   WS API contract (served at /asyncapi.yaml)
+│   │   └── web/dashboard.{html,js,css}   #   the landscape dashboard (served at /)
 │   └── reference/             # verified protocol snapshots, the codec, the APK report
 ├── java-core/                 # empty Java scaffold — future API client OR retire
-├── web-gui/                   # original Node scaffold — superseded by mk4web's page
+├── web-gui/                   # original Node scaffold — superseded by mk4web's dashboard
 └── CLAUDE.md                  # terse agent/dev notes (per folder too)
 ```
 
@@ -383,11 +418,14 @@ stack is entirely in `bt-core/mk4web/`.
 
 ## Roadmap & open problems
 
-- **Finish the channel map** — sweep the remaining slot-0 and slot-1 channels.
+- **RAW page + configurable API endpoint** — a dedicated raw slot/channel page to
+  replace the retired simple page.
+- **Finish the channel map** — sweep/confirm the placeholder channels via Settings → Test.
+- **Reverse-speed calibration** — set each track's `reverse_scale` so reverse matches forward.
 - **Slot auto-detection — unsolved.** Slots are set by physical button and reset on
-  power-cycle; today the GUI guides it manually.
+  power-cycle; today the **wizard** guides it manually.
 - **Box identity UX — unsolved.** Which physical box is on which slot is operator
-  knowledge; the UI labels by slot + channel only.
+  knowledge; the map labels by function (EN/DE).
 - **Console / AI client** of the WebSocket API (the API is ready; the client isn't).
 - **Hardware:** disable onboard BT; keep the 5 V/3 A PSU.
 - **Future phases:** camera, TOF sensor, local AI brain — all driving via the WS API.

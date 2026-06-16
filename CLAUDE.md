@@ -23,24 +23,33 @@ the terse must-knows for next session; PROJECT.md wins on any disagreement.
   failures). `bluetoothd` must be **stopped + masked**; raw HCI needs root/caps.
 - **Codec verified:** `bt-core/reference/mouldking_crypt.py` (`encode`/`decode`)
   reproduces the app's bytes exactly (13/13 tests). Do NOT reinvent the crypt.
-- **Confirmed channel map:** slot 0 = arm/bucket box (**ch0 = shovel**); slot 1 =
-  track box (**ch4 = left track**). Rest UNMAPPED. **Two-hub simultaneous CONFIRMED.**
+- **Channel map = DATA** ([`config/channel_map.json`](config/channel_map.json),
+  editable live in the GUI). Drive **by FUNCTION**; the **server** resolves
+  function→(slot,channel,value) (+ invert, device-0/1 swap, `reverse_scale` trim,
+  per-function `max`) — broadcaster stays dumb. Transmit-confirmed: **bucket =
+  slot0/ch0** (shovel), **left_track = slot1/ch0** (= global ch4); rest placeholders.
+  **Two-hub simultaneous CONFIRMED.**
 
 ## The working software: `bt-core/mk4web/`
 
 The control stack is the **`bt-core/mk4web/`** Python webservice: a **broadcaster**
 (owns the radio + 12-nibble state, lifecycle IDLE→CONNECTING→READY, auto-neutral
-safety) + an **API** (the **WebSocket API `:8765` is the product**; serves the web
-page `:8080`; AsyncAPI spec at `/asyncapi.yaml`). The web page is the first client;
-a console/AI brain will use the same API. Run from `bt-core/` in the venv:
+safety) + an **API** (the **WebSocket API `:8765` is the product**; resolves
+`drive`-by-function via `channelmap.py`; serves the **landscape dashboard at `/`**
+on `:8080`; AsyncAPI spec at `/asyncapi.yaml`). The dashboard is the first client;
+a console/AI brain uses the same API. Run from `bt-core/` in the venv (or
+`scripts/start.sh`):
 
 ```bash
 python -m mk4web.broadcaster --dry-run    # logs telegrams, no transmit (start here)
 sudo python -m mk4web.broadcaster          # live (needs hci1 up, bluetoothd masked)
-python -m mk4web.api                        # http://<pi>:8080/  ,  ws://<pi>:8765
+python -m mk4web.api                        # dashboard http://<pi>:8080/ , API ws://<pi>:8765
 ```
-GUI cold-start: **Connect → button one hub to slot 1 → Ready → drive.** Detail in
-[`bt-core/CLAUDE.md`](bt-core/CLAUDE.md).
+**Dashboard:** drag-joysticks (tracks/arms) + hold buttons (rotation/bucket); a
+**connection wizard** for cold-start (**Connect → button one hub to slot 1 → Ready**);
+a **Settings** overlay to assign function→slot/channel (+ max, reverse-trim, invert,
+EN/DE labels, device-swap, Save/Promote). Responsive (top-bar desktop / sidebar
+mobile). Detail in [`bt-core/CLAUDE.md`](bt-core/CLAUDE.md).
 
 ## Components (one repo)
 

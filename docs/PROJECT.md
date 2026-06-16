@@ -2,7 +2,8 @@
 
 > This is the authoritative project document. Where any other doc (the CLAUDE.md
 > files, or the snapshots in `bt-core/reference/`) disagrees, **this file wins.**
-> Last major update: 2026-06-16 (end of the protocol-discovery + webservice session).
+> Last major update: 2026-06-16 (protocol discovery + webservice + the landscape
+> **dashboard** GUI and the configurable **channel map**).
 
 ---
 
@@ -17,9 +18,14 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
   one radio.** The full control chain works end-to-end: captured app protocol →
   verified codec → one BLE advertising telegram → both hubs move.
 - ✅ A working **control webservice** (`bt-core/mk4web/`) with a WebSocket API and a
-  thin web GUI, including a guided cold-start flow and joystick controls.
-- 🔜 Next: finish the channel→function map, slot auto-detection, console/AI client,
-  then the camera/sensor/AI phases.
+  **landscape dashboard GUI** served at `/`: proportional drag-joysticks + hold
+  buttons, a **connection wizard** for cold-start, and an in-GUI **channel-assignment**
+  settings overlay (assign function → slot/channel, per-function max speed, reverse
+  trim, invert, EN/DE labels). Drive **by function**; the server resolves it against
+  a **configurable channel map** (persisted default + client overrides).
+- 🔜 Next: a dedicated **RAW** slot/channel page + a configurable API endpoint;
+  finish the channel→function map; slot auto-detection; console/AI client; then the
+  camera/sensor/AI phases.
 
 ---
 
@@ -95,25 +101,43 @@ All MK6.0 "device-1 / promotion" guidance is **SUPERSEDED**.
 
 ---
 
-## 5. Confirmed channel map (CANONICAL)
+## 5. Channel map — now DATA (configurable), not hardcoded
 
-Only two channels are confirmed by our own transmits; the rest are **UNMAPPED**
-(the boxes/slots are exchangeable, so this map is per current physical setup).
+The map of **function → (slot, channel)** is **data**: a persisted default in
+[`config/channel_map.json`](../config/channel_map.json), editable live in the GUI
+(see §6). The server has **no hardcoded toy knowledge** — it resolves a `drive`
+command's function against the active map. Six functions: `left_track`,
+`right_track`, `arm_lift`, `front_arm`, `rotation`, `bucket`. Per function:
+`{slot 0-2, channel 0-3, invert, max (1-7), reverse_scale, label_en, label_de}`.
+**(slot, channel)** is within-slot; the global nibble index = `slot*4 + channel`.
 
-| Slot | Physical box | Channel | Function | Status |
-|------|--------------|---------|----------|--------|
-| 0 | arm/bucket box | **ch0** | **shovel / bucket** | CONFIRMED (moved @ nibble 0xb and 0x5) |
-| 0 | arm/bucket box | ch1, ch2, ch3 | ? (turntable / boom / arm) | UNMAPPED |
-| 1 | track box | **ch4** | **left track** | CONFIRMED (moved @ nibble 0xb) |
-| 1 | track box | ch5, ch6, ch7 | ? (right track + ?) | UNMAPPED |
-| 2 | (no third hub) | ch8–11 | — | n/a |
+**Current default** (function → assignment). Only `bucket` and `left_track` are
+**transmit-confirmed**; the rest are placeholders to be swept/confirmed:
+
+| Function | Slot | Ch | Global nib | invert | Status |
+|----------|------|----|-----------:|--------|--------|
+| **bucket** (shovel) | 0 | 0 | ch0 | – | ✅ CONFIRMED (moved @ 0xb / 0x5) |
+| front_arm | 0 | 1 | ch1 | – | placeholder |
+| rotation | 0 | 2 | ch2 | – | placeholder |
+| arm_lift | 0 | 3 | ch3 | – | placeholder |
+| **left_track** | 1 | 0 | ch4 | **true** | ✅ CONFIRMED (moved @ 0xb) |
+| right_track | 1 | 2 | ch6 | – | placeholder |
 
 **Two-hub simultaneous CONFIRMED (2026-06-16):** one telegram with `ch0=0xb` (arm
 box → shovel) **and** `ch4=0xb` (track box → left track) moved both at once on hci1.
 
+- **`invert`** negates a function's value (flip a motor's direction).
+- **`reverse_scale`** (default `1.0` = identity) is a **reverse-speed trim** applied
+  at resolution: the nibble map (`0x8 + value`) is byte-symmetric (verified against
+  the app capture and the mkconnect encoder: `0xFF` fwd / `0x00` rev / `0x80` stop),
+  so any forward/reverse *speed* difference is the **hub PWM curve / motor**, not the
+  encoding. `reverse_scale > 1` boosts reverse magnitude to match forward; calibrate
+  by driving. **`max`** caps a function's full-deflection speed (joystick scaling).
+- **device-0/1 swap** (session-only, not persisted) swaps slots 0↔1 at resolution.
+
 > Reconciliation: `bt-core/reference/channel_map.md` and `…/CONNECT_PROCEDURE.md`
-> are the working snapshots and agree with this table. **This file is canonical**;
-> if they ever drift, trust PROJECT.md.
+> are the protocol-level snapshots (nibble↔global-channel). **This file is
+> canonical** for the function map; if they ever drift, trust PROJECT.md.
 
 ---
 
@@ -126,14 +150,39 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   12-nibble state; lifecycle **IDLE → CONNECTING → READY**; broadcasts one MK4
   telegram reflecting state (~5/sec keepalive). **Safety:** API gone → IDLE/neutral.
 - **API** (`mk4web/api.py`) — the **WebSocket API is the product** (`:8765`), also
-  serves the web page (`:8080`). Owns/drives the lifecycle; maps `value→nibble`;
-  **Safety:** client disconnect / no clients → NEUTRAL. Reuses `mouldking_crypt.py`
-  (the crypt is never reinvented).
-- **Web page** (`mk4web/web/`) — the **first client** of the API: cold-start Setup
-  panel + press-and-hold joystick buttons + STOP. A console/AI brain will use the
-  **same** WS API.
+  serves the dashboard (`:8080`). Owns/drives the lifecycle; maps `value→nibble`;
+  holds the **channel map** (persisted default + session active + device-swap) and
+  **resolves `drive` by function → (slot, channel, value)** via `channelmap.py`
+  (applying invert + device-swap + reverse_scale) — the broadcaster stays dumb.
+  **Safety:** client disconnect / no clients → NEUTRAL. Reuses `mouldking_crypt.py`.
+- **Channel map** (`mk4web/channelmap.py` + `config/channel_map.json`) — load /
+  validate / save / resolve. **No hardcoded toy knowledge.** The client owns the
+  **active** map (default + its overrides) and **pushes it on every connect**;
+  `promote` persists it as the new default. Validation rejects duplicate
+  `(slot, channel)` pairs.
+- **Dashboard** (`mk4web/web/dashboard.{html,js,css}`) — the **primary landing page**
+  (`/`, alias `/dashboard`), the first client of the API. Laid out over an HMI
+  background (`assets/moldqueen_dashboard.png`,
+  [`docs/mould_king_13112_hmi_layout_spec.md`](mould_king_13112_hmi_layout_spec.md))
+  with percent coordinates:
+  - **Controls bind to FUNCTIONS** (not raw channels) via the active map. Tracks +
+    arm-lift + front-arm are **proportional drag joysticks** (drag = speed up to the
+    function's `max`, release snaps to NEUTRAL); rotation + bucket are press-and-hold
+    buttons. Nothing latches.
+  - **Connection wizard** — a centered modal walking cold-start to READY (power on →
+    connect → assign slots → ready), with media slots (placeholder images under
+    `assets/wizard/`), EN/DE text.
+  - **Settings** — a centered overlay = the channel-assignment tool: drag/Test a
+    control, see which motor moves, set slot/channel + max + reverse-trim + invert;
+    a separate **Labels** page (EN/DE); **Save** (session) / **Promote** (default) /
+    Reset; session **device-0/1 swap**. Test pulses the *in-progress* edit (raw set).
+  - **Responsive shell** — viewport-sized (`100dvh`); menu is a **top bar on wide
+    screens, a left sidebar on small ones** (portrait *and* landscape); the stage
+    contain-fits the remaining space (STOP + fullscreen always reachable). **EN/DE**
+    toggle. *(The old dummy simple page is retired; a RAW slot/channel page is planned.)*
 - **AsyncAPI spec** (`mk4web/asyncapi.yaml`, served at `GET /asyncapi.yaml`)
-  documents the WS protocol; verified to match `api.py`.
+  documents the WS protocol (setup / set / **drive** / stop / state / **map** + the
+  pushed lifecycle / state / map / mapresult); verified to match `api.py`.
 
 **`java-core/`** (Java/Gradle scaffold) is **empty** beyond a placeholder + passing
 test. The original idea (java-core builds telegrams, bt-core re-broadcasts) was
@@ -162,28 +211,35 @@ python -m mk4web.api
 Ports/HCI/etc. are env-overridable (`MK4_HCI`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, …;
 see `mk4web/config.py`).
 
-**Cold-start GUI flow** (open `http://<pi-ip>:8080/`):
-1. Power-cycle both hubs (each shows one long flash).
-2. **Connect** → broadcaster sends the connect telegram; both hubs fast-flash.
+**Cold-start GUI flow** — open the **dashboard** at `http://<pi-ip>:8080/` and press
+**Connect** to launch the wizard:
+1. Power on both hubs (each shows one long flash) → **Next**.
+2. *Connecting…* — broadcaster sends the connect telegram; both hubs fast-flash.
 3. Button **one** hub to **two** fast flashes (→ slot 1); leave the other on one
    (→ slot 0). (Different slots are required.)
-4. **Ready** → controls unlock; hold Fwd/Rev to drive; release → stop; **STOP** =
-   all neutral. Disconnect/close → auto-neutral.
+4. **Ready** → controls unlock, wizard closes. Drag a joystick (release → neutral),
+   hold rotation/bucket; **STOP** (or Space/Esc) = all neutral. Disconnect/close →
+   auto-neutral. Assign functions to channels in **Settings**.
+
+(The launcher `scripts/start.sh` does the preflight + starts both processes.)
 
 ---
 
 ## 8. Open problems / next steps
 
-- **Finish the channel map** — sweep slot-0 ch1–3 and slot-1 ch5–7 to label every
-  function (turntable / boom / arm / right track / …).
+- **RAW page + configurable API endpoint — PLANNED.** The retired simple page is to
+  be replaced by a dedicated **RAW** slot/channel page; expose a configurable API
+  endpoint alongside it.
+- **Finish the channel map** — sweep the placeholder channels (slot-0 ch1–3, slot-1
+  ch1/ch3+) and confirm each function by driving it via Settings → Test.
+- **Reverse-speed calibration** — `reverse_scale` defaults to identity; measure the
+  forward-vs-reverse ratio per track and set the trim so speeds match.
 - **Slot auto-detection — UNSOLVED.** Slots are set by physical button and reset on
-  power-cycle; today it's a guided manual flow. No telegram-only way found yet.
-- **Box identity — UNSOLVED UX.** Which physical box is on which slot (and friendly
-  names) is operator knowledge; the UI labels by SLOT + channel only.
-- **Console / AI client of the WS API** — intended, not built. (Audit TODO: confirm
-  a non-GUI client can fully drive the documented API.)
-- **Live `/asyncapi.yaml`** — the route is committed; a running API launched before
-  that commit must be restarted to serve it.
+  power-cycle; today the **wizard** guides it manually. No telegram-only way yet.
+- **Box identity — UNSOLVED UX.** Which physical box is on which slot is operator
+  knowledge; the map labels by function (EN/DE) but the operator still wires it.
+- **Console / AI client of the WS API** — intended, not built. (The API is ready:
+  `drive` by function + `map` management are documented in `asyncapi.yaml`.)
 - **Hardware:** disable onboard BT (`dtoverlay=disable-bt`, needs reboot); keep the
   5 V/3 A PSU; hci2 (TP-Link) is spare for control.
 - **Retire/repurpose** `java-core/` and `web-gui/` (see §6).
@@ -196,15 +252,21 @@ see `mk4web/config.py`).
 ```
 moldqueen/
 ├── docs/PROJECT.md            # THIS FILE — canonical
+│   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── CLAUDE.md                  # terse must-knows (points here)
+├── config/channel_map.json    # persisted DEFAULT channel map (function → slot/channel/…)
+├── assets/                    # excavator.jpg, moldqueen_dashboard.png, wizard/step*.png
+├── scripts/                   # start.sh / check.sh (preflight + launch)
 ├── bt-core/
 │   ├── CLAUDE.md              # bt-core must-knows
-│   ├── mk4web/                # the working control webservice (broadcaster + api + web + asyncapi)
+│   ├── mk4web/                # the control webservice
+│   │   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
+│   │   ├── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
+│   │   └── web/dashboard.{html,js,css}        # the landscape dashboard (served at /)
 │   └── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
-│       │                      #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
-│       └── ...
+│                              #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
 ├── java-core/                 # empty Java scaffold — future API client OR retire
-└── web-gui/                   # original Node scaffold — superseded by mk4web's page
+└── web-gui/                   # original Node scaffold — superseded by mk4web's dashboard
 ```
 
 Scratch working copies live outside the repo in `~/scratch/mk-refs/` (the

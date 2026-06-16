@@ -78,9 +78,10 @@ lives in [`reference/`](reference/) and needs porting into the worker.
 ## mk4web — the MK4 control webservice
 
 [`mk4web/`](mk4web/) is the working control service. **The WebSocket API is the
-product**; the web page is just its first client (a console/AI brain uses the same
-API). It reuses the verified codec (`mk4web/mouldking_crypt.py`, identical to
-`reference/`) — the crypt is **not** reinvented.
+product**; the **landscape dashboard served at `/`** is its first client (a
+console/AI brain uses the same API). It reuses the verified codec
+(`mk4web/mouldking_crypt.py`, identical to `reference/`) — the crypt is **not**
+reinvented.
 
 **Two processes, talking over a local Unix socket** (`/tmp/moldqueen_mk4.sock`):
 
@@ -90,45 +91,53 @@ API). It reuses the verified codec (`mk4web/mouldking_crypt.py`, identical to
   → **READY** (broadcasts ONE motion telegram reflecting state, ~5/sec via the
   200 ms adv interval, on hci1 / `0xFFF0`). Motion is applied only in READY.
   **SAFETY:** if the API process disconnects → reset to IDLE (advertising off, neutral).
-- **`api.py`** — WebSocket server + serves the page; **owns/drives the lifecycle**,
-  forwards transitions + motion to the broadcaster, pushes state to clients.
-  **SAFETY:** on a client disconnect (or no clients) it commands NEUTRAL.
+- **`api.py`** — WebSocket server + serves the dashboard; **owns/drives the
+  lifecycle**, holds the **channel map** (default + session active + device-swap) and
+  **resolves `drive` by function → (slot,channel,value)** via `channelmap.py`
+  (invert + device-swap + `reverse_scale`), forwards to the broadcaster, pushes
+  state. **SAFETY:** client disconnect (or no clients) → NEUTRAL.
+- **`channelmap.py` + `../config/channel_map.json`** — the function map as DATA
+  (load/validate/save/resolve). No hardcoded toy knowledge; validation rejects
+  duplicate `(slot,channel)`. The client owns the **active** map and pushes it on
+  every connect; `promote` persists it as the default.
 
-**WebSocket API:** `{"cmd":"setup","action":"connect"|"ready"|"reset"}` (lifecycle),
-`{"cmd":"set","slot":0-2,"channel":0-3,"value":-7..7}` (motion, honored only in
-READY), `{"cmd":"stop"}`, `{"cmd":"state"}`. Server pushes
-`{"type":"lifecycle","state":…}` and `{"type":"state","slots":[[v×4]×3]}`.
-**Value→nibble map:** `nibble = 0x8 + value` (`-7..+7` → `0x1..0xF`; `0`=`0x8`
-neutral, `+7`=`0xF`, `-7`=`0x1`). The web client uses **press-and-hold** Forward/
-Reverse buttons (release/leave → neutral; several can be held at once) at a
-selectable speed; controls are locked until READY.
+**WebSocket API:** `{"cmd":"setup","action":connect|ready|reset}` (lifecycle),
+`{"cmd":"drive","function":…,"value":-7..7}` (by function, READY-only),
+`{"cmd":"set","slot":0-2,"channel":0-3,"value":-7..7}` (raw, READY-only),
+`{"cmd":"stop"}`, `{"cmd":"state"}`, `{"cmd":"map","action":get|set|swap|promote}`.
+Server pushes `lifecycle`, `state` (`[[v×4]×3]`), `map` (default+active+device_swap),
+`mapresult`. **Value→nibble:** `nibble = 0x8 + value` (`-7..+7` → `0x1..0xF`). The
+dashboard uses **drag joysticks** (tracks/arms; release → neutral) + hold buttons
+(rotation/bucket); controls locked until READY; a **connection wizard** drives the
+cold-start. Full contract in `asyncapi.yaml`.
 
-Run (from `bt-core/`, in the venv):
+Run (from `bt-core/`, in the venv; or `../scripts/start.sh`):
 ```bash
 python -m mk4web.broadcaster --dry-run   # log telegrams, transmit NOTHING (start here)
 python -m mk4web.broadcaster             # live: drives the dongle (needs hci1 up, bluetoothd masked)
-python -m mk4web.api                      # web page http://<pi>:8080/ , API ws://<pi>:8765
+python -m mk4web.api                      # dashboard http://<pi>:8080/ , API ws://<pi>:8765
 ```
 
 ### Slots — guided manually (auto-detect unsolved)
 - A hub's **slot** (which nibble block it obeys) is set by its **physical button**
-  and **resets to slot 0 on power-cycle**. The **Setup panel guides this** (Connect →
-  user buttons one hub to two fast flashes = slot 1 → Ready), because the service
-  can't see the LED flash state — only the user can. The user confirms the hubs are
-  on different slots before READY.
+  and **resets to slot 0 on power-cycle**. The **connection wizard guides this**
+  (Connect → user buttons one hub to two fast flashes = slot 1 → Ready), because the
+  service can't see the LED flash state — only the user can.
 - **TODO / unsolved:** *automatic* slot detection/assignment. For now it is the
-  guided manual flow above.
-- **Boxes are exchangeable**; mapping *slot → friendly name → physical box* is a
-  **later UX step** — the UI labels by SLOT + channel only, no device-identity guessing.
+  guided wizard flow above.
+- **Boxes are exchangeable**; the channel map labels by **function** (EN/DE), and the
+  operator assigns function → slot/channel in **Settings → Test** (drive a control,
+  watch which motor moves). Slot→physical-box identity is still operator knowledge.
 - **One dongle, one telegram drives all slots at once** — no second radio needed.
 
 ## Layout
 
 ```
 bt-core/
-├── mk4web/                # the working control webservice (broadcaster + api + web + asyncapi.yaml)
-│   ├── broadcaster.py  api.py  telegram.py  mouldking_crypt.py  config.py
-│   └── web/index.html  web/app.js
+├── mk4web/                # the working control webservice
+│   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
+│   ├── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
+│   └── web/dashboard.{html,js,css}   # the landscape dashboard (served at /)
 ├── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                          #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
 ├── radio_worker.py        # leftover bootstrap stub (stdin → log hex; NOT used)
