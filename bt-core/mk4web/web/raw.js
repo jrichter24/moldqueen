@@ -173,8 +173,13 @@ function buildSlots() {
 function updatePreview() {
   const raw = motionRaw();
   const p = $("preview");
-  if (p) p.innerHTML = `<span class="lbl">telegram to send →</span> ${raw}` +
-    `<br><span class="lbl">nibbles →</span> ${raw.slice(6, 18).replace(/(..)/g, "$1 ").trim()}`;
+  if (!p) return;
+  const nibs = raw.slice(6, 18).replace(/(..)/g, "$1 ").trim();
+  // block-level rows (not <br>); a raw-specific label class avoids the dashboard's
+  // global ".lbl { position:absolute }" rule (which made the two lines overlap).
+  p.innerHTML =
+    `<div class="prow"><span class="plbl">telegram to send →</span> <span class="pval">${raw}</span></div>` +
+    `<div class="prow"><span class="plbl">nibbles →</span> <span class="pval">${nibs}</span></div>`;
 }
 function updateGate() {
   const g = $("gate"), b = $("sendBtn");
