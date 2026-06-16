@@ -61,6 +61,7 @@ README is the tour; PROJECT.md is the source of truth.
 - [Channel map](#channel-map)
 - [How the protocol was reverse-engineered](#how-the-protocol-was-reverse-engineered)
 - [Safety model](#safety-model)
+- [Troubleshooting](#troubleshooting)
 - [Repository layout](#repository-layout)
 - [Roadmap & open problems](#roadmap--open-problems)
 - [Development](#development)
@@ -190,14 +191,33 @@ re-grab the adapter); raw HCI needs root or `cap_net_raw,cap_net_admin`.
 
 ## Quick start
 
-```bash
-# Prereqs on the Pi: stop + mask bluetoothd, bring up the dongle
-sudo systemctl mask --now bluetooth
-sudo hciconfig hci1 up
+**One-time setup** (Python venv + the one dependency):
 
+```bash
 cd bt-core
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt        # websockets (+ pytest)
+```
+
+**Easiest — the launcher.** [`scripts/start.sh`](scripts/start.sh) preflight-checks
+the radio (bluetoothd; the dongle *by MAC*, so a reindex doesn't matter; the venv)
+and starts the broadcaster + API in the right order. It makes **no persistent system
+changes** — it may mask bluetoothd and bring the dongle up *for the session*, both
+reversible:
+
+```bash
+scripts/start.sh            # preflight + launch (live)  →  http://<pi-ip>:8080/
+scripts/start.sh --dry-run  # logs telegrams, transmits NOTHING
+scripts/start.sh --check    # audit only — report state, change nothing  (= scripts/check.sh)
+```
+
+### Manual alternative
+
+```bash
+# what the launcher does: free the adapter from bluetoothd, bring the dongle up
+sudo systemctl mask --now bluetooth
+sudo hciconfig hci1 up
+cd bt-core && source .venv/bin/activate
 ```
 
 **Dry-run first** (logs the telegrams, transmits *nothing*):
@@ -225,6 +245,14 @@ python -m mk4web.api
 
 All ports/HCI are env-overridable (`MK4_HCI`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, … —
 see [`bt-core/mk4web/config.py`](bt-core/mk4web/config.py)).
+
+### Running as a service (optional)
+
+The launcher is the **no-system-changes default** — run it whenever you want the
+service. If you'd prefer it to **auto-start on boot**, that's an optional
+convenience you can add yourself with a small **systemd** unit (mask `bluetooth`,
+`hciconfig <hci> up`, then launch the broadcaster + API). The project intentionally
+ships **no** systemd units, so cloning it makes no persistent change to your system.
 
 ## The WebSocket API
 
@@ -293,6 +321,26 @@ A compact case study (details in [`docs/PROJECT.md`](docs/PROJECT.md) and
 - **Auto-neutral** on: client disconnect, zero clients, `stop`, or lifecycle leaving READY.
 - **Auto-IDLE** (advertising off) if the API process dies (broadcaster sees the socket drop).
 - Big **STOP** button in the GUI; per-channel **release-to-stop** on the joystick holds.
+
+## Troubleshooting
+
+First, run the health audit — it reports the radio/service state and **changes nothing**:
+
+```bash
+scripts/check.sh          # = scripts/start.sh --check
+```
+
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| **Page loads, motors don't move** | the **broadcaster isn't running** (only the API is) — the API log shows `IPC: broadcaster not reachable` | start the broadcaster; easiest is `scripts/start.sh` (launches both, in order). |
+| **Nothing moves after a reboot** | the broadcaster didn't auto-start, the dongle came back **DOWN**, and/or you haven't re-run **Connect→Ready** | run `scripts/start.sh`, then do the cold-start in the GUI (Connect → press one hub to two flashes → Ready). |
+| **Worked before, now flaky / under-voltage** | **weak PSU** (Pi 3 + two dongles is power-hungry; `vcgencmd get_throttled` ≠ `0x0`) | use a solid **5 V / 3 A** supply. |
+| **Only one hub moves, or both move together** | the two hubs are on the **same slot** | cold-start and press **one** hub's button to **two** fast flashes (slot 1), leaving the other on one flash (slot 0). |
+| **bluetoothd keeps coming back** | it's **socket/dbus-activated** — a plain `stop` gets reactivated as soon as any BT tool touches the adapter | **mask** it: `sudo systemctl mask --now bluetooth` (the launcher does this). Reverse with `sudo systemctl unmask bluetooth`. |
+| **Dongle not found / wrong `hciN`** | USB re-enumeration changed the index, or the dongle isn't plugged in | check `lsusb` / `hciconfig -a`. The launcher binds **by MAC** (`MK4_DONGLE_MAC`) so the index doesn't matter — if it still can't find it, the dongle is absent. |
+
+Safety nets always apply: closing the page (client disconnect) or the **STOP** button
+forces neutral, and if the API process dies the broadcaster drops to **IDLE**.
 
 ## Repository layout
 
