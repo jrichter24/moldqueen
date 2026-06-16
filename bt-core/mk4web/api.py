@@ -258,23 +258,25 @@ class WebHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split("?")[0]
-        if path in ("/", "/index.html"):
-            self._send_web_html("index.html")             # simple control page (unchanged)
-        elif path in ("/dashboard", "/dashboard.html"):
-            self._send_web_html("dashboard.html")          # landscape dashboard
-        elif path == "/app.js":
-            self._send_web_file("app.js", "text/javascript; charset=utf-8")
+        # The landscape dashboard is the PRIMARY landing page (served at "/").
+        # The old simple page is retired; "/dashboard" stays as an alias.
+        if path in ("/", "/index.html", "/dashboard", "/dashboard.html"):
+            self._send_web_html("dashboard.html")
         elif path == "/dashboard.js":
             self._send_web_file("dashboard.js", "text/javascript; charset=utf-8")
         elif path == "/dashboard.css":
             self._send_web_file("dashboard.css", "text/css; charset=utf-8")
-        elif path.startswith("/assets/"):                  # static assets (e.g. the UI background)
-            name = path[len("/assets/"):]
-            ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+        elif path.startswith("/assets/"):                  # static assets (UI background, wizard media)
+            rel = path[len("/assets/"):]
+            ext = rel.rsplit(".", 1)[-1].lower() if "." in rel else ""
             ctype = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
-                     "svg": "image/svg+xml", "webp": "image/webp"}.get(ext)
-            fp = os.path.join(ASSETS_DIR, name)
-            if re.fullmatch(r"[A-Za-z0-9._-]+", name) and ctype and os.path.isfile(fp):
+                     "svg": "image/svg+xml", "webp": "image/webp", "gif": "image/gif",
+                     "mp4": "video/mp4", "webm": "video/webm"}.get(ext)
+            base = os.path.abspath(ASSETS_DIR)
+            fp = os.path.normpath(os.path.join(base, rel))
+            ok = (re.fullmatch(r"[A-Za-z0-9._/-]+", rel) and ".." not in rel.split("/")
+                  and (fp == base or fp.startswith(base + os.sep)) and ctype and os.path.isfile(fp))
+            if ok:
                 with open(fp, "rb") as f:
                     self._send(200, f.read(), ctype)
             else:

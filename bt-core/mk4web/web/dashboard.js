@@ -31,7 +31,14 @@ const T = {
         hConnecting: "Button <b>ONE</b> hub to <b>two fast flashes</b> (slot&nbsp;1); leave the other on one flash (slot&nbsp;0). Then <b>Ready</b>.",
         dir: { forward: "Forward", backward: "Backward", up: "Up", down: "Down",
                out: "Out", in: "In", left: "Left", right: "Right", open: "Open", close: "Close" },
-        info: { mode: "Mode", swap: "Hubs", speed: "Speed", batt: "Batt" } },
+        info: { mode: "Mode", swap: "Hubs", speed: "Speed", batt: "Batt" },
+        resume: "Resume setup",
+        wiz: { title: "Connection setup", next: "Next", back: "Back", cancel: "Cancel",
+               readyBtn: "Ready", startDriving: "Start driving", placeholder: "📷 placeholder — drop a photo here",
+               w1: { t: "Step 1 — Power on", b: "Power on <b>both</b> hubs. Each shows <b>one long flash</b>." },
+               w2: { t: "Step 2 — Connecting…", b: "Sending the connect signal — both hubs should now <b>fast-flash</b>." },
+               w3: { t: "Step 3 — Assign slots", b: "Press <b>ONE</b> hub's button until it shows <b>two fast flashes</b> (slot&nbsp;1). Leave the other on one flash (slot&nbsp;0)." },
+               w4: { t: "Ready ✓", b: "Connected — controls unlocked. You can start driving." } } },
   de: { connect: "Verbinden", ready: "Bereit", reset: "Reset", stop: "STOPP", speed: "Tempo",
         full: "⛶", settings: "⚙", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
         saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern",
@@ -47,16 +54,26 @@ const T = {
         hConnecting: "<b>EINEN</b> Hub auf <b>zwei schnelle Blinks</b> (Slot&nbsp;1); den anderen auf einem Blink (Slot&nbsp;0). Dann <b>Bereit</b>.",
         dir: { forward: "Vorwärts", backward: "Rückwärts", up: "Hoch", down: "Runter",
                out: "Aus", in: "Ein", left: "Links", right: "Rechts", open: "Öffnen", close: "Schließen" },
-        info: { mode: "Modus", swap: "Hubs", speed: "Tempo", batt: "Akku" } },
+        info: { mode: "Modus", swap: "Hubs", speed: "Tempo", batt: "Akku" },
+        resume: "Setup fortsetzen",
+        wiz: { title: "Verbindungs-Setup", next: "Weiter", back: "Zurück", cancel: "Abbrechen",
+               readyBtn: "Bereit", startDriving: "Losfahren", placeholder: "📷 Platzhalter — Foto hier einsetzen",
+               w1: { t: "Schritt 1 — Einschalten", b: "<b>Beide</b> Hubs einschalten. Jeder zeigt <b>ein langes Blinken</b>." },
+               w2: { t: "Schritt 2 — Verbinden…", b: "Verbindungssignal wird gesendet — beide Hubs sollten jetzt <b>schnell blinken</b>." },
+               w3: { t: "Schritt 3 — Slots zuweisen", b: "<b>EINEN</b> Hub auf <b>zwei schnelle Blinks</b> stellen (Slot&nbsp;1). Den anderen auf einem Blink lassen (Slot&nbsp;0)." },
+               w4: { t: "Bereit ✓", b: "Verbunden — Steuerung entsperrt. Du kannst losfahren." } } },
 };
 
 const FN = ["left_track", "right_track", "arm_lift", "front_arm", "rotation", "bucket"];
-// joystick functions (vertical drag) vs button functions (press-and-hold)
+// Proportional drag joysticks. Track joysticks fill the art's far-left/right button
+// housings (top forward-button .. bottom backward-button) so the art is the visual
+// housing; `kw` = knob width (fraction of zone width), `travel` = knob travel
+// (fraction of half-height) at full deflection.
 const JOYS = [
-  { fn: "left_track",  rect: [100, 345, 150, 370] },
-  { fn: "arm_lift",    rect: [468, 165, 130, 320] },
-  { fn: "front_arm",   rect: [800, 162, 130, 325] },
-  { fn: "right_track", rect: [1423, 345, 150, 370] },
+  { fn: "left_track",  rect: [64, 180, 221, 700], kw: 0.34, travel: 0.42 },
+  { fn: "arm_lift",    rect: [468, 165, 130, 320], kw: 0.55, travel: 0.42 },
+  { fn: "front_arm",   rect: [800, 162, 130, 325], kw: 0.55, travel: 0.42 },
+  { fn: "right_track", rect: [1388, 180, 221, 700], kw: 0.34, travel: 0.42 },
 ];
 const BTNS = [
   { fn: "rotation", dir: -1, rect: [1038, 346, 121, 115], k: "left" },
@@ -176,6 +193,7 @@ function setLifecycle(state) {
   if (state !== "READY") neutralizeAll();
   renderTopbar(); renderHint(); refreshValues();
   rebuildOpenSettings();
+  wizardOnLifecycle(state);
 }
 
 // ---- build the stage overlay ----
@@ -205,15 +223,17 @@ function buildStage() {
     box.id = "title_" + t.fn + (t.k ? "_" + t.k : "");
     ov.appendChild(box);
   }
-  for (const j of JOYS) ov.appendChild(makeJoy(j.fn, j.rect));
+  for (const j of JOYS) ov.appendChild(makeJoy(j));
   for (const b of BTNS) ov.appendChild(makeBtn(b.fn, b.dir, b.rect, b.k));
   renderLabels();
 }
 
 // ---- proportional drag joystick (up = +, down = -, release -> 0) ----
-function makeJoy(fn, rect) {
-  const joy = el("joy", pct(rect)); joy.dataset.fn = fn;
+function makeJoy(j) {
+  const fn = j.fn, travel = (j.travel || 0.42) * 100;
+  const joy = el("joy", pct(j.rect)); joy.dataset.fn = fn;
   const zero = el("zero"); const knob = el("knob");
+  if (j.kw) knob.style.width = (j.kw * 100).toFixed(1) + "%";
   joy.appendChild(zero); joy.appendChild(knob);
   let pid = null;
   const setY = clientY => {
@@ -221,7 +241,7 @@ function makeJoy(fn, rect) {
     let frac = -((clientY - (r.top + r.height / 2)) / (r.height / 2));
     frac = clamp(frac, -1, 1);
     if (Math.abs(frac) < 0.12) frac = 0;              // centre dead-zone
-    knob.style.top = (50 - frac * 42) + "%";
+    knob.style.top = (50 - frac * travel) + "%";
     const val = Math.round(frac * funcMax(fn));
     joy.classList.toggle("active", val !== 0);
     driveFn(fn, val);
@@ -268,12 +288,23 @@ function neutralizeAll() {
 }
 
 // ---- labels / live values ----
+// Shrink a label's font until it fits its textbox (handles long/two-line labels
+// like "Arm heben/senken"). Resets to the CSS cqw baseline first so it re-fits on resize.
+function fitLabel(box) {
+  box.style.fontSize = "";
+  let size = parseFloat(getComputedStyle(box).fontSize) || 14, guard = 16;
+  while (guard-- > 0 && size > 6 &&
+         (box.scrollHeight > box.clientHeight + 1 || box.scrollWidth > box.clientWidth + 1)) {
+    size -= 1; box.style.fontSize = size + "px";
+  }
+}
 function renderLabels() {
   if (!activeMap) return;
   for (const t of TITLES) {
     const box = $("title_" + t.fn + (t.k ? "_" + t.k : "")); if (!box) continue;
     const sub = t.k ? " · " + tr().dir[t.k] : "";
-    box.innerHTML = funcLabel(t.fn) + sub + ' <span class="v"></span>';
+    box.innerHTML = '<span class="lt">' + funcLabel(t.fn) + sub + ' <span class="v"></span></span>';
+    fitLabel(box);
   }
   refreshValues();
 }
@@ -297,26 +328,28 @@ function tbtn(label, cls, on) {
 }
 function renderTopbar() {
   const tb = $("topbar"); tb.innerHTML = "";
-  const dot = el("dot"); dot.id = "wsDot"; tb.appendChild(dot);
-  tb.appendChild(el("", "", "<span id='lcText'>" + lifecycle + "</span>"));
-  if (lifecycle === "IDLE") tb.appendChild(tbtn(tr().connect, "primary", () => send({ cmd: "setup", action: "connect" })));
+  // left cluster: connection dot + lifecycle label + setup button — in one flex group
+  // so they never stack/overlap regardless of width.
+  const left = el("tgroup");
+  const dot = el("dot"); dot.id = "wsDot"; left.appendChild(dot);
+  left.appendChild(el("lc", "", "<span id='lcText'>" + lifecycle + "</span>"));
+  if (lifecycle === "IDLE") left.appendChild(tbtn(tr().connect, "primary", openWizard));
   else if (lifecycle === "CONNECTING") {
-    tb.appendChild(tbtn(tr().ready, "primary", () => send({ cmd: "setup", action: "ready" })));
-    tb.appendChild(tbtn(tr().reset, "", () => send({ cmd: "setup", action: "reset" })));
-  } else tb.appendChild(tbtn(tr().reset, "", () => send({ cmd: "setup", action: "reset" })));
+    left.appendChild(tbtn(tr().resume, "primary", openWizard));
+    left.appendChild(tbtn(tr().reset, "", doReset));
+  } else left.appendChild(tbtn(tr().reset, "", doReset));
+  tb.appendChild(left);
   tb.appendChild(el("grow"));
-  tb.appendChild(tbtn(tr().stop, "", stopAll)).id = "stopBtn";
-  tb.appendChild(tbtn(tr().full, "", toggleFullscreen));
-  tb.appendChild(tbtn(tr().lang, "", toggleLang));
-  tb.appendChild(tbtn(tr().settings, "", openSettings));
+  const right = el("tgroup");
+  const sb = tbtn(tr().stop, "", stopAll); sb.id = "stopBtn"; right.appendChild(sb);
+  right.appendChild(tbtn(tr().full, "", toggleFullscreen));
+  right.appendChild(tbtn(tr().lang, "", toggleLang));
+  right.appendChild(tbtn(tr().settings, "", openSettings));
+  tb.appendChild(right);
   setDot(ws && ws.readyState === 1);
 }
-function renderHint() {
-  const h = $("hint");
-  if (lifecycle === "IDLE") { h.innerHTML = tr().hIdle; h.classList.remove("hidden"); }
-  else if (lifecycle === "CONNECTING") { h.innerHTML = tr().hConnecting; h.classList.remove("hidden"); }
-  else h.classList.add("hidden");
-}
+function renderHint() { $("hint").classList.add("hidden"); }   // setup hint replaced by the wizard
+function doReset() { send({ cmd: "setup", action: "reset" }); }
 function stopAll() { neutralizeAll(); send({ cmd: "stop" }); }
 function toggleFullscreen() {
   if (!document.fullscreenElement) (document.documentElement.requestFullscreen || (() => {})).call(document.documentElement);
@@ -327,6 +360,49 @@ function toggleLang() {
   document.documentElement.lang = lang;
   buildStage(); renderTopbar(); renderHint();
   rebuildOpenSettings();
+}
+
+// ---- connection wizard (cold-start IDLE→CONNECTING→READY; centered modal) ----
+let wizardStep = 0;
+function openWizard() {
+  wizardStep = (lifecycle === "READY") ? 4 : (lifecycle === "CONNECTING") ? 3 : 1;
+  buildWizard(); $("wizard").classList.remove("hidden");
+}
+function closeWizard() { wizardStep = 0; $("wizard").classList.add("hidden"); }
+function wizardNext() {
+  if (wizardStep === 1) { send({ cmd: "setup", action: "connect" }); wizardStep = 2; }   // → CONNECTING
+  else if (wizardStep === 2) wizardStep = 3;
+  buildWizard();
+}
+function wizardBack() {
+  if (wizardStep === 2) { send({ cmd: "setup", action: "reset" }); wizardStep = 1; }      // → IDLE
+  else if (wizardStep === 3) wizardStep = 2;
+  buildWizard();
+}
+function wizardCancel() { send({ cmd: "setup", action: "reset" }); closeWizard(); }
+function wizardOnLifecycle(state) {     // keep the wizard in step with the real lifecycle
+  if ($("wizard").classList.contains("hidden")) return;
+  if (state === "READY") { wizardStep = 4; buildWizard(); }
+  else if (state === "IDLE" && wizardStep > 1) { wizardStep = 1; buildWizard(); }
+}
+function buildWizard() {
+  const t = tr(), s = wizardStep, w = t.wiz["w" + s];
+  let btns;
+  if (s === 1) btns = `<button id="wCancel">${t.wiz.cancel}</button><button class="apply" id="wNext">${t.wiz.next}</button>`;
+  else if (s === 2) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wBack">${t.wiz.back}</button><button class="apply" id="wNext">${t.wiz.next}</button>`;
+  else if (s === 3) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wBack">${t.wiz.back}</button><button class="apply" id="wReady">${t.wiz.readyBtn}</button>`;
+  else btns = `<button class="apply" id="wDone">${t.wiz.startDriving}</button>`;
+  $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
+    <h2>${t.wiz.title}</h2>
+    <div class="wsteps">${[1, 2, 3, 4].map(n => `<span class="wdot${n === s ? " on" : n < s ? " done" : ""}"></span>`).join("")}</div>
+    <div class="media"><img src="/assets/wizard/step${s}.png" alt="" onerror="this.style.display='none'"><span class="mediahint">${t.wiz.placeholder}</span></div>
+    <h3 class="wt">${w.t}</h3><p class="wbody">${w.b}</p>
+    <div class="actions wactions">${btns}</div>
+  </div>`;
+  const set = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
+  set("wCancel", wizardCancel); set("wBack", wizardBack); set("wNext", wizardNext);
+  set("wReady", () => send({ cmd: "setup", action: "ready" }));   // → READY → step 4 (via lifecycle)
+  set("wDone", closeWizard);
 }
 
 // ---- settings: two CENTERED overlay pages (assignment + labels) ----
@@ -492,6 +568,9 @@ document.addEventListener("keydown", e => {
 });
 window.addEventListener("blur", neutralizeAll);
 document.addEventListener("visibilitychange", () => { if (document.hidden) neutralizeAll(); });
+let _rfit; window.addEventListener("resize", () => {   // re-fit labels to the new stage size
+  clearTimeout(_rfit); _rfit = setTimeout(() => { if (activeMap) renderLabels(); }, 150);
+});
 
 // seed from the server-injected initial state so the UI renders before the WS opens
 if (window.MK4_INIT) {

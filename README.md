@@ -246,18 +246,23 @@ python -m mk4web.api
 All ports/HCI are env-overridable (`MK4_HCI`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, … —
 see [`bt-core/mk4web/config.py`](bt-core/mk4web/config.py)).
 
-### Two UIs
+### The dashboard
 
-- **`/`** — the simple control page (raw slot/channel hold-buttons).
-- **`/dashboard`** — a **landscape excavator dashboard** laid out over an HMI
-  background (see [`docs/mould_king_13112_hmi_layout_spec.md`](docs/mould_king_13112_hmi_layout_spec.md)).
-  Controls bind to **functions** (left/right track, arm lift, front arm, rotation,
-  bucket) via a **configurable channel map**, not raw channels. All driving controls
-  are **press-and-hold → release snaps to neutral**. A built-in **Settings** view is
-  the **channel-assignment tool**: drive a control, see which motor moves, set its
-  slot/channel + invert + EN/DE labels, **Apply** (this session) or **Promote** (save
-  as the new default in [`config/channel_map.json`](config/channel_map.json)). It also
-  has a session-only **device-0/1 hub swap** and an **EN/DE** language toggle.
+**`/`** (alias **`/dashboard`**) is a **landscape excavator dashboard** laid out over
+an HMI background (see [`docs/mould_king_13112_hmi_layout_spec.md`](docs/mould_king_13112_hmi_layout_spec.md)).
+Controls bind to **functions** (left/right track, arm lift, front arm, rotation,
+bucket) via a **configurable channel map**, not raw channels. Tracks + arm functions
+are **proportional drag joysticks** (drag = speed, release snaps to neutral); rotation
+and bucket are press-and-hold buttons. A **connection wizard** walks the cold-start
+(power on → connect → assign slots → ready). A built-in **Settings** overlay is the
+**channel-assignment tool**: drag/Test a control, see which motor moves, set its
+slot/channel + max speed + reverse-trim + invert, with a separate **Labels** page
+(EN/DE) — **Save** (this session) or **Promote** (save as the new default in
+[`config/channel_map.json`](config/channel_map.json)). Also a session-only
+**device-0/1 hub swap**, **EN/DE** toggle, and fullscreen.
+
+*(The old dummy simple page is retired; a dedicated RAW slot/channel page will
+replace it. Raw `set`/`stop` remain in the API.)*
 
 The channel map has a persisted **server default** and a **client active** map
 (default + overrides); the **server** resolves `function → (slot, channel, value)`

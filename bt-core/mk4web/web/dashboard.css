@@ -35,15 +35,15 @@ body {
 #overlay.locked .hot, #overlay.locked .joy { opacity: .45; cursor: not-allowed; }
 #overlay.locked .hot:hover { background: transparent; }
 
-/* ---- proportional drag joysticks (tracks / arm-lift / front-arm) ---- */
+/* ---- proportional drag joysticks (tracks / arm-lift / front-arm) ----
+   Transparent so the BACKGROUND ART is the visual housing (track button graphics);
+   only a moving knob + a faint active tint are drawn on top. */
 .joy {
   position: absolute; touch-action: none; cursor: grab;
-  border-radius: 14px; background: rgba(255,255,255,.03);
-  box-shadow: inset 0 0 0 1px rgba(150,180,220,.12);
+  border-radius: 14px; background: transparent;
 }
-.joy:hover { background: rgba(255,255,255,.06); }
-.joy.active { cursor: grabbing; background: rgba(74,150,255,.12);
-              box-shadow: inset 0 0 0 2px rgba(130,185,255,.55); }
+.joy:hover { background: rgba(255,255,255,.04); }
+.joy.active { cursor: grabbing; background: rgba(74,150,255,.10); }
 .joy .knob {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: 62%; aspect-ratio: 1; border-radius: 50%;          /* sized to the joystick, not the stage */
@@ -57,35 +57,38 @@ body {
 
 /* ---- labels in the spec's textbox rectangles (cqw = scales with the art) ---- */
 .lbl { position: absolute; display: flex; align-items: center; justify-content: center;
-       text-align: center; line-height: 1.05; pointer-events: none; overflow: hidden; }
+       text-align: center; line-height: 1.0; pointer-events: none; overflow: hidden; }
 .title { font-weight: 650; color: #d6e6fb; font-size: 1.25cqw; }
-.title .v { color: #ffd56b; margin-left: .35em; font-variant-numeric: tabular-nums; }
+.title .lt { display: block; width: 100%; }   /* inner span wraps; box clips + JS shrinks to fit */
+.title .v { color: #ffd56b; margin-left: .35em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .title.driving { color: #ffe08a; }
 .dir { color: #9fb2cc; font-size: 0.92cqw; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; }
 .info { color: #9fb2cc; font-size: 0.92cqw; font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
 .info b { color: #d6e6fb; font-weight: 600; }
 
-/* ---- functional toolbar over the art status bar ---- */
+/* ---- functional toolbar over the art status bar ----
+   Two flex clusters (left/right) with a spacer; items sit side-by-side and never
+   stack/overlap at any width (the bar scrolls horizontally if truly too narrow). */
 #topbar {
-  position: absolute; left: 1%; top: 1.4%; width: 98%; height: 8.4%; z-index: 10;
-  display: flex; align-items: center; gap: .5%; padding: 0 .8%;
-  font-size: clamp(9px, 1.5cqw, 15px);
+  position: absolute; left: 1%; top: 1.4%; width: 98%; min-height: 8.4%; z-index: 10;
+  display: flex; align-items: center; flex-wrap: nowrap; gap: .5em; padding: 0 .8%;
+  font-size: clamp(9px, 1.5cqw, 15px); line-height: 1; overflow: hidden;
 }
-#topbar .grow { flex: 1; }
+#topbar .grow { flex: 1 1 auto; min-width: .5em; }
+#topbar .tgroup { display: flex; align-items: center; gap: .45em; flex: 0 0 auto; min-width: 0; }
+.tgroup .lc { display: inline-flex; align-items: center; }
 .dot { width: .8em; height: .8em; border-radius: 50%; background: #c0413a; flex: none; }
 .dot.ok { background: #43d17a; }
 #topbar button {
-  font: inherit; color: #e8eef6; background: rgba(40,46,58,.85); border: 1px solid #444c5e;
-  border-radius: .4em; padding: .35em .6em; cursor: pointer; white-space: nowrap;
+  font: inherit; color: #e8eef6; background: rgba(40,46,58,.9); border: 1px solid #444c5e;
+  border-radius: .4em; padding: .3em .55em; cursor: pointer; white-space: nowrap; flex: 0 0 auto;
 }
 #topbar button:active { background: rgba(60,68,84,.95); }
 #topbar button:disabled { opacity: .4; cursor: not-allowed; }
 #topbar .primary { background: #1d3a4d; border-color: #2f6f93; }
 #topbar #stopBtn { background: #7a1d1d; border-color: #a33; font-weight: 700; }
 #topbar #stopBtn:active { background: #9b2525; }
-#lcText { color: #cfe0f5; font-weight: 600; }
-#speedWrap { display: flex; align-items: center; gap: .35em; color: #b9c6da; }
-#speedWrap input { width: 5em; }
+#lcText { color: #cfe0f5; font-weight: 600; white-space: nowrap; }
 
 /* setup hint: a bottom-center banner so it never covers the central controls */
 #hint {
@@ -96,9 +99,10 @@ body {
 }
 .hidden { display: none !important; }
 
-/* ---- settings: CENTERED modal overlays + dim click-blocking backdrop ---- */
+/* ---- centered modal overlays + dim click-blocking backdrop ---- */
 .modal { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 2vh 2vw; }
 #labels { z-index: 31; }   /* labels page stacks above the assignment page */
+#wizard { z-index: 32; }   /* connection wizard above everything */
 .modal .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.6); }  /* covers viewport: controls underneath are NOT clickable */
 .sheet {
   position: relative; z-index: 1; width: min(720px, 96vw); max-height: 94vh; overflow: auto;
@@ -131,3 +135,19 @@ table.map .tag { display: inline-block; font-size: .65rem; padding: .05rem .3rem
 #mapMsg { font-size: .82rem; flex-basis: 100%; }
 #mapMsg.ok { color: #5fd98a; } #mapMsg.bad { color: #e06b5a; }
 .muted { color: #8e9cb2; font-size: .78rem; }
+
+/* ---- connection wizard ---- */
+.sheet.wiz { width: min(440px, 94vw); text-align: center; }
+.wsteps { display: flex; justify-content: center; gap: .5rem; margin: .2rem 0 .8rem; }
+.wdot { width: .7rem; height: .7rem; border-radius: 50%; background: #2c3340; border: 1px solid #3a4250; }
+.wdot.on { background: #2f6f93; border-color: #6db0e0; box-shadow: 0 0 0 3px rgba(60,140,200,.25); }
+.wdot.done { background: #2c5a3a; border-color: #4f9f6a; }
+.media { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: .2rem 0 .6rem;
+         background: #0e1218; border: 1px solid #242c38; border-radius: .5rem; overflow: hidden;
+         display: flex; align-items: center; justify-content: center; }
+.media img { width: 100%; height: 100%; object-fit: cover; }
+.media .mediahint { position: absolute; bottom: .35rem; left: 50%; transform: translateX(-50%);
+         font-size: .72rem; color: #8090a4; background: rgba(0,0,0,.4); padding: .1rem .5rem; border-radius: .3rem; }
+.wt { margin: .2rem 0 .3rem; font-size: 1rem; color: #d6e6fb; }
+.wbody { color: #c0ccdc; font-size: .9rem; line-height: 1.4; margin: 0 0 .4rem; }
+.wactions { justify-content: center; }
