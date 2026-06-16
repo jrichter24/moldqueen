@@ -287,6 +287,25 @@ convenience you can add yourself with a small **systemd** unit (mask `bluetooth`
 `hciconfig <hci> up`, then launch the broadcaster + API). The project intentionally
 ships **no** systemd units, so cloning it makes no persistent change to your system.
 
+### Running the client separately (Docker)
+
+The web UI can run **anywhere** and talk to the Pi's WS API over the LAN — the
+broadcaster + radio stay on the Pi. A **client-only** image
+([`Dockerfile.client`](Dockerfile.client)) serves just the static UI (chooser +
+dashboard + RAW) behind nginx:
+
+```bash
+docker build -f Dockerfile.client -t moldqueen-client .   # from the repo root
+docker run --rm -p 8080:80 moldqueen-client               # → http://localhost:8080/
+```
+
+Then open the **API endpoint** setting (Dashboard **⚙ Settings**, or the RAW **API
+connection** panel), enter `ws://<pi-ip>:8765`, and press **Connect** — it's saved
+in the browser and the WebSocket reconnects. The endpoint defaults to the page's
+own host (so the Pi-served UI needs no setup). The Pi's API is **permissive CORS /
+any-WS-origin by design** (LAN hobby tool). Full guide:
+**[`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md)**.
+
 ## The WebSocket API
 
 The product. Connect to `ws://<pi>:8765`; messages are JSON. Full machine-readable

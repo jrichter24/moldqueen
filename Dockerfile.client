@@ -1,0 +1,24 @@
+# moldqueen — CLIENT-ONLY image.
+# Packages just the web UI (chooser + dashboard + RAW + clientconfig.js + assets)
+# behind nginx. It contains NO broadcaster and NO radio access — it's only the UI.
+# Run it anywhere (e.g. your desktop) and point it at a remote Pi's WS API via the
+# in-app "API endpoint" setting (ws://<pi>:8765).  See docs/REMOTE_CLIENT.md.
+#
+#   docker build -f Dockerfile.client -t moldqueen-client .
+#   docker run --rm -p 8080:80 moldqueen-client      # open http://localhost:8080/
+#
+# Build context = repo root (so it can COPY bt-core/mk4web/web + assets).
+FROM nginx:alpine
+
+# The static UI — the SAME files api.py serves on the Pi (chooser.html, dashboard.*,
+# raw.*, clientconfig.js). Placeholders in the HTML stay valid unreplaced (see
+# clientconfig.js): the WS endpoint just defaults to this host until you set it.
+COPY bt-core/mk4web/web/          /usr/share/nginx/html/
+# UI background + wizard images
+COPY assets/                      /usr/share/nginx/html/assets/
+# the API contract the RAW console links (served locally so no cross-origin fetch)
+COPY bt-core/mk4web/asyncapi.yaml /usr/share/nginx/html/asyncapi.yaml
+# routing: / -> chooser, /dashboard, /raw (mirrors api.py)
+COPY deploy/nginx-client.conf     /etc/nginx/conf.d/default.conf
+
+EXPOSE 80

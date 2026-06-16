@@ -157,10 +157,10 @@ function funcValue(fn) { const sc = resolveSC(fn); return sc ? (grid[sc[0]] || [
 function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
 
 function connect() {
-  ws = new WebSocket("ws://" + location.hostname + ":" + window.MK4_WS_PORT);
-  ws.onopen = () => { setDot(true); pushActiveMap(); };   // make the server match our map every connect
-  ws.onclose = () => { setDot(false); neutralizeAll(); setTimeout(connect, 1000); };
-  ws.onerror = () => ws.close();
+  ws = new WebSocket(MK4.wsEndpoint());                    // configurable (shared via clientconfig.js)
+  ws.onopen = () => { setDot(true); MK4.setStatus("connected"); pushActiveMap(); };
+  ws.onclose = () => { setDot(false); MK4.setStatus("retrying"); neutralizeAll(); setTimeout(connect, 1000); };
+  ws.onerror = () => { MK4.setStatus("failed"); ws.close(); };
   ws.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch { return; }
     if (m.type === "lifecycle") setLifecycle(m.state);
@@ -170,12 +170,14 @@ function connect() {
   };
 }
 function pushActiveMap() { if (activeMap) send({ cmd: "map", action: "set", map: activeMap }); }
+function reconnectWS() { try { if (ws) ws.close(); } catch (e) {} connect(); }   // endpoint changed
 
 function onMap(m) {
   // The server is authoritative ONLY for the persisted default + the session swap.
   // The active map is client-owned (default + our overrides), so we never let a
   // server push clobber it — we push ours instead (see ws.onopen / Apply).
   defaultMap = m.default; deviceSwap = !!m.device_swap;
+  if (!activeMap) activeMap = loadStoredMap() || withDefaults(m.active);  // bootstrap if no injected init (e.g. nginx)
   renderLabels();
   rebuildOpenSettings();
 }
@@ -441,6 +443,7 @@ function buildAssign() {
     `<div class="backdrop"></div><div class="sheet">
       <h2>${t.assign}</h2>
       <p class="sub">${t.assignSub}</p>
+      <div class="srow eprow" id="epRow"></div>
       <div class="srow">
         <label><input type="checkbox" id="swapChk"${deviceSwap ? " checked" : ""}> ${t.deviceSwap}</label>
         <span class="muted">${lifecycle !== "READY" ? "· " + t.readyOnly : ""}</span>
@@ -458,6 +461,8 @@ function buildAssign() {
       </div>
     </div>`;
   $("settings").querySelector(".backdrop").onclick = discardEdits;   // click-out = discard (no silent save)
+  MK4.buildEndpointRow($("epRow"), reconnectWS);
+  MK4.setStatus(ws && ws.readyState === 1 ? "connected" : "retrying");
   $("settings").querySelectorAll("tr[data-fn]").forEach(trEl => {
     const fn = trEl.dataset.fn, a = editMap.functions[fn];
     trEl.querySelector(".e-slot").onchange = e => assignCell(fn, +e.target.value, a.channel);

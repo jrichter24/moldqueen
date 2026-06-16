@@ -245,16 +245,33 @@ class WebHandler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
+        # Permissive CORS BY DESIGN — this is a LAN hobby tool, so a client served
+        # from another host/container can fetch these endpoints (e.g. /asyncapi.yaml).
+        # Tightening to a specific origin allowlist is a future option.
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(body)
 
+    def do_OPTIONS(self):               # CORS preflight (permissive, LAN)
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def _send_web_html(self, name):     # serve an HTML file, inject WS port + initial state
+        # Placeholders are written so the files stay VALID even when served raw by a
+        # plain static server (e.g. nginx in the client Docker image) that can't
+        # inject: the port lives in a string, and __INIT_JSON__ is JSON.parse'd in a
+        # try/catch (→ null when unreplaced). See web/clientconfig.js.
         with open(os.path.join(WEB_DIR, name)) as f:
             html = f.read().replace("__WS_PORT__", str(WS_PORT))
-        if "__INIT__" in html:          # let the page render immediately, before the WS opens
+        if "__INIT_JSON__" in html:     # let the page render immediately, before the WS opens
             init = {"default": app.default_map, "active": app.active_map,
                     "device_swap": app.device_swap, "lifecycle": app.lifecycle}
-            html = html.replace("__INIT__", json.dumps(init))
+            js_str = json.dumps(init).replace("\\", "\\\\").replace('"', '\\"')
+            html = html.replace("__INIT_JSON__", js_str)
         self._send(200, html.encode(), "text/html; charset=utf-8")
 
     def _send_web_file(self, name, ctype):
@@ -271,6 +288,8 @@ class WebHandler(BaseHTTPRequestHandler):
             self._send_web_html("dashboard.html")
         elif path in ("/raw", "/raw.html"):
             self._send_web_html("raw.html")
+        elif path == "/clientconfig.js":
+            self._send_web_file("clientconfig.js", "text/javascript; charset=utf-8")
         elif path == "/dashboard.js":
             self._send_web_file("dashboard.js", "text/javascript; charset=utf-8")
         elif path == "/dashboard.css":
@@ -315,8 +334,13 @@ def start_http():
 
 async def amain():
     start_http()
+    # WS ORIGIN: `serve(...)` is called WITHOUT an `origins=` allowlist, so the
+    # server accepts WebSocket connections from ANY Origin — permissive BY DESIGN
+    # for a LAN hobby tool (a client served from another host/container can connect).
+    # Tightening (e.g. origins=[...]) is a future option. The broadcaster stays on
+    # the Pi and is unaffected — only this API faces clients.
     async with serve(handler, HOST, WS_PORT):
-        log.info("WebSocket API on ws://%s:%d", HOST, WS_PORT)
+        log.info("WebSocket API on ws://%s:%d (any origin accepted — LAN tool)", HOST, WS_PORT)
         await asyncio.Future()
 
 

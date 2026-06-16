@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
   <title>moldqueen — dashboard</title>
   <link rel="stylesheet" href="/dashboard.css" />
-  <script>window.MK4_WS_PORT = __WS_PORT__; window.MK4_INIT = __INIT__;</script>
+  <script>
+    // Injected by the Pi's api.py; stay valid when served raw (e.g. nginx): the port
+    // is a string (parsed in clientconfig.js) and MK4_INIT is JSON.parse'd safely.
+    window.MK4_WS_PORT = "__WS_PORT__";
+    try { window.MK4_INIT = JSON.parse("__INIT_JSON__"); } catch (e) { window.MK4_INIT = null; }
+  </script>
 </head>
 <body>
   <!-- Viewport-sized shell: a menu STRIP (top bar on wide screens, left sidebar on
@@ -27,6 +32,7 @@
   <div id="settings" class="modal hidden"></div>   <!-- channel assignment -->
   <div id="labels" class="modal hidden"></div>      <!-- EN/DE labels (separate page) -->
 
+  <script src="/clientconfig.js"></script>
   <script src="/dashboard.js"></script>
 </body>
 </html>

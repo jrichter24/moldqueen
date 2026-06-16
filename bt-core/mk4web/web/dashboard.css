@@ -170,3 +170,16 @@ table.map .tag { display: inline-block; font-size: .65rem; padding: .05rem .3rem
 .wt { margin: .2rem 0 .3rem; font-size: 1rem; color: #d6e6fb; }
 .wbody { color: #c0ccdc; font-size: .9rem; line-height: 1.4; margin: 0 0 .4rem; }
 .wactions { justify-content: center; }
+
+/* ---- configurable API endpoint editor (shared: dashboard settings + RAW) ---- */
+.eprow { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.eprow .eplabel { display: inline-flex; align-items: center; gap: .4rem; color: #c5d2e4; font-size: .88rem; }
+.eprow input[type=text] { font: inherit; color: #e8eef6; background: #1d222b; border: 1px solid #38404e;
+  border-radius: .35rem; padding: .25rem .45rem; width: 17rem; max-width: 70vw; }
+.eprow button { font: inherit; color: #e8eef6; background: #23272f; border: 1px solid #3a414e;
+  border-radius: .4rem; padding: .3rem .6rem; cursor: pointer; }
+.eprow button.primary { background: #1d3a4d; border-color: #2f6f93; }
+.eprow .ephint { flex-basis: 100%; color: #8e9cb2; font-size: .76rem; margin-top: .1rem; }
+.eprow .ephint code, .epstatus + .ephint code { color: #ffd56b; font-family: ui-monospace, monospace; }
+.epstatus { font-size: .8rem; font-variant-numeric: tabular-nums; }
+.epstatus.connected { color: #5fd98a; } .epstatus.retrying { color: #d8b75e; } .epstatus.failed { color: #e06b5a; }

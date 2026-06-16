@@ -33,10 +33,10 @@ function motionRaw() {
 // ---- WebSocket ----
 function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
 function connect() {
-  ws = new WebSocket("ws://" + location.hostname + ":" + window.MK4_WS_PORT);
-  ws.onopen = () => setDot(true);
-  ws.onclose = () => { setDot(false); setTimeout(connect, 1000); };
-  ws.onerror = () => ws.close();
+  ws = new WebSocket(MK4.wsEndpoint());                    // configurable (shared via clientconfig.js)
+  ws.onopen = () => { setDot(true); MK4.setStatus("connected"); };
+  ws.onclose = () => { setDot(false); MK4.setStatus("retrying"); setTimeout(connect, 1000); };
+  ws.onerror = () => { MK4.setStatus("failed"); ws.close(); };
   ws.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch { return; }
     if (m.type === "lifecycle") setLifecycle(m.state);
@@ -100,6 +100,10 @@ function buildMain() {
   $("rawmain").innerHTML =
     `<div class="rawcol controls">
        <div class="panel">
+         <h2>API connection</h2>
+         <div class="eprow" id="epRow"></div>
+       </div>
+       <div class="panel">
          <h2>Active devices / slots</h2>
          <p class="hint">One MK4 telegram carries 3 slots × 4 channels; inactive slots stay neutral (0x8).</p>
          <div class="slotsel" id="slotsel"></div>
@@ -137,6 +141,8 @@ function buildMain() {
   $("neutralBtn").onclick = doNeutral;
   $("clearBtn").onclick = () => { $("log").innerHTML = ""; };
   $("copyBtn").onclick = copyLog;
+  MK4.buildEndpointRow($("epRow"), () => { try { if (ws) ws.close(); } catch (e) {} connect(); });
+  MK4.setStatus(ws && ws.readyState === 1 ? "connected" : "retrying");
   buildSlots(); updatePreview(); updateGate();
   fetch("/asyncapi.yaml").then(r => r.text()).then(t => { const p = $("apispec"); if (p) p.textContent = t; }).catch(() => {});
 }
