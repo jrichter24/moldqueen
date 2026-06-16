@@ -1,0 +1,107 @@
+/* moldqueen landscape dashboard — overlays placed in % over the 1672×941 art.
+   Driving controls are PRESS-AND-HOLD; release snaps the function to NEUTRAL. */
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: #000; color: #e8eef6;
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-user-select: none; user-select: none; touch-action: manipulation;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+
+/* Stage keeps the background's 1672:941 aspect and letterboxes into the viewport. */
+#stage {
+  position: relative;
+  width: min(100vw, calc(100vh * 1672 / 941));
+  aspect-ratio: 1672 / 941;
+}
+#bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill;
+      -webkit-user-drag: none; pointer-events: none; }
+#overlay { position: absolute; inset: 0; }
+
+/* ---- function hotspots (transparent over the art icons) ---- */
+.hot {
+  position: absolute; border: 0; margin: 0; padding: 0; background: transparent;
+  border-radius: 12px; cursor: pointer; transition: background .05s, box-shadow .05s;
+}
+.hot:hover { background: rgba(255,255,255,.06); }
+.hot.active { background: rgba(74,150,255,.30); box-shadow: inset 0 0 0 3px rgba(130,185,255,.9); }
+#overlay.locked .hot { opacity: .45; cursor: not-allowed; }
+#overlay.locked .hot:hover { background: transparent; }
+
+/* ---- labels in the spec's textbox rectangles ---- */
+.lbl { position: absolute; display: flex; align-items: center; justify-content: center;
+       text-align: center; line-height: 1.05; pointer-events: none; overflow: hidden; }
+.title { font-weight: 650; color: #d6e6fb; font-size: clamp(9px, 1.45vw, 19px); }
+.title .v { color: #ffd56b; margin-left: .35em; font-variant-numeric: tabular-nums; }
+.title.driving { color: #ffe08a; }
+.dir { color: #9fb2cc; font-size: clamp(8px, 1.05vw, 14px); font-weight: 600;
+       letter-spacing: .02em; text-transform: uppercase; }
+.info { color: #9fb2cc; font-size: clamp(8px, 1.05vw, 14px); font-variant-numeric: tabular-nums;
+        font-family: ui-monospace, monospace; }
+.info b { color: #d6e6fb; font-weight: 600; }
+
+/* ---- functional toolbar over the art status bar ---- */
+#topbar {
+  position: absolute; left: 1%; top: 1.5%; width: 98%; height: 8%;
+  display: flex; align-items: center; gap: .5%; padding: 0 .8%;
+  font-size: clamp(10px, 1.3vw, 16px);
+}
+#topbar .grow { flex: 1; }
+.dot { width: .7em; height: .7em; border-radius: 50%; background: #c0413a; flex: none; }
+.dot.ok { background: #43d17a; }
+#topbar button {
+  font: inherit; color: #e8eef6; background: rgba(40,46,58,.85); border: 1px solid #444c5e;
+  border-radius: .4em; padding: .35em .7em; cursor: pointer; white-space: nowrap;
+}
+#topbar button:active { background: rgba(60,68,84,.95); }
+#topbar button:disabled { opacity: .4; cursor: not-allowed; }
+#topbar .primary { background: #1d3a4d; border-color: #2f6f93; }
+#topbar #stopBtn { background: #7a1d1d; border-color: #a33; font-weight: 700; }
+#topbar #stopBtn:active { background: #9b2525; }
+#lcText { color: #cfe0f5; font-weight: 600; }
+#speedWrap { display: flex; align-items: center; gap: .35em; color: #b9c6da; }
+#speedWrap input { width: 6em; }
+
+#hint {
+  position: absolute; left: 50%; top: 11%; transform: translateX(-50%);
+  max-width: 60%; text-align: center; padding: .5em .9em; border-radius: .5em;
+  background: rgba(20,28,40,.92); border: 1px solid #2f6f93; color: #d8e6f6;
+  font-size: clamp(10px, 1.25vw, 15px); line-height: 1.35;
+}
+.hidden { display: none !important; }
+
+/* ---- settings / assignment modal ---- */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.62); z-index: 20;
+         display: flex; align-items: center; justify-content: center; padding: 2vh 2vw; }
+.sheet { background: #161a21; border: 1px solid #2a313d; border-radius: .7rem;
+         width: min(960px, 96vw); max-height: 94vh; overflow: auto; padding: 1rem 1.2rem; }
+.sheet h2 { margin: .1rem 0 .2rem; font-size: 1.15rem; }
+.sheet .sub { color: #8e9cb2; font-size: .85rem; margin: 0 0 .8rem; }
+.srow { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
+        margin: .5rem 0 .9rem; }
+.srow label { font-size: .9rem; color: #c5d2e4; display: flex; align-items: center; gap: .4rem; }
+table.map { width: 100%; border-collapse: collapse; font-size: .88rem; }
+table.map th, table.map td { padding: .4rem .45rem; border-bottom: 1px solid #232a35; text-align: left; }
+table.map th { color: #8e9cb2; font-weight: 600; }
+table.map .fn { font-weight: 600; color: #d6e6fb; }
+table.map .tag { font-size: .7rem; padding: .05rem .35rem; border-radius: .3rem; margin-left: .35rem; }
+.tag.ok { background: #16361f; color: #5fd98a; }
+.tag.ph { background: #38301a; color: #d8b75e; }
+.sheet select, .sheet input[type=text] {
+  font: inherit; color: #e8eef6; background: #1d222b; border: 1px solid #38404e;
+  border-radius: .35rem; padding: .25rem .4rem; }
+.sheet input[type=text] { width: 9rem; }
+.sheet button { font: inherit; color: #e8eef6; background: #23272f; border: 1px solid #3a414e;
+                border-radius: .4rem; padding: .4rem .8rem; cursor: pointer; }
+.sheet button:active { background: #30343d; }
+.sheet button:disabled { opacity: .4; cursor: not-allowed; }
+.sheet .test { background: #243b27; border-color: #3a6f43; }
+.sheet .test.held { background: #3563a8; border-color: #5b8fd6; }
+.sheet .apply { background: #1d3a4d; border-color: #2f6f93; }
+.sheet .promote { background: #463016; border-color: #8a5a2a; }
+.actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1rem; align-items: center; }
+#mapMsg { font-size: .85rem; margin-left: .3rem; }
+#mapMsg.ok { color: #5fd98a; } #mapMsg.bad { color: #e06b5a; }
+.muted { color: #8e9cb2; font-size: .8rem; }

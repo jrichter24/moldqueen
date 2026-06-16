@@ -246,6 +246,24 @@ python -m mk4web.api
 All ports/HCI are env-overridable (`MK4_HCI`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, … —
 see [`bt-core/mk4web/config.py`](bt-core/mk4web/config.py)).
 
+### Two UIs
+
+- **`/`** — the simple control page (raw slot/channel hold-buttons).
+- **`/dashboard`** — a **landscape excavator dashboard** laid out over an HMI
+  background (see [`docs/mould_king_13112_hmi_layout_spec.md`](docs/mould_king_13112_hmi_layout_spec.md)).
+  Controls bind to **functions** (left/right track, arm lift, front arm, rotation,
+  bucket) via a **configurable channel map**, not raw channels. All driving controls
+  are **press-and-hold → release snaps to neutral**. A built-in **Settings** view is
+  the **channel-assignment tool**: drive a control, see which motor moves, set its
+  slot/channel + invert + EN/DE labels, **Apply** (this session) or **Promote** (save
+  as the new default in [`config/channel_map.json`](config/channel_map.json)). It also
+  has a session-only **device-0/1 hub swap** and an **EN/DE** language toggle.
+
+The channel map has a persisted **server default** and a **client active** map
+(default + overrides); the **server** resolves `function → (slot, channel, value)`
+so the broadcaster stays dumb. Drive by function over the API:
+`{"cmd":"drive","function":"left_track","value":6}`.
+
 ### Running as a service (optional)
 
 The launcher is the **no-system-changes default** — run it whenever you want the

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>moldqueen — dashboard</title>
+  <link rel="stylesheet" href="/dashboard.css" />
+  <script>window.MK4_WS_PORT = __WS_PORT__; window.MK4_INIT = __INIT__;</script>
+</head>
+<body>
+  <!-- The stage scales to the 1672×941 background; every control/label is placed
+       over it in PERCENT coordinates (see docs/mould_king_13112_hmi_layout_spec.md). -->
+  <div id="stage">
+    <img id="bg" src="/assets/moldqueen_dashboard.png" alt="" draggable="false" />
+    <div id="overlay"></div>     <!-- function hotspots + titles + telemetry -->
+    <div id="topbar"></div>      <!-- functional toolbar over the art status bar -->
+    <div id="hint" class="hidden"></div>
+  </div>
+
+  <!-- Settings / channel-assignment view (PART C). Built by dashboard.js. -->
+  <div id="settings" class="modal hidden"></div>
+
+  <script src="/dashboard.js"></script>
+</body>
+</html>

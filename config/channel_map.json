@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "functions": {
+    "left_track": {
+      "slot": 1,
+      "channel": 0,
+      "invert": false,
+      "label_en": "Left track",
+      "label_de": "Linke Kette",
+      "confirmed": true
+    },
+    "right_track": {
+      "slot": 1,
+      "channel": 1,
+      "invert": false,
+      "label_en": "Right track",
+      "label_de": "Rechte Kette",
+      "confirmed": false
+    },
+    "arm_lift": {
+      "slot": 0,
+      "channel": 1,
+      "invert": false,
+      "label_en": "Arm up/down",
+      "label_de": "Arm heben/senken",
+      "confirmed": false
+    },
+    "front_arm": {
+      "slot": 0,
+      "channel": 2,
+      "invert": false,
+      "label_en": "Front arm",
+      "label_de": "Vorderarm",
+      "confirmed": false
+    },
+    "rotation": {
+      "slot": 0,
+      "channel": 3,
+      "invert": false,
+      "label_en": "Rotation",
+      "label_de": "Drehen",
+      "confirmed": false
+    },
+    "bucket": {
+      "slot": 0,
+      "channel": 0,
+      "invert": false,
+      "label_en": "Bucket",
+      "label_de": "Schaufel",
+      "confirmed": true
+    }
+  }
+}
