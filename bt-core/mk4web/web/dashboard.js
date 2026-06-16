@@ -17,7 +17,7 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 // ---- i18n (static strings; function titles come from the map labels) ----
 const T = {
   en: { connect: "Connect", ready: "Ready", reset: "Reset", stop: "STOP", speed: "Speed",
-        full: "⛶", settings: "⚙", close: "Close", lang: "DE", deviceSwap: "Swap hubs 0↔1",
+        full: "⛶", settings: "⚙", layouts: "Layouts", close: "Close", lang: "DE", deviceSwap: "Swap hubs 0↔1",
         saveClose: "Save and Close", discard: "Discard", promote: "Promote → default",
         resetMap: "Reset to default", labelsBtn: "Labels…", back: "Back", revtrim: "Rev ×",
         fn: "Function", slot: "Slot", ch: "Ch", invert: "Inv", maxsp: "Max", test: "Test",
@@ -40,7 +40,7 @@ const T = {
                w3: { t: "Step 3 — Assign slots", b: "Press <b>ONE</b> hub's button until it shows <b>two fast flashes</b> (slot&nbsp;1). Leave the other on one flash (slot&nbsp;0)." },
                w4: { t: "Ready ✓", b: "Connected — controls unlocked. You can start driving." } } },
   de: { connect: "Verbinden", ready: "Bereit", reset: "Reset", stop: "STOPP", speed: "Tempo",
-        full: "⛶", settings: "⚙", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
+        full: "⛶", settings: "⚙", layouts: "Layouts", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
         saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern",
         resetMap: "Auf Standard zurück", labelsBtn: "Labels…", back: "Zurück", revtrim: "Rev ×",
         fn: "Funktion", slot: "Slot", ch: "Kan", invert: "Inv", maxsp: "Max", test: "Test",
@@ -344,6 +344,7 @@ function renderTopbar() {
   const sb = tbtn(tr().stop, "", stopAll); sb.id = "stopBtn"; right.appendChild(sb);
   right.appendChild(tbtn(tr().full, "", toggleFullscreen));
   right.appendChild(tbtn(tr().lang, "", toggleLang));
+  right.appendChild(tbtn(tr().layouts, "", () => { location.href = "/?choose=1"; }));
   right.appendChild(tbtn(tr().settings, "", openSettings));
   tb.appendChild(right);
   setDot(ws && ws.readyState === 1);

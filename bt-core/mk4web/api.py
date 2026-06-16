@@ -33,7 +33,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from websockets.asyncio.server import serve
 
 from . import channelmap
-from .telegram import value_to_nibble, nibble_to_value, channel_index, N_CHANNELS, NEUTRAL
+from .telegram import (value_to_nibble, nibble_to_value, channel_index, N_CHANNELS, NEUTRAL,
+                       motion_raw, ad_hex)
 from .config import HOST, HTTP_PORT, WS_PORT, SOCK_PATH, CHANNEL_MAP_PATH, ASSETS_DIR
 
 log = logging.getLogger("api")
@@ -141,7 +142,11 @@ clients = set()
 
 
 def state_json():
-    return json.dumps({"type": "state", "slots": app.slots_grid()})
+    # include the resulting motion telegram (raw + on-air AD) so the RAW debug
+    # console can show exact bytes without reinventing the crypt client-side.
+    raw = motion_raw(app.nibbles)
+    return json.dumps({"type": "state", "slots": app.slots_grid(),
+                       "raw": raw, "ad": ad_hex(raw)})
 
 
 def lifecycle_json():
@@ -258,14 +263,22 @@ class WebHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split("?")[0]
-        # The landscape dashboard is the PRIMARY landing page (served at "/").
-        # The old simple page is retired; "/dashboard" stays as an alias.
-        if path in ("/", "/index.html", "/dashboard", "/dashboard.html"):
+        # "/" presents a LAYOUT CHOOSER (pluggable layouts); it routes to the
+        # excavator dashboard ("/dashboard") or the RAW debug view ("/raw").
+        if path in ("/", "/index.html"):
+            self._send_web_html("chooser.html")
+        elif path in ("/dashboard", "/dashboard.html"):
             self._send_web_html("dashboard.html")
+        elif path in ("/raw", "/raw.html"):
+            self._send_web_html("raw.html")
         elif path == "/dashboard.js":
             self._send_web_file("dashboard.js", "text/javascript; charset=utf-8")
         elif path == "/dashboard.css":
             self._send_web_file("dashboard.css", "text/css; charset=utf-8")
+        elif path == "/raw.js":
+            self._send_web_file("raw.js", "text/javascript; charset=utf-8")
+        elif path == "/raw.css":
+            self._send_web_file("raw.css", "text/css; charset=utf-8")
         elif path.startswith("/assets/"):                  # static assets (UI background, wizard media)
             rel = path[len("/assets/"):]
             ext = rel.rsplit(".", 1)[-1].lower() if "." in rel else ""

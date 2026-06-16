@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>moldqueen — choose a layout</title>
+  <script>
+    // Skip straight to the remembered layout (unless ?choose forces the chooser).
+    (function () {
+      var force = new URLSearchParams(location.search).has("choose");
+      var stored = localStorage.getItem("mk4_layout");
+      var routes = { excavator: "/dashboard", raw: "/raw" };
+      if (!force && stored && routes[stored]) location.replace(routes[stored]);
+    })();
+  </script>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body { background: #0b0e13; color: #e8eef6; font-family: system-ui, -apple-system, sans-serif;
+           display: flex; flex-direction: column; align-items: center; justify-content: center;
+           padding: 4vh 4vw; gap: 1.4rem; -webkit-user-select: none; user-select: none; }
+    h1 { font-size: clamp(1.1rem, 3.5vw, 1.6rem); margin: 0; font-weight: 700; }
+    h1 .em { filter: grayscale(.1); }
+    p.sub { margin: 0; color: #8e9cb2; font-size: clamp(.8rem, 2.4vw, .95rem); text-align: center; }
+    .cards { display: flex; gap: 1.2rem; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 760px; }
+    .card { flex: 1 1 280px; max-width: 360px; min-width: 240px; text-align: left; cursor: pointer;
+            background: #161b24; border: 1px solid #283142; border-radius: .9rem; padding: 1.2rem 1.3rem;
+            color: inherit; font: inherit; transition: border-color .12s, transform .08s, background .12s; }
+    .card:hover { border-color: #3f6f93; background: #18202b; transform: translateY(-2px); }
+    .card:active { transform: translateY(0); }
+    .card .icon { font-size: 2.4rem; line-height: 1; }
+    .card h2 { margin: .5rem 0 .2rem; font-size: 1.15rem; }
+    .card .desc { color: #9fb2cc; font-size: .88rem; line-height: 1.4; }
+    .card .tag { display: inline-block; margin-top: .7rem; font-size: .72rem; color: #7f8ea4;
+                 border: 1px solid #2c3646; border-radius: .35rem; padding: .1rem .45rem; }
+    footer { color: #5d6b82; font-size: .75rem; }
+  </style>
+</head>
+<body>
+  <h1><span class="em">🦾</span> moldqueen — choose a layout</h1>
+  <p class="sub">Pick how you want to drive. Your choice is remembered; switch any time via <b>Layouts</b> in the menu.</p>
+  <div class="cards">
+    <button class="card" data-layout="excavator" data-route="/dashboard">
+      <div class="icon">🚜</div>
+      <h2>Excavator (13112)</h2>
+      <div class="desc">Drive the model by function — proportional drag-joysticks, hold buttons,
+        a guided connection wizard, and an in-GUI channel-assignment tool.</div>
+      <span class="tag">primary</span>
+    </button>
+    <button class="card" data-layout="raw" data-route="/raw">
+      <div class="icon">🔧</div>
+      <h2>RAW (debug / test)</h2>
+      <div class="desc">Protocol-level test tool — set slots/channels directly, build &amp; send
+        MK4 telegrams, and watch a console of the exact bytes on air.</div>
+      <span class="tag">low-level</span>
+    </button>
+  </div>
+  <footer>Layouts are pluggable — more toys later.</footer>
+  <script>
+    document.querySelectorAll(".card").forEach(function (c) {
+      c.addEventListener("click", function () {
+        localStorage.setItem("mk4_layout", c.dataset.layout);
+        location.href = c.dataset.route;
+      });
+    });
+  </script>
+</body>
+</html>
