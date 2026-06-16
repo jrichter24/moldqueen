@@ -1,6 +1,15 @@
 # 🦾 moldqueen
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python 3.13](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
+![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-3B-C51A4A?logo=raspberrypi&logoColor=white)
+[![status: two-hub control working](https://img.shields.io/badge/status-two--hub%20control%20working-brightgreen)](#highlights)
+
 **Drive a [Mould King 13112](https://www.mouldking.com/) RC excavator from a Raspberry Pi — over a reverse-engineered BLE protocol, through a clean WebSocket API.**
+
+<p align="center">
+  <img src="assets/excavator.jpg" alt="Mould King 13112 RC crawler excavator (the model this project controls)" width="640">
+</p>
 
 `moldqueen` turns a Lego-compatible building-block excavator (two stock
 battery/Bluetooth hubs, ~6 motorised functions) into a programmable machine. The
@@ -16,6 +25,24 @@ same API.
 > joystick controls. 🔜 Next: finish the channel map, slot auto-detection, an
 > AI/console client, then camera + sensors.
 
+## Disclaimer
+
+> [!WARNING]
+> **Independent, unofficial project — no warranty, use at your own risk.**
+>
+> - **Not affiliated.** This is an independent, unofficial hobby project. It is
+>   **not** affiliated with, authorized by, endorsed by, or sponsored by **Mould
+>   King**, **Shenzhen Yuxing**, or any related entity. "Mould King" and "MK+tech"
+>   are trademarks of their respective owners, used here **only descriptively** for
+>   interoperability.
+> - **Interoperability / reverse-engineering.** The BLE protocol was
+>   reverse-engineered for **interoperability with hardware the author owns**, and
+>   is provided for **educational and personal use** only.
+> - **No warranty.** This software is provided **"as is", without warranty of any
+>   kind.** The author is **not liable** for any damage to hardware, hubs, models,
+>   property, or anything else arising from its use — **you assume all risk.** This
+>   complements, and does not replace, the MIT license's no-warranty clause.
+
 📖 **Canonical, exhaustive reference: [`docs/PROJECT.md`](docs/PROJECT.md).** This
 README is the tour; PROJECT.md is the source of truth.
 
@@ -23,6 +50,7 @@ README is the tour; PROJECT.md is the source of truth.
 
 ## Table of contents
 
+- [Disclaimer](#disclaimer)
 - [Highlights](#highlights)
 - [How it works](#how-it-works)
 - [The protocol (MK4 12-channel nibble)](#the-protocol-mk4-12-channel-nibble)
@@ -306,7 +334,8 @@ stack is entirely in `bt-core/mk4web/`.
 - Protocol groundwork: [`J0EK3R/mkconnect-python`](https://github.com/J0EK3R/mkconnect-python)
   (the MK4/MK6 reference and the original `MouldKingCrypt`). Our hubs turned out to be
   the MK4 variant; the codec here is re-implemented and verified against the app.
-- "Mould King" and "MK+tech" are trademarks of their respective owners. This is an
-  independent, interoperability project — use at your own risk on hardware you own.
+- **Independent & unofficial** — not affiliated with Mould King / Shenzhen Yuxing;
+  trademarks used descriptively. Provided **as-is, no warranty, use at your own
+  risk** — see the full [Disclaimer](#disclaimer).
 
 **License:** [MIT](LICENSE) © 2026 Jens Richter.
