@@ -162,7 +162,7 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   `(slot, channel)` pairs.
 - **Dashboard** (`mk4web/web/dashboard.{html,js,css}`) — the **primary landing page**
   (`/`, alias `/dashboard`), the first client of the API. Laid out over an HMI
-  background (`assets/moldqueen_dashboard.png`,
+  background (`assets/moldqueen_dashboard_v2.png`,
   [`docs/mould_king_13112_hmi_layout_spec.md`](mould_king_13112_hmi_layout_spec.md))
   with percent coordinates:
   - **Controls bind to FUNCTIONS** (not raw channels) via the active map. Tracks +
@@ -255,7 +255,7 @@ moldqueen/
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── CLAUDE.md                  # terse must-knows (points here)
 ├── config/channel_map.json    # persisted DEFAULT channel map (function → slot/channel/…)
-├── assets/                    # excavator.jpg, moldqueen_dashboard.png, wizard/step*.png
+├── assets/                    # excavator.jpg, moldqueen_dashboard_v2.png, wizard/step*.png
 ├── scripts/                   # start.sh / check.sh (preflight + launch)
 ├── bt-core/
 │   ├── CLAUDE.md              # bt-core must-knows

@@ -401,7 +401,7 @@ moldqueen/
 ├── docs/PROJECT.md            # canonical project reference (read this)
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── config/channel_map.json    # persisted default channel map (function → slot/channel/…)
-├── assets/                    # excavator.jpg, moldqueen_dashboard.png, wizard/step*.png
+├── assets/                    # excavator.jpg, moldqueen_dashboard_v2.png, wizard/step*.png
 ├── scripts/                   # start.sh / check.sh — preflight + launch (no system changes)
 ├── bt-core/                   # Python — the radios + the control service
 │   ├── mk4web/                # broadcaster · api · telegram · channelmap · mouldking_crypt · config
