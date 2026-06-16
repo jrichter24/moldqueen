@@ -327,7 +327,7 @@ function tbtn(label, cls, on) {
   const b = document.createElement("button"); b.innerHTML = label; if (cls) b.className = cls; b.onclick = on; return b;
 }
 function renderTopbar() {
-  const tb = $("topbar"); tb.innerHTML = "";
+  const tb = $("menu"); tb.innerHTML = "";
   // left cluster: connection dot + lifecycle label + setup button — in one flex group
   // so they never stack/overlap regardless of width.
   const left = el("tgroup");

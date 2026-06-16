@@ -9,20 +9,63 @@ html, body { height: 100%; }
 body {
   margin: 0; background: #000; color: #e8eef6;
   font-family: system-ui, -apple-system, sans-serif;
-  -webkit-user-select: none; user-select: none; touch-action: manipulation;
-  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  -webkit-user-select: none; user-select: none; touch-action: manipulation; overflow: hidden;
 }
 
-/* Stage keeps the 1672:941 aspect and is a size container (enables cqw/cqh). */
+/* ---- viewport-sized shell: menu strip + dashboard area, no page scroll ----
+   Default (wide/desktop): column — menu is a TOP BAR, stage fills below.
+   Small viewport (mobile, portrait AND landscape): row — menu is a LEFT SIDEBAR. */
+#app { width: 100vw; height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
+#stagewrap {
+  flex: 1 1 auto; min-width: 0; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+  container-type: size; overflow: hidden;          /* the dashboard area, never the menu */
+}
+/* Stage contain-fits the area (cqw/cqh = % of #stagewrap) and is itself a size
+   container so in-stage labels can use cqw. Percent control positions scale with it. */
 #stage {
   position: relative;
-  width: min(100vw, calc(100vh * 1672 / 941));
+  width: min(100cqw, calc(100cqh * 1672 / 941));
   aspect-ratio: 1672 / 941;
   container-type: size;
 }
 #bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill;
       -webkit-user-drag: none; pointer-events: none; }
 #overlay { position: absolute; inset: 0; z-index: 1; }
+
+/* ---- menu strip: TOP BAR (wide) → LEFT SIDEBAR (small viewport) ---- */
+#menu {
+  flex: 0 0 auto; display: flex; align-items: center; gap: .45em;
+  padding: .35em .6em; background: #0c0f14; border-bottom: 1px solid #1e2530;
+  font-size: clamp(11px, 1.5vw, 14px); line-height: 1; overflow: auto;
+}
+#menu .grow { flex: 1 1 auto; min-width: .5em; }
+#menu .tgroup { display: flex; align-items: center; gap: .45em; flex: 0 0 auto; }
+.tgroup .lc { display: inline-flex; align-items: center; }
+.dot { width: .8em; height: .8em; border-radius: 50%; background: #c0413a; flex: none; }
+.dot.ok { background: #43d17a; }
+#menu button {
+  font: inherit; color: #e8eef6; background: rgba(40,46,58,.9); border: 1px solid #444c5e;
+  border-radius: .4em; padding: .35em .6em; cursor: pointer; white-space: nowrap; flex: 0 0 auto;
+}
+#menu button:active { background: rgba(60,68,84,.95); }
+#menu button:disabled { opacity: .4; cursor: not-allowed; }
+#menu .primary { background: #1d3a4d; border-color: #2f6f93; }
+#menu #stopBtn { background: #7a1d1d; border-color: #a33; font-weight: 700; }
+#menu #stopBtn:active { background: #9b2525; }
+#lcText { color: #cfe0f5; font-weight: 600; white-space: nowrap; }
+
+@media (max-width: 768px), (max-height: 540px) {
+  #app { flex-direction: row; }
+  #menu {
+    flex-direction: column; align-items: stretch; gap: .4em; max-width: 42vw;
+    border-bottom: none; border-right: 1px solid #1e2530;
+    overflow-y: auto; overflow-x: hidden; font-size: 12px;
+  }
+  #menu .tgroup { flex-direction: column; align-items: stretch; gap: .4em; width: 100%; }
+  #menu .lc { justify-content: center; }
+  #menu button { width: 100%; text-align: center; white-space: normal; }   /* wrap long labels, keep sidebar narrow */
+}
 
 /* ---- press-and-hold buttons (rotation / bucket) ---- */
 .hot {
@@ -65,30 +108,6 @@ body {
 .dir { color: #9fb2cc; font-size: 0.92cqw; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; }
 .info { color: #9fb2cc; font-size: 0.92cqw; font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
 .info b { color: #d6e6fb; font-weight: 600; }
-
-/* ---- functional toolbar over the art status bar ----
-   Two flex clusters (left/right) with a spacer; items sit side-by-side and never
-   stack/overlap at any width (the bar scrolls horizontally if truly too narrow). */
-#topbar {
-  position: absolute; left: 1%; top: 1.4%; width: 98%; min-height: 8.4%; z-index: 10;
-  display: flex; align-items: center; flex-wrap: nowrap; gap: .5em; padding: 0 .8%;
-  font-size: clamp(9px, 1.5cqw, 15px); line-height: 1; overflow: hidden;
-}
-#topbar .grow { flex: 1 1 auto; min-width: .5em; }
-#topbar .tgroup { display: flex; align-items: center; gap: .45em; flex: 0 0 auto; min-width: 0; }
-.tgroup .lc { display: inline-flex; align-items: center; }
-.dot { width: .8em; height: .8em; border-radius: 50%; background: #c0413a; flex: none; }
-.dot.ok { background: #43d17a; }
-#topbar button {
-  font: inherit; color: #e8eef6; background: rgba(40,46,58,.9); border: 1px solid #444c5e;
-  border-radius: .4em; padding: .3em .55em; cursor: pointer; white-space: nowrap; flex: 0 0 auto;
-}
-#topbar button:active { background: rgba(60,68,84,.95); }
-#topbar button:disabled { opacity: .4; cursor: not-allowed; }
-#topbar .primary { background: #1d3a4d; border-color: #2f6f93; }
-#topbar #stopBtn { background: #7a1d1d; border-color: #a33; font-weight: 700; }
-#topbar #stopBtn:active { background: #9b2525; }
-#lcText { color: #cfe0f5; font-weight: 600; white-space: nowrap; }
 
 /* setup hint: a bottom-center banner so it never covers the central controls */
 #hint {

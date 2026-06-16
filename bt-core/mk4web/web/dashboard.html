@@ -8,13 +8,18 @@
   <script>window.MK4_WS_PORT = __WS_PORT__; window.MK4_INIT = __INIT__;</script>
 </head>
 <body>
-  <!-- The stage scales to the 1672×941 background; every control/label is placed
-       over it in PERCENT coordinates (see docs/mould_king_13112_hmi_layout_spec.md). -->
-  <div id="stage">
-    <img id="bg" src="/assets/moldqueen_dashboard.png" alt="" draggable="false" />
-    <div id="overlay"></div>     <!-- function hotspots + titles + telemetry -->
-    <div id="topbar"></div>      <!-- functional toolbar over the art status bar -->
-    <div id="hint" class="hidden"></div>
+  <!-- Viewport-sized shell: a menu STRIP (top bar on wide screens, left sidebar on
+       small ones) + a dashboard AREA. The stage scales to fit the area (contain),
+       preserving the percent-coordinate control positioning. No page scrolling. -->
+  <div id="app">
+    <nav id="menu"></nav>                     <!-- toolbar; built by dashboard.js -->
+    <div id="stagewrap">
+      <div id="stage">
+        <img id="bg" src="/assets/moldqueen_dashboard.png" alt="" draggable="false" />
+        <div id="overlay"></div>              <!-- hotspots + joysticks + titles + telemetry -->
+        <div id="hint" class="hidden"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Centered modal overlays (built by dashboard.js): -->
