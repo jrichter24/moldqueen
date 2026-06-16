@@ -115,10 +115,11 @@ pass "preflight clean — launching"
 hdr "5. launch"
 BC_SUDO=""; [ "$MODE" = "live" ] && BC_SUDO="$SUDO"
 BC_PID=""; API_PID=""
-cleanup(){ trap - EXIT INT TERM; printf "\nstopping…\n"; [ -n "$API_PID" ] && kill "$API_PID" 2>/dev/null || true; [ -n "$BC_PID" ] && $BC_SUDO kill -INT "$BC_PID" 2>/dev/null || true; }
+cleanup(){ trap - EXIT INT TERM; printf "\nstopping…\n"; [ -n "$API_PID" ] && kill "$API_PID" 2>/dev/null || true; [ -n "$BC_PID" ] && $BC_SUDO kill -INT "$BC_PID" 2>/dev/null || true; rm -f "$SOCK" 2>/dev/null || true; }
 trap cleanup EXIT INT TERM
 
 BC_ARGS=(--hci "$HCI"); [ "$MODE" = "dry-run" ] && BC_ARGS+=(--dry-run)
+[ -S "$SOCK" ] && rm -f "$SOCK" 2>/dev/null || true   # drop a stale socket so the wait below tracks THIS broadcaster
 ( cd "$BT_CORE" && exec $BC_SUDO "$VENV_PY" -m mk4web.broadcaster "${BC_ARGS[@]}" ) &
 BC_PID=$!
 info "broadcaster started (mode: $MODE) — begins IDLE; transmits NOTHING until you do Connect→Ready in the GUI"
