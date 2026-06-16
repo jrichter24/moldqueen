@@ -355,9 +355,9 @@ sweep:
 | Function | Slot | Ch | Global nibble | Status |
 |----------|------|----|--------------:|--------|
 | **bucket** (shovel) | 0 | 0 | ch0 | ✅ confirmed |
-| front_arm | 0 | 1 | ch1 | placeholder |
+| arm_lift | 0 | 1 | ch1 | placeholder |
 | rotation | 0 | 2 | ch2 | placeholder |
-| arm_lift | 0 | 3 | ch3 | placeholder |
+| front_arm | 0 | 3 | ch3 | placeholder |
 | **left_track** | 1 | 0 | ch4 | ✅ confirmed (inverted) |
 | right_track | 1 | 2 | ch6 | placeholder |
 
