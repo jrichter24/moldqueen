@@ -31,7 +31,7 @@ npm-debug.log*
 # Local-only, per-machine overrides. The SHARED settings.json IS committed.
 .claude/settings.local.json
 
-# ── Secrets / env (never commit) ────────────────────────────────
+# ── Secrets / keys / env (never commit) ─────────────────────────
 .env
 .env.*
 !.env.example
@@ -41,6 +41,23 @@ npm-debug.log*
 *.keystore
 secrets/
 *.secret
+# SSH / signing keys
+id_ed25519
+id_rsa
+id_ecdsa
+id_*
+*.ppk
+
+# ── BLE/HCI captures, APKs, native libs, scratch artifacts ──────
+*.xapk
+*.apk
+*.so
+*.pcap
+*.pcapng
+*.cap
+*.snoop
+*.btsnoop
+*_capture.txt
 
 # ── OS / editor cruft ───────────────────────────────────────────
 .DS_Store
