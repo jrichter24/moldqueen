@@ -6,51 +6,57 @@
       "channel": 0,
       "invert": false,
       "max": 7,
+      "reverse_scale": 1.0,
       "label_en": "Left track",
       "label_de": "Linke Kette",
       "confirmed": true
     },
     "right_track": {
       "slot": 1,
-      "channel": 1,
+      "channel": 2,
       "invert": false,
       "max": 7,
+      "reverse_scale": 1.0,
       "label_en": "Right track",
       "label_de": "Rechte Kette",
-      "confirmed": false
+      "confirmed": true
     },
     "arm_lift": {
       "slot": 0,
       "channel": 1,
       "invert": false,
       "max": 7,
+      "reverse_scale": 1.0,
       "label_en": "Arm up/down",
       "label_de": "Arm heben/senken",
-      "confirmed": false
+      "confirmed": true
     },
     "front_arm": {
-      "slot": 0,
-      "channel": 2,
-      "invert": false,
-      "max": 7,
-      "label_en": "Front arm",
-      "label_de": "Vorderarm",
-      "confirmed": false
-    },
-    "rotation": {
       "slot": 0,
       "channel": 3,
       "invert": false,
       "max": 7,
+      "reverse_scale": 1.0,
+      "label_en": "Front arm",
+      "label_de": "Vorderarm",
+      "confirmed": true
+    },
+    "rotation": {
+      "slot": 0,
+      "channel": 2,
+      "invert": false,
+      "max": 7,
+      "reverse_scale": 1.0,
       "label_en": "Rotation",
       "label_de": "Drehen",
-      "confirmed": false
+      "confirmed": true
     },
     "bucket": {
       "slot": 0,
       "channel": 0,
       "invert": false,
       "max": 7,
+      "reverse_scale": 1.0,
       "label_en": "Bucket",
       "label_de": "Schaufel",
       "confirmed": true

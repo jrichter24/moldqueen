@@ -26,7 +26,7 @@ def _placeholder_map():
     for i, f in enumerate(FUNCTIONS):
         title = f.replace("_", " ").title()
         fns[f] = {"slot": i // 4, "channel": i % 4, "invert": False, "max": 7,
-                  "label_en": title, "label_de": title, "confirmed": False}
+                  "reverse_scale": 1.0, "label_en": title, "label_de": title, "confirmed": False}
     return {"version": 1, "functions": fns}
 
 
@@ -90,6 +90,10 @@ def validate(mp):
             mx = a["max"]
             if not isinstance(mx, int) or isinstance(mx, bool) or not (1 <= mx <= 7):
                 errs.append(f"{f}: max must be an integer 1-7")
+        if "reverse_scale" in a:
+            rs = a["reverse_scale"]
+            if not isinstance(rs, (int, float)) or isinstance(rs, bool) or not (0.25 <= rs <= 4.0):
+                errs.append(f"{f}: reverse_scale must be a number 0.25-4.0")
         for k in ("label_en", "label_de"):
             if k in a and not isinstance(a[k], str):
                 errs.append(f"{f}: {k} must be text")
@@ -108,8 +112,14 @@ def validate(mp):
 def resolve(mp, function, value, device_swap=False):
     """function + signed value (-7..7) -> (slot, channel, out_value), or None.
 
-    Applies `invert` (negates value) and the session `device_swap` (slot 0<->1;
-    slot 2 is left untouched). The broadcaster never sees any of this — just nibbles.
+    Applies, in order: `invert` (negates value), the session `device_swap`
+    (slot 0<->1; slot 2 untouched), and a per-function `reverse_scale` REVERSE-SPEED
+    TRIM. The nibble map (0x8 + value) is byte-symmetric — confirmed against the app
+    capture and the mkconnect reference (0xFF fwd / 0x00 rev / 0x80 stop) — so any
+    forward/reverse SPEED difference is the hub's reverse PWM curve and/or the motor,
+    not the encoding. `reverse_scale` (default 1.0 = identity) multiplies the REVERSE
+    magnitude only, so the same speed setting can be tuned to match forward speed.
+    The broadcaster never sees any of this — just nibbles.
     """
     a = mp.get("functions", {}).get(function)
     if not isinstance(a, dict):
@@ -121,4 +131,8 @@ def resolve(mp, function, value, device_swap=False):
     if device_swap and slot in (0, 1):
         slot = 1 - slot
     v = -int(value) if a.get("invert") else int(value)
+    if v < 0:                                   # reverse-speed trim (post-invert direction)
+        rs = a.get("reverse_scale", 1.0)
+        if isinstance(rs, (int, float)) and not isinstance(rs, bool) and rs != 1.0:
+            v = -max(0, min(7, round(abs(v) * rs)))
     return slot, ch, v

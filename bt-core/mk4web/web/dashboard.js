@@ -18,10 +18,12 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const T = {
   en: { connect: "Connect", ready: "Ready", reset: "Reset", stop: "STOP", speed: "Speed",
         full: "⛶", settings: "⚙", close: "Close", lang: "DE", deviceSwap: "Swap hubs 0↔1",
-        apply: "Apply (session)", promote: "Promote → default", resetMap: "Reset to default",
+        saveClose: "Save and Close", discard: "Discard", promote: "Promote → default",
+        resetMap: "Reset to default", labelsBtn: "Labels…", back: "Back", revtrim: "Rev ×",
         fn: "Function", slot: "Slot", ch: "Ch", invert: "Inv", maxsp: "Max", test: "Test",
         labEn: "Label EN", labDe: "Label DE", assign: "Channel assignment",
-        assignSub: "Drag a control, see which motor moves, then set its slot/channel + max here. Apply for this session, or Promote to save as the new default. Occupied target channels are swapped automatically.",
+        assignSub: "Drag/Test a control, see which motor moves, then set its slot/channel, max and reverse-trim here. Save for this session, or Promote to save as the new default. Occupied target channels are swapped automatically.",
+        labelsTitle: "Function labels (EN / DE)", labelsSub: "The display name of each function, per language.",
         readyOnly: "test needs READY", confirmed: "confirmed", placeholder: "placeholder",
         applied: "Applied for this session ✓", promoted: "Saved as default ✓",
         swapOn: "swapped", swapOff: "normal", hold: "hold",
@@ -32,10 +34,12 @@ const T = {
         info: { mode: "Mode", swap: "Hubs", speed: "Speed", batt: "Batt" } },
   de: { connect: "Verbinden", ready: "Bereit", reset: "Reset", stop: "STOPP", speed: "Tempo",
         full: "⛶", settings: "⚙", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
-        apply: "Übernehmen", promote: "Als Standard speichern", resetMap: "Auf Standard zurück",
+        saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern",
+        resetMap: "Auf Standard zurück", labelsBtn: "Labels…", back: "Zurück", revtrim: "Rev ×",
         fn: "Funktion", slot: "Slot", ch: "Kan", invert: "Inv", maxsp: "Max", test: "Test",
         labEn: "Label EN", labDe: "Label DE", assign: "Kanalzuordnung",
-        assignSub: "Steuerung ziehen, sehen welcher Motor läuft, dann Slot/Kanal + Max setzen. Für die Sitzung übernehmen oder als Standard speichern. Belegte Zielkanäle werden automatisch getauscht.",
+        assignSub: "Steuerung ziehen/testen, sehen welcher Motor läuft, dann Slot/Kanal, Max und Rückwärts-Trim setzen. Für die Sitzung speichern oder als Standard speichern. Belegte Zielkanäle werden automatisch getauscht.",
+        labelsTitle: "Funktions-Labels (EN / DE)", labelsSub: "Anzeigename jeder Funktion, je Sprache.",
         readyOnly: "Test braucht BEREIT", confirmed: "bestätigt", placeholder: "Platzhalter",
         applied: "Für Sitzung übernommen ✓", promoted: "Als Standard gespeichert ✓",
         swapOn: "getauscht", swapOff: "normal", hold: "halten",
@@ -111,6 +115,7 @@ function withDefaults(mp) {           // ensure every function has invert/max/la
     const a = m.functions[f];
     if (typeof a.invert !== "boolean") a.invert = false;
     if (!Number.isInteger(a.max) || a.max < 1 || a.max > 7) a.max = 7;
+    if (typeof a.reverse_scale !== "number" || a.reverse_scale < 0.25 || a.reverse_scale > 4) a.reverse_scale = 1;
   }
   return m;
 }
@@ -155,7 +160,7 @@ function onMap(m) {
   // server push clobber it — we push ours instead (see ws.onopen / Apply).
   defaultMap = m.default; deviceSwap = !!m.device_swap;
   renderLabels();
-  if (!$("settings").classList.contains("hidden")) buildSettings();
+  rebuildOpenSettings();
 }
 function onMapResult(m) {
   const el = $("mapMsg"); if (!el) return;
@@ -170,7 +175,7 @@ function setLifecycle(state) {
   $("overlay").classList.toggle("locked", state !== "READY");
   if (state !== "READY") neutralizeAll();
   renderTopbar(); renderHint(); refreshValues();
-  if (!$("settings").classList.contains("hidden")) buildSettings();
+  rebuildOpenSettings();
 }
 
 // ---- build the stage overlay ----
@@ -321,15 +326,22 @@ function toggleLang() {
   lang = lang === "en" ? "de" : "en"; localStorage.setItem("mk4_lang", lang);
   document.documentElement.lang = lang;
   buildStage(); renderTopbar(); renderHint();
-  if (!$("settings").classList.contains("hidden")) buildSettings();
+  rebuildOpenSettings();
 }
 
-// ---- settings / channel-assignment view (right drawer) ----
-let editMap = null;
-function openSettings() { editMap = JSON.parse(JSON.stringify(activeMap)); buildSettings(); $("settings").classList.remove("hidden"); }
-function closeSettings() { releaseSettingsTests(); $("settings").classList.add("hidden"); }
+// ---- settings: two CENTERED overlay pages (assignment + labels) ----
+let editMap = null;   // shared working copy while either page is open
 
-function buildSettings() {
+function openSettings() { editMap = JSON.parse(JSON.stringify(activeMap)); buildAssign(); $("settings").classList.remove("hidden"); }
+function closeAll() { releaseSettingsTests(); $("settings").classList.add("hidden"); $("labels").classList.add("hidden"); }
+function swapAdj(slot) { return (deviceSwap && (slot === 0 || slot === 1)) ? 1 - slot : slot; }
+function rebuildOpenSettings() {   // re-render whichever settings page is currently visible
+  if (!$("settings").classList.contains("hidden")) buildAssign();
+  else if (!$("labels").classList.contains("hidden")) buildLabels();
+}
+
+// ---- page 1: channel assignment (slot/channel/max/invert/rev-trim/Test) — NO labels ----
+function buildAssign() {
   if (!editMap) editMap = JSON.parse(JSON.stringify(activeMap || defaultMap));
   const t = tr();
   const rows = FN.map(fn => {
@@ -339,13 +351,12 @@ function buildSettings() {
     const chans = [0, 1, 2, 3].map(n => opt(n, a.channel)).join("");
     const tag = a.confirmed ? `<span class="tag ok">${t.confirmed}</span>` : `<span class="tag ph">${t.placeholder}</span>`;
     return `<tr data-fn="${fn}">
-      <td class="fn">${fn}<br>${tag}</td>
+      <td class="fn">${funcLabel(fn)}<br><span class="muted">${fn}</span> ${tag}</td>
       <td><select class="e-slot">${slots}</select></td>
       <td><select class="e-ch">${chans}</select></td>
       <td><input type="number" class="e-max" min="1" max="7" value="${a.max || 7}"></td>
+      <td><input type="number" class="e-rev" min="0.25" max="4" step="0.05" value="${a.reverse_scale ?? 1}"></td>
       <td style="text-align:center"><input type="checkbox" class="e-inv"${a.invert ? " checked" : ""}></td>
-      <td><input type="text" class="e-en" value="${(a.label_en || "").replace(/"/g, "&quot;")}"></td>
-      <td><input type="text" class="e-de" value="${(a.label_de || "").replace(/"/g, "&quot;")}"></td>
       <td><button class="test" data-fn="${fn}">${t.test}</button></td>
     </tr>`;
   }).join("");
@@ -358,68 +369,122 @@ function buildSettings() {
         <span class="muted">${lifecycle !== "READY" ? "· " + t.readyOnly : ""}</span>
       </div>
       <table class="map"><thead><tr>
-        <th>${t.fn}</th><th>${t.slot}</th><th>${t.ch}</th><th>${t.maxsp}</th><th>${t.invert}</th>
-        <th>${t.labEn}</th><th>${t.labDe}</th><th></th></tr></thead>
-        <tbody>${rows}</tbody></table>
+        <th>${t.fn}</th><th>${t.slot}</th><th>${t.ch}</th><th>${t.maxsp}</th><th>${t.revtrim}</th><th>${t.invert}</th><th></th>
+      </tr></thead><tbody>${rows}</tbody></table>
       <div class="actions">
-        <button class="apply" id="applyBtn">${t.apply}</button>
+        <button class="apply" id="saveBtn">${t.saveClose}</button>
+        <button id="discardBtn">${t.discard}</button>
+        <button id="labelsBtn">${t.labelsBtn}</button>
         <button class="promote" id="promoteBtn">${t.promote}</button>
         <button id="resetMapBtn">${t.resetMap}</button>
-        <button id="closeBtn">${t.close}</button>
         <span id="mapMsg"></span>
       </div>
     </div>`;
-  $("settings").querySelector(".backdrop").onclick = closeSettings;
+  $("settings").querySelector(".backdrop").onclick = discardEdits;   // click-out = discard (no silent save)
   $("settings").querySelectorAll("tr[data-fn]").forEach(trEl => {
     const fn = trEl.dataset.fn, a = editMap.functions[fn];
     trEl.querySelector(".e-slot").onchange = e => assignCell(fn, +e.target.value, a.channel);
     trEl.querySelector(".e-ch").onchange = e => assignCell(fn, a.slot, +e.target.value);
     trEl.querySelector(".e-max").onchange = e => { a.max = clamp(+e.target.value | 0, 1, 7); e.target.value = a.max; };
+    trEl.querySelector(".e-rev").onchange = e => { a.reverse_scale = clamp(+e.target.value || 1, 0.25, 4); e.target.value = a.reverse_scale; };
     trEl.querySelector(".e-inv").onchange = e => { a.invert = e.target.checked; };
-    trEl.querySelector(".e-en").oninput = e => { a.label_en = e.target.value; };
-    trEl.querySelector(".e-de").oninput = e => { a.label_de = e.target.value; };
-    const tb = trEl.querySelector(".test");
-    tb.disabled = lifecycle !== "READY";
-    const start = e => { e.preventDefault(); if (lifecycle !== "READY") return;
-      tb.classList.add("held"); send({ cmd: "drive", function: fn, value: editMap.functions[fn].max || 7 }); };
-    const stop = () => { tb.classList.remove("held"); send({ cmd: "drive", function: fn, value: 0 }); };
-    tb.addEventListener("pointerdown", start);
-    tb.addEventListener("pointerup", stop);
-    tb.addEventListener("pointerleave", stop);
-    tb.addEventListener("pointercancel", stop);
+    bindTest(trEl.querySelector(".test"), fn);
   });
   $("swapChk").onchange = e => { send({ cmd: "map", action: "swap", value: e.target.checked }); };
-  $("applyBtn").onclick = () => applyMap(false);
-  $("promoteBtn").onclick = () => applyMap(true);
-  $("resetMapBtn").onclick = () => { editMap = JSON.parse(JSON.stringify(defaultMap)); buildSettings(); };
-  $("closeBtn").onclick = closeSettings;
+  $("saveBtn").onclick = saveClose;
+  $("discardBtn").onclick = discardEdits;
+  $("labelsBtn").onclick = openLabels;
+  $("promoteBtn").onclick = promoteMap;
+  $("resetMapBtn").onclick = () => { editMap = JSON.parse(JSON.stringify(defaultMap)); buildAssign(); };
+}
+
+// TEST pulse: drive the IN-PROGRESS edited slot/channel directly (raw set, swap-adjusted),
+// so it reflects the current unsaved selection without needing Save first. READY-gated.
+function bindTest(tb, fn) {
+  tb.disabled = lifecycle !== "READY";
+  const start = e => {
+    e.preventDefault(); if (lifecycle !== "READY") return;
+    const a = editMap.functions[fn];
+    tb.classList.add("held");
+    send({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: a.max || 7 });
+  };
+  const stop = () => {
+    if (!tb.classList.contains("held")) return;
+    const a = editMap.functions[fn]; tb.classList.remove("held");
+    send({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: 0 });
+  };
+  tb.addEventListener("pointerdown", start);
+  tb.addEventListener("pointerup", stop);
+  tb.addEventListener("pointerleave", stop);
+  tb.addEventListener("pointercancel", stop);
+}
+function releaseSettingsTests() {
+  document.querySelectorAll(".test.held").forEach(tb => {
+    tb.classList.remove("held"); send({ cmd: "stop" });   // belt-and-braces neutralize
+  });
 }
 
 // Auto-swap so single-cell reassignment always works (no duplicate dead-ends).
 function assignCell(fn, slot, channel) {
   const other = FN.find(f => f !== fn &&
     editMap.functions[f].slot === slot && editMap.functions[f].channel === channel);
-  if (other) {   // target occupied -> give the displaced function this function's old cell
+  if (other) {
     editMap.functions[other].slot = editMap.functions[fn].slot;
     editMap.functions[other].channel = editMap.functions[fn].channel;
   }
   editMap.functions[fn].slot = slot;
   editMap.functions[fn].channel = channel;
-  buildSettings();
+  buildAssign();
 }
-function releaseSettingsTests() {
-  $("settings").querySelectorAll(".test.held").forEach(tb => {
-    tb.classList.remove("held"); send({ cmd: "drive", function: tb.dataset.fn, value: 0 });
+
+// ---- page 2: EN/DE labels (separate overlay, reached from the assignment page) ----
+function openLabels() { $("settings").classList.add("hidden"); buildLabels(); $("labels").classList.remove("hidden"); }
+function backToAssign() { $("labels").classList.add("hidden"); buildAssign(); $("settings").classList.remove("hidden"); }
+function buildLabels() {
+  const t = tr();
+  const rows = FN.map(fn => {
+    const a = editMap.functions[fn];
+    return `<tr data-fn="${fn}">
+      <td class="fn">${fn}</td>
+      <td><input type="text" class="e-en" value="${(a.label_en || "").replace(/"/g, "&quot;")}"></td>
+      <td><input type="text" class="e-de" value="${(a.label_de || "").replace(/"/g, "&quot;")}"></td>
+    </tr>`;
+  }).join("");
+  $("labels").innerHTML =
+    `<div class="backdrop"></div><div class="sheet">
+      <h2>${t.labelsTitle}</h2>
+      <p class="sub">${t.labelsSub}</p>
+      <table class="map"><thead><tr><th>${t.fn}</th><th>${t.labEn}</th><th>${t.labDe}</th></tr></thead>
+        <tbody>${rows}</tbody></table>
+      <div class="actions">
+        <button class="apply" id="lblSaveBtn">${t.saveClose}</button>
+        <button id="lblBackBtn">${t.back}</button>
+      </div>
+    </div>`;
+  $("labels").querySelector(".backdrop").onclick = backToAssign;
+  $("labels").querySelectorAll("tr[data-fn]").forEach(trEl => {
+    const a = editMap.functions[trEl.dataset.fn];
+    trEl.querySelector(".e-en").oninput = e => { a.label_en = e.target.value; };
+    trEl.querySelector(".e-de").oninput = e => { a.label_de = e.target.value; };
   });
+  $("lblSaveBtn").onclick = saveClose;
+  $("lblBackBtn").onclick = backToAssign;
 }
-function applyMap(promote) {
-  if (!validMap(editMap)) {   // shouldn't happen (auto-swap keeps it valid), but guard
-    const msg = $("mapMsg"); msg.className = "bad"; msg.textContent = "invalid map (duplicate slot/channel)"; return;
-  }
-  activeMap = withDefaults(editMap); saveActive();
-  renderLabels();
-  send({ cmd: "map", action: promote ? "promote" : "set", map: activeMap });
+
+// ---- commit / discard / promote ----
+function saveClose() {
+  if (!validMap(editMap)) { flashMsg("invalid map (duplicate slot/channel)"); return; }
+  activeMap = withDefaults(editMap); saveActive(); renderLabels();
+  send({ cmd: "map", action: "set", map: activeMap });   // session active map
+  closeAll();
 }
+function discardEdits() { editMap = null; closeAll(); }   // revert unsaved edits
+function promoteMap() {
+  if (!validMap(editMap)) { flashMsg("invalid map (duplicate slot/channel)"); return; }
+  activeMap = withDefaults(editMap); saveActive(); renderLabels();
+  send({ cmd: "map", action: "promote", map: activeMap });  // persist as default (stays open; shows result)
+}
+function flashMsg(text) { const m = $("mapMsg"); if (m) { m.className = "bad"; m.textContent = text; } }
 
 // ---- wiring ----
 document.addEventListener("keydown", e => {

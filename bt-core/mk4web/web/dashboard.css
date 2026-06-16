@@ -96,13 +96,14 @@ body {
 }
 .hidden { display: none !important; }
 
-/* ---- settings / assignment: right drawer + dim backdrop (doesn't hide the dashboard) ---- */
-.modal { position: fixed; inset: 0; z-index: 30; display: flex; justify-content: flex-end; }
-.modal .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); }  /* blocks click-through, art stays visible */
+/* ---- settings: CENTERED modal overlays + dim click-blocking backdrop ---- */
+.modal { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 2vh 2vw; }
+#labels { z-index: 31; }   /* labels page stacks above the assignment page */
+.modal .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.6); }  /* covers viewport: controls underneath are NOT clickable */
 .sheet {
-  position: relative; z-index: 1; width: min(560px, 96vw); height: 100%; overflow: auto;
-  background: #141821; border-left: 1px solid #2a313d; padding: 1rem 1.1rem;
-  box-shadow: -8px 0 24px rgba(0,0,0,.5);
+  position: relative; z-index: 1; width: min(720px, 96vw); max-height: 94vh; overflow: auto;
+  background: #141821; border: 1px solid #2a313d; border-radius: .7rem; padding: 1rem 1.2rem;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6);
 }
 .sheet h2 { margin: .1rem 0 .2rem; font-size: 1.12rem; }
 .sheet .sub { color: #8e9cb2; font-size: .82rem; margin: 0 0 .7rem; }
