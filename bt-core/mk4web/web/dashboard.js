@@ -141,6 +141,14 @@ function loadStoredMap() {
         return validMap(m) ? withDefaults(m) : null; } catch { return null; }
 }
 function saveActive() { localStorage.setItem("mk4_active_map", JSON.stringify(activeMap)); }
+// A valid 6-function placeholder so Settings ALWAYS opens, even with no connection/map.
+function placeholderMap() {
+  const fns = {};
+  FN.forEach((f, i) => fns[f] = { slot: (i / 4) | 0, channel: i % 4, invert: false, max: 7, reverse_scale: 1,
+    label_en: f.replace(/_/g, " "), label_de: f.replace(/_/g, " "), confirmed: false });
+  return { version: 1, functions: fns };
+}
+function mapForEdit() { return JSON.parse(JSON.stringify(activeMap || loadStoredMap() || placeholderMap())); }
 function funcLabel(fn) {
   const a = activeMap && activeMap.functions[fn];
   return a ? (lang === "de" ? a.label_de : a.label_en) || fn : fn;
@@ -156,11 +164,22 @@ function funcValue(fn) { const sc = resolveSC(fn); return sc ? (grid[sc[0]] || [
 // ---- WebSocket ----
 function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
 
+let wsTries = 0, wsTimer = null, wsStatus = "retrying";
+const WS_MAX_TRIES = 5;                                    // then stop auto-retry (no spam)
+function setWsStatus(s) { wsStatus = s; MK4.setStatus(s); }
+function scheduleRetry() {
+  wsTries++;
+  if (wsTries > WS_MAX_TRIES) { setWsStatus("failed"); return; }   // give up — user fixes the endpoint, then Connect
+  setWsStatus("retrying");
+  clearTimeout(wsTimer);
+  wsTimer = setTimeout(connect, Math.min(1000 * wsTries, 5000));   // simple backoff
+}
 function connect() {
-  ws = new WebSocket(MK4.wsEndpoint());                    // configurable (shared via clientconfig.js)
-  ws.onopen = () => { setDot(true); MK4.setStatus("connected"); pushActiveMap(); };
-  ws.onclose = () => { setDot(false); MK4.setStatus("retrying"); neutralizeAll(); setTimeout(connect, 1000); };
-  ws.onerror = () => { MK4.setStatus("failed"); ws.close(); };
+  clearTimeout(wsTimer);
+  try { ws = new WebSocket(MK4.wsEndpoint()); } catch (e) { scheduleRetry(); return; }
+  ws.onopen = () => { wsTries = 0; setDot(true); setWsStatus("connected"); pushActiveMap(); };
+  ws.onclose = () => { setDot(false); neutralizeAll(); scheduleRetry(); };
+  ws.onerror = () => { try { ws.close(); } catch (e) {} };   // onclose handles status + retry
   ws.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch { return; }
     if (m.type === "lifecycle") setLifecycle(m.state);
@@ -170,14 +189,18 @@ function connect() {
   };
 }
 function pushActiveMap() { if (activeMap) send({ cmd: "map", action: "set", map: activeMap }); }
-function reconnectWS() { try { if (ws) ws.close(); } catch (e) {} connect(); }   // endpoint changed
+// explicit (re)connect from the endpoint editor: reset the retry budget, connect now.
+function reconnectWS() { wsTries = 0; clearTimeout(wsTimer); try { if (ws) ws.close(); } catch (e) {} connect(); }
 
 function onMap(m) {
   // The server is authoritative ONLY for the persisted default + the session swap.
   // The active map is client-owned (default + our overrides), so we never let a
   // server push clobber it — we push ours instead (see ws.onopen / Apply).
   defaultMap = m.default; deviceSwap = !!m.device_swap;
-  if (!activeMap) activeMap = loadStoredMap() || withDefaults(m.active);  // bootstrap if no injected init (e.g. nginx)
+  if (!activeMap) {                       // FIRST map after a no-connection start (e.g. nginx)
+    activeMap = loadStoredMap() || withDefaults(m.active);
+    if (!$("settings").classList.contains("hidden")) editMap = mapForEdit();  // populate the open settings
+  }
   renderLabels();
   rebuildOpenSettings();
 }
@@ -411,7 +434,7 @@ function buildWizard() {
 // ---- settings: two CENTERED overlay pages (assignment + labels) ----
 let editMap = null;   // shared working copy while either page is open
 
-function openSettings() { editMap = JSON.parse(JSON.stringify(activeMap)); buildAssign(); $("settings").classList.remove("hidden"); }
+function openSettings() { editMap = mapForEdit(); buildAssign(); $("settings").classList.remove("hidden"); }
 function closeAll() { releaseSettingsTests(); $("settings").classList.add("hidden"); $("labels").classList.add("hidden"); }
 function swapAdj(slot) { return (deviceSwap && (slot === 0 || slot === 1)) ? 1 - slot : slot; }
 function rebuildOpenSettings() {   // re-render whichever settings page is currently visible
@@ -421,7 +444,7 @@ function rebuildOpenSettings() {   // re-render whichever settings page is curre
 
 // ---- page 1: channel assignment (slot/channel/max/invert/rev-trim/Test) — NO labels ----
 function buildAssign() {
-  if (!editMap) editMap = JSON.parse(JSON.stringify(activeMap || defaultMap));
+  if (!editMap) editMap = mapForEdit();   // never null -> Settings always renders
   const t = tr();
   const rows = FN.map(fn => {
     const a = editMap.functions[fn];
@@ -462,7 +485,7 @@ function buildAssign() {
     </div>`;
   $("settings").querySelector(".backdrop").onclick = discardEdits;   // click-out = discard (no silent save)
   MK4.buildEndpointRow($("epRow"), reconnectWS);
-  MK4.setStatus(ws && ws.readyState === 1 ? "connected" : "retrying");
+  MK4.setStatus(wsStatus);   // restore last known status into the freshly-built #epStatus
   $("settings").querySelectorAll("tr[data-fn]").forEach(trEl => {
     const fn = trEl.dataset.fn, a = editMap.functions[fn];
     trEl.querySelector(".e-slot").onchange = e => assignCell(fn, +e.target.value, a.channel);
@@ -477,7 +500,7 @@ function buildAssign() {
   $("discardBtn").onclick = discardEdits;
   $("labelsBtn").onclick = openLabels;
   $("promoteBtn").onclick = promoteMap;
-  $("resetMapBtn").onclick = () => { editMap = JSON.parse(JSON.stringify(defaultMap)); buildAssign(); };
+  $("resetMapBtn").onclick = () => { editMap = JSON.parse(JSON.stringify(defaultMap || placeholderMap())); buildAssign(); };
 }
 
 // TEST pulse: drive the IN-PROGRESS edited slot/channel directly (raw set, swap-adjusted),
