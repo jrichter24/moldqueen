@@ -11,9 +11,10 @@ paths, and only one of them is clean today.
   generic core (WS API, lifecycle, telegram building, responsive shell) is yours
   for free. **Start here.**
 - **Function-mapped layout** (named functions + the channel-assignment UI, like the
-  **excavator** dashboard): **not cleanly pluggable yet** — the server's function
-  set is hardcoded to the 13112's six functions. You'd be editing the core. See
-  *Limitations* + *Refactors*.
+  **excavator** dashboard): the **server is now data-driven** — a layout declares its
+  function set (manifest) + default map (`config/channel_map.<id>.json`), no core fork.
+  What's still missing is a reusable **client template** (the dashboard's JS/art is
+  excavator-specific). See *Limitations*.
 
 ---
 
@@ -27,9 +28,9 @@ paths, and only one of them is clean today.
 | Responsive shell + menu (`#app`/`#menu`, top-bar/sidebar) | `dashboard.css` | ✅ reusable (RAW reuses it) |
 | Configurable WS endpoint | `clientconfig.js` (`window.MK4`) | ✅ shared by all layouts |
 | Chooser landing + remember/skip | `chooser.html` | ✅ generic |
-| **`drive`-by-function + channel map** | `channelmap.py`, `config/channel_map.json` | ❌ **hardcoded** to 6 functions |
-| **Function names / labels / art coordinates** | `dashboard.js` (`FN`, `JOYS`, `TITLES`, px `rect`s) | ❌ excavator-specific |
-| **Per-layout HTTP routes** | `api.py` `do_GET` (one branch per file) | ⚠️ manual per layout |
+| **`drive`-by-function + channel map** | `channelmap.py` + per-layout `config/channel_map.<id>.json` + manifest `functions` | ✅ data-driven (per-layout set) |
+| **Function names / labels / art coordinates** | `dashboard.js` (`FN`, `JOYS`, `TITLES`, px `rect`s) | ❌ excavator-specific (needs a template) |
+| **HTTP routes / file serving** | `api.py` generic static handler + manifest | ✅ by filename, no per-layout plumbing |
 
 The **RAW** layout (`raw.{html,js,css}`) is the proof that a generic layout works
 with zero server coupling: it drives raw `{cmd:set, slot, channel, value}` / `stop`,
@@ -98,53 +99,52 @@ slot/channel.
 
 ---
 
-## The hard path: a function-mapped layout (and why it's not clean yet)
+## The function-mapped path (server side now data-driven)
 
 The excavator dashboard drives **by function** (`{cmd:"drive",function:"left_track",…}`)
-and the server resolves the function → (slot, channel) via a **channel map** with a
-**hardcoded set of six functions**:
+and the server resolves the function → (slot, channel) via a **per-layout channel map**:
 
-- `bt-core/mk4web/channelmap.py` → `FUNCTIONS = ["left_track","right_track","arm_lift",
-  "front_arm","rotation","bucket"]` and `validate()`/`resolve()` assume exactly these.
-- `config/channel_map.json` is a **single global** map (one toy at a time).
-- `dashboard.js` hardcodes the same `FN` plus pixel-perfect `rect`s for the 13112 HMI
-  art (`assets/moldqueen_dashboard_v2.png`, 1672×941) and EN/DE labels.
+- A function-mapped layout declares its **function set** in the manifest
+  (`web/layouts.json`, e.g. excavator's six) and its **default map** in
+  `config/channel_map.<layout_id>.json` (`channel_map.excavator.json`).
+- `channelmap.py` has **no global `FUNCTIONS`** — `validate()`/`load()` are
+  parameterized by the active layout's set; `resolve()` just looks a function up.
+  The server validates/persists/promotes against the active layout's set.
+- **Still client-side excavator-specific:** `dashboard.js` hardcodes its own `FN`
+  list + pixel-perfect `rect`s for the 13112 HMI art and EN/DE labels. A *new*
+  function-mapped toy still needs its own client (a layout **template** — not built
+  yet) to draw its controls and (optionally) tell the server its `layout` id.
 
-So a *different* toy with different functions can't reuse the `drive`/channel-map
-machinery without editing the server's `FUNCTIONS` and replacing the global map —
-that's not "bring your own," that's forking the core.
+So the **server** no longer needs forking for a new function set; what remains for a
+fully pluggable function-mapped toy is the client template + the CSS split (below).
 
-**Workaround today:** a function-mapped feel *without* server changes — define your
-own function→(slot,channel) table **in your layout's JS** and send raw `{cmd:set}`
-yourself (exactly what RAW does at the slot/channel level). You lose the server-side
-map persistence/Promote and the channel-assignment overlay, but you stay pluggable.
+**Generic-slot workaround** (no template needed): define your own function→(slot,
+channel) table in your layout's JS and send raw `{cmd:set}` (like RAW). You skip the
+server-side map persistence/Promote + the channel-assignment overlay, but stay pluggable.
 
 ---
 
 ## Limitations (rough edges a contributor will hit)
 
-1. **Channel map is single-toy + server-hardcoded.** `FUNCTIONS` is one list; the
-   default map is one file. No per-layout/per-toy maps.
-2. **HTTP routes are per-file, hardcoded** in `api.py` — no "serve `web/<layout>/`"
-   static handler. Three lines per layout, and the same again in nginx for Docker.
-3. **`dashboard.css` mixes shell + excavator art.** The shared shell (`#app`/`#menu`)
-   and the excavator-only styles (`.joy`, `.title`, HMI labels) live in one file, so
-   a new layout pulls in unused dashboard CSS.
-4. **No layout manifest.** Registration is spread across `chooser.html` (card +
-   route map) and `api.py` (routes) — easy to get out of sync.
-5. **One global lifecycle/state on the server.** All clients share it; layouts can't
-   have independent sessions (fine for one driver, surprising for two).
+1. ✅ **Channel map is now per-layout** (Stage 3) — each layout declares its function
+   set (manifest) + default map (`config/channel_map.<id>.json`); no global list.
+2. ✅ **Generic static handler** (Stage 2) — a layout's files serve by filename; no
+   per-file `api.py` plumbing. (The client **Docker** nginx still lists routes — a
+   separate config to update for that deploy.)
+3. ⏳ **`dashboard.css` mixes shell + excavator art** (Stage 4, pending). The shared
+   shell (`#app`/`#menu`) and excavator-only styles (`.joy`, `.title`, HMI labels)
+   live in one file, so a new layout pulls in unused dashboard CSS.
+4. ✅ **Layout manifest** (Stage 1) — registration is one `web/layouts.json` entry.
+5. ⏳ **One global lifecycle/state on the server.** All clients share it; layouts
+   can't have independent sessions (fine for one driver, surprising for two).
+6. ⏳ **No client template** — a new function-mapped layout still needs its own JS/art
+   (the dashboard is excavator-specific). A reusable template is future work.
 
-## Refactors that would make function-mapped layouts cleanly pluggable
+## Remaining refactors
 
-- **Layout manifest/registry** (e.g. `config/layouts.json`: `{id,title,icon,route,
-  files}`) read by both the chooser and `api.py` → register once.
-- **Generic static handler** in `api.py`: serve `web/<layout>/…` so new layouts need
-  no Python edits.
-- **Per-layout function sets.** Make `channelmap` data-driven: a layout declares its
-  functions (and the channel map is namespaced per toy), instead of the hardcoded
-  `FUNCTIONS`. The `drive` resolver then works for any toy.
-- **Split CSS**: `shell.css` (shared `#app`/`#menu`/modal) vs per-layout styles.
+- **Split CSS**: `shell.css` (shared `#app`/`#menu`/modal) vs per-layout styles (Stage 4).
+- **Layout template**: a reusable client that reads its function set + default map and
+  renders generic controls, so a new function-mapped toy needs no bespoke JS.
 
 Until those land, **document and encourage the generic slot/channel path** (above) —
 it's clean and needs no core changes.

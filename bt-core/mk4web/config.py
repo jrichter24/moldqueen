@@ -22,8 +22,20 @@ REFRESH    = float(os.environ.get("MK4_REFRESH", "0.5"))      # re-issue set-dat
 
 # Persisted DEFAULT channel map (function -> slot/channel/invert/labels) and the
 # assets dir the web server may serve (dashboard background lives here).
-CHANNEL_MAP_PATH = os.environ.get("MK4_CHANNEL_MAP", os.path.join(REPO_ROOT, "config", "channel_map.json"))
+CONFIG_DIR       = os.environ.get("MK4_CONFIG_DIR", os.path.join(REPO_ROOT, "config"))
 ASSETS_DIR       = os.environ.get("MK4_ASSETS_DIR", os.path.join(REPO_ROOT, "assets"))
+
+
+def channel_map_path(layout_id):
+    """PER-LAYOUT default channel map: config/channel_map.<layout_id>.json. Each
+    function-mapped layout owns its default map; the excavator's is
+    channel_map.excavator.json. Legacy fallback: if a layout's file is absent but the
+    old global config/channel_map.json exists, use that (one-time migration safety)."""
+    p = os.path.join(CONFIG_DIR, "channel_map.%s.json" % layout_id)
+    legacy = os.path.join(CONFIG_DIR, "channel_map.json")
+    if not os.path.exists(p) and os.path.exists(legacy):
+        return legacy
+    return p
 
 # Server identity + WS {"cmd":"info"} disclosure tier.
 VERSION = "0.1.0"

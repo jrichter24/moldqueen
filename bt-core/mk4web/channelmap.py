@@ -1,47 +1,55 @@
 """Channel map: function -> (slot, channel, invert, labels). Pure data + resolution.
 
-The server has NO hardcoded toy knowledge — the map is loaded from JSON
-(``config/channel_map.json``, the persisted DEFAULT). A client may push an ACTIVE
-map (default + its own overrides) for the session; the server resolves
-function -> nibble against the active map, optionally applying a session-only
-device-0/1 (slot 0<->1) swap. The broadcaster stays dumb — it only ever receives
-12 nibbles, never a function name.
+The server has NO hardcoded toy knowledge. Each function-mapped LAYOUT declares its
+own FUNCTION SET (in the layout manifest, web/layouts.json) and its own default map
+(``config/channel_map.<layout_id>.json``). validate/load are parameterized by that
+function set — there is no global function list. A client may push an ACTIVE map
+(default + its own overrides) for the session; the server resolves function -> nibble
+against the active map, optionally applying a session-only device-0/1 (slot 0<->1)
+swap. The broadcaster stays dumb — it only ever receives 12 nibbles, never a function
+name. A layout with NO functions (e.g. RAW) doesn't use any of this.
 
-Schema (per function): {slot:0-2, channel:0-3, invert:bool, label_en, label_de}.
-The optional `confirmed` flag is metadata for the UI (verified vs placeholder).
+Schema (per function): {slot:0-2, channel:0-3, invert:bool, max?:1-7,
+reverse_scale?:0.25-4.0, label_en, label_de}. The optional `confirmed` flag is UI
+metadata (verified vs placeholder).
 """
 import os, json, tempfile, logging
 
 log = logging.getLogger("channelmap")
 
-# Canonical functions, in display order. A valid map defines EXACTLY these.
-FUNCTIONS = ["left_track", "right_track", "arm_lift", "front_arm", "rotation", "bucket"]
 REQUIRED_KEYS = ("slot", "channel", "invert", "label_en", "label_de")
 
 
-def _placeholder_map():
-    """Boot-survival fallback, used ONLY if the JSON can't be read/parsed. Distinct,
-    clearly-unconfirmed placeholders — not toy knowledge, just so the service boots."""
+def functions_of(mp):
+    """The function names a map declares, in order (the layout's function set)."""
+    return list(mp.get("functions", {}).keys()) if isinstance(mp, dict) else []
+
+
+def _placeholder_map(functions):
+    """Boot-survival fallback, used ONLY if a layout's JSON can't be read/parsed —
+    distinct, clearly-unconfirmed placeholders over the layout's declared `functions`,
+    just so the service boots. (Empty if the layout declares no functions.)"""
     fns = {}
-    for i, f in enumerate(FUNCTIONS):
+    for i, f in enumerate(functions):
         title = f.replace("_", " ").title()
         fns[f] = {"slot": i // 4, "channel": i % 4, "invert": False, "max": 7,
                   "reverse_scale": 1.0, "label_en": title, "label_de": title, "confirmed": False}
     return {"version": 1, "functions": fns}
 
 
-def load(path):
-    """Load + validate the default map from `path`; fall back to placeholders on error."""
+def load(path, functions=None):
+    """Load + validate a layout's default map from `path` against its `functions` set;
+    fall back to placeholders (over `functions`) on error."""
     try:
         with open(path) as fh:
             mp = json.load(fh)
     except (OSError, ValueError) as e:
         log.warning("channel map %s unreadable (%s) — using placeholder map", path, e)
-        return _placeholder_map()
-    ok, errs = validate(mp)
+        return _placeholder_map(functions or [])
+    ok, errs = validate(mp, functions)
     if not ok:
         log.warning("channel map %s invalid (%s) — using placeholder map", path, "; ".join(errs))
-        return _placeholder_map()
+        return _placeholder_map(functions or [])
     return mp
 
 
@@ -63,15 +71,19 @@ def save(path, mp):
             os.unlink(tmp)
 
 
-def validate(mp):
-    """-> (ok, errors[]). Checks all functions present, slot 0-2, channel 0-3,
-    invert bool, labels present, and NO duplicate (slot, channel) assignments."""
+def validate(mp, functions=None):
+    """-> (ok, errors[]). If `functions` is given (a layout's function set) the map
+    must define EXACTLY those; if None, validates whatever functions the map declares
+    (structural-only, e.g. for generic save). Checks slot 0-2, channel 0-3, invert
+    bool, optional max 1-7 / reverse_scale 0.25-4.0, labels, and NO duplicate
+    (slot, channel) assignments."""
     errs = []
     if not isinstance(mp, dict) or not isinstance(mp.get("functions"), dict):
         return False, ["map must be an object with a 'functions' object"]
     fns = mp["functions"]
+    expected = list(functions) if functions is not None else list(fns.keys())
     seen = {}
-    for f in FUNCTIONS:
+    for f in expected:
         a = fns.get(f)
         if not isinstance(a, dict):
             errs.append(f"missing function '{f}'")
@@ -103,9 +115,10 @@ def validate(mp):
                 errs.append(f"{f}: duplicate slot {slot}/channel {ch} (already used by '{dup}')")
             else:
                 seen[(slot, ch)] = f
-    extra = [k for k in fns if k not in FUNCTIONS]
-    if extra:
-        errs.append("unknown functions: " + ", ".join(sorted(extra)))
+    if functions is not None:                       # exact-set check only when a set is given
+        extra = [k for k in fns if k not in expected]
+        if extra:
+            errs.append("unknown functions: " + ", ".join(sorted(extra)))
     return (not errs), errs
 
 

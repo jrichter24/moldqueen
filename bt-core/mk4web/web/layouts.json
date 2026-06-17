@@ -8,6 +8,7 @@
       "route": "/dashboard",
       "icon": "/assets/excavator_icon.png",
       "kind": "function-mapped",
+      "functions": ["left_track", "right_track", "arm_lift", "front_arm", "rotation", "bucket"],
       "files": { "html": "dashboard.html", "js": "dashboard.js", "css": "dashboard.css" }
     },
     {

@@ -309,7 +309,7 @@ telegram, and a console logs the exact bytes (raw + on-air AD).
 - **Settings** (centered overlay) = the **channel-assignment tool**: drag/Test a
   control, see which motor moves, set its slot/channel + max speed + reverse-trim +
   invert; a separate **Labels** page (EN/DE); **Save** (this session) or **Promote**
-  (save as the new default in [`config/channel_map.json`](config/channel_map.json)).
+  (save as the new default in the layout's `config/channel_map.<layout>.json`).
   Plus a session-only **device-0/1 hub swap**.
 - **Responsive shell** — viewport-fit (no page scroll); the menu is a **top bar on
   desktop, a left sidebar on mobile** (portrait *and* landscape); **EN/DE** toggle,
@@ -385,9 +385,11 @@ against the active map (applying invert, device-swap, and a per-function
 
 ## Channel map
 
-The **function → (slot, channel)** map is **data**, not hardcoded: a persisted
-default in [`config/channel_map.json`](config/channel_map.json), editable live in the
-GUI. Six functions, each `{slot, channel, invert, max, reverse_scale, label_en,
+The **function → (slot, channel)** map is **data**, not hardcoded, and **per layout**:
+each function-mapped layout declares its function set (in the layout manifest) + a
+persisted default in `config/channel_map.<layout>.json` (the excavator's is
+[`config/channel_map.excavator.json`](config/channel_map.excavator.json)), editable
+live in the GUI. The excavator's six functions, each `{slot, channel, invert, max, reverse_scale, label_en,
 label_de}`. The server resolves `drive` against the **active** map (default + the
 client's overrides; `promote` saves a map as the new default). Current default —
 only `bucket` and `left_track` are transmit-confirmed, the rest are placeholders to
@@ -460,7 +462,7 @@ forces neutral, and if the API process dies the broadcaster drops to **IDLE**.
 moldqueen/
 ├── docs/PROJECT.md            # canonical project reference (read this)
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
-├── config/channel_map.json    # persisted default channel map (function → slot/channel/…)
+├── config/channel_map.<layout>.json  # per-layout default channel map (e.g. channel_map.excavator.json)
 ├── assets/                    # moldqueen_banner.png, moldqueen_icon.png, excavator_icon.png, moldqueen_dashboard_v2.png, wizard/
 ├── scripts/                   # start.sh / check.sh — preflight + launch (no system changes)
 ├── bt-core/                   # Python — the radios + the control service

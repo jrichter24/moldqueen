@@ -19,16 +19,18 @@ info:
     **slot** selected by its physical button (resets to slot 0 on power-cycle):
     slot 0 = channels 0–3, slot 1 = 4–7, slot 2 = 8–11.
 
-    ## Channel map — control by FUNCTION
+    ## Channel map — control by FUNCTION (per layout)
     Raw `set` addresses a slot/channel directly. `drive` addresses a **function**
-    (`left_track`, `right_track`, `arm_lift`, `front_arm`, `rotation`, `bucket`)
     which the **server** resolves to (slot, channel, value) via a channel map. The
-    map has a persisted **default** (`config/channel_map.json`) and a session
-    **active** map (default + client overrides) the client pushes with `map set`.
-    Per function: `{slot 0-2, channel 0-3, invert, label_en, label_de}`. A
-    session-only **device-0/1 swap** flips slots 0↔1 (slot 2 untouched). `map
-    promote` persists a map as the new default. The broadcaster stays dumb (it
-    only ever receives 12 nibbles).
+    function set is PER-LAYOUT (declared in the layout manifest) — the excavator's is
+    `left_track`, `right_track`, `arm_lift`, `front_arm`, `rotation`, `bucket`. Each
+    function-mapped layout has a persisted **default** (`config/channel_map.<layout>.
+    json`, e.g. `channel_map.excavator.json`) and a session **active** map (default +
+    client overrides) the client pushes with `map set`. The `map` messages carry the
+    active layout id. Per function: `{slot 0-2, channel 0-3, invert, max?,
+    reverse_scale?, label_en, label_de}`. A session-only **device-0/1 swap** flips
+    slots 0↔1 (slot 2 untouched). `map promote` persists a map as that layout's new
+    default. The broadcaster stays dumb (it only ever receives 12 nibbles).
 
     ## value → nibble mapping
     `nibble = 0x8 + value`, value in `-7..+7` → nibble `0x1..0xF`:
@@ -226,9 +228,11 @@ components:
         version: { type: integer }
         functions:
           type: object
-          description: 'Exactly the six functions; no duplicate (slot, channel) pairs.'
-          required: [left_track, right_track, arm_lift, front_arm, rotation, bucket]
-          additionalProperties: false
+          description: >-
+            The active LAYOUT's function set (declared in the manifest); no duplicate
+            (slot, channel) pairs. The excavator layout's set is shown below; other
+            function-mapped layouts define their own.
+          additionalProperties: { $ref: '#/components/schemas/FunctionAssignment' }
           properties:
             left_track:  { $ref: '#/components/schemas/FunctionAssignment' }
             right_track: { $ref: '#/components/schemas/FunctionAssignment' }
@@ -246,6 +250,7 @@ components:
         action: { type: string, enum: [get, set, swap, promote] }
         map:    { $ref: '#/components/schemas/ChannelMap' }
         value:  { type: boolean, description: 'For action=swap: device-0/1 swap on/off.' }
+        layout: { type: string, description: 'Optional: switch the active function-mapped layout by id.' }
       examples:
         - { cmd: map, action: get }
         - { cmd: map, action: swap, value: true }
@@ -256,6 +261,7 @@ components:
       required: [type, default, active, device_swap]
       properties:
         type:        { type: string, const: map }
+        layout:      { type: [string, 'null'], description: 'Active function-mapped layout id (e.g. "excavator").' }
         default:     { $ref: '#/components/schemas/ChannelMap' }
         active:      { $ref: '#/components/schemas/ChannelMap' }
         device_swap: { type: boolean }

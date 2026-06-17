@@ -35,8 +35,8 @@ from websockets.asyncio.server import serve
 from . import channelmap
 from .telegram import (value_to_nibble, nibble_to_value, channel_index, N_CHANNELS, NEUTRAL,
                        motion_raw, ad_hex)
-from .config import (HOST, HTTP_PORT, WS_PORT, SOCK_PATH, CHANNEL_MAP_PATH, ASSETS_DIR,
-                     SERVE_CLIENT, RADIO_BACKEND, HCI, INFO_LEVEL, DRY_RUN, VERSION)
+from .config import (HOST, HTTP_PORT, WS_PORT, SOCK_PATH, CONFIG_DIR, channel_map_path,
+                     ASSETS_DIR, SERVE_CLIENT, RADIO_BACKEND, HCI, INFO_LEVEL, DRY_RUN, VERSION)
 
 log = logging.getLogger("api")
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
@@ -84,9 +84,18 @@ def _build_html_routes(layouts):
     return routes
 
 
+def _function_layouts(layouts):
+    """{layout_id: [function names]} for function-mapped layouts (declared in the
+    manifest). This is the per-layout FUNCTION SET — no global hardcoded list."""
+    return {lay["id"]: list(lay["functions"])
+            for lay in layouts if lay.get("kind") == "function-mapped" and lay.get("functions")}
+
+
 LAYOUTS = _load_layouts()
 HTML_ROUTES = _build_html_routes(LAYOUTS)
 LAYOUTS_JSON = json.dumps({"layouts": LAYOUTS})
+LAYOUT_FUNCTIONS = _function_layouts(LAYOUTS)
+DEFAULT_LAYOUT = next(iter(LAYOUT_FUNCTIONS), None)   # active function-mapped layout (today: excavator)
 
 
 class IPCClient:
@@ -130,10 +139,32 @@ class App:
     def __init__(self):
         self.lifecycle = IDLE
         self.nibbles = list(NEUTRAL_STATE)
-        # Channel map: persisted DEFAULT + session ACTIVE (default + client overrides).
-        self.default_map = channelmap.load(CHANNEL_MAP_PATH)
+        # Active function-mapped LAYOUT: its function set (from the manifest) + its
+        # per-layout default map (config/channel_map.<id>.json). The client may push an
+        # ACTIVE map (default + overrides) for the session. RAW (no functions) ignores all this.
+        self.layout_id = DEFAULT_LAYOUT
+        self.functions = list(LAYOUT_FUNCTIONS.get(self.layout_id, []))
+        self.default_map = self._load_default()
         self.active_map = _clone(self.default_map)
         self.device_swap = False              # session-only (slot 0<->1), not persisted
+
+    def _load_default(self):
+        if not self.layout_id:
+            return {"version": 1, "functions": {}}
+        return channelmap.load(channel_map_path(self.layout_id), self.functions)
+
+    def set_layout(self, layout_id):
+        """Switch the active function-mapped layout (its function set + default map).
+        Returns True if switched. No-op for unknown ids or the current one — so the
+        default (excavator) means today's single-layout behavior is unchanged; a future
+        multi-layout client selects via this (e.g. {cmd:map, layout:<id>})."""
+        if layout_id not in LAYOUT_FUNCTIONS or layout_id == self.layout_id:
+            return False
+        self.layout_id = layout_id
+        self.functions = list(LAYOUT_FUNCTIONS[layout_id])
+        self.default_map = self._load_default()
+        self.active_map = _clone(self.default_map)
+        return True
 
     def slots_grid(self):
         return [[nibble_to_value(self.nibbles[s * 4 + c]) for c in range(4)] for s in range(3)]
@@ -159,7 +190,7 @@ class App:
         return r
 
     def set_active_map(self, mp):
-        ok, errs = channelmap.validate(mp)
+        ok, errs = channelmap.validate(mp, self.functions)   # against THIS layout's function set
         if ok:
             self.active_map = _clone(mp)
         return ok, errs
@@ -168,13 +199,14 @@ class App:
         self.device_swap = bool(on)
 
     def promote(self, mp=None):
-        """Persist `mp` (or the current active map) as the DEFAULT. Validates first."""
+        """Persist `mp` (or the current active map) as THIS layout's DEFAULT
+        (config/channel_map.<layout_id>.json). Validates against its function set."""
         cand = mp if mp is not None else self.active_map
-        ok, errs = channelmap.validate(cand)
+        ok, errs = channelmap.validate(cand, self.functions)
         if not ok:
             return ok, errs
         try:
-            channelmap.save(CHANNEL_MAP_PATH, cand)
+            channelmap.save(channel_map_path(self.layout_id), cand)
         except (OSError, ValueError) as e:
             return False, [str(e)]
         self.active_map = _clone(cand)
@@ -200,7 +232,7 @@ def lifecycle_json():
 
 
 def map_json():
-    return json.dumps({"type": "map", "default": app.default_map,
+    return json.dumps({"type": "map", "layout": app.layout_id, "default": app.default_map,
                        "active": app.active_map, "device_swap": app.device_swap})
 
 
@@ -234,9 +266,10 @@ def info_json(level):
         info.update({"radio_backend": RADIO_BACKEND, "dry_run": DRY_RUN, "hci": HCI,
                      "ws_port": WS_PORT, "http_port": HTTP_PORT, "serve_client": SERVE_CLIENT})
     if level == "debug":                     # + identifying diagnostics
+        cmap = channel_map_path(app.layout_id) if app.layout_id else None
         info.update({"adapter_mac": _adapter_mac(HCI), "hostname": platform.node(),
-                     "bluetoothd": _bluetoothd_state(), "host_bind": HOST,
-                     "paths": {"sock": SOCK_PATH, "channel_map": CHANNEL_MAP_PATH,
+                     "bluetoothd": _bluetoothd_state(), "host_bind": HOST, "layout": app.layout_id,
+                     "paths": {"sock": SOCK_PATH, "config_dir": CONFIG_DIR, "channel_map": cmap,
                                "assets": ASSETS_DIR, "web": WEB_DIR}})
     return json.dumps(info)
 
@@ -279,6 +312,9 @@ async def handler(websocket):
                         ipc.send_state(app.nibbles)
                         await push(state_json())
             elif cmd == "map":
+                if msg.get("layout") and app.set_layout(msg["layout"]):   # optional: switch layout
+                    app.stop(); ipc.send_neutral()                        # (default excavator → unused today)
+                    await push(map_json()); await push(state_json())
                 action = msg.get("action")
                 if action == "get":
                     await websocket.send(map_json())

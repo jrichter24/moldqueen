@@ -103,15 +103,19 @@ All MK6.0 "device-1 / promotion" guidance is **SUPERSEDED**.
 
 ---
 
-## 5. Channel map — now DATA (configurable), not hardcoded
+## 5. Channel map — DATA, now PER-LAYOUT (not hardcoded, not global)
 
-The map of **function → (slot, channel)** is **data**: a persisted default in
-[`config/channel_map.json`](../config/channel_map.json), editable live in the GUI
-(see §6). The server has **no hardcoded toy knowledge** — it resolves a `drive`
-command's function against the active map. Six functions: `left_track`,
-`right_track`, `arm_lift`, `front_arm`, `rotation`, `bucket`. Per function:
-`{slot 0-2, channel 0-3, invert, max (1-7), reverse_scale, label_en, label_de}`.
-**(slot, channel)** is within-slot; the global nibble index = `slot*4 + channel`.
+The map of **function → (slot, channel)** is **data**, owned **per layout**. Each
+function-mapped layout declares its **function set** in the manifest (`web/
+layouts.json`) and its persisted default in
+[`config/channel_map.<layout_id>.json`](../config/) — the excavator's is
+[`channel_map.excavator.json`](../config/channel_map.excavator.json). The server has
+**no hardcoded function list** — `channelmap.validate/load` are parameterized by the
+active layout's function set, and `resolve` just looks a function up in the map.
+The excavator's six functions: `left_track`, `right_track`, `arm_lift`, `front_arm`,
+`rotation`, `bucket`. Per function: `{slot 0-2, channel 0-3, invert, max (1-7),
+reverse_scale, label_en, label_de}`. **(slot, channel)** is within-slot; the global
+nibble index = `slot*4 + channel`. A layout with no functions (RAW) uses none of this.
 
 **Current default** (function → assignment). Only `bucket` and `left_track` are
 **transmit-confirmed**; the rest are placeholders to be swept/confirmed:
@@ -172,7 +176,7 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   (works in `--ws-only`): **`MK4_INFO_LEVEL`** / `--info-level` = `safe` (app/version/
   lifecycle), `light` (DEFAULT; + backend/dry_run/hci/ports, no MAC) or `debug`
   (+ MAC/hostname/paths/bluetoothd). Unknown → light.
-- **Channel map** (`mk4web/channelmap.py` + `config/channel_map.json`) — load /
+- **Channel map** (`mk4web/channelmap.py` + per-layout `config/channel_map.<id>.json`) — load /
   validate / save / resolve. **No hardcoded toy knowledge.** The client owns the
   **active** map (default + its overrides) and **pushes it on every connect**;
   `promote` persists it as the new default. Validation rejects duplicate
@@ -293,7 +297,7 @@ moldqueen/
 ├── docs/PROJECT.md            # THIS FILE — canonical
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── CLAUDE.md                  # terse must-knows (points here)
-├── config/channel_map.json    # persisted DEFAULT channel map (function → slot/channel/…)
+├── config/channel_map.<layout>.json  # per-layout DEFAULT channel map (e.g. channel_map.excavator.json)
 ├── assets/                    # moldqueen_banner.png, moldqueen_icon.png, excavator_icon.png, moldqueen_dashboard_v2.png, wizard/
 ├── scripts/                   # start.sh / check.sh (preflight + launch)
 ├── bt-core/

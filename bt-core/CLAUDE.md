@@ -99,10 +99,12 @@ reinvented.
   **resolves `drive` by function → (slot,channel,value)** via `channelmap.py`
   (invert + device-swap + `reverse_scale`), forwards to the broadcaster, pushes
   state. **SAFETY:** client disconnect (or no clients) → NEUTRAL.
-- **`channelmap.py` + `../config/channel_map.json`** — the function map as DATA
-  (load/validate/save/resolve). No hardcoded toy knowledge; validation rejects
-  duplicate `(slot,channel)`. The client owns the **active** map and pushes it on
-  every connect; `promote` persists it as the default.
+- **`channelmap.py` + per-layout `../config/channel_map.<id>.json`** — the function
+  map as DATA (load/validate/save/resolve), PER LAYOUT: each function-mapped layout
+  declares its function set (manifest `web/layouts.json`) + default map; `channelmap`
+  is parameterized by that set (no global `FUNCTIONS`). Validation rejects duplicate
+  `(slot,channel)`. The client owns the **active** map and pushes it on every connect;
+  `promote` persists it as that layout's default.
 
 **WebSocket API:** `{"cmd":"setup","action":connect|ready|reset}` (lifecycle),
 `{"cmd":"drive","function":…,"value":-7..7}` (by function, READY-only),

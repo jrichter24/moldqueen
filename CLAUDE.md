@@ -23,8 +23,11 @@ the terse must-knows for next session; PROJECT.md wins on any disagreement.
   failures). `bluetoothd` must be **stopped + masked**; raw HCI needs root/caps.
 - **Codec verified:** `bt-core/reference/mouldking_crypt.py` (`encode`/`decode`)
   reproduces the app's bytes exactly (13/13 tests). Do NOT reinvent the crypt.
-- **Channel map = DATA** ([`config/channel_map.json`](config/channel_map.json),
-  editable live in the GUI). Drive **by FUNCTION**; the **server** resolves
+- **Channel map = DATA, PER-LAYOUT** (each function-mapped layout declares its
+  function set in `bt-core/mk4web/web/layouts.json` + its default in
+  [`config/channel_map.<id>.json`](config/), e.g. `channel_map.excavator.json`;
+  editable live in the GUI). No global `FUNCTIONS` — `channelmap` is parameterized by
+  the layout's set. Drive **by FUNCTION**; the **server** resolves
   function→(slot,channel,value) (+ invert, device-0/1 swap, `reverse_scale` trim,
   per-function `max`) — broadcaster stays dumb. Transmit-confirmed: **bucket =
   slot0/ch0** (shovel), **left_track = slot1/ch0** (= global ch4); rest placeholders.
