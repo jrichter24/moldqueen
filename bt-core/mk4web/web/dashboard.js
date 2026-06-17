@@ -418,10 +418,12 @@ function buildWizard() {
   else if (s === 2) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wBack">${t.wiz.back}</button><button class="apply" id="wNext">${t.wiz.next}</button>`;
   else if (s === 3) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wBack">${t.wiz.back}</button><button class="apply" id="wReady">${t.wiz.readyBtn}</button>`;
   else btns = `<button class="apply" id="wDone">${t.wiz.startDriving}</button>`;
+  const gif = { 1: "long_flash", 2: "short_flash", 3: "double_short_flash" }[s];   // real LED-flash GIFs
+  const media = gif ? `<div class="media"><img src="/assets/${gif}.gif" alt=""></div>` : "";
   $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
     <h2>${t.wiz.title}</h2>
     <div class="wsteps">${[1, 2, 3, 4].map(n => `<span class="wdot${n === s ? " on" : n < s ? " done" : ""}"></span>`).join("")}</div>
-    <div class="media"><img src="/assets/wizard/step${s}.png" alt="" onerror="this.style.display='none'"><span class="mediahint">${t.wiz.placeholder}</span></div>
+    ${media}
     <h3 class="wt">${w.t}</h3><p class="wbody">${w.b}</p>
     <div class="actions wactions">${btns}</div>
   </div>`;

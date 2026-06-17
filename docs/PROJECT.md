@@ -184,8 +184,8 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
     function's `max`, release snaps to NEUTRAL); rotation + bucket are press-and-hold
     buttons. Nothing latches.
   - **Connection wizard** — a centered modal walking cold-start to READY (power on →
-    connect → assign slots → ready), with media slots (placeholder images under
-    `assets/wizard/`), EN/DE text.
+    connect → assign slots → ready), with real **LED-flash GIFs** per step
+    (`assets/{long_flash,short_flash,double_short_flash}.gif`), EN/DE text.
   - **Settings** — a centered overlay = the channel-assignment tool: drag/Test a
     control, see which motor moves, set slot/channel + max + reverse-trim + invert;
     a separate **Labels** page (EN/DE); **Save** (session) / **Promote** (default) /

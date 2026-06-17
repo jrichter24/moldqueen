@@ -146,10 +146,12 @@ function buildWizard() {
   else if (s === 3) btns = wbtn("wCancel", "Cancel") + wbtn("wBack", "Back") + wbtn("wReady", "Ready", 1);
   else btns = wbtn("wDone", "Start", 1);
   const dots = n > 1 ? [1, 2, 3, 4] : [1, 2, 4];
+  const gif = { 1: "long_flash", 2: "short_flash", 3: "double_short_flash" }[s];   // real LED-flash GIFs
+  const media = gif ? `<div class="media"><img src="/assets/${gif}.gif" alt=""></div>` : "";
   $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
     <h2>RAW — connection setup <span class="muted" style="font-size:.8rem">(${n} box${n > 1 ? "es" : ""})</span></h2>
     <div class="wsteps">${dots.map(d => `<span class="wdot${d === s ? " on" : d < s ? " done" : ""}"></span>`).join("")}</div>
-    <div class="media"><img src="/assets/wizard/step${s}.png" alt="" onerror="this.style.display='none'"><span class="mediahint">📷 placeholder</span></div>
+    ${media}
     <h3 class="wt">${txt.t}</h3><p class="wbody">${txt.b}</p>
     <div class="actions wactions">${btns}</div>
   </div>`;

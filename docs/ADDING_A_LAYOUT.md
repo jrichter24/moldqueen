@@ -65,7 +65,7 @@ changes.**
   - Build your toolbar into `#menu` (reuse `.tgroup`/`.dot`/`#stopBtn` classes) — you
     get the top-bar/sidebar responsive behavior for free.
   - Optional: copy RAW's condensed connection **wizard** (`.modal`/`.sheet.wiz`
-    classes in `dashboard.css`, images in `assets/wizard/`).
+    classes in `dashboard.css`, LED-flash GIFs in `assets/*_flash.gif`).
 - `mytoy.css` — only your layout-specific styles (the shell lives in `dashboard.css`).
 
 ### 2. Register the routes (`bt-core/mk4web/api.py`, `do_GET`)
