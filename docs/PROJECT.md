@@ -149,8 +149,11 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
 - **broadcaster** (`mk4web/broadcaster.py`) — owns the radio + the authoritative
   12-nibble state; lifecycle **IDLE → CONNECTING → READY**; broadcasts one MK4
   telegram reflecting state (~5/sec keepalive). **Safety:** API gone → IDLE/neutral.
-- **API** (`mk4web/api.py`) — the **WebSocket API is the product** (`:8765`), also
-  serves the dashboard (`:8080`). Owns/drives the lifecycle; maps `value→nibble`;
+- **API** (`mk4web/api.py`) — the **WebSocket API is the product** (`:8765`, always
+  on). Serving the client web page (`:8080`) is **OPTIONAL**: on by default, disabled
+  with `--ws-only` / `--no-client` / `MK4_SERVE_CLIENT=0` (no HTTP server opened);
+  `--http-port N` (CLI > `MK4_HTTP_PORT`) overrides the page port. Owns/drives the
+  lifecycle; maps `value→nibble`;
   holds the **channel map** (persisted default + session active + device-swap) and
   **resolves `drive` by function → (slot, channel, value)** via `channelmap.py`
   (applying invert + device-swap + reverse_scale) — the broadcaster stays dumb.
@@ -206,9 +209,13 @@ python -m mk4web.api                         # terminal 2  →  http://<pi-ip>:8
 
 # LIVE (drives hci1; needs hci1 UP + bluetoothd masked; broadcaster needs sudo):
 sudo python -m mk4web.broadcaster            # starts IDLE — no transmit until "Connect"
-python -m mk4web.api
+python -m mk4web.api                          # WS :8765 + client page :8080 (default)
+python -m mk4web.api --ws-only                # WS :8765 only — no web page (BYO client)
+python -m mk4web.api --http-port 9000         # serve the page on :9000 instead
 ```
-Ports/HCI/etc. are env-overridable (`MK4_HCI`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, …;
+The **WebSocket API (required)** and **client web page (optional)** are separable:
+see README → "API server (required) + client UI (optional)". Ports/HCI/etc. are
+env-overridable (`MK4_HCI`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, `MK4_SERVE_CLIENT`, …;
 see `mk4web/config.py`).
 
 **Cold-start GUI flow** — open the **dashboard** at `http://<pi-ip>:8080/` and press

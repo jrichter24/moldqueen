@@ -56,6 +56,7 @@ README is the tour; PROJECT.md is the source of truth.
 - [How it works](#how-it-works)
 - [The protocol (MK4 12-channel nibble)](#the-protocol-mk4-12-channel-nibble)
 - [Architecture](#architecture)
+- [API server (required) + client UI (optional)](#two-pieces-api-server-required--client-ui-optional)
 - [Hardware](#hardware)
 - [Quick start](#quick-start)
 - [The WebSocket API](#the-websocket-api)
@@ -194,6 +195,38 @@ uses the *same* API):
 
 `bluetoothd` must be **stopped + masked** (it's dbus/socket-activated and will
 re-grab the adapter); raw HCI needs root or `cap_net_raw,cap_net_admin`.
+
+## Two pieces: API server (required) + client UI (optional)
+
+moldqueen is two cleanly separable features:
+
+- **API server — REQUIRED.** The broadcaster (owns the radio) + the **WebSocket API**
+  (the product). The WebSocket is *always* opened; this is what actually controls the
+  excavator. Runs on the Pi.
+- **Client web UI — OPTIONAL.** The chooser/dashboard/RAW pages are a convenience for
+  *driving* the API. They're not required to control the machine.
+
+Three ways to use it:
+
+1. **API serves the page too (easiest).** `scripts/start.sh` → open `http://<pi>:8080/`.
+2. **Run the client separately.** Serve the UI elsewhere (Docker on a desktop) and
+   point it at the Pi's WS via the in-app endpoint setting — see
+   [Running the client separately](#running-the-client-separately-docker) and
+   [`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md).
+3. **Bring your own client.** Skip the page entirely and talk to the WebSocket from
+   your own code/console/AI — contract in [`asyncapi.yaml`](bt-core/mk4web/asyncapi.yaml).
+
+**Server flags** (the API): `--ws-only` (or `--no-client`, env `MK4_SERVE_CLIENT=0`)
+runs the **WebSocket only — no HTTP server** (headless / bring-your-own-client);
+`--http-port N` serves the page on `N` (default `8080`; CLI wins over `MK4_HTTP_PORT`).
+The WebSocket port is its own setting (`MK4_WS_PORT`, default `8765`).
+
+```bash
+python -m mk4web.api                  # WS :8765 + client page :8080   (default)
+python -m mk4web.api --http-port 9000 # WS :8765 + client page :9000
+python -m mk4web.api --ws-only        # WS :8765 only  (no web server)
+scripts/start.sh --ws-only            # launcher, websocket-only
+```
 
 ## Quick start
 

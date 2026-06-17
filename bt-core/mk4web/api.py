@@ -27,7 +27,7 @@ SAFETY: on a client disconnect (or no clients), command the broadcaster to NEUTR
 
 Run:  python -m mk4web.api
 """
-import os, re, json, socket, asyncio, threading, logging
+import os, re, json, socket, asyncio, threading, logging, argparse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from websockets.asyncio.server import serve
@@ -35,7 +35,7 @@ from websockets.asyncio.server import serve
 from . import channelmap
 from .telegram import (value_to_nibble, nibble_to_value, channel_index, N_CHANNELS, NEUTRAL,
                        motion_raw, ad_hex)
-from .config import HOST, HTTP_PORT, WS_PORT, SOCK_PATH, CHANNEL_MAP_PATH, ASSETS_DIR
+from .config import HOST, HTTP_PORT, WS_PORT, SOCK_PATH, CHANNEL_MAP_PATH, ASSETS_DIR, SERVE_CLIENT
 
 log = logging.getLogger("api")
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
@@ -326,14 +326,20 @@ class WebHandler(BaseHTTPRequestHandler):
         pass
 
 
-def start_http():
-    httpd = ThreadingHTTPServer((HOST, HTTP_PORT), WebHandler)
+def start_http(http_port):
+    httpd = ThreadingHTTPServer((HOST, http_port), WebHandler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
-    log.info("web page on http://%s:%d/", HOST, HTTP_PORT)
+    log.info("client web UI on http://%s:%d/", HOST, http_port)
 
 
-async def amain():
-    start_http()
+async def amain(serve_client, http_port):
+    # The WebSocket API is the product and is ALWAYS started. Serving the client
+    # web page is OPTIONAL (a convenience) — skipped entirely when serve_client is
+    # off (--ws-only / MK4_SERVE_CLIENT=0): no HTTP server is opened at all.
+    if serve_client:
+        start_http(http_port)
+    else:
+        log.info("WebSocket-only (client web UI NOT served) — bring your own client")
     # WS ORIGIN: `serve(...)` is called WITHOUT an `origins=` allowlist, so the
     # server accepts WebSocket connections from ANY Origin — permissive BY DESIGN
     # for a LAN hobby tool (a client served from another host/container can connect).
@@ -345,9 +351,17 @@ async def amain():
 
 
 def main():
+    ap = argparse.ArgumentParser(description="moldqueen API — WebSocket control + optional client web UI.")
+    ap.add_argument("--ws-only", "--no-client", dest="ws_only", action="store_true",
+                    help="WebSocket-only: do NOT serve the client web page (no HTTP server).")
+    ap.add_argument("--http-port", type=int, default=None,
+                    help="port for the client web UI (overrides MK4_HTTP_PORT; default %d)." % HTTP_PORT)
+    a = ap.parse_args()
+    serve_client = SERVE_CLIENT and not a.ws_only          # CLI --ws-only wins over env
+    http_port = a.http_port if a.http_port is not None else HTTP_PORT   # CLI flag wins over env
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     try:
-        asyncio.run(amain())
+        asyncio.run(amain(serve_client, http_port))
     except KeyboardInterrupt:
         ipc.setup("reset")
         log.info("api stopped (sent reset)")

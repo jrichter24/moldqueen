@@ -7,12 +7,15 @@
 # systemd is an OPTIONAL documented path (README → "Running as a service").
 #
 # Usage:
-#   scripts/start.sh            preflight, fix what it safely can, launch (live)
-#   scripts/start.sh --dry-run  same, but the broadcaster LOGS telegrams (no transmit)
-#   scripts/start.sh --check    audit only — report state, change nothing, don't launch
+#   scripts/start.sh             preflight, fix what it safely can, launch (live)
+#   scripts/start.sh --dry-run   same, but the broadcaster LOGS telegrams (no transmit)
+#   scripts/start.sh --check     audit only — report state, change nothing, don't launch
+#   scripts/start.sh --ws-only   API serves the WebSocket ONLY (no client web page)
+#   scripts/start.sh --http-port N   serve the client page on port N (default 8080)
 #
-# Env overrides (see bt-core/mk4web/config.py): MK4_DONGLE_MAC, MK4_HCI (force an
-#   index), MK4_HTTP_PORT, MK4_WS_PORT, MK4_SOCK.
+# The WebSocket API (the product) always runs; serving the client web page is
+# optional. Env overrides (bt-core/mk4web/config.py): MK4_DONGLE_MAC, MK4_HCI,
+# MK4_HTTP_PORT, MK4_WS_PORT, MK4_SOCK, MK4_SERVE_CLIENT (0 = ws-only).
 set -euo pipefail
 
 DONGLE_MAC="${MK4_DONGLE_MAC:-00:A6:44:02:21:25}"   # Realtek control dongle
@@ -22,14 +25,18 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BT_CORE="$REPO_ROOT/bt-core"
 VENV_PY="$BT_CORE/.venv/bin/python"
 
-MODE="live"
-for a in "$@"; do
-  case "$a" in
-    --check)   MODE="check" ;;
-    --dry-run) MODE="dry-run" ;;
-    -h|--help) sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^#\s\{0,1\}//'; exit 0 ;;
-    *) echo "unknown argument: $a (try --help)"; exit 2 ;;
+MODE="live"; WS_ONLY=0; API_EXTRA=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --check)              MODE="check" ;;
+    --dry-run)            MODE="dry-run" ;;
+    --ws-only|--no-client) WS_ONLY=1; API_EXTRA+=(--ws-only) ;;
+    --http-port)          shift; HTTP_PORT="$1"; API_EXTRA+=(--http-port "$1") ;;
+    --http-port=*)        HTTP_PORT="${1#*=}"; API_EXTRA+=(--http-port "${1#*=}") ;;
+    -h|--help)            sed -n '2,19p' "${BASH_SOURCE[0]}" | sed 's/^#\s\{0,1\}//'; exit 0 ;;
+    *) echo "unknown argument: $1 (try --help)"; exit 2 ;;
   esac
+  shift
 done
 
 c_g=$'\033[32m'; c_y=$'\033[33m'; c_r=$'\033[31m'; c_b=$'\033[1m'; c_0=$'\033[0m'
@@ -127,11 +134,15 @@ info "broadcaster started (mode: $MODE) — begins IDLE; transmits NOTHING until
 for _ in $(seq 1 50); do if [ -S "$SOCK" ]; then break; fi; sleep 0.1; done
 if [ -S "$SOCK" ]; then pass "IPC socket up: $SOCK"; else info "socket not seen yet ($SOCK) — the api will keep retrying"; fi
 
-( cd "$BT_CORE" && exec "$VENV_PY" -m mk4web.api ) &
+( cd "$BT_CORE" && exec "$VENV_PY" -m mk4web.api "${API_EXTRA[@]}" ) &
 API_PID=$!
 ip="$(hostname -I 2>/dev/null | awk '{print $1}')"; ip="${ip:-localhost}"
 pass "api started"
-hdr "READY — open  http://$ip:$HTTP_PORT/"
+if [ "$WS_ONLY" = "1" ]; then
+  hdr "READY — WebSocket API on ws://$ip:${MK4_WS_PORT:-8765} (no web page; bring your own client)"
+else
+  hdr "READY — open  http://$ip:$HTTP_PORT/"
+fi
 info "Cold-start in the browser: Connect → press ONE hub's button to TWO flashes (slot 1) → Ready → drive."
 info "The big STOP button (and closing the page) forces neutral. Ctrl-C here stops both processes."
 wait || true
