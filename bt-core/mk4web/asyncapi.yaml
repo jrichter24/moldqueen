@@ -65,10 +65,12 @@ channels:
       stateRequest: { $ref: '#/components/messages/StateRequest' }
       setup: { $ref: '#/components/messages/Setup' }
       mapCommand: { $ref: '#/components/messages/MapCommand' }
+      infoRequest: { $ref: '#/components/messages/InfoRequest' }
       lifecycle: { $ref: '#/components/messages/Lifecycle' }
       state: { $ref: '#/components/messages/State' }
       map: { $ref: '#/components/messages/Map' }
       mapResult: { $ref: '#/components/messages/MapResult' }
+      info: { $ref: '#/components/messages/Info' }
 
 operations:
   receiveCommands:
@@ -82,6 +84,7 @@ operations:
       - { $ref: '#/channels/control/messages/stop' }
       - { $ref: '#/channels/control/messages/stateRequest' }
       - { $ref: '#/channels/control/messages/mapCommand' }
+      - { $ref: '#/channels/control/messages/infoRequest' }
 
   sendUpdates:
     action: send
@@ -96,6 +99,7 @@ operations:
       - { $ref: '#/channels/control/messages/state' }
       - { $ref: '#/channels/control/messages/map' }
       - { $ref: '#/channels/control/messages/mapResult' }
+      - { $ref: '#/channels/control/messages/info' }
 
 components:
   messages:
@@ -136,6 +140,22 @@ components:
       title: Request current state
       summary: Ask the server to (re)send the current lifecycle + state to this client.
       payload: { $ref: '#/components/schemas/StateRequestPayload' }
+    InfoRequest:
+      name: info
+      title: Request server info
+      summary: Ask for server-info. Answered to the requesting client only with an Info message.
+      payload: { $ref: '#/components/schemas/InfoRequestPayload' }
+    Info:
+      name: info
+      title: Server info (server → requester)
+      summary: |
+        Server-info disclosure over the mandatory WS channel (works in --ws-only/
+        headless). Fields depend on the server's tier (MK4_INFO_LEVEL / --info-level),
+        which is always echoed as `info_level`:
+        - safe:  app, version, lifecycle, info_level (minimal, nothing identifying).
+        - light (DEFAULT): + radio_backend, dry_run, hci, ws_port, http_port, serve_client (NO MAC).
+        - debug: + adapter_mac, hostname, bluetoothd, host_bind, paths.
+      payload: { $ref: '#/components/schemas/InfoPayload' }
     Setup:
       name: setup
       title: Drive the connection lifecycle
@@ -260,6 +280,46 @@ components:
         cmd: { type: string, const: state }
       examples:
         - { cmd: state }
+
+    InfoRequestPayload:
+      type: object
+      additionalProperties: false
+      required: [cmd]
+      properties:
+        cmd: { type: string, const: info }
+      examples:
+        - { cmd: info }
+
+    InfoPayload:
+      type: object
+      description: |
+        Tiered server-info. Only `type`, `app`, `version`, `lifecycle`, `info_level`
+        are always present (the "safe" tier). The `light` and `debug` fields appear
+        only at those tiers — hence not "required" here.
+      required: [type, app, version, lifecycle, info_level]
+      properties:
+        type:          { type: string, const: info }
+        app:           { type: string, const: moldqueen }
+        version:       { type: string, description: 'Server version (config.VERSION).' }
+        lifecycle:     { type: string, enum: [IDLE, CONNECTING, READY] }
+        info_level:    { type: string, enum: [safe, light, debug], description: 'The active disclosure tier.' }
+        # --- light tier (and debug) ---
+        radio_backend: { type: string, enum: [rawhci, hcitool], description: 'light+ — active radio backend (default rawhci).' }
+        dry_run:       { type: boolean, description: 'light+ — configured dry-run intent (no transmit).' }
+        hci:           { type: string, description: 'light+ — HCI adapter index, e.g. "hci1" (NO MAC).' }
+        ws_port:       { type: integer, description: 'light+' }
+        http_port:     { type: integer, description: 'light+' }
+        serve_client:  { type: boolean, description: 'light+ — whether the API also serves the web page.' }
+        # --- debug tier only (identifying) ---
+        adapter_mac:   { type: [string, 'null'], description: 'debug — adapter BD address (may be null).' }
+        hostname:      { type: string, description: 'debug — server hostname.' }
+        bluetoothd:    { type: [string, 'null'], description: 'debug — systemctl is-active bluetooth.' }
+        host_bind:     { type: string, description: 'debug — bind address (MK4_HOST).' }
+        paths:         { type: object, description: 'debug — socket / channel-map / assets / web paths.' }
+      examples:
+        - { type: info, app: moldqueen, version: '0.1.0', lifecycle: IDLE, info_level: safe }
+        - { type: info, app: moldqueen, version: '0.1.0', lifecycle: READY, info_level: light,
+            radio_backend: rawhci, dry_run: false, hci: hci1, ws_port: 8765, http_port: 8080, serve_client: true }
 
     SetupPayload:
       type: object

@@ -76,12 +76,12 @@ class Controller:
 # The broadcaster needs exactly THREE BLE-advertising operations on one bound HCI
 # adapter; RadioBackend is that minimal interface, and the broadcaster calls it —
 # never hcitool directly. Two implementations:
-#   - HcitoolBackend (DEFAULT): shells out to `hcitool`. This is the PROVEN path
-#     that drives both hubs today; its commands/bytes are UNCHANGED from before.
-#   - RawHciBackend  (opt-in):  a raw AF_BLUETOOTH/BTPROTO_HCI socket that issues the
-#     SAME HCI commands WITHOUT hcitool — future-proofing, since hcitool is deprecated
-#     in BlueZ 5.64+. UNPROVEN on hardware; never the default.
-# Pick with MK4_RADIO_BACKEND=hcitool|rawhci or --radio-backend (default hcitool).
+#   - RawHciBackend  (DEFAULT): a raw AF_BLUETOOTH/BTPROTO_HCI socket that issues the
+#     HCI commands WITHOUT hcitool — future-proof, since hcitool is deprecated in
+#     BlueZ 5.64+. Hardware-proven (drives both hubs); the default since.
+#   - HcitoolBackend (LEGACY): shells out to `hcitool` — the original path, kept as a
+#     fallback for setups where the raw socket can't be used. Commands/bytes UNCHANGED.
+# Pick with MK4_RADIO_BACKEND=rawhci|hcitool or --radio-backend (default rawhci).
 #
 # The three ops map to HCI LE commands (OGF 0x08): Set Advertising Parameters
 # (OCF 0x0006), Set Advertising Data (0x0008), Set Advertise Enable (0x000a).
@@ -112,7 +112,7 @@ class RadioBackend:
 
 
 class HcitoolBackend(RadioBackend):
-    """Proven path — shells out to hcitool with the EXACT commands used before."""
+    """LEGACY fallback — shells out to hcitool with the EXACT commands used before."""
     name = "hcitool"
     def __init__(self, hci):
         self.hci = hci
@@ -131,10 +131,10 @@ class HcitoolBackend(RadioBackend):
 
 
 class RawHciBackend(RadioBackend):
-    """Opt-in — issue the SAME HCI commands over a raw AF_BLUETOOTH/BTPROTO_HCI socket,
-    no hcitool. UNPROVEN on hardware; the socket is opened lazily (never in dry-run).
-    On a real adapter this typically also needs the device DOWN + CAP_NET_RAW; left as
-    future hardware work. In dry-run it only prints the packets it WOULD send."""
+    """DEFAULT — issue the HCI commands over a raw AF_BLUETOOTH/BTPROTO_HCI socket, no
+    hcitool. Hardware-proven (drives both hubs). Needs root/CAP_NET_RAW (the socket is
+    opened lazily, never in dry-run); the adapter can stay UP. In dry-run it only prints
+    the packets it WOULD send."""
     name = "rawhci"
     preview_in_dry = True
     _HCI_COMMAND_PKT = 0x01
@@ -167,10 +167,11 @@ class RawHciBackend(RadioBackend):
 
 
 def make_backend(name, hci):
-    """Select a radio backend by name; unknown -> hcitool (the safe default)."""
-    if name == "rawhci":
-        return RawHciBackend(hci)
-    return HcitoolBackend(hci)
+    """Select a radio backend by name. "hcitool" -> the LEGACY fallback; anything else
+    (incl. unknown/unset) -> rawhci, the DEFAULT."""
+    if name == "hcitool":
+        return HcitoolBackend(hci)       # legacy fallback
+    return RawHciBackend(hci)            # default
 
 
 # ---------------------------------------------------------------- transition -> ops
@@ -325,7 +326,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true", help="log telegrams, transmit nothing")
     ap.add_argument("--hci", default=HCI)
     ap.add_argument("--radio-backend", choices=["hcitool", "rawhci"], default=RADIO_BACKEND,
-                    help="radio driver: hcitool (default, proven) or rawhci (opt-in, no hcitool)")
+                    help="radio driver: rawhci (DEFAULT, no hcitool) or hcitool (legacy fallback)")
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     backend = make_backend(a.radio_backend, a.hci)

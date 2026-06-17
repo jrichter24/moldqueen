@@ -27,7 +27,7 @@ SAFETY: on a client disconnect (or no clients), command the broadcaster to NEUTR
 
 Run:  python -m mk4web.api
 """
-import os, re, json, socket, asyncio, threading, logging, argparse
+import os, re, json, socket, asyncio, threading, logging, argparse, subprocess, platform
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from websockets.asyncio.server import serve
@@ -35,7 +35,8 @@ from websockets.asyncio.server import serve
 from . import channelmap
 from .telegram import (value_to_nibble, nibble_to_value, channel_index, N_CHANNELS, NEUTRAL,
                        motion_raw, ad_hex)
-from .config import HOST, HTTP_PORT, WS_PORT, SOCK_PATH, CHANNEL_MAP_PATH, ASSETS_DIR, SERVE_CLIENT
+from .config import (HOST, HTTP_PORT, WS_PORT, SOCK_PATH, CHANNEL_MAP_PATH, ASSETS_DIR,
+                     SERVE_CLIENT, RADIO_BACKEND, HCI, INFO_LEVEL, DRY_RUN, VERSION)
 
 log = logging.getLogger("api")
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
@@ -158,6 +159,43 @@ def map_json():
                        "active": app.active_map, "device_swap": app.device_swap})
 
 
+def _adapter_mac(hci):
+    """Best-effort adapter MAC for the debug tier (read-only hciconfig; None if N/A)."""
+    try:
+        out = subprocess.run(["hciconfig", hci], capture_output=True, text=True, timeout=2).stdout
+        m = re.search(r"([0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})", out)
+        return m.group(1) if m else None
+    except Exception:
+        return None
+
+
+def _bluetoothd_state():
+    """Best-effort bluetoothd state for the debug tier (None if unknown)."""
+    try:
+        return (subprocess.run(["systemctl", "is-active", "bluetooth"],
+                               capture_output=True, text=True, timeout=2).stdout.strip() or None)
+    except Exception:
+        return None
+
+
+def info_json(level):
+    """Server-info disclosure over the WS (mandatory channel — works in --ws-only).
+    Tiered: safe < light < debug; include only the fields the tier allows, and always
+    report info_level so the client knows the tier. Values are the API server's
+    CONFIGURED view (env/config)."""
+    info = {"type": "info", "app": "moldqueen", "version": VERSION,
+            "lifecycle": app.lifecycle, "info_level": level}
+    if level in ("light", "debug"):          # + radio + ports, but NO MAC / host identity
+        info.update({"radio_backend": RADIO_BACKEND, "dry_run": DRY_RUN, "hci": HCI,
+                     "ws_port": WS_PORT, "http_port": HTTP_PORT, "serve_client": SERVE_CLIENT})
+    if level == "debug":                     # + identifying diagnostics
+        info.update({"adapter_mac": _adapter_mac(HCI), "hostname": platform.node(),
+                     "bluetoothd": _bluetoothd_state(), "host_bind": HOST,
+                     "paths": {"sock": SOCK_PATH, "channel_map": CHANNEL_MAP_PATH,
+                               "assets": ASSETS_DIR, "web": WEB_DIR}})
+    return json.dumps(info)
+
+
 async def push(msg):
     if clients:
         await asyncio.gather(*(c.send(msg) for c in list(clients)), return_exceptions=True)
@@ -229,6 +267,8 @@ async def handler(websocket):
             elif cmd == "state":
                 await websocket.send(lifecycle_json())
                 await websocket.send(state_json())
+            elif cmd == "info":               # server-info disclosure (tiered)
+                await websocket.send(info_json(INFO_LEVEL))
     except Exception as e:
         log.debug("WS handler error: %s", e)
     finally:
@@ -351,14 +391,19 @@ async def amain(serve_client, http_port):
 
 
 def main():
+    global INFO_LEVEL                          # may be overridden by --info-level below
     ap = argparse.ArgumentParser(description="moldqueen API — WebSocket control + optional client web UI.")
     ap.add_argument("--ws-only", "--no-client", dest="ws_only", action="store_true",
                     help="WebSocket-only: do NOT serve the client web page (no HTTP server).")
     ap.add_argument("--http-port", type=int, default=None,
                     help="port for the client web UI (overrides MK4_HTTP_PORT; default %d)." % HTTP_PORT)
+    ap.add_argument("--info-level", choices=["safe", "light", "debug"], default=None,
+                    help="server-info disclosure tier (overrides MK4_INFO_LEVEL; default %s)." % INFO_LEVEL)
     a = ap.parse_args()
     serve_client = SERVE_CLIENT and not a.ws_only          # CLI --ws-only wins over env
     http_port = a.http_port if a.http_port is not None else HTTP_PORT   # CLI flag wins over env
+    if a.info_level:                                       # CLI --info-level wins over env
+        INFO_LEVEL = a.info_level
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     try:
         asyncio.run(amain(serve_client, http_port))

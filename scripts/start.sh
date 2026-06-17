@@ -14,7 +14,9 @@
 #   scripts/start.sh --http-port N   serve the client page on port N (default 8080)
 #
 # The WebSocket API (the product) always runs; serving the client web page is
-# optional. Env overrides (bt-core/mk4web/config.py): MK4_DONGLE_MAC, MK4_HCI,
+# optional. Radio backend defaults to rawhci (raw HCI socket, no hcitool); set
+# MK4_RADIO_BACKEND=hcitool for the legacy fallback. Env overrides (bt-core/mk4web/
+# config.py): MK4_DONGLE_MAC, MK4_HCI, MK4_RADIO_BACKEND, MK4_INFO_LEVEL,
 # MK4_HTTP_PORT, MK4_WS_PORT, MK4_SOCK, MK4_SERVE_CLIENT (0 = ws-only).
 set -euo pipefail
 

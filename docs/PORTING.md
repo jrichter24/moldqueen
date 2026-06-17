@@ -26,7 +26,7 @@ transition) — a USB dongle is required.
 |---|---|---|
 | **Python 3.11+** (`websockets`, pure-Python; `pytest` for tests) | ✅ arch-agnostic | no native wheels; x86 and ARM both fine |
 | `mouldking_crypt` / `telegram` (the codec) | ✅ pure Python | no hardware |
-| **BlueZ userland** — `hcitool`, `hciconfig` | ⚠️ distro-dependent | **`hcitool` is deprecated** in newer BlueZ (≈5.64+); may be absent or need a deprecated-tools build. The Pi here runs BlueZ 5.82 where it works. |
+| **BlueZ userland** — `hciconfig` (bring-up); `hcitool` only for the *legacy* backend | ⚠️ distro-dependent | The **default `rawhci` backend needs NO `hcitool`** (raw socket). `hcitool` is deprecated in newer BlueZ (≈5.64+) and only required if you opt into `MK4_RADIO_BACKEND=hcitool`. |
 | **Raw HCI access** | ❌ hardware/priv | needs **root** or `cap_net_raw,cap_net_admin`; `bluetoothd` **stopped + masked** (it grabs the adapter) |
 | **A compatible BLE adapter** | ❌ hardware | must accept *manufacturer advertising data* via HCI (`0x08 0x0008`). Most USB BT4.0+ dongles do; behavior is firmware-dependent. |
 | Adapter identity | — | found by MAC → `hciN` (`MK4_HCI`, `MK4_DONGLE_MAC`) so a USB re-enumeration doesn't matter |
@@ -41,11 +41,10 @@ share that socket — i.e. same machine; the IPC is local by design.)
 Realistically: **any Linux with BlueZ + a compatible USB BLE adapter.**
 
 1. Install Python 3.11+ and create the venv (`pip install -r bt-core/requirements.txt`).
-2. Install BlueZ userland with `hcitool`/`hciconfig`. **Gotcha:** on modern distros
-   these are deprecated/removed — you may need the distro's `bluez-deprecated`/
-   compat package, or to build BlueZ with `--enable-deprecated`. If `hcitool` truly
-   isn't available, try the opt-in **`rawhci`** backend (`MK4_RADIO_BACKEND=rawhci`),
-   which uses raw `AF_BLUETOOTH` sockets instead — unproven on hardware (see below).
+2. Install BlueZ for `hciconfig` (adapter bring-up). The **default `rawhci` backend
+   needs no `hcitool`**, so hcitool's deprecation on modern distros is a non-issue
+   unless you opt into the legacy backend (`MK4_RADIO_BACKEND=hcitool`), which then
+   needs a `bluez-deprecated`/`--enable-deprecated` build.
 3. Plug in a USB BLE dongle; `sudo systemctl mask --now bluetooth`; bring the adapter
    up (`hciconfig hciN up`). `scripts/start.sh` does the preflight (finds the dongle
    *by MAC*, masks bluetoothd, checks the venv) and works on any such box.
@@ -102,15 +101,16 @@ and containerize only the *client*. Port the core to a new SBC the normal way: L
 
 ## Radio backends (the abstraction exists)
 
-The radio layer is already behind a small **`RadioBackend`** abstraction
-(`broadcaster.py`), selectable with **`MK4_RADIO_BACKEND`** / `--radio-backend`:
+The radio layer is behind a small **`RadioBackend`** abstraction (`broadcaster.py`),
+selectable with **`MK4_RADIO_BACKEND`** / `--radio-backend`:
 
-- **`hcitool`** (DEFAULT) — the proven path that drives the hubs today.
-- **`rawhci`** (opt-in) — issues the *same* HCI commands over a raw
-  `AF_BLUETOOTH`/`BTPROTO_HCI` socket (stdlib `socket`), **no hcitool**, removing the
-  deprecation risk. **Unproven on hardware** — it likely also needs the device DOWN +
-  `CAP_NET_RAW` on a real adapter; in `--dry-run` it prints the exact HCI packets it
-  would send. Validate on hardware before relying on it.
+- **`rawhci`** (**DEFAULT**) — issues the HCI commands over a raw
+  `AF_BLUETOOTH`/`BTPROTO_HCI` socket (stdlib `socket`), **no hcitool**, so a fresh
+  install has **no BlueZ-`hcitool` dependency** and is future-proof against its
+  deprecation. Hardware-proven; needs **root / `CAP_NET_RAW`** (the adapter can stay
+  UP). In `--dry-run` it prints the exact HCI packets it would send.
+- **`hcitool`** (**legacy** fallback) — shells out to `hcitool`; select with
+  `MK4_RADIO_BACKEND=hcitool` for setups where the raw socket can't be used.
 
-So the deprecation escape hatch is in place; what's left is proving `rawhci` live and,
-if useful, a third `btmgmt` backend.
+So the default no longer depends on `hcitool`; the table's `hcitool` row above applies
+only when you opt into the legacy backend. A future `btmgmt` backend could be a third option.
