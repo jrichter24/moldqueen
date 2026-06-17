@@ -156,7 +156,7 @@ bt-core/
 ├── mk4web/                # the working control webservice
 │   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
 │   ├── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
-│   └── web/{chooser.html,dashboard.*,raw.*,clientconfig.js}  # / , /excavator , /raw
+│   └── web/{chooser.html,shell.css,clientconfig.js,layouts.json,dashboard.*,raw.*,template.*}  # / , /excavator , /raw (+ inactive template)
 ├── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                          #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
 ├── radio_worker.py        # leftover bootstrap stub (stdin → log hex; NOT used)

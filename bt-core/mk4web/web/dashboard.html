@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
   <title>moldqueen — dashboard</title>
   <link rel="icon" href="/assets/moldqueen_icon.png" />
-  <link rel="stylesheet" href="/dashboard.css" />
+  <link rel="stylesheet" href="/shell.css" />       <!-- shared shell + menu + modal/wizard base -->
+  <link rel="stylesheet" href="/dashboard.css" />   <!-- excavator-specific: stage/art/joysticks -->
+
   <script>
     // Injected by the Pi's api.py; stay valid when served raw (e.g. nginx): the port
     // is a string (parsed in clientconfig.js) and MK4_INIT is JSON.parse'd safely.

@@ -25,7 +25,7 @@ paths, and only one of them is clean today.
 | WebSocket API (`setup`/`set`/`stop`/`state`) | `api.py` | ✅ generic — raw slot/channel |
 | Connect lifecycle IDLE→CONNECTING→READY, auto-neutral safety | `broadcaster.py` + `api.py` | ✅ generic |
 | Telegram building (12 nibbles = 3 slots × 4 ch) | `telegram.py` | ✅ generic to MK4 hubs |
-| Responsive shell + menu (`#app`/`#menu`, top-bar/sidebar) | `dashboard.css` | ✅ reusable (RAW reuses it) |
+| Responsive shell + menu + modal/wizard base (`#app`/`#menu`, top-bar/sidebar) | `shell.css` | ✅ shared by all layouts |
 | Configurable WS endpoint | `clientconfig.js` (`window.MK4`) | ✅ shared by all layouts |
 | Chooser landing + remember/skip | `chooser.html` | ✅ generic |
 | **`drive`-by-function + channel map** | `channelmap.py` + per-layout `config/channel_map.<id>.json` + manifest `functions` | ✅ data-driven (per-layout set) |
@@ -50,7 +50,7 @@ the chooser builds the card from the manifest.
 - `mytoy.html` — copy `raw.html`; it already pulls in the shell:
   ```html
   <link rel="icon" href="/assets/moldqueen_icon.png" />
-  <link rel="stylesheet" href="/dashboard.css" />   <!-- shared shell + #menu -->
+  <link rel="stylesheet" href="/shell.css" />       <!-- shared shell + #menu + modal/wizard base -->
   <link rel="stylesheet" href="/mytoy.css" />
   <script>window.MK4_WS_PORT = "__WS_PORT__";</script>
   ...
@@ -67,8 +67,8 @@ the chooser builds the card from the manifest.
   - Build your toolbar into `#menu` (reuse `.tgroup`/`.dot`/`#stopBtn` classes) — you
     get the top-bar/sidebar responsive behavior for free.
   - Optional: copy RAW's condensed connection **wizard** (`.modal`/`.sheet.wiz`
-    classes in `dashboard.css`, LED-flash GIFs in `assets/*_flash.gif`).
-- `mytoy.css` — only your layout-specific styles (the shell lives in `dashboard.css`).
+    classes in `shell.css`, LED-flash GIFs in `assets/*_flash.gif`).
+- `mytoy.css` — only your layout-specific styles (the shared shell lives in `shell.css`).
 
 ### 2. Add ONE manifest entry (`bt-core/mk4web/web/layouts.json`)
 
@@ -175,7 +175,6 @@ appears on the chooser automatically — **no `api.py` edits**.
 
 ### Current limitations (be honest)
 - The **client is hand-written** (no auto-generated controls from the function set yet).
-- `dashboard.css` mixes the shared shell with excavator-only styles (CSS split pending).
 - One **global** lifecycle/state on the server — fine for one driver.
 - The **Docker** static client (`deploy/nginx-client.conf`) still needs a per-layout
   `location` line; the Pi's `api.py` derives routes automatically.
@@ -189,20 +188,22 @@ appears on the chooser automatically — **no `api.py` edits**.
 2. ✅ **Generic static handler** (Stage 2) — a layout's files serve by filename; no
    per-file `api.py` plumbing. (The client **Docker** nginx still lists routes — a
    separate config to update for that deploy.)
-3. ⏳ **`dashboard.css` mixes shell + excavator art** (Stage 4, pending). The shared
-   shell (`#app`/`#menu`) and excavator-only styles (`.joy`, `.title`, HMI labels)
-   live in one file, so a new layout pulls in unused dashboard CSS.
+3. ✅ **CSS split** (Stage 4) — the shared shell/menu/modal/wizard is `shell.css`;
+   `dashboard.css`/`raw.css`/`template.css` hold only their layout's styles. A new
+   layout links `shell.css` + its own.
 4. ✅ **Layout manifest** (Stage 1) — registration is one `web/layouts.json` entry.
-5. ⏳ **One global lifecycle/state on the server.** All clients share it; layouts
+5. ✅ **Layout template** — `web/template.{html,js,css}` + `channel_map.template.json`,
+   shipped `active:false`; copy it (above).
+6. ⏳ **One global lifecycle/state on the server.** All clients share it; layouts
    can't have independent sessions (fine for one driver, surprising for two).
-6. ⏳ **No client template** — a new function-mapped layout still needs its own JS/art
-   (the dashboard is excavator-specific). A reusable template is future work.
+7. ⏳ **No auto-generated controls** — a function-mapped layout's JS/art is still
+   hand-written (the template gives you a one-knob starting point).
 
 ## Remaining refactors
 
-- **Split CSS**: `shell.css` (shared `#app`/`#menu`/modal) vs per-layout styles (Stage 4).
-- **Layout template**: a reusable client that reads its function set + default map and
-  renders generic controls, so a new function-mapped toy needs no bespoke JS.
+- **Auto-generated controls**: a layout client that reads its function set + default
+  map and renders generic knobs, so a new function-mapped toy needs no bespoke JS.
+- **Per-session layout state** so two layouts can be driven independently.
 
 Until those land, **document and encourage the generic slot/channel path** (above) —
 it's clean and needs no core changes.

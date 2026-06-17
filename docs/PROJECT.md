@@ -2,8 +2,9 @@
 
 > This is the authoritative project document. Where any other doc (the CLAUDE.md
 > files, or the snapshots in `bt-core/reference/`) disagrees, **this file wins.**
-> Last major update: 2026-06-16 (protocol discovery + webservice + the landscape
-> **dashboard** GUI and the configurable **channel map**).
+> Last major update: 2026-06-18 (pluggable layouts: manifest + server-derived
+> `/<id>` routes + per-layout function maps + an inactive template; rawhci default
+> radio backend; server-info tiers; shared `shell.css`).
 
 ---
 
@@ -26,6 +27,11 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
 - ✅ **RAW** debug layout, a layout **chooser**, a **configurable API endpoint**
   (run the client separately / in Docker), and a **two-piece split** (mandatory
   WebSocket API + optional client web page via `--ws-only` / `--http-port`).
+- ✅ **Pluggable layouts**: a `layouts.json` manifest, **server-derived `/<id>`
+  routes**, **per-layout function maps**, an `active`/`category` schema, a copyable
+  **inactive template**, and a shared **`shell.css`**. Radio behind a backend
+  abstraction with **rawhci** (raw HCI socket, no hcitool) the default. Tiered
+  **server-info** over the WS (`{cmd:info}`) + a client readout.
 - 🔜 Next: finish the channel→function map (sweep placeholders); slot
   auto-detection; a console/AI client; then the camera/sensor/AI phases.
 
@@ -182,15 +188,23 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   **active** map (default + its overrides) and **pushes it on every connect**;
   `promote` persists it as the new default. Validation rejects duplicate
   `(slot, channel)` pairs.
-- **Layouts + chooser.** `/` serves a **layout chooser** (`mk4web/web/chooser.html`)
-  — pluggable cards (Excavator → `/excavator`, RAW → `/raw`, "bring your own") that
-  remember the last pick; an **About** overlay (disclaimer, credits, licensing, AI
-  note, author). `/raw` (`raw.{html,js,css}`) is a **RAW debug** layout: a
-  protocol-level test bench over the low-level `set`/`stop` path — pick 1-3 slots,
-  set each channel directly, build + send the telegram, and a console logs the exact
-  bytes (raw + on-air AD). All clients share `clientconfig.js` (the configurable WS
-  endpoint, persisted in localStorage — so a client can be served anywhere and
-  pointed at the Pi; see "Two-piece split" below + [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md)).
+- **Layouts + manifest + chooser.** Layouts are declared in **`mk4web/web/
+  layouts.json`** (single source of truth): per entry `{id, name, description, icon,
+  kind: function-mapped|generic|placeholder, category, active, functions?, files}`.
+  The **server DERIVES each route as `/<id>`** (not a manifest field; title is
+  display-only) and serves the files by filename; `active:false` hides a layout
+  entirely (no route, no card). `/` serves a **layout chooser** (`chooser.html`) whose
+  cards are built from the (active) manifest — Excavator → `/excavator`, RAW → `/raw`,
+  a "bring your own" placeholder — remembering the last pick; an **About** overlay
+  (disclaimer, credits, licensing, AI note, author). `/raw` (`raw.{html,js,css}`) is a
+  **RAW debug** layout over the low-level `set`/`stop` path (pick 1-3 slots, set
+  channels, build + send, console logs raw + on-air AD). A **TEMPLATE** layout ships
+  `active:false` (`template.{html,js,css}` + `config/channel_map.template.json`, one
+  function) as a copyable function-mapped starter — see
+  [`ADDING_A_LAYOUT.md`](ADDING_A_LAYOUT.md). The shared shell/menu/modal/wizard CSS is
+  **`shell.css`** (each layout links it + its own css); `clientconfig.js` is the
+  configurable WS endpoint (persisted in localStorage — serve a client anywhere and
+  point it at the Pi; see "Two-piece split" below + [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md)).
 - **Dashboard** (`mk4web/web/dashboard.{html,js,css}`, served at `/excavator`) — the
   main driving GUI, the first client of the API. Laid out over an HMI
   background (`assets/moldqueen_dashboard_v2.png`,
@@ -210,7 +224,7 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   - **Responsive shell** — viewport-sized (`100dvh`); menu is a **top bar on wide
     screens, a left sidebar on small ones** (portrait *and* landscape); the stage
     contain-fits the remaining space (STOP + fullscreen always reachable). **EN/DE**
-    toggle. *(The old dummy simple page is retired; a RAW slot/channel page is planned.)*
+    toggle. *(The old dummy simple page is retired; the **RAW** layout (`/raw`) is the slot/channel test bench.)*
 - **AsyncAPI spec** (`mk4web/asyncapi.yaml`, served at `GET /asyncapi.yaml`)
   documents the WS protocol (setup / set / **drive** / stop / state / **map** + the
   pushed lifecycle / state / map / mapresult, incl. `max`/`reverse_scale`/device-swap);
@@ -306,7 +320,7 @@ moldqueen/
 │   ├── mk4web/                # the control webservice
 │   │   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
 │   │   ├── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
-│   │   └── web/{chooser.html, dashboard.*, raw.*, clientconfig.js}   # chooser (/), dashboard (/excavator), RAW (/raw)
+│   │   └── web/{chooser.html, shell.css, clientconfig.js, layouts.json, dashboard.*, raw.*, template.*}   # chooser (/), /excavator, /raw; shell.css=shared shell; template=inactive starter
 │   └── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                              #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
 ├── java-core/                 # empty Java scaffold — future API client OR retire

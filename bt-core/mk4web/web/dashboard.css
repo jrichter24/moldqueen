@@ -1,21 +1,11 @@
-/* moldqueen landscape dashboard — overlays placed in % over the 1672×941 art.
-   Tracks + arm-lift + front-arm are PROPORTIONAL drag joysticks (drag = speed,
-   release snaps to neutral); rotation + bucket are press-and-hold buttons.
-   Typography uses cqw (1% of the stage width) so labels scale with the art and
-   always fit their textboxes on any viewport, incl. mobile. */
-:root { color-scheme: dark; }
-* { box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  margin: 0; background: #000; color: #e8eef6;
-  font-family: system-ui, -apple-system, sans-serif;
-  -webkit-user-select: none; user-select: none; touch-action: manipulation; overflow: hidden;
-}
+/* moldqueen — EXCAVATOR (13112) dashboard layout. The shared shell (#app/#menu,
+   modal/wizard base, common controls, endpoint editor) lives in shell.css, linked
+   BEFORE this file. Here: only the landscape stage/art, the joysticks/hold buttons,
+   the in-art labels, the setup hint, and the channel-assignment settings overlay.
+   Overlays placed in % over the 1672×941 art; typography uses cqw (1% of stage width)
+   so labels scale with the art and always fit their textboxes on any viewport. */
 
-/* ---- viewport-sized shell: menu strip + dashboard area, no page scroll ----
-   Default (wide/desktop): column — menu is a TOP BAR, stage fills below.
-   Small viewport (mobile, portrait AND landscape): row — menu is a LEFT SIDEBAR. */
-#app { width: 100vw; height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
+/* ---- the dashboard stage (art-fitted, never the menu) ---- */
 #stagewrap {
   flex: 1 1 auto; min-width: 0; min-height: 0;
   display: flex; align-items: center; justify-content: center;
@@ -32,40 +22,6 @@ body {
 #bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill;
       -webkit-user-drag: none; pointer-events: none; }
 #overlay { position: absolute; inset: 0; z-index: 1; }
-
-/* ---- menu strip: TOP BAR (wide) → LEFT SIDEBAR (small viewport) ---- */
-#menu {
-  flex: 0 0 auto; display: flex; align-items: center; gap: .45em;
-  padding: .35em .6em; background: #0c0f14; border-bottom: 1px solid #1e2530;
-  font-size: clamp(11px, 1.5vw, 14px); line-height: 1; overflow: auto;
-}
-#menu .grow { flex: 1 1 auto; min-width: .5em; }
-#menu .tgroup { display: flex; align-items: center; gap: .45em; flex: 0 0 auto; }
-.tgroup .lc { display: inline-flex; align-items: center; }
-.dot { width: .8em; height: .8em; border-radius: 50%; background: #c0413a; flex: none; }
-.dot.ok { background: #43d17a; }
-#menu button {
-  font: inherit; color: #e8eef6; background: rgba(40,46,58,.9); border: 1px solid #444c5e;
-  border-radius: .4em; padding: .35em .6em; cursor: pointer; white-space: nowrap; flex: 0 0 auto;
-}
-#menu button:active { background: rgba(60,68,84,.95); }
-#menu button:disabled { opacity: .4; cursor: not-allowed; }
-#menu .primary { background: #1d3a4d; border-color: #2f6f93; }
-#menu #stopBtn { background: #7a1d1d; border-color: #a33; font-weight: 700; }
-#menu #stopBtn:active { background: #9b2525; }
-#lcText { color: #cfe0f5; font-weight: 600; white-space: nowrap; }
-
-@media (max-width: 768px), (max-height: 540px) {
-  #app { flex-direction: row; }
-  #menu {
-    flex-direction: column; align-items: stretch; gap: .4em; max-width: 42vw;
-    border-bottom: none; border-right: 1px solid #1e2530;
-    overflow-y: auto; overflow-x: hidden; font-size: 12px;
-  }
-  #menu .tgroup { flex-direction: column; align-items: stretch; gap: .4em; width: 100%; }
-  #menu .lc { justify-content: center; }
-  #menu button { width: 100%; text-align: center; white-space: normal; }   /* wrap long labels, keep sidebar narrow */
-}
 
 /* ---- press-and-hold buttons (rotation / bucket) ---- */
 .hot {
@@ -116,19 +72,9 @@ body {
   background: rgba(20,28,40,.94); border: 1px solid #2f6f93; color: #d8e6f6;
   font-size: clamp(9px, 1.35cqw, 14px); line-height: 1.35;
 }
-.hidden { display: none !important; }
 
-/* ---- centered modal overlays + dim click-blocking backdrop ---- */
-.modal { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 2vh 2vw; }
+/* ---- channel-assignment settings overlay (dashboard-specific) ---- */
 #labels { z-index: 31; }   /* labels page stacks above the assignment page */
-#wizard { z-index: 32; }   /* connection wizard above everything */
-.modal .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.6); }  /* covers viewport: controls underneath are NOT clickable */
-.sheet {
-  position: relative; z-index: 1; width: min(720px, 96vw); max-height: 94vh; overflow: auto;
-  background: #141821; border: 1px solid #2a313d; border-radius: .7rem; padding: 1rem 1.2rem;
-  box-shadow: 0 12px 40px rgba(0,0,0,.6);
-}
-.sheet h2 { margin: .1rem 0 .2rem; font-size: 1.12rem; }
 .sheet .sub { color: #8e9cb2; font-size: .82rem; margin: 0 0 .7rem; }
 .srow { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; margin: .5rem 0 .8rem; }
 .srow label { font-size: .88rem; color: #c5d2e4; display: flex; align-items: center; gap: .4rem; }
@@ -143,14 +89,9 @@ table.map .tag { display: inline-block; font-size: .65rem; padding: .05rem .3rem
 .sheet input[type=text] { width: 7.5rem; }
 .sheet input[type=number] { width: 3.2rem; }
 .sheet input[type=range] { width: 5rem; vertical-align: middle; }
-.sheet button { font: inherit; color: #e8eef6; background: #23272f; border: 1px solid #3a414e; border-radius: .4rem; padding: .4rem .7rem; cursor: pointer; }
-.sheet button:active { background: #30343d; }
-.sheet button:disabled { opacity: .4; cursor: not-allowed; }
 .sheet .test { background: #243b27; border-color: #3a6f43; }
 .sheet .test.held { background: #3563a8; border-color: #5b8fd6; }
-.sheet .apply { background: #1d3a4d; border-color: #2f6f93; }
 .sheet .promote { background: #463016; border-color: #8a5a2a; }
-.actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; align-items: center; }
 /* server-info readout (tier-agnostic key/value list) */
 .infobox:empty { display: none; }
 .infobox { margin-top: .8rem; padding: .6rem .8rem; background: #15181f; border: 1px solid #2c333f;
@@ -164,33 +105,3 @@ table.map .tag { display: inline-block; font-size: .65rem; padding: .05rem .3rem
 .infobox .v { flex: 1 1 auto; color: #e3e9f2; font-family: ui-monospace, monospace; word-break: break-word; }
 #mapMsg { font-size: .82rem; flex-basis: 100%; }
 #mapMsg.ok { color: #5fd98a; } #mapMsg.bad { color: #e06b5a; }
-.muted { color: #8e9cb2; font-size: .78rem; }
-
-/* ---- connection wizard ---- */
-.sheet.wiz { width: min(440px, 94vw); text-align: center; }
-.wsteps { display: flex; justify-content: center; gap: .5rem; margin: .2rem 0 .8rem; }
-.wdot { width: .7rem; height: .7rem; border-radius: 50%; background: #2c3340; border: 1px solid #3a4250; }
-.wdot.on { background: #2f6f93; border-color: #6db0e0; box-shadow: 0 0 0 3px rgba(60,140,200,.25); }
-.wdot.done { background: #2c5a3a; border-color: #4f9f6a; }
-.media { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: .2rem 0 .6rem;
-         background: #0e1218; border: 1px solid #242c38; border-radius: .5rem; overflow: hidden;
-         display: flex; align-items: center; justify-content: center; }
-.media img { width: 100%; height: 100%; object-fit: cover; }
-.media .mediahint { position: absolute; bottom: .35rem; left: 50%; transform: translateX(-50%);
-         font-size: .72rem; color: #8090a4; background: rgba(0,0,0,.4); padding: .1rem .5rem; border-radius: .3rem; }
-.wt { margin: .2rem 0 .3rem; font-size: 1rem; color: #d6e6fb; }
-.wbody { color: #c0ccdc; font-size: .9rem; line-height: 1.4; margin: 0 0 .4rem; }
-.wactions { justify-content: center; }
-
-/* ---- configurable API endpoint editor (shared: dashboard settings + RAW) ---- */
-.eprow { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
-.eprow .eplabel { display: inline-flex; align-items: center; gap: .4rem; color: #c5d2e4; font-size: .88rem; }
-.eprow input[type=text] { font: inherit; color: #e8eef6; background: #1d222b; border: 1px solid #38404e;
-  border-radius: .35rem; padding: .25rem .45rem; width: 17rem; max-width: 70vw; }
-.eprow button { font: inherit; color: #e8eef6; background: #23272f; border: 1px solid #3a414e;
-  border-radius: .4rem; padding: .3rem .6rem; cursor: pointer; }
-.eprow button.primary { background: #1d3a4d; border-color: #2f6f93; }
-.eprow .ephint { flex-basis: 100%; color: #8e9cb2; font-size: .76rem; margin-top: .1rem; }
-.eprow .ephint code, .epstatus + .ephint code { color: #ffd56b; font-family: ui-monospace, monospace; }
-.epstatus { font-size: .8rem; font-variant-numeric: tabular-nums; }
-.epstatus.connected { color: #5fd98a; } .epstatus.retrying { color: #d8b75e; } .epstatus.failed { color: #e06b5a; }

@@ -53,13 +53,18 @@ sudo python -m mk4web.broadcaster          # live (needs hci1 up, bluetoothd mas
 python -m mk4web.api                        # page http://<pi>:8080/ + API ws://<pi>:8765
 python -m mk4web.api --ws-only              # WebSocket only (bring-your-own-client)
 ```
-**Routes:** `/` = **layout chooser** → `/excavator` (excavator) or `/raw` (RAW debug
-test bench). **Dashboard:** drag-joysticks (tracks/arms) + hold buttons (rotation/
-bucket); a **connection wizard** for cold-start (**Connect → button one hub to slot
-1 → Ready**); **Settings** to assign function→slot/channel (+ max, reverse-trim,
-invert, EN/DE labels, device-swap, **configurable WS endpoint**, Save/Promote).
-Responsive. The client can be served separately (Docker, point at the Pi via the
-endpoint setting — see [`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md)). Detail in
+**Layouts = DATA** (`web/layouts.json` manifest: `{id,name,description,icon,kind,
+category,active,functions?,files}`). The **server derives each route as `/<id>`**
+(not a manifest field); `active:false` hides a layout (no route/card) — that's how
+the inactive **template** (`template.{html,js,css}` + `channel_map.template.json`)
+ships. Shared shell/menu/modal CSS = **`shell.css`** (each layout links it + its own
+css); see [`docs/ADDING_A_LAYOUT.md`](docs/ADDING_A_LAYOUT.md). **Routes:** `/` =
+**chooser** → `/excavator` or `/raw`. **Dashboard:** drag-joysticks + hold buttons; a
+**connection wizard** (**Connect → button one hub to slot 1 → Ready**); **Settings**
+to assign function→slot/channel (+ max, reverse-trim, invert, EN/DE labels,
+device-swap, **configurable WS endpoint**, **ℹ server-info readout**, Save/Promote).
+The client can be served separately (Docker, point at the Pi via the endpoint
+setting — see [`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md)). Detail in
 [`bt-core/CLAUDE.md`](bt-core/CLAUDE.md).
 
 ## Components (one repo)

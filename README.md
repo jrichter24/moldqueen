@@ -22,9 +22,11 @@ same API.
 
 > **Status:** ✅ **core goal achieved** — *two hubs driven simultaneously from a
 > single telegram on a single radio.* Working webservice + a **landscape dashboard**
-> GUI (`/excavator`, chosen from the `/` layout chooser) with drag-joysticks, a connection wizard, and an in-GUI
-> **channel-assignment** tool over a configurable channel map. 🔜 Next: a RAW
-> slot/channel page, finish the channel map, an AI/console client, then camera + sensors.
+> GUI (`/excavator`, chosen from the `/` layout chooser) with drag-joysticks, a
+> connection wizard, and an in-GUI **channel-assignment** tool over a configurable
+> channel map; plus a **RAW** debug layout and a **pluggable-layout** system
+> (manifest + server-derived routes + per-layout function maps + a copyable template).
+> 🔜 Next: finish the channel map, an AI/console client, then camera + sensors.
 
 ## Disclaimer
 
@@ -169,7 +171,7 @@ uses the *same* API):
 │        │  WebSocket  (JSON, :8765)                                   │
 │        ▼                                                             │
 │   ┌──────────┐   Unix socket    ┌──────────────┐    BLE adverts     │
-│   │   api    │ ───────────────► │  broadcaster │ ──(hcitool, hci1)─► hubs
+│   │   api    │ ───────────────► │  broadcaster │ ──(raw HCI socket)─► hubs
 │   │  :8080   │   12-nibble      │  owns radio  │     company 0xFFF0  │
 │   │  :8765   │   state + setup  │  + state +   │                     │
 │   └──────────┘                  │  lifecycle   │                     │
@@ -180,7 +182,10 @@ uses the *same* API):
 
 - **`broadcaster.py`** — owns the radio and the authoritative 12-nibble state; runs
   a lifecycle **IDLE → CONNECTING → READY**; keepalive-broadcasts (~5/s) one MK4
-  telegram reflecting state. Reverts to neutral/IDLE if the API goes away.
+  telegram reflecting state. Reverts to neutral/IDLE if the API goes away. The radio
+  sits behind a backend abstraction: **`rawhci`** (raw `AF_BLUETOOTH`/`BTPROTO_HCI`
+  socket, no hcitool dependency) is the default; `hcitool` is a legacy fallback
+  (`MK4_RADIO_BACKEND`). Resolve the dongle **by MAC** — the `hciN` index varies.
 - **`api.py`** — the WebSocket server (the product), also serves the static page;
   owns/drives the lifecycle, maps `value→nibble`, enforces motion-only-in-READY,
   and pushes state to clients. Disconnect/no-clients → NEUTRAL.
@@ -190,7 +195,7 @@ uses the *same* API):
 | Part | Detail |
 |------|--------|
 | Control box | Raspberry Pi 3B (aarch64, 1 GB RAM) |
-| **Radio (use this)** | **hci1 = Realtek RTL8761B USB dongle** `00:A6:44:02:21:25` |
+| **Radio (use this)** | **Realtek RTL8761B USB dongle** `00:A6:44:02:21:25` (resolve by MAC; the `hciN` index varies across replugs/reboots) |
 | Spare radio | hci2 = TP-Link USB dongle `6C:4C:BC:87:D0:83` (one radio is enough) |
 | Avoid | Onboard Broadcom UART BT (hci0) — corrupts frames *at the connect transition*; plan to disable via `dtoverlay=disable-bt` |
 | Power | **Solid 5 V / 3 A** — under-voltage caused real failures; a weak PSU is the #1 gremlin |
@@ -317,8 +322,8 @@ telegram, and a console logs the exact bytes (raw + on-air AD).
 
 The channel map has a persisted **server default** and a **client active** map
 (default + overrides); the **server** resolves `function → (slot, channel, value)`
-so the broadcaster stays dumb. *(The old dummy simple page is retired; a dedicated
-RAW slot/channel page will replace it — raw `set`/`stop` remain in the API.)*
+so the broadcaster stays dumb. *(The **RAW** layout (`/raw`) is the slot/channel test
+bench over raw `set`/`stop`.)*
 
 ### Running as a service (optional)
 
@@ -468,7 +473,7 @@ moldqueen/
 ├── bt-core/                   # Python — the radios + the control service
 │   ├── mk4web/                # broadcaster · api · telegram · channelmap · mouldking_crypt · config
 │   │   ├── asyncapi.yaml       #   WS API contract (served at /asyncapi.yaml)
-│   │   └── web/{chooser.html, dashboard.*, raw.*, clientconfig.js}   #  / · /excavator · /raw
+│   │   └── web/{chooser.html, shell.css, clientconfig.js, layouts.json, dashboard.*, raw.*, template.*}  # / · /excavator · /raw (template inactive)
 │   └── reference/             # verified protocol snapshots, the codec, the APK report
 ├── java-core/                 # empty Java scaffold — future API client OR retire
 ├── web-gui/                   # original Node scaffold — superseded by mk4web's dashboard
