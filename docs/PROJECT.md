@@ -18,14 +18,16 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
   one radio.** The full control chain works end-to-end: captured app protocol →
   verified codec → one BLE advertising telegram → both hubs move.
 - ✅ A working **control webservice** (`bt-core/mk4web/`) with a WebSocket API and a
-  **landscape dashboard GUI** served at `/`: proportional drag-joysticks + hold
+  **landscape dashboard GUI** served at `/dashboard` (a layout chooser is at `/`): proportional drag-joysticks + hold
   buttons, a **connection wizard** for cold-start, and an in-GUI **channel-assignment**
   settings overlay (assign function → slot/channel, per-function max speed, reverse
   trim, invert, EN/DE labels). Drive **by function**; the server resolves it against
   a **configurable channel map** (persisted default + client overrides).
-- 🔜 Next: a dedicated **RAW** slot/channel page + a configurable API endpoint;
-  finish the channel→function map; slot auto-detection; console/AI client; then the
-  camera/sensor/AI phases.
+- ✅ **RAW** debug layout, a layout **chooser**, a **configurable API endpoint**
+  (run the client separately / in Docker), and a **two-piece split** (mandatory
+  WebSocket API + optional client web page via `--ws-only` / `--http-port`).
+- 🔜 Next: finish the channel→function map (sweep placeholders); slot
+  auto-detection; a console/AI client; then the camera/sensor/AI phases.
 
 ---
 
@@ -163,8 +165,17 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   **active** map (default + its overrides) and **pushes it on every connect**;
   `promote` persists it as the new default. Validation rejects duplicate
   `(slot, channel)` pairs.
-- **Dashboard** (`mk4web/web/dashboard.{html,js,css}`) — the **primary landing page**
-  (`/`, alias `/dashboard`), the first client of the API. Laid out over an HMI
+- **Layouts + chooser.** `/` serves a **layout chooser** (`mk4web/web/chooser.html`)
+  — pluggable cards (Excavator → `/dashboard`, RAW → `/raw`, "bring your own") that
+  remember the last pick; an **About** overlay (disclaimer, credits, licensing, AI
+  note, author). `/raw` (`raw.{html,js,css}`) is a **RAW debug** layout: a
+  protocol-level test bench over the low-level `set`/`stop` path — pick 1-3 slots,
+  set each channel directly, build + send the telegram, and a console logs the exact
+  bytes (raw + on-air AD). All clients share `clientconfig.js` (the configurable WS
+  endpoint, persisted in localStorage — so a client can be served anywhere and
+  pointed at the Pi; see "Two-piece split" below + [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md)).
+- **Dashboard** (`mk4web/web/dashboard.{html,js,css}`, served at `/dashboard`) — the
+  main driving GUI, the first client of the API. Laid out over an HMI
   background (`assets/moldqueen_dashboard_v2.png`,
   [`docs/mould_king_13112_hmi_layout_spec.md`](mould_king_13112_hmi_layout_spec.md))
   with percent coordinates:
@@ -185,7 +196,16 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
     toggle. *(The old dummy simple page is retired; a RAW slot/channel page is planned.)*
 - **AsyncAPI spec** (`mk4web/asyncapi.yaml`, served at `GET /asyncapi.yaml`)
   documents the WS protocol (setup / set / **drive** / stop / state / **map** + the
-  pushed lifecycle / state / map / mapresult); verified to match `api.py`.
+  pushed lifecycle / state / map / mapresult, incl. `max`/`reverse_scale`/device-swap);
+  verified to match `api.py`.
+- **Two-piece split (server vs client).** The **WebSocket API is mandatory** (owns
+  the radio, always on). Serving the client web page is **OPTIONAL**: on by default;
+  `--ws-only` / `--no-client` / `MK4_SERVE_CLIENT=0` runs the WebSocket only (no HTTP
+  server); `--http-port N` (CLI > `MK4_HTTP_PORT`) overrides the page port. So you can
+  (a) let the API serve the page, (b) serve the client elsewhere — script or the
+  client-only **Docker** image ([`../Dockerfile.client`](../Dockerfile.client)) — and
+  point it at the Pi via the in-app endpoint, or (c) bring your own WebSocket client.
+  Details: [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md), CORS/WS-origin permissive for LAN.
 
 **`java-core/`** (Java/Gradle scaffold) is **empty** beyond a placeholder + passing
 test. The original idea (java-core builds telegrams, bt-core re-broadcasts) was
@@ -269,7 +289,7 @@ moldqueen/
 │   ├── mk4web/                # the control webservice
 │   │   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
 │   │   ├── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
-│   │   └── web/dashboard.{html,js,css}        # the landscape dashboard (served at /)
+│   │   └── web/{chooser.html, dashboard.*, raw.*, clientconfig.js}   # chooser (/), dashboard (/dashboard), RAW (/raw)
 │   └── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                              #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
 ├── java-core/                 # empty Java scaffold — future API client OR retire

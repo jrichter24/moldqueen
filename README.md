@@ -22,7 +22,7 @@ same API.
 
 > **Status:** ✅ **core goal achieved** — *two hubs driven simultaneously from a
 > single telegram on a single radio.* Working webservice + a **landscape dashboard**
-> GUI (served at `/`) with drag-joysticks, a connection wizard, and an in-GUI
+> GUI (`/dashboard`, chosen from the `/` layout chooser) with drag-joysticks, a connection wizard, and an in-GUI
 > **channel-assignment** tool over a configurable channel map. 🔜 Next: a RAW
 > slot/channel page, finish the channel map, an AI/console client, then camera + sensors.
 
@@ -43,6 +43,8 @@ same API.
 >   kind.** The author is **not liable** for any damage to hardware, hubs, models,
 >   property, or anything else arising from its use — **you assume all risk.** This
 >   complements, and does not replace, the MIT license's no-warranty clause.
+
+🚀 **In a hurry? [`docs/QUICKSTART.md`](docs/QUICKSTART.md)** — fastest path from boxes to driving.
 
 📖 **Canonical, exhaustive reference: [`docs/PROJECT.md`](docs/PROJECT.md).** This
 README is the tour; PROJECT.md is the source of truth.
@@ -286,11 +288,17 @@ python -m mk4web.api
 All ports/HCI are env-overridable (`MK4_HCI`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, … —
 see [`bt-core/mk4web/config.py`](bt-core/mk4web/config.py)).
 
-### Dashboard & controls
+### Layouts: chooser, dashboard, RAW
 
-**`/`** (alias **`/dashboard`**) is the **landscape excavator dashboard** — the
-primary landing page — laid out over an HMI background (see
-[`docs/mould_king_13112_hmi_layout_spec.md`](docs/mould_king_13112_hmi_layout_spec.md)).
+**`/`** serves a **layout chooser** — pick **Excavator** (`/dashboard`) or **RAW**
+(`/raw`); it remembers your choice (a "Layouts" button / `/?choose` returns to it).
+An **About** overlay carries the disclaimer, credits, licensing, AI note, and author.
+
+**`/dashboard`** is the **landscape excavator dashboard**, laid out over an HMI
+background (see [`docs/mould_king_13112_hmi_layout_spec.md`](docs/mould_king_13112_hmi_layout_spec.md)).
+**`/raw`** is a **RAW debug** layout — a protocol-level test bench over the low-level
+`set`/`stop` path: choose 1-3 slots, set each channel directly, build + send the
+telegram, and a console logs the exact bytes (raw + on-air AD).
 
 - **Controls bind to functions** (left/right track, arm lift, front arm, rotation,
   bucket) via a **configurable channel map**, not raw channels. Tracks + arm
@@ -458,7 +466,7 @@ moldqueen/
 ├── bt-core/                   # Python — the radios + the control service
 │   ├── mk4web/                # broadcaster · api · telegram · channelmap · mouldking_crypt · config
 │   │   ├── asyncapi.yaml       #   WS API contract (served at /asyncapi.yaml)
-│   │   └── web/dashboard.{html,js,css}   #   the landscape dashboard (served at /)
+│   │   └── web/{chooser.html, dashboard.*, raw.*, clientconfig.js}   #  / · /dashboard · /raw
 │   └── reference/             # verified protocol snapshots, the codec, the APK report
 ├── java-core/                 # empty Java scaffold — future API client OR retire
 ├── web-gui/                   # original Node scaffold — superseded by mk4web's dashboard

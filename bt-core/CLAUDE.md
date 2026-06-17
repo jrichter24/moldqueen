@@ -78,7 +78,7 @@ lives in [`reference/`](reference/) and needs porting into the worker.
 ## mk4web — the MK4 control webservice
 
 [`mk4web/`](mk4web/) is the working control service. **The WebSocket API is the
-product**; the **landscape dashboard served at `/`** is its first client (a
+product**; the **layout chooser at `/`** (→ `/dashboard` excavator, `/raw` RAW debug) is its first client (a
 console/AI brain uses the same API). It reuses the verified codec
 (`mk4web/mouldking_crypt.py`, identical to `reference/`) — the crypt is **not**
 reinvented.
@@ -91,8 +91,11 @@ reinvented.
   → **READY** (broadcasts ONE motion telegram reflecting state, ~5/sec via the
   200 ms adv interval, on hci1 / `0xFFF0`). Motion is applied only in READY.
   **SAFETY:** if the API process disconnects → reset to IDLE (advertising off, neutral).
-- **`api.py`** — WebSocket server + serves the dashboard; **owns/drives the
-  lifecycle**, holds the **channel map** (default + session active + device-swap) and
+- **`api.py`** — WebSocket server (always on) + **optionally** serves the client web
+  page (`--ws-only`/`MK4_SERVE_CLIENT=0` to skip HTTP; `--http-port N`). Permissive
+  CORS/WS-origin so the client can be served separately (Docker) and pointed back via
+  its configurable endpoint (`clientconfig.js`). **Owns/drives the lifecycle**, holds
+  the **channel map** (default + session active + device-swap) and
   **resolves `drive` by function → (slot,channel,value)** via `channelmap.py`
   (invert + device-swap + `reverse_scale`), forwards to the broadcaster, pushes
   state. **SAFETY:** client disconnect (or no clients) → NEUTRAL.
@@ -115,7 +118,8 @@ Run (from `bt-core/`, in the venv; or `../scripts/start.sh`):
 ```bash
 python -m mk4web.broadcaster --dry-run   # log telegrams, transmit NOTHING (start here)
 python -m mk4web.broadcaster             # live: drives the dongle (needs hci1 up, bluetoothd masked)
-python -m mk4web.api                      # dashboard http://<pi>:8080/ , API ws://<pi>:8765
+python -m mk4web.api                      # page :8080 (/ chooser, /dashboard, /raw) + API ws :8765
+python -m mk4web.api --ws-only             # WebSocket only (no page); --http-port N moves the page
 ```
 
 ### Slots — guided manually (auto-detect unsolved)
@@ -137,7 +141,7 @@ bt-core/
 ├── mk4web/                # the working control webservice
 │   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
 │   ├── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
-│   └── web/dashboard.{html,js,css}   # the landscape dashboard (served at /)
+│   └── web/{chooser.html,dashboard.*,raw.*,clientconfig.js}  # / , /dashboard , /raw
 ├── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                          #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
 ├── radio_worker.py        # leftover bootstrap stub (stdin → log hex; NOT used)

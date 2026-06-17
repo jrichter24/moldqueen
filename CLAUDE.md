@@ -34,22 +34,28 @@ the terse must-knows for next session; PROJECT.md wins on any disagreement.
 
 The control stack is the **`bt-core/mk4web/`** Python webservice: a **broadcaster**
 (owns the radio + 12-nibble state, lifecycle IDLE→CONNECTING→READY, auto-neutral
-safety) + an **API** (the **WebSocket API `:8765` is the product**; resolves
-`drive`-by-function via `channelmap.py`; serves the **landscape dashboard at `/`**
-on `:8080`; AsyncAPI spec at `/asyncapi.yaml`). The dashboard is the first client;
-a console/AI brain uses the same API. Run from `bt-core/` in the venv (or
-`scripts/start.sh`):
+safety) + an **API** (the **WebSocket API `:8765` is the product**, always on;
+resolves `drive`-by-function via `channelmap.py`; AsyncAPI at `/asyncapi.yaml`).
+**WS commands:** `setup` (connect/ready/reset), `drive` (by function), `set` (raw
+slot/ch), `stop`, `state`, `map` (get/set/swap/promote); pushes `lifecycle`/`state`/
+`map`/`mapresult`. Serving the client web page is **OPTIONAL**: on by default,
+`--ws-only` (=`MK4_SERVE_CLIENT=0`) runs WS-only, `--http-port N` overrides the page
+port. Run from `bt-core/` in the venv (or `scripts/start.sh`):
 
 ```bash
 python -m mk4web.broadcaster --dry-run    # logs telegrams, no transmit (start here)
 sudo python -m mk4web.broadcaster          # live (needs hci1 up, bluetoothd masked)
-python -m mk4web.api                        # dashboard http://<pi>:8080/ , API ws://<pi>:8765
+python -m mk4web.api                        # page http://<pi>:8080/ + API ws://<pi>:8765
+python -m mk4web.api --ws-only              # WebSocket only (bring-your-own-client)
 ```
-**Dashboard:** drag-joysticks (tracks/arms) + hold buttons (rotation/bucket); a
-**connection wizard** for cold-start (**Connect → button one hub to slot 1 → Ready**);
-a **Settings** overlay to assign function→slot/channel (+ max, reverse-trim, invert,
-EN/DE labels, device-swap, Save/Promote). Responsive (top-bar desktop / sidebar
-mobile). Detail in [`bt-core/CLAUDE.md`](bt-core/CLAUDE.md).
+**Routes:** `/` = **layout chooser** → `/dashboard` (excavator) or `/raw` (RAW debug
+test bench). **Dashboard:** drag-joysticks (tracks/arms) + hold buttons (rotation/
+bucket); a **connection wizard** for cold-start (**Connect → button one hub to slot
+1 → Ready**); **Settings** to assign function→slot/channel (+ max, reverse-trim,
+invert, EN/DE labels, device-swap, **configurable WS endpoint**, Save/Promote).
+Responsive. The client can be served separately (Docker, point at the Pi via the
+endpoint setting — see [`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md)). Detail in
+[`bt-core/CLAUDE.md`](bt-core/CLAUDE.md).
 
 ## Components (one repo)
 
