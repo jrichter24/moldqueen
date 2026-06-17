@@ -296,6 +296,12 @@ moldqueen/
 └── web-gui/                   # original Node scaffold — superseded by mk4web's dashboard
 ```
 
+Other docs: [`QUICKSTART.md`](QUICKSTART.md) (boxes → driving),
+[`REMOTE_CLIENT.md`](REMOTE_CLIENT.md) (run the client separately),
+[`ADDING_A_LAYOUT.md`](ADDING_A_LAYOUT.md) (contribute a layout/toy — generic path
+is clean, function-mapped is core-coupled), [`PORTING.md`](PORTING.md) (other
+boards / containers — the radio core is hardware-bound).
+
 Scratch working copies live outside the repo in `~/scratch/mk-refs/` (the
 `mkconnect-python` reference clone, the test tools, capture parsers). Not version-
 controlled; the repo's `bt-core/reference/` holds the durable snapshots.

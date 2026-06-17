@@ -492,6 +492,10 @@ stack is entirely in `bt-core/mk4web/`.
 
 ## Development
 
+- **Add your own layout / toy:** [`docs/ADDING_A_LAYOUT.md`](docs/ADDING_A_LAYOUT.md)
+  (the clean path = a generic slot/channel layout, no server change).
+- **Run on another board / in a container:** [`docs/PORTING.md`](docs/PORTING.md)
+  (the radio core is hardware-bound — honest caveats inside).
 - **Minimal dependencies** (1 GB Pi): the service needs only `websockets`.
 - **Tests:** `cd bt-core && source .venv/bin/activate && pytest`.
 - **Conventions:** small, clear conventional commits (`feat:`/`fix:`/`docs:`/`chore:`);
