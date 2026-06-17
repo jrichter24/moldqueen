@@ -20,6 +20,7 @@ const T = {
         full: "⛶", settings: "⚙", layouts: "Layouts", close: "Close", lang: "DE", deviceSwap: "Swap hubs 0↔1",
         saveClose: "Save and Close", discard: "Discard", promote: "Promote → default",
         resetMap: "Reset to default", labelsBtn: "Labels…", back: "Back", revtrim: "Rev ×",
+        serverInfo: "ℹ Server info", infoConnectFirst: "Connect first", infoFetching: "Fetching…", infoTier: "tier",
         fn: "Function", slot: "Slot", ch: "Ch", invert: "Inv", maxsp: "Max", test: "Test",
         labEn: "Label EN", labDe: "Label DE", assign: "Channel assignment",
         assignSub: "Drag/Test a control, see which motor moves, then set its slot/channel, max and reverse-trim here. Save for this session, or Promote to save as the new default. Occupied target channels are swapped automatically.",
@@ -43,6 +44,7 @@ const T = {
         full: "⛶", settings: "⚙", layouts: "Layouts", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
         saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern",
         resetMap: "Auf Standard zurück", labelsBtn: "Labels…", back: "Zurück", revtrim: "Rev ×",
+        serverInfo: "ℹ Server-Info", infoConnectFirst: "Erst verbinden", infoFetching: "Lädt…", infoTier: "Stufe",
         fn: "Funktion", slot: "Slot", ch: "Kan", invert: "Inv", maxsp: "Max", test: "Test",
         labEn: "Label EN", labDe: "Label DE", assign: "Kanalzuordnung",
         assignSub: "Steuerung ziehen/testen, sehen welcher Motor läuft, dann Slot/Kanal, Max und Rückwärts-Trim setzen. Für die Sitzung speichern oder als Standard speichern. Belegte Zielkanäle werden automatisch getauscht.",
@@ -186,6 +188,7 @@ function connect() {
     else if (m.type === "state" && m.slots) { grid = m.slots; refreshValues(); }
     else if (m.type === "map") onMap(m);
     else if (m.type === "mapresult") onMapResult(m);
+    else if (m.type === "info") onInfo(m);
   };
 }
 function pushActiveMap() { if (activeMap) send({ cmd: "map", action: "set", map: activeMap }); }
@@ -482,8 +485,10 @@ function buildAssign() {
         <button id="labelsBtn">${t.labelsBtn}</button>
         <button class="promote" id="promoteBtn">${t.promote}</button>
         <button id="resetMapBtn">${t.resetMap}</button>
+        <button id="infoBtn">${t.serverInfo}</button>
         <span id="mapMsg"></span>
       </div>
+      <div class="infobox" id="infoBox"></div>
     </div>`;
   $("settings").querySelector(".backdrop").onclick = discardEdits;   // click-out = discard (no silent save)
   MK4.buildEndpointRow($("epRow"), reconnectWS);
@@ -503,7 +508,45 @@ function buildAssign() {
   $("labelsBtn").onclick = openLabels;
   $("promoteBtn").onclick = promoteMap;
   $("resetMapBtn").onclick = () => { editMap = JSON.parse(JSON.stringify(defaultMap || placeholderMap())); buildAssign(); };
+  $("infoBtn").onclick = requestInfo;
+  if (lastInfo) onInfo(lastInfo);   // re-render last fetched info across rebuilds
 }
+
+// ---- server-info readout (tier-agnostic: render whatever fields come back) ----
+let lastInfo = null;
+function requestInfo() {
+  const box = $("infoBox"); if (!box) return;
+  if (!ws || ws.readyState !== 1) {           // graceful: no hang when disconnected
+    lastInfo = null;
+    box.innerHTML = `<div class="ihead">${tr().serverInfo}</div><div class="kv"><span class="muted">${tr().infoConnectFirst}</span></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="ihead">${tr().serverInfo}</div><div class="kv"><span class="muted">${tr().infoFetching}</span></div>`;
+  send({ cmd: "info" });                        // server replies {type:"info", ...} -> onInfo
+}
+
+function onInfo(m) {
+  lastInfo = m;
+  const box = $("infoBox"); if (!box) return;   // only when the settings page is open
+  const ORDER = ["app", "version", "info_level", "lifecycle", "radio_backend", "dry_run",
+                 "hci", "ws_port", "http_port", "serve_client", "adapter_mac", "hostname",
+                 "bluetoothd", "host_bind", "paths"];
+  const fmtVal = v => {
+    if (v === null || v === undefined) return "<span class='muted'>—</span>";
+    if (Array.isArray(v)) return v.map(esc).join(", ");
+    if (typeof v === "object") return Object.entries(v).map(([k, val]) => `${esc(k)}: ${esc(val)}`).join("<br>");
+    if (typeof v === "boolean") return v ? "yes" : "no";
+    return esc(v);
+  };
+  const keys = Object.keys(m).filter(k => k !== "type")     // iterate WHATEVER came back (tier-agnostic)
+    .sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
+  const tier = m.info_level ? ` <span class="tag ph">${tr().infoTier}: ${esc(m.info_level)}</span>` : "";
+  const rows = keys.map(k =>
+    `<div class="kv"><span class="k">${esc(k)}</span><span class="v">${fmtVal(m[k])}</span></div>`).join("");
+  box.innerHTML = `<div class="ihead">${tr().serverInfo}${tier}<button id="infoRefresh" class="mini" title="refresh">↻</button></div>${rows}`;
+  const rb = $("infoRefresh"); if (rb) rb.onclick = requestInfo;
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
 // TEST pulse: drive the IN-PROGRESS edited slot/channel directly (raw set, swap-adjusted),
 // so it reflects the current unsaved selection without needing Save first. READY-gated.

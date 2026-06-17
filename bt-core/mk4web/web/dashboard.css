@@ -151,6 +151,17 @@ table.map .tag { display: inline-block; font-size: .65rem; padding: .05rem .3rem
 .sheet .apply { background: #1d3a4d; border-color: #2f6f93; }
 .sheet .promote { background: #463016; border-color: #8a5a2a; }
 .actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; align-items: center; }
+/* server-info readout (tier-agnostic key/value list) */
+.infobox:empty { display: none; }
+.infobox { margin-top: .8rem; padding: .6rem .8rem; background: #15181f; border: 1px solid #2c333f;
+  border-radius: .5rem; font-size: .82rem; }
+.infobox .ihead { display: flex; align-items: center; gap: .5rem; font-weight: 600; color: #cdd9ea;
+  margin-bottom: .45rem; }
+.infobox .mini { margin-left: auto; padding: .1rem .45rem; font-size: .8rem; line-height: 1; }
+.infobox .kv { display: flex; gap: .8rem; padding: .15rem 0; border-top: 1px solid #20262f; }
+.infobox .kv:first-of-type { border-top: 0; }
+.infobox .k { flex: 0 0 38%; color: #8aa0bd; font-family: ui-monospace, monospace; }
+.infobox .v { flex: 1 1 auto; color: #e3e9f2; font-family: ui-monospace, monospace; word-break: break-word; }
 #mapMsg { font-size: .82rem; flex-basis: 100%; }
 #mapMsg.ok { color: #5fd98a; } #mapMsg.bad { color: #e06b5a; }
 .muted { color: #8e9cb2; font-size: .78rem; }
