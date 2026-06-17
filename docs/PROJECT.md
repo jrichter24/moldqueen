@@ -18,7 +18,7 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
   one radio.** The full control chain works end-to-end: captured app protocol →
   verified codec → one BLE advertising telegram → both hubs move.
 - ✅ A working **control webservice** (`bt-core/mk4web/`) with a WebSocket API and a
-  **landscape dashboard GUI** served at `/dashboard` (a layout chooser is at `/`): proportional drag-joysticks + hold
+  **landscape dashboard GUI** served at `/excavator` (a layout chooser is at `/`): proportional drag-joysticks + hold
   buttons, a **connection wizard** for cold-start, and an in-GUI **channel-assignment**
   settings overlay (assign function → slot/channel, per-function max speed, reverse
   trim, invert, EN/DE labels). Drive **by function**; the server resolves it against
@@ -183,7 +183,7 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   `promote` persists it as the new default. Validation rejects duplicate
   `(slot, channel)` pairs.
 - **Layouts + chooser.** `/` serves a **layout chooser** (`mk4web/web/chooser.html`)
-  — pluggable cards (Excavator → `/dashboard`, RAW → `/raw`, "bring your own") that
+  — pluggable cards (Excavator → `/excavator`, RAW → `/raw`, "bring your own") that
   remember the last pick; an **About** overlay (disclaimer, credits, licensing, AI
   note, author). `/raw` (`raw.{html,js,css}`) is a **RAW debug** layout: a
   protocol-level test bench over the low-level `set`/`stop` path — pick 1-3 slots,
@@ -191,7 +191,7 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   bytes (raw + on-air AD). All clients share `clientconfig.js` (the configurable WS
   endpoint, persisted in localStorage — so a client can be served anywhere and
   pointed at the Pi; see "Two-piece split" below + [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md)).
-- **Dashboard** (`mk4web/web/dashboard.{html,js,css}`, served at `/dashboard`) — the
+- **Dashboard** (`mk4web/web/dashboard.{html,js,css}`, served at `/excavator`) — the
   main driving GUI, the first client of the API. Laid out over an HMI
   background (`assets/moldqueen_dashboard_v2.png`,
   [`docs/mould_king_13112_hmi_layout_spec.md`](mould_king_13112_hmi_layout_spec.md))
@@ -306,7 +306,7 @@ moldqueen/
 │   ├── mk4web/                # the control webservice
 │   │   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
 │   │   ├── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
-│   │   └── web/{chooser.html, dashboard.*, raw.*, clientconfig.js}   # chooser (/), dashboard (/dashboard), RAW (/raw)
+│   │   └── web/{chooser.html, dashboard.*, raw.*, clientconfig.js}   # chooser (/), dashboard (/excavator), RAW (/raw)
 │   └── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                              #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
 ├── java-core/                 # empty Java scaffold — future API client OR retire

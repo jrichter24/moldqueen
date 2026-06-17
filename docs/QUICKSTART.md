@@ -31,7 +31,7 @@ The broadcaster starts **IDLE** — nothing is transmitted until you connect in 
 ## 2. Open the page, pick a layout
 
 Browse to **`http://<pi-ip>:8080/`** → the **layout chooser** → **Excavator (13112)**
-(opens `/dashboard`). (Your choice is remembered next time.)
+(opens `/excavator`). (Your choice is remembered next time.)
 
 ## 3. Cold-start with the wizard
 

@@ -16,8 +16,9 @@
       var stored = localStorage.getItem("mk4_layout");
       var m = window.__LAYOUTS__;
       if (force || !stored || !m) return;
-      var L = m.layouts.filter(function (x) { return x.id === stored && x.route; })[0];
-      if (L) location.replace(L.route);
+      var L = m.layouts.filter(function (x) { return x.id === stored && x.kind !== "placeholder"; })[0];
+      // route is server-derived (/<id>); fall back to /<id> if served raw (no injection).
+      if (L) location.replace(L.route || ("/" + L.id));
     })();
   </script>
   <style>
@@ -193,11 +194,15 @@
     // that are real layouts use an <img> icon path).
     var BYO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"></rect><path d="M12 9v6M9 12h6"></path></svg>';
 
+    // route is server-derived (/<id>); fall back to /<id> when served raw (no injection).
+    function routeOf(L) { return L.kind === "placeholder" ? null : (L.route || ("/" + L.id)); }
+
     function cardHtml(L) {                       // render ONE manifest entry -> a card (same DOM as before)
       var ghost = L.kind === "placeholder";
       var art = ghost ? BYO_SVG : '<img src="' + esc(L.icon) + '" alt="" />';
       var cta = ghost ? "Contribute ▸" : "Open ▸";
-      var attrs = 'data-id="' + esc(L.id) + '"' + (L.route ? ' data-route="' + esc(L.route) + '"' : '') + (ghost ? ' data-byo="1"' : '');
+      var route = routeOf(L);
+      var attrs = 'data-id="' + esc(L.id) + '"' + (route ? ' data-route="' + esc(route) + '"' : '') + (ghost ? ' data-byo="1"' : '');
       return '<button class="card' + (ghost ? ' ghost' : '') + '" ' + attrs + '>' +
              '<div class="art">' + art + '</div>' +
              '<div class="body"><h2>' + esc(L.name) + '</h2><div class="desc">' + esc(L.description) + '</div>' +

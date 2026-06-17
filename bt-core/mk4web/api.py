@@ -44,14 +44,13 @@ NEUTRAL_STATE = [NEUTRAL] * N_CHANNELS
 IDLE, CONNECTING, READY = "IDLE", "CONNECTING", "READY"
 
 # ---- layout manifest (single source of truth: web/layouts.json) --------------
-# Each layout declares id/name/description/route/icon/kind and its client files.
-# Both the served routes and the chooser CARDS (injected into chooser.html / fetched
-# at /layouts.json) derive from this — add a layout here (+ drop its files in web/)
-# and it surfaces in both, with NO api.py change (STAGE 2: generic static handler).
-#
-# Only the "pretty" HTML routes (/dashboard, /raw) need a manifest mapping (they are
-# not filenames). Everything else — *.js/*.css/*.json under web/, /assets/** — is
-# served generically by filename (see WebHandler._serve_static).
+# Each layout declares id/name/description/icon/kind and its client files. The ROUTE
+# is NOT a manifest field — the server DERIVES it as /<id> (id sanitized to a URL-safe
+# segment), so renaming a display title never changes a route. The chooser CARDS get
+# the derived route (the server augments each layout with `route` before injecting it /
+# serving /layouts.json). Add a layout (+ its files in web/) and it surfaces in both
+# the chooser and the routes with NO api.py change. .js/.css are served generically by
+# filename (see WebHandler._serve_static).
 _CTYPES = {
     "js": "text/javascript; charset=utf-8", "css": "text/css; charset=utf-8",
     "json": "application/json; charset=utf-8", "html": "text/html; charset=utf-8",
@@ -70,17 +69,38 @@ def _load_layouts():
         return []
 
 
+def _safe_id(layout_id):
+    """A URL-safe path segment from a layout id (unsafe chars -> '-', trimmed). '' if
+    nothing usable remains."""
+    return re.sub(r"[^A-Za-z0-9._-]", "-", str(layout_id or "")).strip("-")
+
+
 def _build_html_routes(layouts):
-    """Derive {path -> html file} for the layouts' pretty routes (e.g. /dashboard ->
-    dashboard.html, plus the /dashboard.html alias). The layout's .js/.css are NOT
-    listed here — they are served generically by filename."""
-    routes = {}
+    """SERVER-GENERATE each layout's route as /<id> and return {route -> html file}.
+    The route is derived from the (sanitized) id, NOT a manifest field — the title is
+    display-only. On a route collision (e.g. two ids sanitizing to the same segment)
+    later layouts get -2, -3, … appended. Each layout dict is augmented in place with
+    its derived `route` so the chooser/manifest follow automatically. .js/.css are NOT
+    listed here (served generically by filename)."""
+    routes, used = {}, set()
     for lay in layouts:
-        files, route = lay.get("files") or {}, lay.get("route")
-        html = files.get("html")
-        if route and html:
-            routes[route] = html
-            routes["/" + html] = html            # alias /dashboard.html
+        html = (lay.get("files") or {}).get("html")
+        sid = _safe_id(lay.get("id"))
+        if not sid:
+            log.warning("layout %r has no URL-safe id — skipped", lay.get("id"))
+            continue
+        if not html:                              # e.g. the "bring your own" placeholder: no route
+            continue
+        route = "/" + sid
+        if route in used:                         # collision -> enumerate (-2, -3, …)
+            n = 2
+            while "%s-%d" % (route, n) in used:
+                n += 1
+            route = "%s-%d" % (route, n)
+            log.warning("layout id %r route collides -> using %s", lay.get("id"), route)
+        used.add(route)
+        routes[route] = html
+        lay["route"] = route                      # augment so the chooser + /layouts.json follow
     return routes
 
 
@@ -426,15 +446,18 @@ class WebHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split("?")[0]
-        # "/" = layout chooser. The dashboard/RAW "pretty" routes map to their declared
-        # HTML via the manifest (HTML_ROUTES). EVERY other file — clientconfig.js,
-        # *.js/*.css, layouts.json, /assets/** — is served generically by filename, so a
+        # "/" = layout chooser. Each layout's server-derived route (/<id>, in HTML_ROUTES)
+        # serves its injected HTML. /layouts.json returns the manifest WITH derived routes
+        # (so the chooser's fetch-fallback gets them too). EVERY other file —
+        # clientconfig.js, *.js/*.css, /assets/** — is served generically by filename, so a
         # new layout needs only its manifest entry + files (no route plumbing here).
         # asyncapi.yaml sits beside api.py (not in web/) so it keeps a small mapping.
         if path in ("/", "/index.html"):
             self._send_web_html("chooser.html")
-        elif path in HTML_ROUTES:                          # /dashboard, /raw (+ .html aliases) -> injected HTML
+        elif path in HTML_ROUTES:                          # /<id> (e.g. /excavator, /raw) -> injected HTML
             self._send_web_html(HTML_ROUTES[path])
+        elif path == "/layouts.json":                      # manifest WITH server-derived routes
+            self._send(200, LAYOUTS_JSON.encode(), _CTYPES["json"])
         elif path == "/asyncapi.yaml":                     # API contract, lives beside api.py
             self._serve_file(os.path.join(os.path.dirname(__file__), "asyncapi.yaml"), _CTYPES["yaml"])
         else:                                              # generic by-filename static handler

@@ -9,9 +9,22 @@ It builds and broadcasts **MK4 BLE "telegrams"** that drive the excavator's hubs
 
 The working control stack is **[`mk4web/`](mk4web/)** (see below). It broadcasts the
 **MK4 12-channel nibble protocol** — **one** telegram drives **all** hubs at once
-(company `0xFFF0`) — on a USB dongle (**hci1**) via raw HCI (`hcitool`). The verified
-codec is [`reference/mouldking_crypt.py`](reference/mouldking_crypt.py).
+(company `0xFFF0`) — on a USB dongle (resolved by MAC, see below) via raw HCI. The
+verified codec is [`reference/mouldking_crypt.py`](reference/mouldking_crypt.py).
 (`radio_worker.py` is a leftover stub from the bootstrap — not used.)
+
+## ⚠️ Operational gotchas (live service)
+
+- **Restart the API after editing `api.py` / routes / `web/layouts.json` / WS
+  handlers** — the running process serves **stale** behavior (404 new routes, missing
+  fields, old layout). Restart the API **and verify live** before calling it done.
+  Static `.js`/`.css`/`.html` serve from disk per request (browser **hard-refresh**
+  only; no restart).
+- **Restart by EXACT PID.** Never `pkill`/`kill` by name or `--radio-backend`
+  substring — it has killed the **live broadcaster** (the broadcaster shares those
+  strings). The broadcaster usually needs **no** restart; only the API does.
+- **Dongle re-enumerates** (`hci1`→`hci3`) and comes up DOWN. Resolve by **MAC
+  `00:A6:44:02:21:25`** / use `../scripts/start.sh`; never assume a fixed `hciN`.
 
 ## Stack
 
@@ -78,7 +91,7 @@ lives in [`reference/`](reference/) and needs porting into the worker.
 ## mk4web — the MK4 control webservice
 
 [`mk4web/`](mk4web/) is the working control service. **The WebSocket API is the
-product**; the **layout chooser at `/`** (→ `/dashboard` excavator, `/raw` RAW debug) is its first client (a
+product**; the **layout chooser at `/`** (→ `/excavator` excavator, `/raw` RAW debug) is its first client (a
 console/AI brain uses the same API). It reuses the verified codec
 (`mk4web/mouldking_crypt.py`, identical to `reference/`) — the crypt is **not**
 reinvented.
@@ -120,7 +133,7 @@ Run (from `bt-core/`, in the venv; or `../scripts/start.sh`):
 ```bash
 python -m mk4web.broadcaster --dry-run   # log telegrams, transmit NOTHING (start here)
 python -m mk4web.broadcaster             # live: drives the dongle (needs hci1 up, bluetoothd masked)
-python -m mk4web.api                      # page :8080 (/ chooser, /dashboard, /raw) + API ws :8765
+python -m mk4web.api                      # page :8080 (/ chooser, /excavator, /raw) + API ws :8765
 python -m mk4web.api --ws-only             # WebSocket only (no page); --http-port N moves the page
 ```
 
@@ -143,7 +156,7 @@ bt-core/
 ├── mk4web/                # the working control webservice
 │   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
 │   ├── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
-│   └── web/{chooser.html,dashboard.*,raw.*,clientconfig.js}  # / , /dashboard , /raw
+│   └── web/{chooser.html,dashboard.*,raw.*,clientconfig.js}  # / , /excavator , /raw
 ├── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                          #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
 ├── radio_worker.py        # leftover bootstrap stub (stdin → log hex; NOT used)

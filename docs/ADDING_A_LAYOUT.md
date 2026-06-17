@@ -41,8 +41,9 @@ reuses the shell + menu + lifecycle + endpoint config, and knows nothing about
 
 ## The clean path: a generic (slot/channel) layout
 
-You write 3 client files and touch 2 small registration points. **No Python/protocol
-changes.**
+You write 3 client files and add **one manifest entry**. **No Python/route/chooser
+edits** — the server derives the route from the id, serves the files by filename, and
+the chooser builds the card from the manifest.
 
 ### 1. Create the client files (`bt-core/mk4web/web/`)
 
@@ -69,32 +70,34 @@ changes.**
     classes in `dashboard.css`, LED-flash GIFs in `assets/*_flash.gif`).
 - `mytoy.css` — only your layout-specific styles (the shell lives in `dashboard.css`).
 
-### 2. Register the routes (`bt-core/mk4web/api.py`, `do_GET`)
+### 2. Add ONE manifest entry (`bt-core/mk4web/web/layouts.json`)
 
-Add three branches next to the `raw` ones:
-```python
-elif path in ("/mytoy", "/mytoy.html"): self._send_web_html("mytoy.html")
-elif path == "/mytoy.js":  self._send_web_file("mytoy.js",  "text/javascript; charset=utf-8")
-elif path == "/mytoy.css": self._send_web_file("mytoy.css", "text/css; charset=utf-8")
+```json
+{ "id": "mytoy", "name": "My Toy", "description": "One line.",
+  "icon": "/assets/mytoy_icon.png", "kind": "generic",
+  "files": { "html": "mytoy.html", "js": "mytoy.js", "css": "mytoy.css" } }
 ```
-(`__WS_PORT__` is injected by `_send_web_html`; served raw by nginx it falls back via
-`clientconfig.js`.)
+That's the whole registration. The server then, with **no api.py change**:
+- **derives the route** `/mytoy` from the `id` (server-generated — `id` must be
+  URL-safe; the `name`/title is display-only and never affects the route). On the
+  off chance two ids collide, later ones get `-2`, `-3` appended.
+- **serves the files by filename** (`/mytoy.html` injected, `/mytoy.js`, `/mytoy.css`
+  via the generic static handler).
+- **builds the chooser card** from the entry (icon, name, description) and wires it to
+  the derived route (the chooser reads the route the server injects, or falls back to
+  `/<id>` when served raw).
 
-### 3. Add the chooser card (`bt-core/mk4web/web/chooser.html`)
-
-- Add your route to the skip map: `var routes = { excavator:"/dashboard", raw:"/raw", mytoy:"/mytoy" };`
-- Add a `<button class="card" data-layout="mytoy" data-route="/mytoy">` with an icon
-  (`/assets/<your>.png` or an inline SVG), an UPPERCASE title, and a one-line desc.
-
-### 4. (Optional) Serve it separately
+### 3. (Optional) Serve it separately (Docker)
 
 If you serve the client via the Docker image, add your files to `Dockerfile.client`
-+ a route in `deploy/nginx-client.conf` (`location = /mytoy { try_files /mytoy.html =404; }`).
-Then point it at the Pi via the in-app endpoint setting (see
-[`REMOTE_CLIENT.md`](REMOTE_CLIENT.md)).
+(it copies all of `web/`, so they're included) and a route line in
+`deploy/nginx-client.conf` (`location = /mytoy { try_files /mytoy.html =404; }`) — the
+**static nginx mirror is the one place that still needs a per-layout line** (the Pi's
+api.py derives it automatically; a static server can't). Then point it at the Pi via
+the in-app endpoint setting (see [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md)).
 
 That's the whole clean path. You inherit the radio, lifecycle, safety, endpoint
-config, and responsive chrome; you only write the toy's control surface over
+config, responsive chrome, and routing; you only write the toy's control surface over
 slot/channel.
 
 ---

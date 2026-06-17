@@ -46,7 +46,7 @@ The Pi's API is **permissive by design** for a LAN hobby tool:
 
 A **client-only** image ([`Dockerfile.client`](../Dockerfile.client)) packages just
 the static UI behind nginx — **no broadcaster, no radio**. nginx mirrors the Pi's
-routes (`/` → chooser, `/dashboard`, `/raw`; see
+routes (`/` → chooser, `/excavator`, `/raw`; see
 [`deploy/nginx-client.conf`](../deploy/nginx-client.conf)).
 
 ```bash

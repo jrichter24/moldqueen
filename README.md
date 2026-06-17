@@ -22,7 +22,7 @@ same API.
 
 > **Status:** ✅ **core goal achieved** — *two hubs driven simultaneously from a
 > single telegram on a single radio.* Working webservice + a **landscape dashboard**
-> GUI (`/dashboard`, chosen from the `/` layout chooser) with drag-joysticks, a connection wizard, and an in-GUI
+> GUI (`/excavator`, chosen from the `/` layout chooser) with drag-joysticks, a connection wizard, and an in-GUI
 > **channel-assignment** tool over a configurable channel map. 🔜 Next: a RAW
 > slot/channel page, finish the channel map, an AI/console client, then camera + sensors.
 
@@ -205,7 +205,7 @@ moldqueen is two cleanly separable features:
 - **API server — REQUIRED.** The broadcaster (owns the radio) + the **WebSocket API**
   (the product). The WebSocket is *always* opened; this is what actually controls the
   excavator. Runs on the Pi.
-- **Client web UI — OPTIONAL.** The chooser/dashboard/RAW pages are a convenience for
+- **Client web UI — OPTIONAL.** The chooser/excavator/RAW pages are a convenience for
   *driving* the API. They're not required to control the machine.
 
 Three ways to use it:
@@ -290,11 +290,11 @@ see [`bt-core/mk4web/config.py`](bt-core/mk4web/config.py)).
 
 ### Layouts: chooser, dashboard, RAW
 
-**`/`** serves a **layout chooser** — pick **Excavator** (`/dashboard`) or **RAW**
+**`/`** serves a **layout chooser** — pick **Excavator** (`/excavator`) or **RAW**
 (`/raw`); it remembers your choice (a "Layouts" button / `/?choose` returns to it).
 An **About** overlay carries the disclaimer, credits, licensing, AI note, and author.
 
-**`/dashboard`** is the **landscape excavator dashboard**, laid out over an HMI
+**`/excavator`** is the **landscape excavator dashboard**, laid out over an HMI
 background (see [`docs/mould_king_13112_hmi_layout_spec.md`](docs/mould_king_13112_hmi_layout_spec.md)).
 **`/raw`** is a **RAW debug** layout — a protocol-level test bench over the low-level
 `set`/`stop` path: choose 1-3 slots, set each channel directly, build + send the
@@ -468,7 +468,7 @@ moldqueen/
 ├── bt-core/                   # Python — the radios + the control service
 │   ├── mk4web/                # broadcaster · api · telegram · channelmap · mouldking_crypt · config
 │   │   ├── asyncapi.yaml       #   WS API contract (served at /asyncapi.yaml)
-│   │   └── web/{chooser.html, dashboard.*, raw.*, clientconfig.js}   #  / · /dashboard · /raw
+│   │   └── web/{chooser.html, dashboard.*, raw.*, clientconfig.js}   #  / · /excavator · /raw
 │   └── reference/             # verified protocol snapshots, the codec, the APK report
 ├── java-core/                 # empty Java scaffold — future API client OR retire
 ├── web-gui/                   # original Node scaffold — superseded by mk4web's dashboard

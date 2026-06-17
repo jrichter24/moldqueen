@@ -53,7 +53,7 @@ sudo python -m mk4web.broadcaster          # live (needs hci1 up, bluetoothd mas
 python -m mk4web.api                        # page http://<pi>:8080/ + API ws://<pi>:8765
 python -m mk4web.api --ws-only              # WebSocket only (bring-your-own-client)
 ```
-**Routes:** `/` = **layout chooser** → `/dashboard` (excavator) or `/raw` (RAW debug
+**Routes:** `/` = **layout chooser** → `/excavator` (excavator) or `/raw` (RAW debug
 test bench). **Dashboard:** drag-joysticks (tracks/arms) + hold buttons (rotation/
 bucket); a **connection wizard** for cold-start (**Connect → button one hub to slot
 1 → Ready**); **Settings** to assign function→slot/channel (+ max, reverse-trim,
@@ -70,6 +70,20 @@ endpoint setting — see [`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md)). Deta
   telegrams" plan is **SUPERSEDED** (telegrams are built in Python). **Decision:**
   future API client (a JVM brain) OR retire. Not on the control path.
 - **[`web-gui/`](web-gui/)** — original Node scaffold, superseded by mk4web's page.
+
+## Operational gotchas (running the live service)
+
+- **Restart the API after changing `api.py` / routes / manifest / WS handlers** — the
+  running process holds the old code and serves **stale** behavior (404 on new routes,
+  missing response fields, old layout). Always restart the API **and verify live**
+  before reporting done. (Static `.js`/`.css`/`.html` serve from disk per request — a
+  browser **hard-refresh** suffices for those; no restart needed.)
+- **Restart the API by EXACT PID only.** Never `pkill`/`kill` by name or backend
+  substring — that has killed the **live broadcaster** twice. The broadcaster usually
+  needs **no** restart; only the API does. Find the API pid, `kill -TERM <pid>`, relaunch.
+- **The dongle re-enumerates** (`hci1`→`hci3` after replug/reboot) and comes up DOWN.
+  **Resolve by MAC `00:A6:44:02:21:25`** (or just use `scripts/start.sh`, which finds
+  it by MAC + brings it up); **never assume a fixed `hciN`**.
 
 ## Open problems (see `docs/PROJECT.md` §8)
 

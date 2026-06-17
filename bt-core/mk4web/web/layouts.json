@@ -1,11 +1,10 @@
 {
-  "_comment": "Layout manifest — the SINGLE source of truth for layouts. The server (api.py) derives its HTML/JS/CSS routes from this, and the chooser builds its cards from this (injected inline, or fetched at /layouts.json when served raw). Add a layout here and it surfaces in BOTH the chooser and the routes. kind: function-mapped | generic | placeholder.",
+  "_comment": "Layout manifest — the SINGLE source of truth for layouts. The server (api.py) DERIVES each layout's route as /<id> (route is NOT a manifest field; the title is display-only and does not affect the route) and serves its HTML/JS/CSS; the chooser builds its cards from this (the server injects the derived route, or the chooser falls back to /<id> when served raw). Add a layout here and it surfaces in BOTH the chooser and the routes. id must be URL-safe. kind: function-mapped | generic | placeholder.",
   "layouts": [
     {
       "id": "excavator",
       "name": "Excavator (13112)",
       "description": "Drive the excavator — full dashboard.",
-      "route": "/dashboard",
       "icon": "/assets/excavator_icon.png",
       "kind": "function-mapped",
       "functions": ["left_track", "right_track", "arm_lift", "front_arm", "rotation", "bucket"],
@@ -15,7 +14,6 @@
       "id": "raw",
       "name": "RAW (Debug)",
       "description": "Low-level telegram test bench.",
-      "route": "/raw",
       "icon": "/assets/generic_icon.png",
       "kind": "generic",
       "files": { "html": "raw.html", "js": "raw.js", "css": "raw.css" }
