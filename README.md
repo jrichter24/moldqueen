@@ -492,9 +492,11 @@ stack is entirely in `bt-core/mk4web/`.
 
 ## Credits & license
 
-- **Author:** [Jens Richter](https://www.linkedin.com/in/li-jens-richter) — physicist
-  by training, working in optimization. *Built for my son Jonas, who loves excavators
-  and helicopters.*
+- **Author:** Built by Jens Richter. Background in physics and electrical engineering;
+  by day I work on tour optimization with genetic and AI algorithms at
+  [DNA Evolutions](https://www.dna-evolutions.com/). Find me on
+  [LinkedIn](https://www.linkedin.com/in/li-jens-richter). *Built for my son Jonas, who
+  loves excavators and helicopters.*
 - Protocol groundwork: [`J0EK3R/mkconnect-python`](https://github.com/J0EK3R/mkconnect-python)
   (the MK4/MK6 reference and `MouldKingCrypt`). Our `mouldking_crypt.py` is a
   **port/derivative** of their `MouldKingCrypt`, **used under the MIT License**
