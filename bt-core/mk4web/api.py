@@ -45,10 +45,20 @@ IDLE, CONNECTING, READY = "IDLE", "CONNECTING", "READY"
 
 # ---- layout manifest (single source of truth: web/layouts.json) --------------
 # Each layout declares id/name/description/route/icon/kind and its client files.
-# Both the served ROUTES (below) and the chooser CARDS (injected into chooser.html /
-# fetched at /layouts.json) derive from this — add a layout here and it surfaces in
-# both. STAGE 2 will replace the explicit per-file route maps with a generic handler.
-_STATIC_CTYPE = {"js": "text/javascript; charset=utf-8", "css": "text/css; charset=utf-8"}
+# Both the served routes and the chooser CARDS (injected into chooser.html / fetched
+# at /layouts.json) derive from this — add a layout here (+ drop its files in web/)
+# and it surfaces in both, with NO api.py change (STAGE 2: generic static handler).
+#
+# Only the "pretty" HTML routes (/dashboard, /raw) need a manifest mapping (they are
+# not filenames). Everything else — *.js/*.css/*.json under web/, /assets/** — is
+# served generically by filename (see WebHandler._serve_static).
+_CTYPES = {
+    "js": "text/javascript; charset=utf-8", "css": "text/css; charset=utf-8",
+    "json": "application/json; charset=utf-8", "html": "text/html; charset=utf-8",
+    "yaml": "application/yaml; charset=utf-8", "svg": "image/svg+xml",
+    "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "webp": "image/webp",
+    "gif": "image/gif", "mp4": "video/mp4", "webm": "video/webm",
+}
 
 
 def _load_layouts():
@@ -60,24 +70,22 @@ def _load_layouts():
         return []
 
 
-def _build_routes(layouts):
-    """Derive {path -> html file} and {path -> (file, ctype)} from the manifest."""
-    html_routes, static_files = {}, {}
+def _build_html_routes(layouts):
+    """Derive {path -> html file} for the layouts' pretty routes (e.g. /dashboard ->
+    dashboard.html, plus the /dashboard.html alias). The layout's .js/.css are NOT
+    listed here — they are served generically by filename."""
+    routes = {}
     for lay in layouts:
         files, route = lay.get("files") or {}, lay.get("route")
         html = files.get("html")
         if route and html:
-            html_routes[route] = html                 # e.g. /dashboard -> dashboard.html
-            html_routes["/" + html] = html            # alias /dashboard.html
-        for kind in ("js", "css"):
-            fn = files.get(kind)
-            if fn:
-                static_files["/" + fn] = (fn, _STATIC_CTYPE[kind])   # /dashboard.js -> (dashboard.js, ctype)
-    return html_routes, static_files
+            routes[route] = html
+            routes["/" + html] = html            # alias /dashboard.html
+    return routes
 
 
 LAYOUTS = _load_layouts()
-HTML_ROUTES, STATIC_FILES = _build_routes(LAYOUTS)
+HTML_ROUTES = _build_html_routes(LAYOUTS)
 LAYOUTS_JSON = json.dumps({"layouts": LAYOUTS})
 
 
@@ -353,49 +361,47 @@ class WebHandler(BaseHTTPRequestHandler):
             html = html.replace("__INIT_JSON__", js_str)
         self._send(200, html.encode(), "text/html; charset=utf-8")
 
-    def _send_web_file(self, name, ctype):
-        with open(os.path.join(WEB_DIR, name), "rb") as f:
-            self._send(200, f.read(), ctype)
+    def _serve_file(self, abspath, ctype):
+        try:
+            with open(abspath, "rb") as f:
+                self._send(200, f.read(), ctype)
+        except OSError:
+            self._send(404, b"404", "text/plain")
+
+    def _serve_static(self, path):
+        """Generic static handler: serve a file BY NAME from web/ (or assets/ for
+        /assets/**), content-type by extension, with path-traversal protection. No
+        per-file plumbing — a new layout's *.js/*.css (and shared infra like
+        clientconfig.js / layouts.json) serve automatically once the file exists."""
+        if path.startswith("/assets/"):
+            base, rel = os.path.abspath(ASSETS_DIR), path[len("/assets/"):]
+        else:
+            base, rel = os.path.abspath(WEB_DIR), path.lstrip("/")
+        ext = rel.rsplit(".", 1)[-1].lower() if "." in rel else ""
+        ctype = _CTYPES.get(ext)
+        fp = os.path.normpath(os.path.join(base, rel))
+        ok = (rel and re.fullmatch(r"[A-Za-z0-9._/-]+", rel) and ".." not in rel.split("/")
+              and (fp == base or fp.startswith(base + os.sep)) and ctype and os.path.isfile(fp))
+        if ok:
+            self._serve_file(fp, ctype)
+        else:
+            self._send(404, b"404", "text/plain")
 
     def do_GET(self):
         path = self.path.split("?")[0]
-        # "/" presents a LAYOUT CHOOSER (pluggable layouts). The dashboard/RAW HTML
-        # routes and their .js/.css are DERIVED from the layout manifest (web/
-        # layouts.json) — see HTML_ROUTES / STATIC_FILES above — not hardcoded here.
+        # "/" = layout chooser. The dashboard/RAW "pretty" routes map to their declared
+        # HTML via the manifest (HTML_ROUTES). EVERY other file — clientconfig.js,
+        # *.js/*.css, layouts.json, /assets/** — is served generically by filename, so a
+        # new layout needs only its manifest entry + files (no route plumbing here).
+        # asyncapi.yaml sits beside api.py (not in web/) so it keeps a small mapping.
         if path in ("/", "/index.html"):
             self._send_web_html("chooser.html")
-        elif path in HTML_ROUTES:                          # /dashboard, /raw, … (+ .html aliases)
+        elif path in HTML_ROUTES:                          # /dashboard, /raw (+ .html aliases) -> injected HTML
             self._send_web_html(HTML_ROUTES[path])
-        elif path == "/clientconfig.js":                   # shared client infra (not a layout)
-            self._send_web_file("clientconfig.js", "text/javascript; charset=utf-8")
-        elif path in STATIC_FILES:                         # /dashboard.js, /raw.css, … from the manifest
-            fn, ctype = STATIC_FILES[path]
-            self._send_web_file(fn, ctype)
-        elif path == "/layouts.json":                      # the manifest itself (chooser fetch fallback)
-            self._send_web_file("layouts.json", "application/json; charset=utf-8")
-        elif path.startswith("/assets/"):                  # static assets (UI background, wizard media)
-            rel = path[len("/assets/"):]
-            ext = rel.rsplit(".", 1)[-1].lower() if "." in rel else ""
-            ctype = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
-                     "svg": "image/svg+xml", "webp": "image/webp", "gif": "image/gif",
-                     "mp4": "video/mp4", "webm": "video/webm"}.get(ext)
-            base = os.path.abspath(ASSETS_DIR)
-            fp = os.path.normpath(os.path.join(base, rel))
-            ok = (re.fullmatch(r"[A-Za-z0-9._/-]+", rel) and ".." not in rel.split("/")
-                  and (fp == base or fp.startswith(base + os.sep)) and ctype and os.path.isfile(fp))
-            if ok:
-                with open(fp, "rb") as f:
-                    self._send(200, f.read(), ctype)
-            else:
-                self._send(404, b"asset not found", "text/plain")
-        elif path == "/asyncapi.yaml":   # the WebSocket API's AsyncAPI 3.0 spec
-            try:
-                with open(os.path.join(os.path.dirname(__file__), "asyncapi.yaml"), "rb") as f:
-                    self._send(200, f.read(), "application/yaml; charset=utf-8")
-            except OSError:
-                self._send(404, b"asyncapi.yaml not found", "text/plain")
-        else:
-            self._send(404, b"404", "text/plain")
+        elif path == "/asyncapi.yaml":                     # API contract, lives beside api.py
+            self._serve_file(os.path.join(os.path.dirname(__file__), "asyncapi.yaml"), _CTYPES["yaml"])
+        else:                                              # generic by-filename static handler
+            self._serve_static(path)
 
     def log_message(self, *a):
         pass
