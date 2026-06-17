@@ -23,7 +23,7 @@
     },
     "arm_lift": {
       "slot": 0,
-      "channel": 1,
+      "channel": 3,
       "invert": false,
       "label_en": "Arm up/down",
       "label_de": "Arm heben/senken",
@@ -33,7 +33,7 @@
     },
     "front_arm": {
       "slot": 0,
-      "channel": 3,
+      "channel": 1,
       "invert": false,
       "label_en": "Front arm",
       "label_de": "Vorderarm",

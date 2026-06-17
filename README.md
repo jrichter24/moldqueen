@@ -392,15 +392,15 @@ persisted default in `config/channel_map.<layout>.json` (the excavator's is
 live in the GUI. The excavator's six functions, each `{slot, channel, invert, max, reverse_scale, label_en,
 label_de}`. The server resolves `drive` against the **active** map (default + the
 client's overrides; `promote` saves a map as the new default). Current default —
-only `bucket` and `left_track` are transmit-confirmed, the rest are placeholders to
-sweep:
+`bucket`, `left_track`, `arm_lift`, `front_arm` are transmit-confirmed; `rotation`
+and `right_track` are placeholders to sweep:
 
 | Function | Slot | Ch | Global nibble | Status |
 |----------|------|----|--------------:|--------|
 | **bucket** (shovel) | 0 | 0 | ch0 | ✅ confirmed |
-| arm_lift | 0 | 1 | ch1 | placeholder |
+| **arm_lift** | 0 | 3 | ch3 | ✅ confirmed (hardware test) |
 | rotation | 0 | 2 | ch2 | placeholder |
-| front_arm | 0 | 3 | ch3 | placeholder |
+| **front_arm** | 0 | 1 | ch1 | ✅ confirmed (hardware test) |
 | **left_track** | 1 | 0 | ch4 | ✅ confirmed (inverted) |
 | right_track | 1 | 2 | ch6 | placeholder |
 

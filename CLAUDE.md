@@ -30,7 +30,9 @@ the terse must-knows for next session; PROJECT.md wins on any disagreement.
   the layout's set. Drive **by FUNCTION**; the **server** resolves
   function→(slot,channel,value) (+ invert, device-0/1 swap, `reverse_scale` trim,
   per-function `max`) — broadcaster stays dumb. Transmit-confirmed: **bucket =
-  slot0/ch0** (shovel), **left_track = slot1/ch0** (= global ch4); rest placeholders.
+  slot0/ch0** (shovel), **left_track = slot1/ch0** (= global ch4), **arm_lift =
+  slot0/ch3**, **front_arm = slot0/ch1** (last two from the 2026-06-17 hardware test,
+  swapped from the placeholders); rotation/right_track still placeholders.
   **Two-hub simultaneous CONFIRMED.**
 
 ## The working software: `bt-core/mk4web/`

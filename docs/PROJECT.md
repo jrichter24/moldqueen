@@ -117,15 +117,16 @@ The excavator's six functions: `left_track`, `right_track`, `arm_lift`, `front_a
 reverse_scale, label_en, label_de}`. **(slot, channel)** is within-slot; the global
 nibble index = `slot*4 + channel`. A layout with no functions (RAW) uses none of this.
 
-**Current default** (function → assignment). Only `bucket` and `left_track` are
-**transmit-confirmed**; the rest are placeholders to be swept/confirmed:
+**Current default** (function → assignment). `bucket`, `left_track`, `arm_lift`,
+`front_arm` are **transmit-confirmed**; `rotation`/`right_track` are placeholders to
+be swept/confirmed:
 
 | Function | Slot | Ch | Global nib | invert | Status |
 |----------|------|----|-----------:|--------|--------|
 | **bucket** (shovel) | 0 | 0 | ch0 | – | ✅ CONFIRMED (moved @ 0xb / 0x5) |
-| arm_lift | 0 | 1 | ch1 | – | placeholder |
+| **arm_lift** | 0 | 3 | ch3 | – | ✅ CONFIRMED (hardware test 2026-06-17) |
 | rotation | 0 | 2 | ch2 | – | placeholder |
-| front_arm | 0 | 3 | ch3 | – | placeholder |
+| **front_arm** | 0 | 1 | ch1 | – | ✅ CONFIRMED (hardware test 2026-06-17) |
 | **left_track** | 1 | 0 | ch4 | **true** | ✅ CONFIRMED (moved @ 0xb) |
 | right_track | 1 | 2 | ch6 | – | placeholder |
 
