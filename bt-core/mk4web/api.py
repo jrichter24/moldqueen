@@ -262,13 +262,14 @@ def info_json(level):
     CONFIGURED view (env/config)."""
     info = {"type": "info", "app": "moldqueen", "version": VERSION,
             "lifecycle": app.lifecycle, "info_level": level}
-    if level in ("light", "debug"):          # + radio + ports, but NO MAC / host identity
+    if level in ("light", "debug"):          # + radio + ports + active layout, but NO MAC / host identity
         info.update({"radio_backend": RADIO_BACKEND, "dry_run": DRY_RUN, "hci": HCI,
-                     "ws_port": WS_PORT, "http_port": HTTP_PORT, "serve_client": SERVE_CLIENT})
+                     "ws_port": WS_PORT, "http_port": HTTP_PORT, "serve_client": SERVE_CLIENT,
+                     "layout": app.layout_id})   # active function-mapped layout id (non-sensitive)
     if level == "debug":                     # + identifying diagnostics
         cmap = channel_map_path(app.layout_id) if app.layout_id else None
         info.update({"adapter_mac": _adapter_mac(HCI), "hostname": platform.node(),
-                     "bluetoothd": _bluetoothd_state(), "host_bind": HOST, "layout": app.layout_id,
+                     "bluetoothd": _bluetoothd_state(), "host_bind": HOST,
                      "paths": {"sock": SOCK_PATH, "config_dir": CONFIG_DIR, "channel_map": cmap,
                                "assets": ASSETS_DIR, "web": WEB_DIR}})
     return json.dumps(info)
