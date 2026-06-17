@@ -21,6 +21,9 @@ const T = {
         saveClose: "Save and Close", discard: "Discard", promote: "Promote → default",
         resetMap: "Reset to default", labelsBtn: "Labels…", back: "Back", revtrim: "Rev ×",
         serverInfo: "ℹ Server info", infoConnectFirst: "Connect first", infoFetching: "Fetching…", infoTier: "tier",
+        tabConnection: "Connection", tabChannels: "Channels", tabLabels: "Labels", tabServerInfo: "Server info",
+        connSub: "Set the WebSocket API endpoint this page talks to (empty = this page’s host).",
+        infoSub: "What the server reports — depends on its disclosure tier.",
         fn: "Function", slot: "Slot", ch: "Ch", invert: "Inv", maxsp: "Max", test: "Test",
         labEn: "Label EN", labDe: "Label DE", assign: "Channel assignment",
         assignSub: "Drag/Test a control, see which motor moves, then set its slot/channel, max and reverse-trim here. Save for this session, or Promote to save as the new default. Occupied target channels are swapped automatically.",
@@ -45,6 +48,9 @@ const T = {
         saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern",
         resetMap: "Auf Standard zurück", labelsBtn: "Labels…", back: "Zurück", revtrim: "Rev ×",
         serverInfo: "ℹ Server-Info", infoConnectFirst: "Erst verbinden", infoFetching: "Lädt…", infoTier: "Stufe",
+        tabConnection: "Verbindung", tabChannels: "Kanäle", tabLabels: "Labels", tabServerInfo: "Server-Info",
+        connSub: "WebSocket-API-Endpunkt dieser Seite (leer = Host dieser Seite).",
+        infoSub: "Was der Server meldet — je nach Offenlegungsstufe.",
         fn: "Funktion", slot: "Slot", ch: "Kan", invert: "Inv", maxsp: "Max", test: "Test",
         labEn: "Label EN", labDe: "Label DE", assign: "Kanalzuordnung",
         assignSub: "Steuerung ziehen/testen, sehen welcher Motor läuft, dann Slot/Kanal, Max und Rückwärts-Trim setzen. Für die Sitzung speichern oder als Standard speichern. Belegte Zielkanäle werden automatisch getauscht.",
@@ -439,18 +445,51 @@ function buildWizard() {
 // ---- settings: two CENTERED overlay pages (assignment + labels) ----
 let editMap = null;   // shared working copy while either page is open
 
-function openSettings() { editMap = mapForEdit(); buildAssign(); $("settings").classList.remove("hidden"); }
-function closeAll() { releaseSettingsTests(); $("settings").classList.add("hidden"); $("labels").classList.add("hidden"); }
+function openSettings() { editMap = mapForEdit(); buildSettings(); $("settings").classList.remove("hidden"); }
+function closeAll() { releaseSettingsTests(); $("settings").classList.add("hidden"); }
 function swapAdj(slot) { return (deviceSwap && (slot === 0 || slot === 1)) ? 1 - slot : slot; }
-function rebuildOpenSettings() {   // re-render whichever settings page is currently visible
-  if (!$("settings").classList.contains("hidden")) buildAssign();
-  else if (!$("labels").classList.contains("hidden")) buildLabels();
+function rebuildOpenSettings() {   // re-render the open settings overlay (keeps the current tab)
+  if (!$("settings").classList.contains("hidden")) buildSettings();
 }
 
-// ---- page 1: channel assignment (slot/channel/max/invert/rev-trim/Test) — NO labels ----
-function buildAssign() {
-  if (!editMap) editMap = mapForEdit();   // never null -> Settings always renders
+// ====== TABBED settings overlay: Connection · Channels · Labels · Server info ======
+// One overlay, four panels (one visible). Each panel owns its own actions. editMap is
+// module state preserved across tab switches; all tabs render OFFLINE (no deadlock).
+let settingsTab = "channels";
+function showTab(name) { settingsTab = name; releaseSettingsTests(); buildSettings(); }
+
+function buildSettings() {
+  if (!editMap) editMap = mapForEdit();   // never null -> always renders, even offline
   const t = tr();
+  const TABS = [["connection", t.tabConnection], ["channels", t.tabChannels],
+                ["labels", t.tabLabels], ["info", t.tabServerInfo]];
+  const bar = TABS.map(([id, lbl]) =>
+    `<button class="stab${settingsTab === id ? " on" : ""}" data-tab="${id}">${lbl}</button>`).join("");
+  const panel = settingsTab === "connection" ? connectionPanel(t)
+              : settingsTab === "labels" ? labelsPanel(t)
+              : settingsTab === "info" ? infoPanel(t)
+              : channelsPanel(t);
+  $("settings").innerHTML =
+    `<div class="backdrop"></div><div class="sheet">
+       <div class="stabs">${bar}</div>
+       <div class="spanel">${panel}</div>
+     </div>`;
+  $("settings").querySelector(".backdrop").onclick = discardEdits;   // click-out = discard (no silent save)
+  $("settings").querySelectorAll(".stab").forEach(b => { b.onclick = () => showTab(b.dataset.tab); });
+  ({ connection: wireConnection, channels: wireChannels, labels: wireLabels, info: wireInfo }[settingsTab])();
+}
+
+// ---- Connection tab: endpoint editor + status (usable OFFLINE — set endpoint first) ----
+function connectionPanel(t) {
+  return `<h2>${t.tabConnection}</h2><p class="sub">${t.connSub}</p><div class="eprow" id="epRow"></div>`;
+}
+function wireConnection() {
+  MK4.buildEndpointRow($("epRow"), reconnectWS);
+  MK4.setStatus(wsStatus);   // restore last known status into the freshly-built #epStatus
+}
+
+// ---- Channels tab: assignment table + swap + its own action row ----
+function channelsPanel(t) {
   const rows = FN.map(fn => {
     const a = editMap.functions[fn];
     const opt = (n, sel) => `<option value="${n}"${n === sel ? " selected" : ""}>${n}</option>`;
@@ -467,32 +506,23 @@ function buildAssign() {
       <td><button class="test" data-fn="${fn}">${t.test}</button></td>
     </tr>`;
   }).join("");
-  $("settings").innerHTML =
-    `<div class="backdrop"></div><div class="sheet">
-      <h2>${t.assign}</h2>
-      <p class="sub">${t.assignSub}</p>
-      <div class="srow eprow" id="epRow"></div>
-      <div class="srow">
-        <label><input type="checkbox" id="swapChk"${deviceSwap ? " checked" : ""}> ${t.deviceSwap}</label>
-        <span class="muted">${lifecycle !== "READY" ? "· " + t.readyOnly : ""}</span>
-      </div>
-      <table class="map"><thead><tr>
-        <th>${t.fn}</th><th>${t.slot}</th><th>${t.ch}</th><th>${t.maxsp}</th><th>${t.revtrim}</th><th>${t.invert}</th><th></th>
-      </tr></thead><tbody>${rows}</tbody></table>
-      <div class="actions">
-        <button class="apply" id="saveBtn">${t.saveClose}</button>
-        <button id="discardBtn">${t.discard}</button>
-        <button id="labelsBtn">${t.labelsBtn}</button>
-        <button class="promote" id="promoteBtn">${t.promote}</button>
-        <button id="resetMapBtn">${t.resetMap}</button>
-        <button id="infoBtn">${t.serverInfo}</button>
-        <span id="mapMsg"></span>
-      </div>
-      <div class="infobox" id="infoBox"></div>
+  return `<h2>${t.assign}</h2><p class="sub">${t.assignSub}</p>
+    <div class="srow">
+      <label><input type="checkbox" id="swapChk"${deviceSwap ? " checked" : ""}> ${t.deviceSwap}</label>
+      <span class="muted">${lifecycle !== "READY" ? "· " + t.readyOnly : ""}</span>
+    </div>
+    <table class="map"><thead><tr>
+      <th>${t.fn}</th><th>${t.slot}</th><th>${t.ch}</th><th>${t.maxsp}</th><th>${t.revtrim}</th><th>${t.invert}</th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table>
+    <div class="actions">
+      <button class="apply" id="saveBtn">${t.saveClose}</button>
+      <button id="discardBtn">${t.discard}</button>
+      <button class="promote" id="promoteBtn">${t.promote}</button>
+      <button id="resetMapBtn">${t.resetMap}</button>
+      <span id="mapMsg"></span>
     </div>`;
-  $("settings").querySelector(".backdrop").onclick = discardEdits;   // click-out = discard (no silent save)
-  MK4.buildEndpointRow($("epRow"), reconnectWS);
-  MK4.setStatus(wsStatus);   // restore last known status into the freshly-built #epStatus
+}
+function wireChannels() {
   $("settings").querySelectorAll("tr[data-fn]").forEach(trEl => {
     const fn = trEl.dataset.fn, a = editMap.functions[fn];
     trEl.querySelector(".e-slot").onchange = e => assignCell(fn, +e.target.value, a.channel);
@@ -505,12 +535,43 @@ function buildAssign() {
   $("swapChk").onchange = e => { send({ cmd: "map", action: "swap", value: e.target.checked }); };
   $("saveBtn").onclick = saveClose;
   $("discardBtn").onclick = discardEdits;
-  $("labelsBtn").onclick = openLabels;
   $("promoteBtn").onclick = promoteMap;
-  $("resetMapBtn").onclick = () => { editMap = JSON.parse(JSON.stringify(defaultMap || placeholderMap())); buildAssign(); };
-  $("infoBtn").onclick = requestInfo;
-  if (lastInfo) onInfo(lastInfo);   // re-render last fetched info across rebuilds
+  $("resetMapBtn").onclick = () => { editMap = JSON.parse(JSON.stringify(defaultMap || placeholderMap())); buildSettings(); };
 }
+
+// ---- Labels tab: EN/DE per function + own Save/Discard (folded-in old Labels page) ----
+function labelsPanel(t) {
+  const rows = FN.map(fn => {
+    const a = editMap.functions[fn];
+    return `<tr data-fn="${fn}">
+      <td class="fn">${fn}</td>
+      <td><input type="text" class="e-en" value="${(a.label_en || "").replace(/"/g, "&quot;")}"></td>
+      <td><input type="text" class="e-de" value="${(a.label_de || "").replace(/"/g, "&quot;")}"></td>
+    </tr>`;
+  }).join("");
+  return `<h2>${t.labelsTitle}</h2><p class="sub">${t.labelsSub}</p>
+    <table class="map"><thead><tr><th>${t.fn}</th><th>${t.labEn}</th><th>${t.labDe}</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    <div class="actions">
+      <button class="apply" id="lblSaveBtn">${t.saveClose}</button>
+      <button id="lblDiscardBtn">${t.discard}</button>
+    </div>`;
+}
+function wireLabels() {
+  $("settings").querySelectorAll("tr[data-fn]").forEach(trEl => {
+    const a = editMap.functions[trEl.dataset.fn];
+    trEl.querySelector(".e-en").oninput = e => { a.label_en = e.target.value; };
+    trEl.querySelector(".e-de").oninput = e => { a.label_de = e.target.value; };
+  });
+  $("lblSaveBtn").onclick = saveClose;
+  $("lblDiscardBtn").onclick = discardEdits;
+}
+
+// ---- Server info tab: tier-agnostic readout (auto-fetch on open) ----
+function infoPanel(t) {
+  return `<h2>${t.tabServerInfo}</h2><p class="sub">${t.infoSub}</p><div class="infobox" id="infoBox"></div>`;
+}
+function wireInfo() { requestInfo(); }   // fetch immediately (or show "connect first")
 
 // ---- server-info readout (tier-agnostic: render whatever fields come back) ----
 let lastInfo = null;
@@ -518,10 +579,12 @@ function requestInfo() {
   const box = $("infoBox"); if (!box) return;
   if (!ws || ws.readyState !== 1) {           // graceful: no hang when disconnected
     lastInfo = null;
-    box.innerHTML = `<div class="ihead">${tr().serverInfo}</div><div class="kv"><span class="muted">${tr().infoConnectFirst}</span></div>`;
+    box.innerHTML = `<div class="ihead"><button id="infoRefresh" class="mini" title="refresh">↻</button></div>` +
+                    `<div class="kv"><span class="muted">${tr().infoConnectFirst}</span></div>`;
+    const rb = $("infoRefresh"); if (rb) rb.onclick = requestInfo;
     return;
   }
-  box.innerHTML = `<div class="ihead">${tr().serverInfo}</div><div class="kv"><span class="muted">${tr().infoFetching}</span></div>`;
+  box.innerHTML = `<div class="kv"><span class="muted">${tr().infoFetching}</span></div>`;
   send({ cmd: "info" });                        // server replies {type:"info", ...} -> onInfo
 }
 
@@ -543,7 +606,7 @@ function onInfo(m) {
   const tier = m.info_level ? ` <span class="tag ph">${tr().infoTier}: ${esc(m.info_level)}</span>` : "";
   const rows = keys.map(k =>
     `<div class="kv"><span class="k">${esc(k)}</span><span class="v">${fmtVal(m[k])}</span></div>`).join("");
-  box.innerHTML = `<div class="ihead">${tr().serverInfo}${tier}<button id="infoRefresh" class="mini" title="refresh">↻</button></div>${rows}`;
+  box.innerHTML = `<div class="ihead">${tier}<button id="infoRefresh" class="mini" title="refresh">↻</button></div>${rows}`;
   const rb = $("infoRefresh"); if (rb) rb.onclick = requestInfo;
 }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
@@ -584,41 +647,7 @@ function assignCell(fn, slot, channel) {
   }
   editMap.functions[fn].slot = slot;
   editMap.functions[fn].channel = channel;
-  buildAssign();
-}
-
-// ---- page 2: EN/DE labels (separate overlay, reached from the assignment page) ----
-function openLabels() { $("settings").classList.add("hidden"); buildLabels(); $("labels").classList.remove("hidden"); }
-function backToAssign() { $("labels").classList.add("hidden"); buildAssign(); $("settings").classList.remove("hidden"); }
-function buildLabels() {
-  const t = tr();
-  const rows = FN.map(fn => {
-    const a = editMap.functions[fn];
-    return `<tr data-fn="${fn}">
-      <td class="fn">${fn}</td>
-      <td><input type="text" class="e-en" value="${(a.label_en || "").replace(/"/g, "&quot;")}"></td>
-      <td><input type="text" class="e-de" value="${(a.label_de || "").replace(/"/g, "&quot;")}"></td>
-    </tr>`;
-  }).join("");
-  $("labels").innerHTML =
-    `<div class="backdrop"></div><div class="sheet">
-      <h2>${t.labelsTitle}</h2>
-      <p class="sub">${t.labelsSub}</p>
-      <table class="map"><thead><tr><th>${t.fn}</th><th>${t.labEn}</th><th>${t.labDe}</th></tr></thead>
-        <tbody>${rows}</tbody></table>
-      <div class="actions">
-        <button class="apply" id="lblSaveBtn">${t.saveClose}</button>
-        <button id="lblBackBtn">${t.back}</button>
-      </div>
-    </div>`;
-  $("labels").querySelector(".backdrop").onclick = backToAssign;
-  $("labels").querySelectorAll("tr[data-fn]").forEach(trEl => {
-    const a = editMap.functions[trEl.dataset.fn];
-    trEl.querySelector(".e-en").oninput = e => { a.label_en = e.target.value; };
-    trEl.querySelector(".e-de").oninput = e => { a.label_de = e.target.value; };
-  });
-  $("lblSaveBtn").onclick = saveClose;
-  $("lblBackBtn").onclick = backToAssign;
+  buildSettings();
 }
 
 // ---- commit / discard / promote ----
