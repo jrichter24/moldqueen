@@ -11,6 +11,10 @@ WS_PORT    = int(os.environ.get("MK4_WS_PORT", "8765"))       # WebSocket API (t
 SERVE_CLIENT = os.environ.get("MK4_SERVE_CLIENT", "1").strip().lower() not in ("0", "false", "no", "off")
 SOCK_PATH  = os.environ.get("MK4_SOCK", "/tmp/moldqueen_mk4.sock")   # broadcaster <-> api IPC
 HCI        = os.environ.get("MK4_HCI", "hci1")                # control dongle (Realtek)
+# Radio backend: "hcitool" (DEFAULT, proven path that drives the hubs today) or
+# "rawhci" (opt-in raw AF_BLUETOOTH/BTPROTO_HCI socket, no hcitool — future-proofing
+# since hcitool is deprecated in BlueZ 5.64+; UNPROVEN on hardware). --radio-backend wins.
+RADIO_BACKEND = os.environ.get("MK4_RADIO_BACKEND", "hcitool").strip().lower()
 DWELL      = float(os.environ.get("MK4_DWELL", "10"))         # connect-telegram dwell, seconds
 ADV_INTERVAL = int(os.environ.get("MK4_ADV_INTERVAL", "320")) # 0.625ms slots; 320 = 200ms (~5/sec)
 REFRESH    = float(os.environ.get("MK4_REFRESH", "0.5"))      # re-issue set-data at least this often (live)

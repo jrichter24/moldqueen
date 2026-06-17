@@ -44,8 +44,8 @@ Realistically: **any Linux with BlueZ + a compatible USB BLE adapter.**
 2. Install BlueZ userland with `hcitool`/`hciconfig`. **Gotcha:** on modern distros
    these are deprecated/removed — you may need the distro's `bluez-deprecated`/
    compat package, or to build BlueZ with `--enable-deprecated`. If `hcitool` truly
-   isn't available, the radio layer would need porting to `btmgmt`/raw `AF_BLUETOOTH`
-   sockets (noted as a future option in `requirements.txt`; not done yet).
+   isn't available, try the opt-in **`rawhci`** backend (`MK4_RADIO_BACKEND=rawhci`),
+   which uses raw `AF_BLUETOOTH` sockets instead — unproven on hardware (see below).
 3. Plug in a USB BLE dongle; `sudo systemctl mask --now bluetooth`; bring the adapter
    up (`hciconfig hciN up`). `scripts/start.sh` does the preflight (finds the dongle
    *by MAC*, masks bluetoothd, checks the venv) and works on any such box.
@@ -100,10 +100,17 @@ host bluetoothd masked). For most setups, **run the core natively via `scripts/s
 and containerize only the *client*. Port the core to a new SBC the normal way: Linux
 + BlueZ + a good USB dongle.
 
-## If we wanted true portability later
+## Radio backends (the abstraction exists)
 
-- Replace the `hcitool` subprocess with direct **`AF_BLUETOOTH`/`BTPROTO_HCI`** raw
-  sockets (stdlib `socket`) — removes the `hcitool` dependency and its deprecation
-  risk; still needs a real adapter + caps.
-- Or a thin **radio-worker** abstraction so the adapter backend (hcitool / btmgmt /
-  raw socket) is swappable per platform.
+The radio layer is already behind a small **`RadioBackend`** abstraction
+(`broadcaster.py`), selectable with **`MK4_RADIO_BACKEND`** / `--radio-backend`:
+
+- **`hcitool`** (DEFAULT) — the proven path that drives the hubs today.
+- **`rawhci`** (opt-in) — issues the *same* HCI commands over a raw
+  `AF_BLUETOOTH`/`BTPROTO_HCI` socket (stdlib `socket`), **no hcitool**, removing the
+  deprecation risk. **Unproven on hardware** — it likely also needs the device DOWN +
+  `CAP_NET_RAW` on a real adapter; in `--dry-run` it prints the exact HCI packets it
+  would send. Validate on hardware before relying on it.
+
+So the deprecation escape hatch is in place; what's left is proving `rawhci` live and,
+if useful, a third `btmgmt` backend.

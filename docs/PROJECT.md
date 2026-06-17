@@ -151,6 +151,14 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
 - **broadcaster** (`mk4web/broadcaster.py`) — owns the radio + the authoritative
   12-nibble state; lifecycle **IDLE → CONNECTING → READY**; broadcasts one MK4
   telegram reflecting state (~5/sec keepalive). **Safety:** API gone → IDLE/neutral.
+  The radio sits behind a small **`RadioBackend`** abstraction (three ops: set adv
+  params / set adv data / enable adv). Two backends, picked by **`MK4_RADIO_BACKEND`**
+  (or `--radio-backend`): **`hcitool`** (DEFAULT — the proven path that drives the
+  hubs today, unchanged commands/bytes) and **`rawhci`** (opt-in — the *same* HCI
+  commands over a raw `AF_BLUETOOTH`/`BTPROTO_HCI` socket, **no hcitool**, since
+  hcitool is deprecated in BlueZ 5.64+; **unproven on hardware**, never the default).
+  In `--dry-run` the `rawhci` backend prints the exact HCI packets it *would* send so
+  they can be eyeballed against the hcitool path; `hcitool` dry-run output is unchanged.
 - **API** (`mk4web/api.py`) — the **WebSocket API is the product** (`:8765`, always
   on). Serving the client web page (`:8080`) is **OPTIONAL**: on by default, disabled
   with `--ws-only` / `--no-client` / `MK4_SERVE_CLIENT=0` (no HTTP server opened);
@@ -235,7 +243,7 @@ python -m mk4web.api --http-port 9000         # serve the page on :9000 instead
 ```
 The **WebSocket API (required)** and **client web page (optional)** are separable:
 see README → "API server (required) + client UI (optional)". Ports/HCI/etc. are
-env-overridable (`MK4_HCI`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, `MK4_SERVE_CLIENT`, …;
+env-overridable (`MK4_HCI`, `MK4_RADIO_BACKEND`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, `MK4_SERVE_CLIENT`, …;
 see `mk4web/config.py`).
 
 **Cold-start GUI flow** — open the **dashboard** at `http://<pi-ip>:8080/` and press
