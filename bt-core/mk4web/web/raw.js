@@ -57,7 +57,7 @@ function setDot(ok) { const d = $("wsDot"); if (d) d.className = "dot" + (ok ? "
 function setLifecycle(state) {
   const prev = lifecycle; lifecycle = state;
   if (prev !== state) logInfo("lifecycle → " + state + (state === "CONNECTING" ? "  (connect telegram: adae18808080f352)" : ""));
-  renderMenu(); updateGate();
+  renderMenu(); updateGate(); wizardOnLifecycle(state);
 }
 
 // ---- menu (same shell/look as the dashboard) ----
@@ -68,8 +68,10 @@ function renderMenu() {
   const left = el("tgroup");
   const dot = el("dot"); dot.id = "wsDot"; left.appendChild(dot);
   left.appendChild(el("lc", "", "<span id='lcText'>RAW · " + lifecycle + "</span>"));
-  if (lifecycle === "IDLE") left.appendChild(mbtn("Connect", "primary", () => send({ cmd: "setup", action: "connect" })));
-  else if (lifecycle === "CONNECTING") {
+  if (lifecycle === "IDLE") {
+    left.appendChild(mbtn("⮕ Wizard", "primary", openWizard));   // guided on-ramp
+    left.appendChild(mbtn("Connect", "", () => send({ cmd: "setup", action: "connect" })));  // manual
+  } else if (lifecycle === "CONNECTING") {
     left.appendChild(mbtn("Ready", "primary", () => send({ cmd: "setup", action: "ready" })));
     left.appendChild(mbtn("Reset", "", doReset));
   } else left.appendChild(mbtn("Reset", "", doReset));
@@ -93,6 +95,67 @@ function doNeutral() {
   for (let s = 0; s < 3; s++) for (let c = 0; c < 4; c++) vals[s][c] = 0;
   buildSlots(); updatePreview();
   send({ cmd: "stop" }); logInfo("NEUTRAL — channels zeroed");
+}
+
+// ---- condensed connection wizard (1-3 boxes); reuses the dashboard's .modal/.wiz
+// styling and drives the same IDLE→CONNECTING→READY lifecycle. Step 3 (assign
+// slots) is shown only when >1 box is selected. The service can't see the LEDs —
+// it's a guided manual flow. The manual Connect/Ready/Reset buttons still work. ----
+let wizStep = 0;
+function openWizard() {
+  wizStep = (lifecycle === "READY") ? 4 : (lifecycle === "CONNECTING") ? (slotCount > 1 ? 3 : 2) : 1;
+  buildWizard(); $("wizard").classList.remove("hidden");
+}
+function closeWizard() { wizStep = 0; $("wizard").classList.add("hidden"); }
+function wizardCancel() { send({ cmd: "setup", action: "reset" }); closeWizard(); }
+function wizardOnLifecycle(state) {
+  if (!$("wizard") || $("wizard").classList.contains("hidden")) return;
+  if (state === "READY") { wizStep = 4; buildWizard(); }
+  else if (state === "IDLE" && wizStep > 1) { wizStep = 1; buildWizard(); }
+}
+function wizNext() {
+  if (wizStep === 1) { send({ cmd: "setup", action: "connect" }); wizStep = 2; }   // → CONNECTING
+  else if (wizStep === 2) wizStep = 3;                                              // (multi-box only)
+  buildWizard();
+}
+function wizBack() {
+  if (wizStep === 2) { send({ cmd: "setup", action: "reset" }); wizStep = 1; }      // → IDLE
+  else if (wizStep === 3) wizStep = 2;
+  buildWizard();
+}
+function wizReady() { send({ cmd: "setup", action: "ready" }); }   // → READY → step 4 (via lifecycle)
+function wAssign(n) {
+  if (n === 2) return "Set the boxes to <b>different</b> slots: <b>box 1 → ONE flash</b> (slot 0), " +
+    "<b>box 2 → TWO flashes</b> (slot 1). They must differ or they'll move together.";
+  return "Set each box to a <b>different</b> slot: <b>box 1 → ONE flash</b> (slot 0), " +
+    "<b>box 2 → TWO flashes</b> (slot 1), <b>box 3 → THREE flashes</b> (slot 2). All must differ.";
+}
+function wbtn(id, label, primary) { return `<button id="${id}"${primary ? ' class="apply"' : ""}>${label}</button>`; }
+function buildWizard() {
+  const n = slotCount, s = wizStep;
+  const boxes = n === 1 ? "your box" : "your " + n + " boxes";
+  const txt = {
+    1: { t: "Step 1 — Power on", b: "Power on " + boxes + " — each shows <b>one long flash</b>." },
+    2: { t: "Step 2 — Connect", b: "Sending the MK4 connect telegram — " + (n === 1 ? "your box" : "the boxes") + " should now <b>fast-flash</b> (connected)." },
+    3: { t: "Step 3 — Assign slots", b: wAssign(n) },
+    4: { t: "Ready ✓", b: "Connected — RAW controls unlocked. Set channels and Send." },
+  }[s];
+  let btns;
+  if (s === 1) btns = wbtn("wCancel", "Cancel") + wbtn("wNext", "Next", 1);
+  else if (s === 2) btns = wbtn("wCancel", "Cancel") + wbtn("wBack", "Back") + (n > 1 ? wbtn("wNext", "Next", 1) : wbtn("wReady", "Ready", 1));
+  else if (s === 3) btns = wbtn("wCancel", "Cancel") + wbtn("wBack", "Back") + wbtn("wReady", "Ready", 1);
+  else btns = wbtn("wDone", "Start", 1);
+  const dots = n > 1 ? [1, 2, 3, 4] : [1, 2, 4];
+  $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
+    <h2>RAW — connection setup <span class="muted" style="font-size:.8rem">(${n} box${n > 1 ? "es" : ""})</span></h2>
+    <div class="wsteps">${dots.map(d => `<span class="wdot${d === s ? " on" : d < s ? " done" : ""}"></span>`).join("")}</div>
+    <div class="media"><img src="/assets/wizard/step${s}.png" alt="" onerror="this.style.display='none'"><span class="mediahint">📷 placeholder</span></div>
+    <h3 class="wt">${txt.t}</h3><p class="wbody">${txt.b}</p>
+    <div class="actions wactions">${btns}</div>
+  </div>`;
+  $("wizard").querySelector(".backdrop").onclick = function () {};   // use Cancel, not click-out
+  const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
+  on("wCancel", wizardCancel); on("wBack", wizBack); on("wNext", wizNext); on("wReady", wizReady); on("wDone", closeWizard);
 }
 
 // ---- controls (slots / channels / send) ----
