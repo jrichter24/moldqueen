@@ -113,17 +113,72 @@ and the server resolves the function → (slot, channel) via a **per-layout chan
 - `channelmap.py` has **no global `FUNCTIONS`** — `validate()`/`load()` are
   parameterized by the active layout's set; `resolve()` just looks a function up.
   The server validates/persists/promotes against the active layout's set.
-- **Still client-side excavator-specific:** `dashboard.js` hardcodes its own `FN`
-  list + pixel-perfect `rect`s for the 13112 HMI art and EN/DE labels. A *new*
-  function-mapped toy still needs its own client (a layout **template** — not built
-  yet) to draw its controls and (optionally) tell the server its `layout` id.
+- **The client is still per-toy:** the excavator's `dashboard.js` hardcodes its `FN`
+  list + pixel-perfect art `rect`s. A new function-mapped toy needs its own (small)
+  client — and there's now a **TEMPLATE** to start from (below).
 
-So the **server** no longer needs forking for a new function set; what remains for a
-fully pluggable function-mapped toy is the client template + the CSS split (below).
+So the **server** no longer needs forking for a new function set; you copy the template
+client and edit it.
 
-**Generic-slot workaround** (no template needed): define your own function→(slot,
+**Generic-slot workaround** (no functions at all): define your own function→(slot,
 channel) table in your layout's JS and send raw `{cmd:set}` (like RAW). You skip the
-server-side map persistence/Promote + the channel-assignment overlay, but stay pluggable.
+server-side map persistence/Promote, but stay pluggable.
+
+---
+
+## Start from the TEMPLATE (copy → rename → modify → activate)
+
+A minimal **function-mapped** starter ships in the repo, **inactive**, so it doesn't
+show on the chooser or get a route until you turn it on:
+
+- manifest entry `id:"template"`, `active:false`, `category:"template"`, one function
+  `knob_1`
+- `bt-core/mk4web/web/template.{html,js,css}` — connect/lifecycle wiring + ONE knob
+  that drives `knob_1` by name + a client channel-map override, all marked with `TODO`
+- `config/channel_map.template.json` — that one function's placeholder default map
+
+It's a *working skeleton*: set `active:true` and it would connect + drive one channel.
+
+### 1. Copy + rename to a unique id
+```bash
+cp bt-core/mk4web/web/template.html bt-core/mk4web/web/mytoy.html
+cp bt-core/mk4web/web/template.js   bt-core/mk4web/web/mytoy.js
+cp bt-core/mk4web/web/template.css  bt-core/mk4web/web/mytoy.css
+cp config/channel_map.template.json config/channel_map.mytoy.json
+```
+In `mytoy.html` point the `<link>`/`<script>` at `mytoy.css` / `mytoy.js`. The **route
+auto-derives to `/mytoy`** from the id — you never write a route.
+
+### 2. Declare it in the manifest (`web/layouts.json`)
+Copy the `template` entry, then: set `id:"mytoy"` (URL-safe + unique), your `name`,
+`description`, `icon`, `category`, and the `functions` list + `files` (your renamed
+files). Keep `active:false` for now.
+
+### 3. Define your channel map
+Edit `config/channel_map.mytoy.json`: one entry per function in your `functions` list,
+each `{slot 0-2, channel 0-3, invert, max 1-7, reverse_scale, label_en, label_de}`. You
+don't have to know the real channels yet — drive each control and read which motor
+moves (the override UI in the template helps), then set them.
+
+### 4. Modify the controls (`mytoy.js`)
+- Extend `FN = ["knob_1"]` to **one name per motor/channel** you control (mirror it in
+  the manifest `functions` and the channel-map file). **More motors = more functions +
+  more knobs** — this is the modular path; add a knob per function in `buildMain()`.
+- Drive each by name: `send({cmd:"drive", function:<name>, value:-7..7})` (READY-only).
+- Optional, copy from `raw.js`/`dashboard.js`: the connection **wizard**, Save/Promote
+  of the map, joysticks instead of sliders.
+
+### 5. Activate
+Set `active:true` in the manifest and **restart the API** (it reads the manifest at
+startup — see *Operational gotchas* in `CLAUDE.md`). `/mytoy` now serves and a card
+appears on the chooser automatically — **no `api.py` edits**.
+
+### Current limitations (be honest)
+- The **client is hand-written** (no auto-generated controls from the function set yet).
+- `dashboard.css` mixes the shared shell with excavator-only styles (CSS split pending).
+- One **global** lifecycle/state on the server — fine for one driver.
+- The **Docker** static client (`deploy/nginx-client.conf`) still needs a per-layout
+  `location` line; the Pi's `api.py` derives routes automatically.
 
 ---
 

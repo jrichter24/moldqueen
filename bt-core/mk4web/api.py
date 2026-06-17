@@ -112,9 +112,15 @@ def _function_layouts(layouts):
 
 
 LAYOUTS = _load_layouts()
-HTML_ROUTES = _build_html_routes(LAYOUTS)
-LAYOUTS_JSON = json.dumps({"layouts": LAYOUTS})
-LAYOUT_FUNCTIONS = _function_layouts(LAYOUTS)
+# `active` (default true): an INACTIVE layout (active:false) is fully hidden — no route,
+# no chooser card, not in /layouts.json, no function set loaded. This is how the bundled
+# template ships dormant until a contributor flips it active. `category` is a layout-
+# declared grouping label (e.g. "vehicle"/"debug"/"template") carried through to the
+# chooser. Everything below derives from the ACTIVE subset only.
+ACTIVE_LAYOUTS = [l for l in LAYOUTS if l.get("active", True)]
+HTML_ROUTES = _build_html_routes(ACTIVE_LAYOUTS)      # derives /<id> + augments each with `route`
+LAYOUTS_JSON = json.dumps({"layouts": ACTIVE_LAYOUTS})
+LAYOUT_FUNCTIONS = _function_layouts(ACTIVE_LAYOUTS)
 DEFAULT_LAYOUT = next(iter(LAYOUT_FUNCTIONS), None)   # active function-mapped layout (today: excavator)
 
 

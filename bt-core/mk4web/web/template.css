@@ -1,0 +1,23 @@
+/* TEMPLATE layout — minimal layout-specific styles. The shared shell (#app, #menu,
+   .tgroup, .dot, .primary, #stopBtn, responsive top-bar/sidebar) lives in dashboard.css.
+   TODO: style your toy's controls here. */
+#main { padding: clamp(1rem, 3vw, 2rem); overflow: auto; }
+.tpl-card {
+  max-width: 560px; margin: 0 auto; background: #11161e; border: 1px solid #2a3343;
+  border-radius: .8rem; padding: 1.2rem 1.4rem;
+}
+.tpl-card h2 { margin: 0 0 .2rem; }
+.tpl-card .muted { color: #8aa0bd; }
+.tpl-card code { background: #0d1320; padding: .05rem .35rem; border-radius: .3rem; }
+
+/* the one knob (drive-by-function) */
+.knob { display: flex; align-items: center; gap: .8rem; margin: 1.2rem 0; }
+.knob label { min-width: 5rem; font-family: ui-monospace, monospace; }
+.knob input[type="range"] { flex: 1; }
+.knob input:disabled { opacity: .4; }     /* gated until READY */
+
+/* the minimal channel-map override */
+.tpl-settings { margin-top: 1rem; padding-top: .9rem; border-top: 1px solid #20262f; font-size: .9rem; }
+.tpl-settings label { display: inline-flex; align-items: center; gap: .3rem; margin: .4rem .8rem .4rem 0; }
+.tpl-settings input[type="number"] { width: 3rem; }
+.epRow { margin: .6rem 0; }

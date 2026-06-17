@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>moldqueen — template layout</title>
+  <link rel="icon" href="/assets/moldqueen_icon.png" />
+  <link rel="stylesheet" href="/dashboard.css" />   <!-- shared shell + #menu + .modal/.dot/etc. -->
+  <link rel="stylesheet" href="/template.css" />
+  <script>window.MK4_WS_PORT = "__WS_PORT__";</script>  <!-- injected by api.py; valid string when served raw -->
+</head>
+<body>
+  <!-- ============================================================================
+       TEMPLATE layout — a MINIMAL function-mapped starter. It connects, drives ONE
+       function ("knob_1") by name, and lets you override that function's channel map.
+       It ships INACTIVE (active:false in web/layouts.json) so it gets no route / card.
+       To make your own toy: copy template.html/.js/.css, rename to a unique id, set
+       active:true, and follow docs/ADDING_A_LAYOUT.md. Same viewport shell as the
+       dashboard/RAW (top bar on desktop, sidebar on mobile).
+       ============================================================================ -->
+  <div id="app">
+    <nav id="menu"></nav>
+    <div id="main"></div>     <!-- controls built by template.js -->
+  </div>
+
+  <script src="/clientconfig.js"></script>   <!-- shared: MK4.wsEndpoint(), endpoint editor, status -->
+  <script src="/template.js"></script>
+</body>
+</html>

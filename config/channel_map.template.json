@@ -1,0 +1,17 @@
+{
+  "_comment": "TEMPLATE default channel map — placeholder. Copy to config/channel_map.<your-id>.json and edit. One function per motor/channel you control; add more entries to the 'functions' object AND to the layout's 'functions' list in web/layouts.json. Each function maps to a (slot, channel) nibble; values are -7..+7 (0x8 + value).",
+  "version": 1,
+  "functions": {
+    "knob_1": {
+      "_todo": "Rename this function, set its real slot/channel, and tune the fields below by driving it.",
+      "slot": 0,
+      "channel": 0,
+      "invert": false,
+      "max": 7,
+      "reverse_scale": 1.0,
+      "label_en": "Knob 1 (TODO)",
+      "label_de": "Regler 1 (TODO)",
+      "confirmed": false
+    }
+  }
+}
