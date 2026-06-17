@@ -22,18 +22,21 @@
       background: #05070b; color: #e8eef6; font-family: system-ui, -apple-system, sans-serif;
       min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: clamp(1rem, 3vh, 2rem); padding: 4vh 4vw; -webkit-user-select: none; user-select: none;
-      background-image: url("/assets/moldqueen_banner.png");
+      background-image: url("/assets/moldqueen_banner_no_text.png");   /* text-free: brand title is real text below */
       background-size: cover; background-position: center; background-attachment: fixed;
     }
     body::before { content: ""; position: fixed; inset: 0; z-index: 0;     /* dim the banner so cards stay readable */
       background: radial-gradient(120% 90% at 50% 30%, rgba(5,7,11,.55), rgba(5,7,11,.88)); }
     .wrap { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
             gap: clamp(1rem, 3vh, 2rem); width: 100%; max-width: 860px; }
-    header { display: flex; align-items: center; gap: .7rem; text-align: center; }
-    header img { width: clamp(34px, 7vw, 54px); height: auto; filter: drop-shadow(0 2px 8px rgba(0,0,0,.6)); }
-    header h1 { margin: 0; font-size: clamp(1.2rem, 4vw, 1.9rem); font-weight: 800; letter-spacing: .04em;
-                text-shadow: 0 2px 12px rgba(0,0,0,.7); }
-    header .sub { display: block; font-size: clamp(.72rem, 2vw, .9rem); font-weight: 500; color: #9fb2cc; letter-spacing: .02em; }
+    header { display: flex; flex-direction: column; align-items: center; gap: .4rem; text-align: center; }
+    .brand { display: flex; align-items: center; gap: clamp(.5rem, 1.6vw, 1rem); }
+    .brand img { width: clamp(48px, 11vw, 96px); height: auto; filter: drop-shadow(0 3px 12px rgba(0,0,0,.7)); }
+    .brand h1 { margin: 0; font-size: clamp(2.4rem, 9vw, 4.6rem); font-weight: 900; letter-spacing: .01em; line-height: 1;
+                background: linear-gradient(180deg, #eaf2ff, #9fc3f2); -webkit-background-clip: text; background-clip: text;
+                color: transparent; text-shadow: 0 4px 24px rgba(0,0,0,.55); }
+    header .sub { font-size: clamp(.78rem, 2.2vw, 1rem); font-weight: 500; color: #b6c6dc; letter-spacing: .03em;
+                 text-shadow: 0 2px 10px rgba(0,0,0,.7); }
     .cards { display: flex; gap: clamp(1rem, 3vw, 1.8rem); flex-wrap: wrap; justify-content: center; width: 100%; }
     .card {
       flex: 1 1 260px; max-width: 320px; min-width: 220px;
@@ -64,8 +67,11 @@
 <body>
   <div class="wrap">
     <header>
-      <img src="/assets/moldqueen_icon.png" alt="" />
-      <h1>moldqueen<span class="sub">Choose a layout — remembered for next time</span></h1>
+      <div class="brand">
+        <img src="/assets/moldqueen_icon.png" alt="" />
+        <h1>MoldQueen</h1>
+      </div>
+      <span class="sub">Choose a layout — remembered for next time</span>
     </header>
     <div class="cards">
       <button class="card" data-layout="excavator" data-route="/dashboard">
@@ -77,16 +83,7 @@
         </div>
       </button>
       <button class="card" data-layout="raw" data-route="/raw">
-        <div class="art">
-          <!-- generic tool/debug glyph (wrench + terminal); our own art, no external -->
-          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="6" y="12" width="52" height="40" rx="4"></rect>
-            <path d="M15 24l7 6-7 6"></path>
-            <path d="M30 38h12"></path>
-            <path d="M50 16l-3.5 3.5a5 5 0 0 0 6.5 6.5L56 22" stroke-width="2.4"></path>
-          </svg>
-        </div>
+        <div class="art"><img src="/assets/generic_icon.png" alt="" /></div>
         <div class="body">
           <h2>RAW (Debug)</h2>
           <div class="desc">Low-level telegram test bench.</div>
