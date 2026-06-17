@@ -492,11 +492,19 @@ stack is entirely in `bt-core/mk4web/`.
 
 ## Credits & license
 
+- **Author:** [Jens Richter](https://www.linkedin.com/in/li-jens-richter) — physicist
+  by training, working in optimization. *Built for my son Jonas, who loves excavators
+  and helicopters.*
 - Protocol groundwork: [`J0EK3R/mkconnect-python`](https://github.com/J0EK3R/mkconnect-python)
-  (the MK4/MK6 reference and the original `MouldKingCrypt`). Our hubs turned out to be
-  the MK4 variant; the codec here is re-implemented and verified against the app.
+  (the MK4/MK6 reference and `MouldKingCrypt`). Our `mouldking_crypt.py` is a
+  **port/derivative** of their `MouldKingCrypt`, **used under the MIT License**
+  (© 2024 J0EK3R) — see [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) — and
+  verified byte-exact against the MK+tech app. Our hubs are the MK4 nibble variant.
+  Additional protocol reference: [BrickController2](https://github.com/imurvai/brickcontroller2).
+- **Built with AI assistance** — see the *About* overlay on the start page.
 - **Independent & unofficial** — not affiliated with Mould King / Shenzhen Yuxing;
   trademarks used descriptively. Provided **as-is, no warranty, use at your own
   risk** — see the full [Disclaimer](#disclaimer).
 
-**License:** [MIT](LICENSE) © 2026 Jens Richter.
+**License:** [MIT](LICENSE) © 2026 Jens Richter. Bundled third-party code retains its
+own license — see [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).

@@ -4,9 +4,10 @@
 encode(raw_hex) -> bytes   : raw command hex  -> 24-byte on-air manufacturer data
 decode(crypted)  -> raw_hex: 24-byte on-air manufacturer data -> raw command hex
 
-Ported byte-for-byte from J0EK3R/mkconnect-python `MouldKingCrypt` and
-cross-checked against §4 of MKtech_reverse_engineering_report.md. `decode` is the
-exact inverse, which unblocks Route A (capture the app's device-1 adverts and
+DERIVATIVE WORK — ported from J0EK3R/mkconnect-python `MouldKingCrypt`
+(https://github.com/J0EK3R/mkconnect-python), Copyright (c) 2024 J0EK3R, used
+under the MIT License (see ../../THIRD-PARTY-NOTICES.md). Cross-checked against §4
+of MKtech_reverse_engineering_report.md. `decode` is the exact inverse, which unblocks Route A (capture the app's device-1 adverts and
 read the raw telegrams verbatim). NO BLE here — pure software.
 
 Frame layout inside the 33/35-byte working buffer `t` (for payload length L):
