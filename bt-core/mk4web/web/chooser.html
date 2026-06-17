@@ -6,12 +6,18 @@
   <title>moldqueen — choose a layout</title>
   <link rel="icon" href="/assets/moldqueen_icon.png" />
   <script>
+    // Layout manifest = single source of truth. Injected inline by api.py; when this
+    // page is served RAW (e.g. the client Docker via nginx) the placeholder stays
+    // literal, JSON.parse throws, and the body script falls back to fetch(/layouts.json).
+    window.__LAYOUTS__ = (function () { try { return JSON.parse("__LAYOUTS_JSON__"); } catch (e) { return null; } })();
     // Skip straight to the remembered layout (unless ?choose forces the chooser).
     (function () {
       var force = new URLSearchParams(location.search).has("choose");
       var stored = localStorage.getItem("mk4_layout");
-      var routes = { excavator: "/dashboard", raw: "/raw" };
-      if (!force && stored && routes[stored]) location.replace(routes[stored]);
+      var m = window.__LAYOUTS__;
+      if (force || !stored || !m) return;
+      var L = m.layouts.filter(function (x) { return x.id === stored && x.route; })[0];
+      if (L) location.replace(L.route);
     })();
   </script>
   <style>
@@ -109,36 +115,7 @@
       </div>
       <span class="sub">Choose a layout — remembered for next time</span>
     </header>
-    <div class="cards">
-      <button class="card" data-layout="excavator" data-route="/dashboard">
-        <div class="art"><img src="/assets/excavator_icon.png" alt="" /></div>
-        <div class="body">
-          <h2>Excavator (13112)</h2>
-          <div class="desc">Drive the excavator — full dashboard.</div>
-          <div class="go">Open ▸</div>
-        </div>
-      </button>
-      <button class="card" data-layout="raw" data-route="/raw">
-        <div class="art"><img src="/assets/generic_icon.png" alt="" /></div>
-        <div class="body">
-          <h2>RAW (Debug)</h2>
-          <div class="desc">Low-level telegram test bench.</div>
-          <div class="go">Open ▸</div>
-        </div>
-      </button>
-      <button class="card ghost" id="byoCard">
-        <div class="art">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="14" rx="2"></rect><path d="M12 9v6M9 12h6"></path>
-          </svg>
-        </div>
-        <div class="body">
-          <h2>Bring your own</h2>
-          <div class="desc">Build a layout for your own toy — and share it.</div>
-          <div class="go">Contribute ▸</div>
-        </div>
-      </button>
-    </div>
+    <div class="cards" id="cards"></div>   <!-- built from the layout manifest (see scripts below) -->
   </div>
 
   <footer>
@@ -209,17 +186,43 @@
   </div>
 
   <script>
-    // navigate only the real layout cards (those with a route)
-    document.querySelectorAll(".card[data-route]").forEach(function (c) {
-      c.addEventListener("click", function () {
-        localStorage.setItem("mk4_layout", c.dataset.layout);
-        location.href = c.dataset.route;
-      });
-    });
     function show(id, on) { document.getElementById(id).classList.toggle("show", on); }
+    function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+
+    // The "bring your own" placeholder icon (kept here as markup; manifest entries
+    // that are real layouts use an <img> icon path).
+    var BYO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"></rect><path d="M12 9v6M9 12h6"></path></svg>';
+
+    function cardHtml(L) {                       // render ONE manifest entry -> a card (same DOM as before)
+      var ghost = L.kind === "placeholder";
+      var art = ghost ? BYO_SVG : '<img src="' + esc(L.icon) + '" alt="" />';
+      var cta = ghost ? "Contribute ▸" : "Open ▸";
+      var attrs = 'data-id="' + esc(L.id) + '"' + (L.route ? ' data-route="' + esc(L.route) + '"' : '') + (ghost ? ' data-byo="1"' : '');
+      return '<button class="card' + (ghost ? ' ghost' : '') + '" ' + attrs + '>' +
+             '<div class="art">' + art + '</div>' +
+             '<div class="body"><h2>' + esc(L.name) + '</h2><div class="desc">' + esc(L.description) + '</div>' +
+             '<div class="go">' + cta + '</div></div></button>';
+    }
+
+    function renderCards(m) {
+      var layouts = (m && m.layouts) || [];
+      document.getElementById("cards").innerHTML = layouts.map(cardHtml).join("");
+      document.querySelectorAll(".card[data-route]").forEach(function (c) {   // real layouts: remember + navigate
+        c.addEventListener("click", function () {
+          localStorage.setItem("mk4_layout", c.dataset.id);
+          location.href = c.dataset.route;
+        });
+      });
+      var byo = document.querySelector(".card[data-byo]");                    // placeholder: open the invite overlay
+      if (byo) byo.addEventListener("click", function () { show("byo", true); });
+    }
+
+    // Render from the injected manifest; if served raw (no injection), fetch it.
+    if (window.__LAYOUTS__) renderCards(window.__LAYOUTS__);
+    else fetch("/layouts.json").then(function (r) { return r.json(); }).then(renderCards).catch(function () {});
+
     document.getElementById("aboutBtn").onclick = function () { show("about", true); };
     document.getElementById("aboutLink").onclick = function (e) { e.preventDefault(); show("about", true); };
-    document.getElementById("byoCard").onclick = function () { show("byo", true); };
     document.querySelectorAll("[data-close]").forEach(function (el) {
       el.addEventListener("click", function () { el.closest(".overlay").classList.remove("show"); });
     });

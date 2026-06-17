@@ -43,6 +43,43 @@ WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
 NEUTRAL_STATE = [NEUTRAL] * N_CHANNELS
 IDLE, CONNECTING, READY = "IDLE", "CONNECTING", "READY"
 
+# ---- layout manifest (single source of truth: web/layouts.json) --------------
+# Each layout declares id/name/description/route/icon/kind and its client files.
+# Both the served ROUTES (below) and the chooser CARDS (injected into chooser.html /
+# fetched at /layouts.json) derive from this — add a layout here and it surfaces in
+# both. STAGE 2 will replace the explicit per-file route maps with a generic handler.
+_STATIC_CTYPE = {"js": "text/javascript; charset=utf-8", "css": "text/css; charset=utf-8"}
+
+
+def _load_layouts():
+    try:
+        with open(os.path.join(WEB_DIR, "layouts.json")) as f:
+            return json.load(f).get("layouts", [])
+    except (OSError, ValueError) as e:
+        log.warning("layouts.json unreadable (%s) — no layout routes derived", e)
+        return []
+
+
+def _build_routes(layouts):
+    """Derive {path -> html file} and {path -> (file, ctype)} from the manifest."""
+    html_routes, static_files = {}, {}
+    for lay in layouts:
+        files, route = lay.get("files") or {}, lay.get("route")
+        html = files.get("html")
+        if route and html:
+            html_routes[route] = html                 # e.g. /dashboard -> dashboard.html
+            html_routes["/" + html] = html            # alias /dashboard.html
+        for kind in ("js", "css"):
+            fn = files.get(kind)
+            if fn:
+                static_files["/" + fn] = (fn, _STATIC_CTYPE[kind])   # /dashboard.js -> (dashboard.js, ctype)
+    return html_routes, static_files
+
+
+LAYOUTS = _load_layouts()
+HTML_ROUTES, STATIC_FILES = _build_routes(LAYOUTS)
+LAYOUTS_JSON = json.dumps({"layouts": LAYOUTS})
+
 
 class IPCClient:
     """Reconnecting Unix-socket client to the broadcaster; sends newline JSON."""
@@ -307,6 +344,8 @@ class WebHandler(BaseHTTPRequestHandler):
         # try/catch (→ null when unreplaced). See web/clientconfig.js.
         with open(os.path.join(WEB_DIR, name)) as f:
             html = f.read().replace("__WS_PORT__", str(WS_PORT))
+        if "__LAYOUTS_JSON__" in html:  # chooser cards from the manifest (raw-serve falls back to fetch)
+            html = html.replace("__LAYOUTS_JSON__", LAYOUTS_JSON.replace("\\", "\\\\").replace('"', '\\"'))
         if "__INIT_JSON__" in html:     # let the page render immediately, before the WS opens
             init = {"default": app.default_map, "active": app.active_map,
                     "device_swap": app.device_swap, "lifecycle": app.lifecycle}
@@ -320,24 +359,20 @@ class WebHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split("?")[0]
-        # "/" presents a LAYOUT CHOOSER (pluggable layouts); it routes to the
-        # excavator dashboard ("/dashboard") or the RAW debug view ("/raw").
+        # "/" presents a LAYOUT CHOOSER (pluggable layouts). The dashboard/RAW HTML
+        # routes and their .js/.css are DERIVED from the layout manifest (web/
+        # layouts.json) — see HTML_ROUTES / STATIC_FILES above — not hardcoded here.
         if path in ("/", "/index.html"):
             self._send_web_html("chooser.html")
-        elif path in ("/dashboard", "/dashboard.html"):
-            self._send_web_html("dashboard.html")
-        elif path in ("/raw", "/raw.html"):
-            self._send_web_html("raw.html")
-        elif path == "/clientconfig.js":
+        elif path in HTML_ROUTES:                          # /dashboard, /raw, … (+ .html aliases)
+            self._send_web_html(HTML_ROUTES[path])
+        elif path == "/clientconfig.js":                   # shared client infra (not a layout)
             self._send_web_file("clientconfig.js", "text/javascript; charset=utf-8")
-        elif path == "/dashboard.js":
-            self._send_web_file("dashboard.js", "text/javascript; charset=utf-8")
-        elif path == "/dashboard.css":
-            self._send_web_file("dashboard.css", "text/css; charset=utf-8")
-        elif path == "/raw.js":
-            self._send_web_file("raw.js", "text/javascript; charset=utf-8")
-        elif path == "/raw.css":
-            self._send_web_file("raw.css", "text/css; charset=utf-8")
+        elif path in STATIC_FILES:                         # /dashboard.js, /raw.css, … from the manifest
+            fn, ctype = STATIC_FILES[path]
+            self._send_web_file(fn, ctype)
+        elif path == "/layouts.json":                      # the manifest itself (chooser fetch fallback)
+            self._send_web_file("layouts.json", "application/json; charset=utf-8")
         elif path.startswith("/assets/"):                  # static assets (UI background, wizard media)
             rel = path[len("/assets/"):]
             ext = rel.rsplit(".", 1)[-1].lower() if "." in rel else ""

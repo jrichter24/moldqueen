@@ -1,0 +1,29 @@
+{
+  "_comment": "Layout manifest — the SINGLE source of truth for layouts. The server (api.py) derives its HTML/JS/CSS routes from this, and the chooser builds its cards from this (injected inline, or fetched at /layouts.json when served raw). Add a layout here and it surfaces in BOTH the chooser and the routes. kind: function-mapped | generic | placeholder.",
+  "layouts": [
+    {
+      "id": "excavator",
+      "name": "Excavator (13112)",
+      "description": "Drive the excavator — full dashboard.",
+      "route": "/dashboard",
+      "icon": "/assets/excavator_icon.png",
+      "kind": "function-mapped",
+      "files": { "html": "dashboard.html", "js": "dashboard.js", "css": "dashboard.css" }
+    },
+    {
+      "id": "raw",
+      "name": "RAW (Debug)",
+      "description": "Low-level telegram test bench.",
+      "route": "/raw",
+      "icon": "/assets/generic_icon.png",
+      "kind": "generic",
+      "files": { "html": "raw.html", "js": "raw.js", "css": "raw.css" }
+    },
+    {
+      "id": "byo",
+      "name": "Bring your own",
+      "description": "Build a layout for your own toy — and share it.",
+      "kind": "placeholder"
+    }
+  ]
+}
