@@ -3,7 +3,9 @@
 Hardware-**bound** Python. The **only** code in the project that touches the radios.
 It builds and broadcasts **MK4 BLE "telegrams"** that drive the excavator's hubs.
 
-📖 Canonical reference: [`../docs/PROJECT.md`](../docs/PROJECT.md).
+📖 Canonical reference: [`../docs/PROJECT.md`](../docs/PROJECT.md). **Session handover:**
+read [`../docs/HANDOVER.md`](../docs/HANDOVER.md) at the start of a session and update +
+commit it before wrapping up (see the root `CLAUDE.md`). We run frequent short sessions.
 
 ## Purpose
 

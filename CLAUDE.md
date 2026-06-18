@@ -6,6 +6,18 @@ TOF sensor, and a local AI brain that drives it via the same API).
 📖 **Full canonical reference: [`docs/PROJECT.md`](docs/PROJECT.md).** This file is
 the terse must-knows for next session; PROJECT.md wins on any disagreement.
 
+## Session handover (do this every session)
+
+We run **frequent fresh sessions** (the 1 GB Pi RAM thrashes in long ones), so context
+must survive a restart via **[`docs/HANDOVER.md`](docs/HANDOVER.md)** — a short living
+"where we are right now" doc.
+
+- **At session START:** read `docs/HANDOVER.md` (current state + next task) alongside
+  this file + `PROJECT.md`.
+- **Before WRAPPING UP:** **update `docs/HANDOVER.md`** (move finished work to *Current
+  state*, set the new *next task*, note new decisions/quirks) and **commit it** — that
+  makes ending a session lossless. Prefer ending early over a long thrashy session.
+
 ## Must-know facts
 
 - **Protocol = MK4 12-channel NIBBLE** (NOT MK6.0 — every MK6 / "device 0/1" /
