@@ -17,6 +17,21 @@
 - **Tabbed settings** overlay: Connection · Channels · Labels · Server info.
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
+- **Reverse-speed audit + Rev× fix (2026-06-18):** AUDIT found `reverse_scale` was gated
+  on the POST-invert sign, so on inverted functions (left_track) it trimmed the user's
+  FORWARD not reverse — "Rev× does nothing" symptom explained. Also Rev× clamps at full
+  scale so it can NEVER fix a slow FULL reverse (only partial-throttle). Nibble math is
+  symmetric internally (−7→0x1 mirrors +7→0xF); 0x0 is never emitted though the code's own
+  cited reference says full reverse = 0x00 — **possible one-step-short, UNCONFIRMED without
+  a stock capture.** FIX (committed): `resolve()` now applies Rev× on the PRE-invert
+  (user-intended) reverse; rs=1.0 is byte-identical to before (0 regressions, verified),
+  left_track partial-reverse now scales, right_track unchanged. UI/docstring note added:
+  Rev× tunes partial-throttle only. **PART A capture PENDING (decisive):** sniffer ready at
+  `/tmp/sniff_stock.py` (raw-HCI LE scan on the SPARE hci1/TP-Link, decodes 0xFFF0 adverts
+  → nibbles; decoder round-trip verified). Needs USER to run it with sudo + drive the STOCK
+  app full-fwd/rev/neutral on a track, to see if stock sends 0x0 at full reverse. Encoding
+  NOT changed pending that capture. **API restarted** for the resolve fix; broadcaster 1929
+  untouched.
 - **Gamepad / DualSense control (2026-06-18):** client-only (dashboard.js + dashboard.css,
   NO Pi/API change). Gamepad API rAF poll loop reads a controller paired to the CLIENT
   device and calls the SAME `driveFn` (WS drive-by-function) as the joysticks → reuses

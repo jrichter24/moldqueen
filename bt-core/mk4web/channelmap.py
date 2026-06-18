@@ -165,14 +165,15 @@ def validate(mp, functions=None):
 def resolve(mp, function, value, device_swap=False):
     """function + signed value (-7..7) -> (slot, channel, out_value), or None.
 
-    Applies, in order: `invert` (negates value), the session `device_swap`
-    (slot 0<->1; slot 2 untouched), and a per-function `reverse_scale` REVERSE-SPEED
-    TRIM. The nibble map (0x8 + value) is byte-symmetric — confirmed against the app
-    capture and the mkconnect reference (0xFF fwd / 0x00 rev / 0x80 stop) — so any
-    forward/reverse SPEED difference is the hub's reverse PWM curve and/or the motor,
-    not the encoding. `reverse_scale` (default 1.0 = identity) multiplies the REVERSE
-    magnitude only, so the same speed setting can be tuned to match forward speed.
-    The broadcaster never sees any of this — just nibbles.
+    Applies, in order: a per-function `reverse_scale` REVERSE-SPEED TRIM keyed on the
+    USER's intended reverse (the PRE-invert negative input), then `invert` (flips
+    direction), then the session `device_swap` (slot 0<->1; slot 2 untouched).
+    `reverse_scale` (default 1.0 = identity) multiplies the magnitude of the user's
+    reverse only — so the same stick position can be tuned to match forward speed. It
+    can boost a PARTIAL deflection up toward full but NEVER exceeds full scale (a
+    full-throttle reverse is already at the nibble extreme), so it tunes mid-throttle
+    feel, not the full-reverse ceiling. At rs == 1.0 the output is identical to plain
+    invert. The broadcaster never sees any of this — just nibbles.
     """
     a = mp.get("functions", {}).get(function)
     if not isinstance(a, dict):
@@ -183,9 +184,18 @@ def resolve(mp, function, value, device_swap=False):
         return None
     if device_swap and slot in (0, 1):
         slot = 1 - slot
-    v = -int(value) if a.get("invert") else int(value)
-    if v < 0:                                   # reverse-speed trim (post-invert direction)
+    val = int(value)
+    mag = abs(val)
+    # Reverse-speed trim applies to the USER's intended reverse = the PRE-invert negative
+    # input, so it boosts what the user actually calls "reverse" on inverted AND
+    # non-inverted functions. (Previously it gated on the POST-invert sign, so on an
+    # inverted function like left_track it trimmed the user's FORWARD instead — bug.)
+    # It can only scale a partial deflection UP toward full; it never exceeds full scale.
+    if val < 0:
         rs = a.get("reverse_scale", 1.0)
         if isinstance(rs, (int, float)) and not isinstance(rs, bool) and rs != 1.0:
-            v = -max(0, min(7, round(abs(v) * rs)))
-    return slot, ch, v
+            mag = max(0, min(7, round(mag * rs)))
+    sign = -1 if val < 0 else (1 if val > 0 else 0)
+    if a.get("invert"):
+        sign = -sign
+    return slot, ch, sign * mag
