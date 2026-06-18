@@ -35,5 +35,11 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.activity:activity-ktx:1.7.2'
+    // Local WebSocket server (mirrors the Pi's websockets server). Pulls slf4j-api;
+    // with no binding on Android it no-ops, which is fine for a LAN tool.
+    implementation 'org.java-websocket:Java-WebSocket:1.5.6'
     testImplementation 'junit:junit:4.13.2'
+    // Real org.json for JVM unit tests (Android provides it at runtime; the SDK stub
+    // throws "not mocked"). Keeps the pure core's int-vs-float fidelity in tests.
+    testImplementation 'org.json:json:20231013'
 }

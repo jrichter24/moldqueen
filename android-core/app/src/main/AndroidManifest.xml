@@ -5,6 +5,8 @@
          BLUETOOTH_CONNECT is requested per spec (adapter state / future GATT). -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- Local WebSocket server bound to loopback (the WebView client connects here). -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
 

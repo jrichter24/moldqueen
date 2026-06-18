@@ -8,14 +8,17 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.dnaevolutions.moldqueen.service.Mk4Service
 
 /**
- * Minimal radio proof: Connect / Drive / Stop, each pushing one MK4 telegram to
- * the BLE advertiser. Goal of this session = move ONE motor.
+ * Layer 2 host: starts the local WS API service (ws://localhost:8765) and drives it
+ * through the SAME ApiCore the WebView will use — so Connect → Ready → Drive → Stop
+ * exercises the full stack (UI → ApiCore → RadioController → BleBroadcaster → hub),
+ * re-proving the radio behind the mirror. The WebView client arrives in layer 3.
  */
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var broadcaster: BleBroadcaster
+    private lateinit var service: Mk4Service
     private lateinit var status: TextView
 
     private val requiredPerms = arrayOf(
@@ -26,29 +29,38 @@ class MainActivity : AppCompatActivity() {
     private val permLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
-        val granted = result.values.all { it }
-        status.text = if (granted) "Permissions granted — ready to Connect"
-        else "Bluetooth permissions DENIED — grant them in Settings"
+        status.text = if (result.values.all { it }) "Ready — WS on ws://localhost:8765"
+        else "Bluetooth permissions DENIED — radio disabled (WS still up)"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         status = findViewById(R.id.status)
-        broadcaster = BleBroadcaster(this)
-        broadcaster.onStatus = { msg -> runOnUiThread { status.text = msg } }
+
+        service = Mk4Service(this)
+        service.start()
+        status.text = "WS API on ws://localhost:8765 — Connect → Ready → Drive"
 
         findViewById<Button>(R.id.btnConnect).setOnClickListener {
-            if (ensurePerms()) broadcaster.setPayload(Mk4Telegrams.connect(), "CONNECT")
+            if (ensurePerms()) submit("""{"cmd":"setup","action":"connect"}""", "CONNECT (hub should fast-flash)")
+        }
+        findViewById<Button>(R.id.btnReady).setOnClickListener {
+            submit("""{"cmd":"setup","action":"ready"}""", "READY")
         }
         findViewById<Button>(R.id.btnDrive).setOnClickListener {
-            if (ensurePerms()) broadcaster.setPayload(Mk4Telegrams.drive(0, 0, 5), "DRIVE s0 c0 +5")
+            submit("""{"cmd":"set","slot":0,"channel":0,"value":5}""", "DRIVE slot0 ch0 +5")
         }
         findViewById<Button>(R.id.btnStop).setOnClickListener {
-            if (ensurePerms()) broadcaster.setPayload(Mk4Telegrams.stop(), "STOP (neutral)")
+            submit("""{"cmd":"stop"}""", "STOP (neutral)")
         }
 
         if (!hasPerms()) permLauncher.launch(requiredPerms)
+    }
+
+    private fun submit(cmd: String, label: String) {
+        service.submit(cmd)
+        status.text = label
     }
 
     private fun hasPerms(): Boolean = requiredPerms.all {
@@ -63,6 +75,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        broadcaster.stop()
+        service.stop()
     }
 }

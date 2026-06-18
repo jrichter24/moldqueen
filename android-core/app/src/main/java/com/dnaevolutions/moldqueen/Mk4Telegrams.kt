@@ -19,7 +19,43 @@ object Mk4Telegrams {
     private const val MOTION_HEADER = "7dae18"
     private const val MOTION_TRAILER = "82"
 
+    const val N_CHANNELS = 12
+    const val NEUTRAL = 0x8                 // neutral nibble
     private const val NEUTRAL_NIBBLE = 0x8
+    // Full on-air advertising-data prefix the Pi/stock app use: Flags AD (02 01 02) +
+    // manufacturer AD header (len 1b, type ff, company f0 ff = 0xFFF0). The 24 crypted
+    // bytes follow. Mirrors bt-core/mk4web/telegram.py _AD_PREFIX.
+    private const val AD_PREFIX_HEX = "1f0201021bfff0ff"
+
+    /** value (-7..+7) -> nibble (0x1..0xF); 0 -> 0x8 neutral. Clamps out-of-range. */
+    fun valueToNibble(value: Int): Int = NEUTRAL + value.coerceIn(-7, 7)
+
+    /** nibble (0x1..0xF) -> signed value (-7..+7). */
+    fun nibbleToValue(nibble: Int): Int = nibble - NEUTRAL
+
+    /** (slot 0-2, channel 0-3) -> global channel index 0-11. */
+    fun channelIndex(slot: Int, channel: Int): Int = slot * 4 + channel
+
+    /** 12 nibbles (0x0..0xF) -> motion telegram raw hex (mirrors telegram.motion_raw). */
+    fun motionRawHexNibbles(nibbles: IntArray): String {
+        require(nibbles.size == N_CHANNELS) { "expected 12 nibbles (was ${nibbles.size})" }
+        val sb = StringBuilder(MOTION_HEADER)
+        for (i in 0 until 6) sb.append("%02x".format(((nibbles[2 * i] and 0xF) shl 4) or (nibbles[2 * i + 1] and 0xF)))
+        sb.append(MOTION_TRAILER)
+        return sb.toString()
+    }
+
+    /** raw telegram hex -> on-air AD bytes (prefix + crypted 24), mirrors telegram.ad_bytes. */
+    fun adBytes(rawHex: String): ByteArray {
+        val prefix = ByteArray(AD_PREFIX_HEX.length / 2) {
+            AD_PREFIX_HEX.substring(it * 2, it * 2 + 2).toInt(16).toByte()
+        }
+        return prefix + MouldKingCrypt.encode(rawHex)
+    }
+
+    /** Space-separated hex of [adBytes] (mirrors telegram.ad_hex) for the RAW console. */
+    fun adHex(rawHex: String): String =
+        adBytes(rawHex).joinToString(" ") { "%02x".format(it.toInt() and 0xFF) }
 
     fun connect(): ByteArray = MouldKingCrypt.encode(CONNECT_RAW)
 

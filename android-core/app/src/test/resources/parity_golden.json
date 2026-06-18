@@ -1,0 +1,1916 @@
+[
+  {
+    "label": "<on_connect>",
+    "sent": null,
+    "recv": [
+      {
+        "type": "lifecycle",
+        "state": "IDLE"
+      },
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1888888888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 72 a2 3c 6f 56 f1 1e 15 16 17 18"
+      },
+      {
+        "type": "map",
+        "layout": "excavator",
+        "default": {
+          "version": 1,
+          "functions": {
+            "left_track": {
+              "slot": 1,
+              "channel": 0,
+              "invert": true,
+              "labels": {
+                "en": "Left track",
+                "de": "Linke Kette",
+                "zh": "左履带",
+                "ko": "왼쪽 트랙",
+                "es": "Oruga izquierda",
+                "fr": "Chenille gauche"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "right_track": {
+              "slot": 1,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Right track",
+                "de": "Rechte Kette",
+                "zh": "右履带",
+                "ko": "오른쪽 트랙",
+                "es": "Oruga derecha",
+                "fr": "Chenille droite"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "arm_lift": {
+              "slot": 0,
+              "channel": 3,
+              "invert": false,
+              "labels": {
+                "en": "Arm up/down",
+                "de": "Arm heben/senken",
+                "zh": "大臂升降",
+                "ko": "암 올림/내림",
+                "es": "Brazo subir/bajar",
+                "fr": "Bras monter/descendre"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "front_arm": {
+              "slot": 0,
+              "channel": 1,
+              "invert": false,
+              "labels": {
+                "en": "Front arm",
+                "de": "Vorderarm",
+                "zh": "前臂",
+                "ko": "앞 암",
+                "es": "Brazo delantero",
+                "fr": "Bras avant"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "rotation": {
+              "slot": 0,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Rotation",
+                "de": "Drehen",
+                "zh": "旋转",
+                "ko": "회전",
+                "es": "Rotación",
+                "fr": "Rotation"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "bucket": {
+              "slot": 0,
+              "channel": 0,
+              "invert": false,
+              "labels": {
+                "en": "Bucket",
+                "de": "Schaufel",
+                "zh": "铲斗",
+                "ko": "버킷",
+                "es": "Cazo",
+                "fr": "Godet"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            }
+          }
+        },
+        "active": {
+          "version": 1,
+          "functions": {
+            "left_track": {
+              "slot": 1,
+              "channel": 0,
+              "invert": true,
+              "labels": {
+                "en": "Left track",
+                "de": "Linke Kette",
+                "zh": "左履带",
+                "ko": "왼쪽 트랙",
+                "es": "Oruga izquierda",
+                "fr": "Chenille gauche"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "right_track": {
+              "slot": 1,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Right track",
+                "de": "Rechte Kette",
+                "zh": "右履带",
+                "ko": "오른쪽 트랙",
+                "es": "Oruga derecha",
+                "fr": "Chenille droite"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "arm_lift": {
+              "slot": 0,
+              "channel": 3,
+              "invert": false,
+              "labels": {
+                "en": "Arm up/down",
+                "de": "Arm heben/senken",
+                "zh": "大臂升降",
+                "ko": "암 올림/내림",
+                "es": "Brazo subir/bajar",
+                "fr": "Bras monter/descendre"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "front_arm": {
+              "slot": 0,
+              "channel": 1,
+              "invert": false,
+              "labels": {
+                "en": "Front arm",
+                "de": "Vorderarm",
+                "zh": "前臂",
+                "ko": "앞 암",
+                "es": "Brazo delantero",
+                "fr": "Bras avant"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "rotation": {
+              "slot": 0,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Rotation",
+                "de": "Drehen",
+                "zh": "旋转",
+                "ko": "회전",
+                "es": "Rotación",
+                "fr": "Rotation"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "bucket": {
+              "slot": 0,
+              "channel": 0,
+              "invert": false,
+              "labels": {
+                "en": "Bucket",
+                "de": "Schaufel",
+                "zh": "铲斗",
+                "ko": "버킷",
+                "es": "Cazo",
+                "fr": "Godet"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            }
+          }
+        },
+        "device_swap": false
+      }
+    ]
+  },
+  {
+    "label": "info",
+    "sent": {
+      "cmd": "info"
+    },
+    "recv": [
+      {
+        "type": "info",
+        "app": "moldqueen",
+        "version": "0.1.0",
+        "lifecycle": "IDLE",
+        "info_level": "light",
+        "radio_backend": "rawhci",
+        "dry_run": false,
+        "hci": "hci1",
+        "ws_port": 8765,
+        "http_port": 8080,
+        "serve_client": true,
+        "layout": "excavator"
+      }
+    ]
+  },
+  {
+    "label": "state",
+    "sent": {
+      "cmd": "state"
+    },
+    "recv": [
+      {
+        "type": "lifecycle",
+        "state": "IDLE"
+      },
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1888888888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 72 a2 3c 6f 56 f1 1e 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "connect",
+    "sent": {
+      "cmd": "setup",
+      "action": "connect"
+    },
+    "recv": [
+      {
+        "type": "lifecycle",
+        "state": "CONNECTING"
+      },
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1888888888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 72 a2 3c 6f 56 f1 1e 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "ready",
+    "sent": {
+      "cmd": "setup",
+      "action": "ready"
+    },
+    "recv": [
+      {
+        "type": "lifecycle",
+        "state": "READY"
+      },
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1888888888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 72 a2 3c 6f 56 f1 1e 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "set_s1c0_+5",
+    "sent": {
+      "cmd": "set",
+      "slot": 1,
+      "channel": 0,
+      "value": 5
+    },
+    "recv": [
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            5,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae188888d888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 22 a2 3c 6f 56 93 6b 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "drive_left_+6",
+    "sent": {
+      "cmd": "drive",
+      "function": "left_track",
+      "value": 6
+    },
+    "recv": [
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            -5,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1888883888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 c2 a2 3c 6f 56 75 40 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "drive_bucket_0",
+    "sent": {
+      "cmd": "drive",
+      "function": "bucket",
+      "value": 0
+    },
+    "recv": [
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            -5,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1888883888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 c2 a2 3c 6f 56 75 40 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "set_when_not_ready?",
+    "sent": {
+      "cmd": "set",
+      "slot": 0,
+      "channel": 0,
+      "value": 7
+    },
+    "recv": [
+      {
+        "type": "state",
+        "slots": [
+          [
+            7,
+            0,
+            0,
+            0
+          ],
+          [
+            -5,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae18f8883888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 40 d9 c2 a2 3c 6f 56 39 51 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "map_get",
+    "sent": {
+      "cmd": "map",
+      "action": "get"
+    },
+    "recv": [
+      {
+        "type": "map",
+        "layout": "excavator",
+        "default": {
+          "version": 1,
+          "functions": {
+            "left_track": {
+              "slot": 1,
+              "channel": 0,
+              "invert": true,
+              "labels": {
+                "en": "Left track",
+                "de": "Linke Kette",
+                "zh": "左履带",
+                "ko": "왼쪽 트랙",
+                "es": "Oruga izquierda",
+                "fr": "Chenille gauche"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "right_track": {
+              "slot": 1,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Right track",
+                "de": "Rechte Kette",
+                "zh": "右履带",
+                "ko": "오른쪽 트랙",
+                "es": "Oruga derecha",
+                "fr": "Chenille droite"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "arm_lift": {
+              "slot": 0,
+              "channel": 3,
+              "invert": false,
+              "labels": {
+                "en": "Arm up/down",
+                "de": "Arm heben/senken",
+                "zh": "大臂升降",
+                "ko": "암 올림/내림",
+                "es": "Brazo subir/bajar",
+                "fr": "Bras monter/descendre"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "front_arm": {
+              "slot": 0,
+              "channel": 1,
+              "invert": false,
+              "labels": {
+                "en": "Front arm",
+                "de": "Vorderarm",
+                "zh": "前臂",
+                "ko": "앞 암",
+                "es": "Brazo delantero",
+                "fr": "Bras avant"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "rotation": {
+              "slot": 0,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Rotation",
+                "de": "Drehen",
+                "zh": "旋转",
+                "ko": "회전",
+                "es": "Rotación",
+                "fr": "Rotation"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "bucket": {
+              "slot": 0,
+              "channel": 0,
+              "invert": false,
+              "labels": {
+                "en": "Bucket",
+                "de": "Schaufel",
+                "zh": "铲斗",
+                "ko": "버킷",
+                "es": "Cazo",
+                "fr": "Godet"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            }
+          }
+        },
+        "active": {
+          "version": 1,
+          "functions": {
+            "left_track": {
+              "slot": 1,
+              "channel": 0,
+              "invert": true,
+              "labels": {
+                "en": "Left track",
+                "de": "Linke Kette",
+                "zh": "左履带",
+                "ko": "왼쪽 트랙",
+                "es": "Oruga izquierda",
+                "fr": "Chenille gauche"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "right_track": {
+              "slot": 1,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Right track",
+                "de": "Rechte Kette",
+                "zh": "右履带",
+                "ko": "오른쪽 트랙",
+                "es": "Oruga derecha",
+                "fr": "Chenille droite"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "arm_lift": {
+              "slot": 0,
+              "channel": 3,
+              "invert": false,
+              "labels": {
+                "en": "Arm up/down",
+                "de": "Arm heben/senken",
+                "zh": "大臂升降",
+                "ko": "암 올림/내림",
+                "es": "Brazo subir/bajar",
+                "fr": "Bras monter/descendre"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "front_arm": {
+              "slot": 0,
+              "channel": 1,
+              "invert": false,
+              "labels": {
+                "en": "Front arm",
+                "de": "Vorderarm",
+                "zh": "前臂",
+                "ko": "앞 암",
+                "es": "Brazo delantero",
+                "fr": "Bras avant"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "rotation": {
+              "slot": 0,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Rotation",
+                "de": "Drehen",
+                "zh": "旋转",
+                "ko": "회전",
+                "es": "Rotación",
+                "fr": "Rotation"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "bucket": {
+              "slot": 0,
+              "channel": 0,
+              "invert": false,
+              "labels": {
+                "en": "Bucket",
+                "de": "Schaufel",
+                "zh": "铲斗",
+                "ko": "버킷",
+                "es": "Cazo",
+                "fr": "Godet"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            }
+          }
+        },
+        "device_swap": false
+      }
+    ]
+  },
+  {
+    "label": "map_swap_on",
+    "sent": {
+      "cmd": "map",
+      "action": "swap",
+      "value": true
+    },
+    "recv": [
+      {
+        "type": "map",
+        "layout": "excavator",
+        "default": {
+          "version": 1,
+          "functions": {
+            "left_track": {
+              "slot": 1,
+              "channel": 0,
+              "invert": true,
+              "labels": {
+                "en": "Left track",
+                "de": "Linke Kette",
+                "zh": "左履带",
+                "ko": "왼쪽 트랙",
+                "es": "Oruga izquierda",
+                "fr": "Chenille gauche"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "right_track": {
+              "slot": 1,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Right track",
+                "de": "Rechte Kette",
+                "zh": "右履带",
+                "ko": "오른쪽 트랙",
+                "es": "Oruga derecha",
+                "fr": "Chenille droite"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "arm_lift": {
+              "slot": 0,
+              "channel": 3,
+              "invert": false,
+              "labels": {
+                "en": "Arm up/down",
+                "de": "Arm heben/senken",
+                "zh": "大臂升降",
+                "ko": "암 올림/내림",
+                "es": "Brazo subir/bajar",
+                "fr": "Bras monter/descendre"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "front_arm": {
+              "slot": 0,
+              "channel": 1,
+              "invert": false,
+              "labels": {
+                "en": "Front arm",
+                "de": "Vorderarm",
+                "zh": "前臂",
+                "ko": "앞 암",
+                "es": "Brazo delantero",
+                "fr": "Bras avant"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "rotation": {
+              "slot": 0,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Rotation",
+                "de": "Drehen",
+                "zh": "旋转",
+                "ko": "회전",
+                "es": "Rotación",
+                "fr": "Rotation"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "bucket": {
+              "slot": 0,
+              "channel": 0,
+              "invert": false,
+              "labels": {
+                "en": "Bucket",
+                "de": "Schaufel",
+                "zh": "铲斗",
+                "ko": "버킷",
+                "es": "Cazo",
+                "fr": "Godet"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            }
+          }
+        },
+        "active": {
+          "version": 1,
+          "functions": {
+            "left_track": {
+              "slot": 1,
+              "channel": 0,
+              "invert": true,
+              "labels": {
+                "en": "Left track",
+                "de": "Linke Kette",
+                "zh": "左履带",
+                "ko": "왼쪽 트랙",
+                "es": "Oruga izquierda",
+                "fr": "Chenille gauche"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "right_track": {
+              "slot": 1,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Right track",
+                "de": "Rechte Kette",
+                "zh": "右履带",
+                "ko": "오른쪽 트랙",
+                "es": "Oruga derecha",
+                "fr": "Chenille droite"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "arm_lift": {
+              "slot": 0,
+              "channel": 3,
+              "invert": false,
+              "labels": {
+                "en": "Arm up/down",
+                "de": "Arm heben/senken",
+                "zh": "大臂升降",
+                "ko": "암 올림/내림",
+                "es": "Brazo subir/bajar",
+                "fr": "Bras monter/descendre"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "front_arm": {
+              "slot": 0,
+              "channel": 1,
+              "invert": false,
+              "labels": {
+                "en": "Front arm",
+                "de": "Vorderarm",
+                "zh": "前臂",
+                "ko": "앞 암",
+                "es": "Brazo delantero",
+                "fr": "Bras avant"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "rotation": {
+              "slot": 0,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Rotation",
+                "de": "Drehen",
+                "zh": "旋转",
+                "ko": "회전",
+                "es": "Rotación",
+                "fr": "Rotation"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "bucket": {
+              "slot": 0,
+              "channel": 0,
+              "invert": false,
+              "labels": {
+                "en": "Bucket",
+                "de": "Schaufel",
+                "zh": "铲斗",
+                "ko": "버킷",
+                "es": "Cazo",
+                "fr": "Godet"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            }
+          }
+        },
+        "device_swap": true
+      },
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1888888888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 72 a2 3c 6f 56 f1 1e 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "drive_left_+6_swap",
+    "sent": {
+      "cmd": "drive",
+      "function": "left_track",
+      "value": 6
+    },
+    "recv": [
+      {
+        "type": "state",
+        "slots": [
+          [
+            -5,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1838888888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 80 d9 72 a2 3c 6f 56 a6 4e 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "map_set_valid",
+    "sent": {
+      "cmd": "map",
+      "action": "set",
+      "map": {
+        "version": 1,
+        "functions": {
+          "left_track": {
+            "slot": 1,
+            "channel": 0,
+            "invert": true,
+            "labels": {
+              "en": "Left track",
+              "de": "Linke Kette",
+              "zh": "左履带",
+              "ko": "왼쪽 트랙",
+              "es": "Oruga izquierda",
+              "fr": "Chenille gauche"
+            },
+            "confirmed": true,
+            "reverse_scale": 1,
+            "max_fwd": 7,
+            "max_rev": 5
+          },
+          "right_track": {
+            "slot": 1,
+            "channel": 2,
+            "invert": false,
+            "labels": {
+              "en": "Right track",
+              "de": "Rechte Kette",
+              "zh": "右履带",
+              "ko": "오른쪽 트랙",
+              "es": "Oruga derecha",
+              "fr": "Chenille droite"
+            },
+            "confirmed": false,
+            "reverse_scale": 1,
+            "max_fwd": 7,
+            "max_rev": 5
+          },
+          "arm_lift": {
+            "slot": 0,
+            "channel": 3,
+            "invert": false,
+            "labels": {
+              "en": "Arm up/down",
+              "de": "Arm heben/senken",
+              "zh": "大臂升降",
+              "ko": "암 올림/내림",
+              "es": "Brazo subir/bajar",
+              "fr": "Bras monter/descendre"
+            },
+            "confirmed": false,
+            "reverse_scale": 1,
+            "max_fwd": 7,
+            "max_rev": 5
+          },
+          "front_arm": {
+            "slot": 0,
+            "channel": 1,
+            "invert": false,
+            "labels": {
+              "en": "Front arm",
+              "de": "Vorderarm",
+              "zh": "前臂",
+              "ko": "앞 암",
+              "es": "Brazo delantero",
+              "fr": "Bras avant"
+            },
+            "confirmed": false,
+            "reverse_scale": 1,
+            "max_fwd": 7,
+            "max_rev": 5
+          },
+          "rotation": {
+            "slot": 0,
+            "channel": 2,
+            "invert": false,
+            "labels": {
+              "en": "Rotation",
+              "de": "Drehen",
+              "zh": "旋转",
+              "ko": "회전",
+              "es": "Rotación",
+              "fr": "Rotation"
+            },
+            "confirmed": false,
+            "reverse_scale": 1,
+            "max_fwd": 7,
+            "max_rev": 5
+          },
+          "bucket": {
+            "slot": 0,
+            "channel": 0,
+            "invert": false,
+            "labels": {
+              "en": "Bucket",
+              "de": "Schaufel",
+              "zh": "铲斗",
+              "ko": "버킷",
+              "es": "Cazo",
+              "fr": "Godet"
+            },
+            "confirmed": true,
+            "reverse_scale": 1,
+            "max_fwd": 7,
+            "max_rev": 5
+          }
+        }
+      }
+    },
+    "recv": [
+      {
+        "type": "mapresult",
+        "action": "set",
+        "ok": true,
+        "errors": []
+      },
+      {
+        "type": "map",
+        "layout": "excavator",
+        "default": {
+          "version": 1,
+          "functions": {
+            "left_track": {
+              "slot": 1,
+              "channel": 0,
+              "invert": true,
+              "labels": {
+                "en": "Left track",
+                "de": "Linke Kette",
+                "zh": "左履带",
+                "ko": "왼쪽 트랙",
+                "es": "Oruga izquierda",
+                "fr": "Chenille gauche"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "right_track": {
+              "slot": 1,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Right track",
+                "de": "Rechte Kette",
+                "zh": "右履带",
+                "ko": "오른쪽 트랙",
+                "es": "Oruga derecha",
+                "fr": "Chenille droite"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "arm_lift": {
+              "slot": 0,
+              "channel": 3,
+              "invert": false,
+              "labels": {
+                "en": "Arm up/down",
+                "de": "Arm heben/senken",
+                "zh": "大臂升降",
+                "ko": "암 올림/내림",
+                "es": "Brazo subir/bajar",
+                "fr": "Bras monter/descendre"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "front_arm": {
+              "slot": 0,
+              "channel": 1,
+              "invert": false,
+              "labels": {
+                "en": "Front arm",
+                "de": "Vorderarm",
+                "zh": "前臂",
+                "ko": "앞 암",
+                "es": "Brazo delantero",
+                "fr": "Bras avant"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "rotation": {
+              "slot": 0,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Rotation",
+                "de": "Drehen",
+                "zh": "旋转",
+                "ko": "회전",
+                "es": "Rotación",
+                "fr": "Rotation"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "bucket": {
+              "slot": 0,
+              "channel": 0,
+              "invert": false,
+              "labels": {
+                "en": "Bucket",
+                "de": "Schaufel",
+                "zh": "铲斗",
+                "ko": "버킷",
+                "es": "Cazo",
+                "fr": "Godet"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            }
+          }
+        },
+        "active": {
+          "version": 1,
+          "functions": {
+            "left_track": {
+              "slot": 1,
+              "channel": 0,
+              "invert": true,
+              "labels": {
+                "en": "Left track",
+                "de": "Linke Kette",
+                "zh": "左履带",
+                "ko": "왼쪽 트랙",
+                "es": "Oruga izquierda",
+                "fr": "Chenille gauche"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "right_track": {
+              "slot": 1,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Right track",
+                "de": "Rechte Kette",
+                "zh": "右履带",
+                "ko": "오른쪽 트랙",
+                "es": "Oruga derecha",
+                "fr": "Chenille droite"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "arm_lift": {
+              "slot": 0,
+              "channel": 3,
+              "invert": false,
+              "labels": {
+                "en": "Arm up/down",
+                "de": "Arm heben/senken",
+                "zh": "大臂升降",
+                "ko": "암 올림/내림",
+                "es": "Brazo subir/bajar",
+                "fr": "Bras monter/descendre"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "front_arm": {
+              "slot": 0,
+              "channel": 1,
+              "invert": false,
+              "labels": {
+                "en": "Front arm",
+                "de": "Vorderarm",
+                "zh": "前臂",
+                "ko": "앞 암",
+                "es": "Brazo delantero",
+                "fr": "Bras avant"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "rotation": {
+              "slot": 0,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Rotation",
+                "de": "Drehen",
+                "zh": "旋转",
+                "ko": "회전",
+                "es": "Rotación",
+                "fr": "Rotation"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "bucket": {
+              "slot": 0,
+              "channel": 0,
+              "invert": false,
+              "labels": {
+                "en": "Bucket",
+                "de": "Schaufel",
+                "zh": "铲斗",
+                "ko": "버킷",
+                "es": "Cazo",
+                "fr": "Godet"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            }
+          }
+        },
+        "device_swap": true
+      },
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1888888888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 72 a2 3c 6f 56 f1 1e 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "map_set_invalid",
+    "sent": {
+      "cmd": "map",
+      "action": "set",
+      "map": {}
+    },
+    "recv": [
+      {
+        "type": "mapresult",
+        "action": "set",
+        "ok": false,
+        "errors": [
+          "map must be an object with a 'functions' object"
+        ]
+      }
+    ]
+  },
+  {
+    "label": "map_promote",
+    "sent": {
+      "cmd": "map",
+      "action": "promote",
+      "map": {
+        "version": 1,
+        "functions": {
+          "left_track": {
+            "slot": 1,
+            "channel": 0,
+            "invert": true,
+            "labels": {
+              "en": "Left track",
+              "de": "Linke Kette",
+              "zh": "左履带",
+              "ko": "왼쪽 트랙",
+              "es": "Oruga izquierda",
+              "fr": "Chenille gauche"
+            },
+            "confirmed": true,
+            "reverse_scale": 1,
+            "max_fwd": 7,
+            "max_rev": 5
+          },
+          "right_track": {
+            "slot": 1,
+            "channel": 2,
+            "invert": false,
+            "labels": {
+              "en": "Right track",
+              "de": "Rechte Kette",
+              "zh": "右履带",
+              "ko": "오른쪽 트랙",
+              "es": "Oruga derecha",
+              "fr": "Chenille droite"
+            },
+            "confirmed": false,
+            "reverse_scale": 1,
+            "max_fwd": 7,
+            "max_rev": 5
+          },
+          "arm_lift": {
+            "slot": 0,
+            "channel": 3,
+            "invert": false,
+            "labels": {
+              "en": "Arm up/down",
+              "de": "Arm heben/senken",
+              "zh": "大臂升降",
+              "ko": "암 올림/내림",
+              "es": "Brazo subir/bajar",
+              "fr": "Bras monter/descendre"
+            },
+            "confirmed": false,
+            "reverse_scale": 1,
+            "max_fwd": 7,
+            "max_rev": 5
+          },
+          "front_arm": {
+            "slot": 0,
+            "channel": 1,
+            "invert": false,
+            "labels": {
+              "en": "Front arm",
+              "de": "Vorderarm",
+              "zh": "前臂",
+              "ko": "앞 암",
+              "es": "Brazo delantero",
+              "fr": "Bras avant"
+            },
+            "confirmed": false,
+            "reverse_scale": 1,
+            "max_fwd": 7,
+            "max_rev": 5
+          },
+          "rotation": {
+            "slot": 0,
+            "channel": 2,
+            "invert": false,
+            "labels": {
+              "en": "Rotation",
+              "de": "Drehen",
+              "zh": "旋转",
+              "ko": "회전",
+              "es": "Rotación",
+              "fr": "Rotation"
+            },
+            "confirmed": false,
+            "reverse_scale": 1,
+            "max_fwd": 7,
+            "max_rev": 5
+          },
+          "bucket": {
+            "slot": 0,
+            "channel": 0,
+            "invert": false,
+            "labels": {
+              "en": "Bucket",
+              "de": "Schaufel",
+              "zh": "铲斗",
+              "ko": "버킷",
+              "es": "Cazo",
+              "fr": "Godet"
+            },
+            "confirmed": true,
+            "reverse_scale": 1,
+            "max_fwd": 3,
+            "max_rev": 5
+          }
+        }
+      }
+    },
+    "recv": [
+      {
+        "type": "mapresult",
+        "action": "promote",
+        "ok": true,
+        "errors": []
+      },
+      {
+        "type": "map",
+        "layout": "excavator",
+        "default": {
+          "version": 1,
+          "functions": {
+            "left_track": {
+              "slot": 1,
+              "channel": 0,
+              "invert": true,
+              "labels": {
+                "en": "Left track",
+                "de": "Linke Kette",
+                "zh": "左履带",
+                "ko": "왼쪽 트랙",
+                "es": "Oruga izquierda",
+                "fr": "Chenille gauche"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "right_track": {
+              "slot": 1,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Right track",
+                "de": "Rechte Kette",
+                "zh": "右履带",
+                "ko": "오른쪽 트랙",
+                "es": "Oruga derecha",
+                "fr": "Chenille droite"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "arm_lift": {
+              "slot": 0,
+              "channel": 3,
+              "invert": false,
+              "labels": {
+                "en": "Arm up/down",
+                "de": "Arm heben/senken",
+                "zh": "大臂升降",
+                "ko": "암 올림/내림",
+                "es": "Brazo subir/bajar",
+                "fr": "Bras monter/descendre"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "front_arm": {
+              "slot": 0,
+              "channel": 1,
+              "invert": false,
+              "labels": {
+                "en": "Front arm",
+                "de": "Vorderarm",
+                "zh": "前臂",
+                "ko": "앞 암",
+                "es": "Brazo delantero",
+                "fr": "Bras avant"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "rotation": {
+              "slot": 0,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Rotation",
+                "de": "Drehen",
+                "zh": "旋转",
+                "ko": "회전",
+                "es": "Rotación",
+                "fr": "Rotation"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "bucket": {
+              "slot": 0,
+              "channel": 0,
+              "invert": false,
+              "labels": {
+                "en": "Bucket",
+                "de": "Schaufel",
+                "zh": "铲斗",
+                "ko": "버킷",
+                "es": "Cazo",
+                "fr": "Godet"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 3,
+              "max_rev": 5
+            }
+          }
+        },
+        "active": {
+          "version": 1,
+          "functions": {
+            "left_track": {
+              "slot": 1,
+              "channel": 0,
+              "invert": true,
+              "labels": {
+                "en": "Left track",
+                "de": "Linke Kette",
+                "zh": "左履带",
+                "ko": "왼쪽 트랙",
+                "es": "Oruga izquierda",
+                "fr": "Chenille gauche"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "right_track": {
+              "slot": 1,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Right track",
+                "de": "Rechte Kette",
+                "zh": "右履带",
+                "ko": "오른쪽 트랙",
+                "es": "Oruga derecha",
+                "fr": "Chenille droite"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "arm_lift": {
+              "slot": 0,
+              "channel": 3,
+              "invert": false,
+              "labels": {
+                "en": "Arm up/down",
+                "de": "Arm heben/senken",
+                "zh": "大臂升降",
+                "ko": "암 올림/내림",
+                "es": "Brazo subir/bajar",
+                "fr": "Bras monter/descendre"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "front_arm": {
+              "slot": 0,
+              "channel": 1,
+              "invert": false,
+              "labels": {
+                "en": "Front arm",
+                "de": "Vorderarm",
+                "zh": "前臂",
+                "ko": "앞 암",
+                "es": "Brazo delantero",
+                "fr": "Bras avant"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "rotation": {
+              "slot": 0,
+              "channel": 2,
+              "invert": false,
+              "labels": {
+                "en": "Rotation",
+                "de": "Drehen",
+                "zh": "旋转",
+                "ko": "회전",
+                "es": "Rotación",
+                "fr": "Rotation"
+              },
+              "confirmed": false,
+              "reverse_scale": 1,
+              "max_fwd": 7,
+              "max_rev": 5
+            },
+            "bucket": {
+              "slot": 0,
+              "channel": 0,
+              "invert": false,
+              "labels": {
+                "en": "Bucket",
+                "de": "Schaufel",
+                "zh": "铲斗",
+                "ko": "버킷",
+                "es": "Cazo",
+                "fr": "Godet"
+              },
+              "confirmed": true,
+              "reverse_scale": 1,
+              "max_fwd": 3,
+              "max_rev": 5
+            }
+          }
+        },
+        "device_swap": true
+      },
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1888888888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 72 a2 3c 6f 56 f1 1e 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "drive_before_ready_recheck",
+    "sent": {
+      "cmd": "drive",
+      "function": "rotation",
+      "value": 4
+    },
+    "recv": [
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae18888888c8888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 72 e2 3c 6f 56 46 08 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "stop",
+    "sent": {
+      "cmd": "stop"
+    },
+    "recv": [
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1888888888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 72 a2 3c 6f 56 f1 1e 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "reset",
+    "sent": {
+      "cmd": "setup",
+      "action": "reset"
+    },
+    "recv": [
+      {
+        "type": "lifecycle",
+        "state": "IDLE"
+      },
+      {
+        "type": "state",
+        "slots": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "raw": "7dae1888888888888882",
+        "ad": "1f 02 01 02 1b ff f0 ff 6d b6 43 cf 7e 8f 47 11 98 b3 e6 30 d9 72 a2 3c 6f 56 f1 1e 15 16 17 18"
+      }
+    ]
+  },
+  {
+    "label": "set_after_reset_ignored",
+    "sent": {
+      "cmd": "set",
+      "slot": 0,
+      "channel": 0,
+      "value": 7
+    },
+    "recv": []
+  }
+]

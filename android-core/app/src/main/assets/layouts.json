@@ -1,0 +1,45 @@
+{
+  "_comment": "Layout manifest — the SINGLE source of truth for layouts. The server DERIVES each layout's route as /<id> (route is NOT a field; the title is display-only) and serves its HTML/JS/CSS; the chooser builds its cards from this. active:false hides a layout entirely (no route, no card, not in /layouts.json) until a contributor flips it true — see docs/ADDING_A_LAYOUT.md. Add a layout here and it surfaces in BOTH the chooser and the routes (no api.py edit). id must be URL-safe. kind: function-mapped | generic | placeholder. category is a declared grouping label.",
+  "layouts": [
+    {
+      "id": "excavator",
+      "name": "Excavator (13112)",
+      "description": "Drive the excavator — full dashboard.",
+      "icon": "/assets/excavator_icon.png",
+      "kind": "function-mapped",
+      "category": "vehicle",
+      "active": true,
+      "functions": ["left_track", "right_track", "arm_lift", "front_arm", "rotation", "bucket"],
+      "files": { "html": "dashboard.html", "js": "dashboard.js", "css": "dashboard.css" }
+    },
+    {
+      "id": "raw",
+      "name": "RAW (Debug)",
+      "description": "Low-level telegram test bench.",
+      "icon": "/assets/generic_icon.png",
+      "kind": "generic",
+      "category": "debug",
+      "active": true,
+      "files": { "html": "raw.html", "js": "raw.js", "css": "raw.css" }
+    },
+    {
+      "id": "byo",
+      "name": "Bring your own",
+      "description": "Build a layout for your own toy — and share it.",
+      "kind": "placeholder",
+      "category": "template",
+      "active": true
+    },
+    {
+      "id": "template",
+      "name": "TEMPLATE — your toy here",
+      "description": "Inactive starter for a function-mapped layout. Copy it, give it a unique id, and flip active:true. See docs/ADDING_A_LAYOUT.md.",
+      "icon": "/assets/generic_icon.png",
+      "kind": "function-mapped",
+      "category": "template",
+      "active": false,
+      "functions": ["knob_1"],
+      "files": { "html": "template.html", "js": "template.js", "css": "template.css" }
+    }
+  ]
+}
