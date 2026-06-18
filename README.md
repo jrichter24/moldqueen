@@ -69,6 +69,7 @@ README is the tour; PROJECT.md is the source of truth.
 - [What you get](#what-you-get)
 - [Highlights](#highlights)
 - [Screenshots](#screenshots)
+- [Game controller](#game-controller)
 - [How it works](#how-it-works)
 - [The protocol (MK4 12-channel nibble)](#the-protocol-mk4-12-channel-nibble)
 - [Architecture](#architecture)
@@ -97,6 +98,9 @@ README is the tour; PROJECT.md is the source of truth.
 - **Multi-language web client** — a polished dashboard with a **6-language picker**
   (EN/DE/ZH/KO/ES/FR) so kids can drive in their own language; run it on the Pi or
   anywhere as a container.
+- **Game controller support** — drive with a **PS5/DualSense** gamepad. It connects to
+  the **client device** (your phone/laptop), not the Pi — just another input sending the
+  same API commands, so the API-first design stays intact.
 - **RAW debug mode** — a low-level bench for crafting and reading BLE telegrams
   directly: how the protocol was reverse-engineered, now a built-in tool.
 - **Future-proof radio** — talks to the adapter over **raw HCI sockets** (no reliance
@@ -154,6 +158,29 @@ channel settings) in **[`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md)**.
 <p align="center">
   <a href="docs/SCREENSHOTS.md"><img src="assets/excavator_layout.PNG" alt="moldqueen excavator dashboard" width="760"></a>
 </p>
+
+---
+
+## Game controller
+
+Drive the excavator with a **PS5 DualSense** (or any browser-supported) gamepad. Pair it
+to the **device running the web client** — over USB or Bluetooth — and the dashboard reads
+it through the browser **Gamepad API**, sending the *same* drive-by-function commands as
+the on-screen joysticks.
+
+<p align="center">
+  <img src="assets/ps5_controller.png" alt="PS5 DualSense controller driving moldqueen" width="520">
+</p>
+
+**The controller talks to the client, not the Pi.** Nothing on the Pi or the radio side
+changes — the gamepad is just another client input on top of the WebSocket API. It's a
+clean demonstration of the API-first design: *any* input that can reach the client can
+drive the machine.
+
+A built-in **calibration UI** shows live stick/button values and lets you map inputs →
+functions (handling per-browser/OS gamepad differences), and gamepad control respects the
+**same channel map, per-direction speed caps, and safety** as everything else — motors
+snap to **neutral** on stick release or if the controller disconnects.
 
 ---
 

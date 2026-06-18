@@ -17,6 +17,11 @@
 - **Tabbed settings** overlay: Connection · Channels · Labels · Server info.
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
+- **README game controller (2026-06-18):** added a "What you get" bullet + a **Game
+  controller** section (ToC + `assets/ps5_controller.png`) — PS5/DualSense via browser
+  Gamepad API; emphasizes the controller talks to the CLIENT not the Pi (API-first demo);
+  notes calibration UI + same channel-map/caps/safety. Docs+asset only; banner/badges/
+  disclaimer/credits/author/license untouched.
 - **Per-direction max caps (2026-06-18):** schema `max` → **`max_fwd`/`max_rev`** (1–7 each;
   excavator + template migrated, **max_rev default 5 = anti-stall**). `channelmap.py`: `migrate()`
   splits legacy `max` to BOTH (backward-compat) else 7/5; `resolve()` caps the OUTPUT/nibble
