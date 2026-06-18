@@ -43,6 +43,11 @@
   pushed gently / conflict masked it) → **need a CLEAN recapture** (broadcaster IDLE, push FULL to
   the stop BOTH ways) to confirm the other full extreme is 0x1 (not 0x0). Encoding still NOT changed.
   **Lesson: only ONE 0xFFF0 transmitter at a time** — keep broadcaster IDLE when driving the stock app.
+  **SECOND capture (clean, broadcaster IDLE):** still only reached **0x7 (v-1)** on the slow
+  direction (3rd time) while the other hit **0xF** — press-and-hold keeps missing that extreme.
+  Added **`--sweep` mode** (`sudo python3 /tmp/sniff_stock.py --sweep`): ONE slow stick-to-stick
+  sweep, lists EVERY nibble per channel + min/max, flags 0x0 vs 0x1 vs capped. This is the way to
+  get the slow direction's bottom value (the decisive 0x1-vs-0x0 datum). Still UNRESOLVED; encoding unchanged.
 - **Gamepad / DualSense control (2026-06-18):** client-only (dashboard.js + dashboard.css,
   NO Pi/API change). Gamepad API rAF poll loop reads a controller paired to the CLIENT
   device and calls the SAME `driveFn` (WS drive-by-function) as the joysticks → reuses
