@@ -184,8 +184,9 @@ if __name__ == "__main__":
     # ── cross-check against mkconnect-python's own MouldKingCrypt ──
     print("Cross-check — our encode() == mkconnect-python MouldKingCrypt.Crypt()")
     try:
-        import importlib.util
-        _src = "/home/jrichter/scratch/mk-refs/mkconnect-python/MouldKing/MouldKingCrypt.py"
+        import os, importlib.util
+        _refs = os.environ.get("MK_REFS_DIR", os.path.expanduser("~/scratch/mk-refs"))
+        _src = os.path.join(_refs, "mkconnect-python/MouldKing/MouldKingCrypt.py")
         _spec = importlib.util.spec_from_file_location("mkc_ref", _src)
         _mod = importlib.util.module_from_spec(_spec)
         _spec.loader.exec_module(_mod)             # MouldKingCrypt.py has no imports -> clean load

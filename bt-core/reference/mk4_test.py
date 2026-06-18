@@ -10,9 +10,10 @@
 #   dryrun                                  print raw + on-air bytes (connect, neutral, ch pulse)
 #   drive --hci H --ch N --nib V --dwell S --dur S   connect, dwell, pulse, neutral, keep adv
 
-import sys, time, subprocess, argparse
+import os, sys, time, subprocess, argparse
 
-sys.path.insert(0, "/home/jrichter/scratch/mk-refs")
+# Import the codec: default to the co-located reference copy; override with MK_REFS_DIR.
+sys.path.insert(0, os.environ.get("MK_REFS_DIR", os.path.dirname(os.path.abspath(__file__))))
 from mouldking_crypt import encode
 
 MANUF_PREFIX = "1f 02 01 02 1b ff f0 ff"        # Flags AD + Manufacturer AD header (company 0xFFF0)
