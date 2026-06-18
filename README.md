@@ -66,6 +66,7 @@ README is the tour; PROJECT.md is the source of truth.
 ## Table of contents
 
 - [Disclaimer](#disclaimer)
+- [What you get](#what-you-get)
 - [Highlights](#highlights)
 - [Screenshots](#screenshots)
 - [How it works](#how-it-works)
@@ -84,6 +85,34 @@ README is the tour; PROJECT.md is the source of truth.
 - [Roadmap & open problems](#roadmap--open-problems)
 - [Development](#development)
 - [Credits & license](#credits--license)
+
+---
+
+## What you get
+
+- **Simultaneous multi-hub control** — one MK4 BLE telegram moves several hubs at
+  once, with no per-device pairing.
+- **A clean WebSocket API first** — the control core is an API; build your own client
+  (console, app, AI agent) against a documented **AsyncAPI 3.0** spec.
+- **Multi-language web client** — a polished dashboard with a **6-language picker**
+  (EN/DE/ZH/KO/ES/FR) so kids can drive in their own language; run it on the Pi or
+  anywhere as a container.
+- **RAW debug mode** — a low-level bench for crafting and reading BLE telegrams
+  directly: how the protocol was reverse-engineered, now a built-in tool.
+- **Future-proof radio** — talks to the adapter over **raw HCI sockets** (no reliance
+  on deprecated `hcitool`), behind a swappable backend.
+- **Portable core** — the API and control logic are plain Python, **architected to
+  run on other Linux SBCs** (anywhere with BlueZ + a BLE adapter); proven today on the
+  Raspberry Pi.
+- **Pluggable layouts** — the excavator is the reference layout; add one for *your*
+  Mould King toy via the manifest, no core changes
+  ([`docs/ADDING_A_LAYOUT.md`](docs/ADDING_A_LAYOUT.md)).
+- **Multi-device by design** — the protocol addresses **up to 3 hub slots**, so a
+  single telegram can drive several toys/hubs together.
+- **Safe by default** — motors snap to **neutral** on disconnect, zero clients, STOP,
+  or leaving the READY state; a dry-run mode logs every telegram and transmits nothing.
+- **AI-assisted setup** — hand the repo to an AI agent and let it walk the install; the
+  docs (QUICKSTART · PROJECT · CLAUDE.md) are written to be agent-friendly.
 
 ---
 

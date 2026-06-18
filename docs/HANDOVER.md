@@ -17,6 +17,11 @@
 - **Tabbed settings** overlay: Connection · Channels · Labels · Server info.
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
+- **README "What you get" (2026-06-18):** added a skimmable feature-bullets section
+  before Highlights (+ ToC entry) — multi-hub control, API-first, 6-lang client, RAW mode,
+  raw-HCI radio, portable core (honest "architected to / proven on Pi"), pluggable layouts,
+  3-slot multi-device, safe-by-default, AI-assisted setup. Docs-only; banner/badges/
+  disclaimer/credits/author/license untouched.
 - **6-language labels (2026-06-18):** per-function labels moved from flat `label_en`/
   `label_de` to a **`labels: {en,de,zh,ko,es,fr}`** object. `channelmap.py` gained
   `migrate()` (legacy flat → `labels.{en,de}`, run on load + save) + lenient `validate()`
