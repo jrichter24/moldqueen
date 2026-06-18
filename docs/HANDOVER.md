@@ -32,8 +32,17 @@
   Now **guided/interactive**: self-test ("LISTENING" once it sees any advert) → prompts
   STEP 1 FULL FORWARD / STEP 2 FULL REVERSE → decodes 0xFFF0 nibbles → SUMMARY (stock fwd vs
   rev nibble; flags if stock uses 0x0 at full reverse vs our 0x1). `--parsetest` (no-root)
-  PASSES end-to-end. Run: `sudo python3 /tmp/sniff_stock.py`. Encoding NOT changed pending the
-  capture. **API restarted** for the resolve fix; broadcaster 1929 untouched (SPARE hci1 only).
+  PASSES end-to-end. Run: `sudo python3 /tmp/sniff_stock.py`. **API restarted** for the resolve
+  fix; broadcaster 1929 untouched (SPARE hci1 only).
+  **FIRST CAPTURE (2026-06-18):** CONFOUNDER found — our broadcaster was **READY (advertising
+  neutral on hci0)** during the capture, co-transmitting 0xFFF0 WITH the phone → hub alternated
+  move/stop = the interleaved `all-neutral` AND the user's "not fluent" stutter. Reset to **IDLE**
+  via WS `setup/reset` (no kill). Stock app nibbles seen: one direction reached **0xF (v+7)** —
+  **does NOT use 0x0**, so the "we're one step short at full reverse" hypothesis is **DISPROVEN**;
+  encoding is symmetric & matches stock. BUT the other direction only reached **0x7 (v-1)** (user
+  pushed gently / conflict masked it) → **need a CLEAN recapture** (broadcaster IDLE, push FULL to
+  the stop BOTH ways) to confirm the other full extreme is 0x1 (not 0x0). Encoding still NOT changed.
+  **Lesson: only ONE 0xFFF0 transmitter at a time** — keep broadcaster IDLE when driving the stock app.
 - **Gamepad / DualSense control (2026-06-18):** client-only (dashboard.js + dashboard.css,
   NO Pi/API change). Gamepad API rAF poll loop reads a controller paired to the CLIENT
   device and calls the SAME `driveFn` (WS drive-by-function) as the joysticks → reuses
