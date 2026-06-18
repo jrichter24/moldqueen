@@ -1,0 +1,12 @@
+# Gradle
+.gradle/
+build/
+
+# Local machine SDK pointer
+local.properties
+
+# IDE
+*.iml
+.idea/
+captures/
+.cxx/
