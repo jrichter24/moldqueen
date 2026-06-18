@@ -27,11 +27,13 @@
   (user-intended) reverse; rs=1.0 is byte-identical to before (0 regressions, verified),
   left_track partial-reverse now scales, right_track unchanged. UI/docstring note added:
   Rev× tunes partial-throttle only. **PART A capture PENDING (decisive):** sniffer ready at
-  `/tmp/sniff_stock.py` (raw-HCI LE scan on the SPARE hci1/TP-Link, decodes 0xFFF0 adverts
-  → nibbles; decoder round-trip verified). Needs USER to run it with sudo + drive the STOCK
-  app full-fwd/rev/neutral on a track, to see if stock sends 0x0 at full reverse. Encoding
-  NOT changed pending that capture. **API restarted** for the resolve fix; broadcaster 1929
-  untouched.
+  `/tmp/sniff_stock.py`. **v1 hit `setsockopt(HCI_FILTER)` Errno 22** — kernel
+  `struct hci_filter` is 16 bytes (padded) and rejects optlen<sizeof; v2 packs 16 (`<IIIH2x`).
+  Now **guided/interactive**: self-test ("LISTENING" once it sees any advert) → prompts
+  STEP 1 FULL FORWARD / STEP 2 FULL REVERSE → decodes 0xFFF0 nibbles → SUMMARY (stock fwd vs
+  rev nibble; flags if stock uses 0x0 at full reverse vs our 0x1). `--parsetest` (no-root)
+  PASSES end-to-end. Run: `sudo python3 /tmp/sniff_stock.py`. Encoding NOT changed pending the
+  capture. **API restarted** for the resolve fix; broadcaster 1929 untouched (SPARE hci1 only).
 - **Gamepad / DualSense control (2026-06-18):** client-only (dashboard.js + dashboard.css,
   NO Pi/API change). Gamepad API rAF poll loop reads a controller paired to the CLIENT
   device and calls the SAME `driveFn` (WS drive-by-function) as the joysticks → reuses
