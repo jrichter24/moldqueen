@@ -7,7 +7,6 @@
       "slot": 0,
       "channel": 0,
       "invert": false,
-      "max": 7,
       "reverse_scale": 1.0,
       "labels": {
         "en": "Knob 1 (TODO)",
@@ -17,7 +16,9 @@
         "es": "Mando 1 (TODO)",
         "fr": "Bouton 1 (TODO)"
       },
-      "confirmed": false
+      "confirmed": false,
+      "max_fwd": 7,
+      "max_rev": 5
     }
   }
 }

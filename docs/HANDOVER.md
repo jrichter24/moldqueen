@@ -17,6 +17,17 @@
 - **Tabbed settings** overlay: Connection · Channels · Labels · Server info.
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
+- **Per-direction max caps (2026-06-18):** schema `max` → **`max_fwd`/`max_rev`** (1–7 each;
+  excavator + template migrated, **max_rev default 5 = anti-stall**). `channelmap.py`: `migrate()`
+  splits legacy `max` to BOTH (backward-compat) else 7/5; `resolve()` caps the OUTPUT/nibble
+  direction (out>0→max_fwd, out<0→max_rev) — so the motor-stall polarity (reverse nibble 0x1-side)
+  is capped regardless of invert. Dry-run: full reverse −7 → −5 (**nibble 0x1 → 0x3**), forward
+  unchanged; old `max` files migrate; 3 tests pass. asyncapi.yaml updated. Client: `migrateCaps`,
+  direction+invert-aware **`scaleVal`** (replaces `funcMax` in joystick/gamepad/buttons; Test uses
+  max_fwd) so all input paths respect caps smoothly; Channels tab now has **Max ▲ / Max ▼** columns
+  + a **stall warning** (don't set Max ▼ too high). **API restarted** (5526→6557); broadcaster 1929
+  untouched/IDLE. NOTE: relates to the reverse-speed audit below — caps are the anti-stall lever
+  (full reverse can't be boosted, only capped down out of the stall zone).
 - **Reverse-speed audit + Rev× fix (2026-06-18):** AUDIT found `reverse_scale` was gated
   on the POST-invert sign, so on inverted functions (left_track) it trimmed the user's
   FORWARD not reverse — "Rev× does nothing" symptom explained. Also Rev× clamps at full

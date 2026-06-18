@@ -14,8 +14,9 @@
         "fr": "Chenille gauche"
       },
       "confirmed": true,
-      "max": 7,
-      "reverse_scale": 1
+      "reverse_scale": 1,
+      "max_fwd": 7,
+      "max_rev": 5
     },
     "right_track": {
       "slot": 1,
@@ -30,8 +31,9 @@
         "fr": "Chenille droite"
       },
       "confirmed": false,
-      "max": 7,
-      "reverse_scale": 1
+      "reverse_scale": 1,
+      "max_fwd": 7,
+      "max_rev": 5
     },
     "arm_lift": {
       "slot": 0,
@@ -46,8 +48,9 @@
         "fr": "Bras monter/descendre"
       },
       "confirmed": false,
-      "max": 7,
-      "reverse_scale": 1
+      "reverse_scale": 1,
+      "max_fwd": 7,
+      "max_rev": 5
     },
     "front_arm": {
       "slot": 0,
@@ -62,8 +65,9 @@
         "fr": "Bras avant"
       },
       "confirmed": false,
-      "max": 7,
-      "reverse_scale": 1
+      "reverse_scale": 1,
+      "max_fwd": 7,
+      "max_rev": 5
     },
     "rotation": {
       "slot": 0,
@@ -78,8 +82,9 @@
         "fr": "Rotation"
       },
       "confirmed": false,
-      "max": 7,
-      "reverse_scale": 1
+      "reverse_scale": 1,
+      "max_fwd": 7,
+      "max_rev": 5
     },
     "bucket": {
       "slot": 0,
@@ -94,8 +99,9 @@
         "fr": "Godet"
       },
       "confirmed": true,
-      "max": 7,
-      "reverse_scale": 1
+      "reverse_scale": 1,
+      "max_fwd": 7,
+      "max_rev": 5
     }
   }
 }

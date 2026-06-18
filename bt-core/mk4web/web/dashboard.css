@@ -112,6 +112,7 @@ table.map .tag { display: inline-block; font-size: .65rem; padding: .05rem .3rem
 .sheet .test { background: #243b27; border-color: #3a6f43; }
 .sheet .test.held { background: #3563a8; border-color: #5b8fd6; }
 .sheet .promote { background: #463016; border-color: #8a5a2a; }
+.sheet .maxnote { color: #d8b75e; font-size: .76rem; margin: .4rem 0 0; }   /* per-direction cap / stall warning */
 
 /* ---- Labels tab: one card per function, the 6 languages as a labelled grid ----
    (auto-fit columns → multi-column on a wide sheet, single column on mobile). */

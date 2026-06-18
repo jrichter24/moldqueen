@@ -9,9 +9,11 @@ against the active map, optionally applying a session-only device-0/1 (slot 0<->
 swap. The broadcaster stays dumb — it only ever receives 12 nibbles, never a function
 name. A layout with NO functions (e.g. RAW) doesn't use any of this.
 
-Schema (per function): {slot:0-2, channel:0-3, invert:bool, max?:1-7,
+Schema (per function): {slot:0-2, channel:0-3, invert:bool, max_fwd?:1-7, max_rev?:1-7,
 reverse_scale?:0.25-4.0, labels:{en,de,zh,ko,es,fr}}. The optional `confirmed` flag is
-UI metadata (verified vs placeholder).
+UI metadata (verified vs placeholder). `max_fwd`/`max_rev` are independent per-direction
+speed caps (some motors STALL near full reverse, so max_rev defaults to 5). The old
+single symmetric `max` is migrated to both.
 
 LABELS are a per-language object. Older maps used flat `label_en`/`label_de`; `migrate()`
 upgrades those to `labels.{en,de}` on load (and `save()` writes the new shape), so old
@@ -41,12 +43,43 @@ def _migrate_function_labels(a):
     a.pop("label_de", None)
 
 
+def _migrate_caps(a):
+    """In place: split the old single `max` into per-direction max_fwd/max_rev. A legacy
+    symmetric `max` applies to BOTH (backward-compat, no surprise); a function with no max
+    defaults to max_fwd 7 / max_rev 5 (5 = anti-stall, out of the reverse stall zone)."""
+    if not isinstance(a, dict):
+        return
+    legacy = a.get("max")
+    legacy = legacy if (isinstance(legacy, int) and not isinstance(legacy, bool) and 1 <= legacy <= 7) else None
+    if "max_fwd" not in a:
+        a["max_fwd"] = legacy if legacy is not None else 7
+    if "max_rev" not in a:
+        a["max_rev"] = legacy if legacy is not None else 5
+    a.pop("max", None)
+    for k, d in (("max_fwd", 7), ("max_rev", 5)):
+        v = a.get(k)
+        if not (isinstance(v, int) and not isinstance(v, bool) and 1 <= v <= 7):
+            a[k] = d
+
+
 def migrate(mp):
-    """Upgrade a map IN PLACE to the labels-object schema; returns it. Idempotent."""
+    """Upgrade a map IN PLACE to the current schema (labels object + per-dir caps); idempotent."""
     if isinstance(mp, dict) and isinstance(mp.get("functions"), dict):
         for a in mp["functions"].values():
             _migrate_function_labels(a)
+            _migrate_caps(a)
     return mp
+
+
+def _cap(a, key, default):
+    """Per-direction speed cap (1-7). Falls back to a legacy symmetric `max`, then default."""
+    v = a.get(key)
+    if isinstance(v, int) and not isinstance(v, bool) and 1 <= v <= 7:
+        return v
+    legacy = a.get("max")
+    if isinstance(legacy, int) and not isinstance(legacy, bool) and 1 <= legacy <= 7:
+        return legacy
+    return default
 
 
 def functions_of(mp):
@@ -61,7 +94,7 @@ def _placeholder_map(functions):
     fns = {}
     for i, f in enumerate(functions):
         title = f.replace("_", " ").title()
-        fns[f] = {"slot": i // 4, "channel": i % 4, "invert": False, "max": 7,
+        fns[f] = {"slot": i // 4, "channel": i % 4, "invert": False, "max_fwd": 7, "max_rev": 5,
                   "reverse_scale": 1.0, "labels": {L: title for L in LANGS}, "confirmed": False}
     return {"version": 1, "functions": fns}
 
@@ -130,10 +163,11 @@ def validate(mp, functions=None):
             errs.append(f"{f}: channel must be an integer 0-3")
         if not isinstance(a.get("invert"), bool):
             errs.append(f"{f}: invert must be true/false")
-        if "max" in a:
-            mx = a["max"]
-            if not isinstance(mx, int) or isinstance(mx, bool) or not (1 <= mx <= 7):
-                errs.append(f"{f}: max must be an integer 1-7")
+        for mk in ("max_fwd", "max_rev", "max"):       # max = legacy, still tolerated on read
+            if mk in a:
+                mx = a[mk]
+                if not isinstance(mx, int) or isinstance(mx, bool) or not (1 <= mx <= 7):
+                    errs.append(f"{f}: {mk} must be an integer 1-7")
         if "reverse_scale" in a:
             rs = a["reverse_scale"]
             if not isinstance(rs, (int, float)) or isinstance(rs, bool) or not (0.25 <= rs <= 4.0):
@@ -165,15 +199,14 @@ def validate(mp, functions=None):
 def resolve(mp, function, value, device_swap=False):
     """function + signed value (-7..7) -> (slot, channel, out_value), or None.
 
-    Applies, in order: a per-function `reverse_scale` REVERSE-SPEED TRIM keyed on the
-    USER's intended reverse (the PRE-invert negative input), then `invert` (flips
-    direction), then the session `device_swap` (slot 0<->1; slot 2 untouched).
-    `reverse_scale` (default 1.0 = identity) multiplies the magnitude of the user's
-    reverse only — so the same stick position can be tuned to match forward speed. It
-    can boost a PARTIAL deflection up toward full but NEVER exceeds full scale (a
-    full-throttle reverse is already at the nibble extreme), so it tunes mid-throttle
-    feel, not the full-reverse ceiling. At rs == 1.0 the output is identical to plain
-    invert. The broadcaster never sees any of this — just nibbles.
+    Applies, in order: a per-function `reverse_scale` REVERSE-SPEED TRIM (keyed on the
+    PRE-invert input sign), then `invert` (flips direction), then a per-direction MAX CAP
+    on the resulting OUTPUT/nibble direction (`max_fwd` for the forward nibble out>0,
+    `max_rev` for the reverse nibble out<0), then the session `device_swap` (slot 0<->1).
+    The cap matters because some motors STALL near full reverse (nibble 0x1 barely moves),
+    so `max_rev` (default 5) keeps full reverse out of the stall zone (e.g. -7 -> -5 -> 0x3).
+    `reverse_scale` (default 1.0) tunes mid-throttle reverse feel. The broadcaster never
+    sees any of this — just nibbles.
     """
     a = mp.get("functions", {}).get(function)
     if not isinstance(a, dict):
@@ -198,4 +231,11 @@ def resolve(mp, function, value, device_swap=False):
     sign = -1 if val < 0 else (1 if val > 0 else 0)
     if a.get("invert"):
         sign = -sign
-    return slot, ch, sign * mag
+    out = sign * mag
+    # Per-direction MAX cap on the OUTPUT/nibble direction. The stall is a fixed motor
+    # polarity (the reverse nibble, 0x1-side), so cap there regardless of invert.
+    if out > 0:
+        out = min(out, _cap(a, "max_fwd", 7))
+    elif out < 0:
+        out = -min(-out, _cap(a, "max_rev", 5))
+    return slot, ch, out

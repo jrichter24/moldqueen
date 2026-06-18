@@ -31,7 +31,8 @@ const T = {
         padOnTitle: "Gamepad ON — click to disable", padOffTitle: "Gamepad OFF — click to enable",
         connSub: "Set the WebSocket API endpoint this page talks to (empty = this page’s host).",
         infoSub: "What the server reports — depends on its disclosure tier.",
-        fn: "Function", slot: "Slot", ch: "Ch", invert: "Inv", maxsp: "Max", test: "Test",
+        fn: "Function", slot: "Slot", ch: "Ch", invert: "Inv", maxFwd: "Max ▲", maxRev: "Max ▼", test: "Test",
+        maxRevNote: "Max ▲ / ▼ cap forward / reverse speed (1–7). Reverse default is 5: setting Max ▼ too HIGH can drive the motor into a stall near full reverse (it stops moving).",
         labEn: "Label EN", labDe: "Label DE", assign: "Channel assignment",
         assignSub: "Drag/Test a control, see which motor moves, then set its slot/channel, max and reverse-trim here. Rev× boosts PARTIAL-throttle reverse toward forward speed (it can't exceed full speed). Save for this session, or Promote to save as the new default. Occupied target channels are swapped automatically.",
         labelsTitle: "Function labels (EN / DE)", labelsSub: "The display name of each function, per language.",
@@ -70,7 +71,8 @@ const T = {
         padOnTitle: "Gamepad AN — zum Deaktivieren klicken", padOffTitle: "Gamepad AUS — zum Aktivieren klicken",
         connSub: "WebSocket-API-Endpunkt dieser Seite (leer = Host dieser Seite).",
         infoSub: "Was der Server meldet — je nach Offenlegungsstufe.",
-        fn: "Funktion", slot: "Slot", ch: "Kan", invert: "Inv", maxsp: "Max", test: "Test",
+        fn: "Funktion", slot: "Slot", ch: "Kan", invert: "Inv", maxFwd: "Max ▲", maxRev: "Max ▼", test: "Test",
+        maxRevNote: "Max ▲ / ▼ begrenzen Vorwärts- / Rückwärtstempo (1–7). Rückwärts-Standard ist 5: ein zu HOHES Max ▼ kann den Motor nahe Vollgas-Rückwärts in einen Stillstand treiben (er bewegt sich nicht mehr).",
         labEn: "Label EN", labDe: "Label DE", assign: "Kanalzuordnung",
         assignSub: "Steuerung ziehen/testen, sehen welcher Motor läuft, dann Slot/Kanal, Max und Rückwärts-Trim setzen. Rev× hebt TEILGAS-Rückwärts Richtung Vorwärtstempo an (kann Vollgas nicht überschreiten). Für die Sitzung speichern oder als Standard speichern. Belegte Zielkanäle werden automatisch getauscht.",
         labelsTitle: "Funktions-Labels (EN / DE)", labelsSub: "Anzeigename jeder Funktion, je Sprache.",
@@ -174,13 +176,21 @@ function migrateLabels(a) {
   LANGS.forEach(([c]) => { out[c] = typeof lb[c] === "string" ? lb[c] : ""; });
   a.labels = out; delete a.label_en; delete a.label_de;
 }
-function withDefaults(mp) {           // ensure every function has invert/max/labels
+// Legacy single `max` -> per-direction max_fwd/max_rev (mirrors channelmap.py). A symmetric
+// `max` applies to both (backward-compat); otherwise max_fwd 7 / max_rev 5 (5 = anti-stall).
+function migrateCaps(a) {
+  const legacy = (Number.isInteger(a.max) && a.max >= 1 && a.max <= 7) ? a.max : null;
+  if (!(Number.isInteger(a.max_fwd) && a.max_fwd >= 1 && a.max_fwd <= 7)) a.max_fwd = legacy != null ? legacy : 7;
+  if (!(Number.isInteger(a.max_rev) && a.max_rev >= 1 && a.max_rev <= 7)) a.max_rev = legacy != null ? legacy : 5;
+  delete a.max;
+}
+function withDefaults(mp) {           // ensure every function has invert/caps/labels
   const m = JSON.parse(JSON.stringify(mp));
   for (const f of FN) {
     const a = m.functions[f];
     if (typeof a.invert !== "boolean") a.invert = false;
-    if (!Number.isInteger(a.max) || a.max < 1 || a.max > 7) a.max = 7;
     if (typeof a.reverse_scale !== "number" || a.reverse_scale < 0.25 || a.reverse_scale > 4) a.reverse_scale = 1;
+    migrateCaps(a);
     migrateLabels(a);
   }
   return m;
@@ -193,7 +203,7 @@ function saveActive() { localStorage.setItem("mk4_active_map", JSON.stringify(ac
 // A valid 6-function placeholder so Settings ALWAYS opens, even with no connection/map.
 function placeholderMap() {
   const fns = {};
-  FN.forEach((f, i) => fns[f] = { slot: (i / 4) | 0, channel: i % 4, invert: false, max: 7, reverse_scale: 1,
+  FN.forEach((f, i) => fns[f] = { slot: (i / 4) | 0, channel: i % 4, invert: false, max_fwd: 7, max_rev: 5, reverse_scale: 1,
     labels: Object.fromEntries(LANGS.map(([c]) => [c, f.replace(/_/g, " ")])), confirmed: false });
   return { version: 1, functions: fns };
 }
@@ -204,7 +214,20 @@ function funcLabel(fn) {
   const lb = a.labels || {};
   return lb[lang] || lb.en || a.label_en || fn;   // picked lang → en → legacy → function name
 }
-function funcMax(fn) { const a = activeMap && activeMap.functions[fn]; return (a && a.max) || 7; }
+function capFor(a, outPositive) {     // per-direction speed cap (mirrors channelmap.py)
+  const m = outPositive ? a && a.max_fwd : a && a.max_rev;
+  return (Number.isInteger(m) && m >= 1 && m <= 7) ? m : (outPositive ? 7 : 5);
+}
+// Scale a joystick/gamepad/button intent (frac in [-1,1], PRE-invert) to a signed value
+// respecting the per-direction caps. The cap that applies is for the OUTPUT direction
+// (frac sign flipped by invert) — so the joystick travel maps smoothly to the right cap
+// and stays consistent with the server's output-side cap. Magnitude only; sign = frac sign.
+function scaleVal(fn, frac) {
+  const a = activeMap && activeMap.functions[fn];
+  if (!a || !frac) return Math.round((frac || 0) * 7);
+  const outPositive = (frac > 0) !== !!a.invert;
+  return Math.sign(frac) * Math.round(Math.abs(frac) * capFor(a, outPositive));
+}
 function resolveSC(fn) {                // client-side resolve for reading the live grid
   const a = activeMap && activeMap.functions[fn]; if (!a) return null;
   let slot = a.slot; if (deviceSwap && (slot === 0 || slot === 1)) slot = 1 - slot;
@@ -320,7 +343,7 @@ function makeJoy(j) {
     frac = clamp(frac, -1, 1);
     if (Math.abs(frac) < 0.12) frac = 0;              // centre dead-zone
     knob.style.top = (50 - frac * travel) + "%";
-    const val = Math.round(frac * funcMax(fn));
+    const val = scaleVal(fn, frac);
     joy.classList.toggle("active", val !== 0);
     driveFn(fn, val);
   };
@@ -349,7 +372,7 @@ function makeBtn(fn, dir, rect, k) {
   b.title = funcLabel(fn) + " — " + tr().dir[k];
   let on = false;
   const press = e => { e.preventDefault(); if (lifecycle !== "READY" || on) return;
-    on = true; b.classList.add("active"); addHold(fn); driveFn(fn, dir * funcMax(fn)); };
+    on = true; b.classList.add("active"); addHold(fn); driveFn(fn, scaleVal(fn, dir)); };
   const rel = () => { if (!on) return; on = false; b.classList.remove("active"); relHold(fn); };
   b.addEventListener("pointerdown", press);
   b.addEventListener("pointerup", rel);
@@ -602,7 +625,8 @@ function channelsPanel(t) {
       <td class="fn">${funcLabel(fn)}<br><span class="muted">${fn}</span> ${tag}</td>
       <td><select class="e-slot">${slots}</select></td>
       <td><select class="e-ch">${chans}</select></td>
-      <td><input type="number" class="e-max" min="1" max="7" value="${a.max || 7}"></td>
+      <td><input type="number" class="e-maxf" min="1" max="7" value="${a.max_fwd || 7}"></td>
+      <td><input type="number" class="e-maxr" min="1" max="7" value="${a.max_rev || 5}"></td>
       <td><input type="number" class="e-rev" min="0.25" max="4" step="0.05" value="${a.reverse_scale ?? 1}"></td>
       <td style="text-align:center"><input type="checkbox" class="e-inv"${a.invert ? " checked" : ""}></td>
       <td><button class="test" data-fn="${fn}">${t.test}</button></td>
@@ -614,8 +638,9 @@ function channelsPanel(t) {
       <span class="muted">${lifecycle !== "READY" ? "· " + t.readyOnly : ""}</span>
     </div>
     <table class="map"><thead><tr>
-      <th>${t.fn}</th><th>${t.slot}</th><th>${t.ch}</th><th>${t.maxsp}</th><th>${t.revtrim}</th><th>${t.invert}</th><th></th>
+      <th>${t.fn}</th><th>${t.slot}</th><th>${t.ch}</th><th>${t.maxFwd}</th><th>${t.maxRev}</th><th>${t.revtrim}</th><th>${t.invert}</th><th></th>
     </tr></thead><tbody>${rows}</tbody></table>
+    <p class="sub maxnote">${t.maxRevNote}</p>
     <div class="actions">
       <button class="apply" id="saveBtn">${t.saveClose}</button>
       <button id="discardBtn">${t.discard}</button>
@@ -629,7 +654,8 @@ function wireChannels() {
     const fn = trEl.dataset.fn, a = editMap.functions[fn];
     trEl.querySelector(".e-slot").onchange = e => assignCell(fn, +e.target.value, a.channel);
     trEl.querySelector(".e-ch").onchange = e => assignCell(fn, a.slot, +e.target.value);
-    trEl.querySelector(".e-max").onchange = e => { a.max = clamp(+e.target.value | 0, 1, 7); e.target.value = a.max; };
+    trEl.querySelector(".e-maxf").onchange = e => { a.max_fwd = clamp(+e.target.value | 0, 1, 7); e.target.value = a.max_fwd; };
+    trEl.querySelector(".e-maxr").onchange = e => { a.max_rev = clamp(+e.target.value | 0, 1, 7); e.target.value = a.max_rev; };
     trEl.querySelector(".e-rev").onchange = e => { a.reverse_scale = clamp(+e.target.value || 1, 0.25, 4); e.target.value = a.reverse_scale; };
     trEl.querySelector(".e-inv").onchange = e => { a.invert = e.target.checked; };
     bindTest(trEl.querySelector(".test"), fn);
@@ -725,7 +751,7 @@ function bindTest(tb, fn) {
     e.preventDefault(); if (lifecycle !== "READY") return;
     const a = editMap.functions[fn];
     tb.classList.add("held");
-    send({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: a.max || 7 });
+    send({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: a.max_fwd || 7 });
   };
   const stop = () => {
     if (!tb.classList.contains("held")) return;
@@ -827,9 +853,9 @@ function padAxisDeflection(gp, idx, invert) {
 }
 function padFnValue(gp, fn) {    // -> signed value -7..+7 for `fn` from the mapped input
   const s = padMap[fn]; if (!s) return 0;
-  if (s.type === "axis") return Math.round(clamp(padAxisDeflection(gp, s.axis, s.invert), -1, 1) * funcMax(fn));
+  if (s.type === "axis") return scaleVal(fn, clamp(padAxisDeflection(gp, s.axis, s.invert), -1, 1));
   const pos = padPressed(gp, s.pos), neg = padPressed(gp, s.neg);
-  return pos && !neg ? funcMax(fn) : neg && !pos ? -funcMax(fn) : 0;
+  return pos && !neg ? scaleVal(fn, 1) : neg && !pos ? scaleVal(fn, -1) : 0;
 }
 // Arbitration: the pad only writes 0 for a function IT was driving — so a resting stick
 // never stomps an on-screen joystick the user is actively dragging.
