@@ -17,6 +17,14 @@
 - **Tabbed settings** overlay: Connection · Channels · Labels · Server info.
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
+- **Cosmetic UI polish (2026-06-18):** excavator settings overlay is now **fixed-height**
+  (`.spanel min-height: 26rem`, sized to the tallest = Channels) so switching tabs
+  no longer jumps; tab bar **wraps** instead of showing a side scrollbar; taller tab
+  captions. Chooser (`/`) is **mobile-fixed** — `@media (max-width:768px)` lets the
+  page scroll (`height:auto`, `justify-content:flex-start`) and shrinks cards to one
+  readable column; added a **⛶ Fullscreen** button (matches the dashboard). Chooser
+  stays self-contained (NOT shell.css — its `body{overflow:hidden}` would break the
+  new scroll, and the page must also render raw via nginx). Static-only; verified live.
 
 ## In progress / next task
 - **Repo about to go PUBLIC.** Pending: push the handover commit (f266d13 already on

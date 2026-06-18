@@ -98,6 +98,22 @@
       font-size: 1.4rem; line-height: 1; cursor: pointer; }
     .sheet .muted { color: #7d8ba0; font-size: .82rem; }
     .sheet .ainote { background: #0d1320; border: 1px solid #243049; border-radius: .5rem; padding: .7rem .9rem; }
+
+    /* ---- mobile / narrow viewport: let the page SCROLL and shrink the cards so every
+            card is reachable (the desktop layout above is left untouched) ---- */
+    @media (max-width: 768px) {
+      html, body { height: auto; }                       /* grow past the viewport → document scrolls */
+      body { justify-content: flex-start; min-height: 100%; padding: 2.5vh 4vw 5vh;
+             background-attachment: scroll; }            /* fixed bg janks while scrolling on mobile */
+      .actions { position: static; align-self: flex-end; flex-wrap: wrap; justify-content: flex-end; }
+      .cards { gap: .9rem; }
+      .card { flex: 1 1 100%; max-width: 480px; min-width: 0; }   /* one readable, full-width column */
+      .card .art { height: clamp(84px, 15vh, 130px); }            /* smaller art so cards fit on a phone */
+      .card .art img { width: 56%; height: 72%; }
+      .card .body { padding: .7rem .95rem .9rem; }
+      .card h2 { font-size: 1rem; }
+      .card .desc { font-size: .82rem; }
+    }
   </style>
 </head>
 <body>
@@ -105,6 +121,7 @@
     <a href="https://github.com/jrichter24/moldqueen" target="_blank" rel="noopener" title="moldqueen on GitHub">
       <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
       GitHub</a>
+    <button id="fsBtn" title="Toggle fullscreen">⛶ Fullscreen</button>
     <button id="aboutBtn">About</button>
   </div>
 
@@ -226,6 +243,10 @@
     if (window.__LAYOUTS__) renderCards(window.__LAYOUTS__);
     else fetch("/layouts.json").then(function (r) { return r.json(); }).then(renderCards).catch(function () {});
 
+    document.getElementById("fsBtn").onclick = function () {   // consistent with the dashboard ⛶ button
+      if (!document.fullscreenElement) (document.documentElement.requestFullscreen || function () {}).call(document.documentElement);
+      else document.exitFullscreen && document.exitFullscreen();
+    };
     document.getElementById("aboutBtn").onclick = function () { show("about", true); };
     document.getElementById("aboutLink").onclick = function (e) { e.preventDefault(); show("about", true); };
     document.querySelectorAll("[data-close]").forEach(function (el) {

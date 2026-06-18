@@ -74,13 +74,16 @@
 }
 
 /* ---- tabbed settings overlay (dashboard-specific): Connection · Channels · Labels · Server info ---- */
-.stabs { display: flex; gap: .2rem; margin: -.3rem -.2rem .8rem; border-bottom: 1px solid #2a313d;
-  overflow-x: auto; }                                  /* horizontal scroll if the sidebar is narrow */
+.stabs { display: flex; flex-wrap: wrap; gap: .2rem; margin: -.3rem -.2rem .8rem; border-bottom: 1px solid #2a313d; }
+  /* WRAP (no side scrollbar) if the four captions don't fit one row on a narrow sheet */
 .stab { flex: 0 0 auto; font: inherit; color: #9fb0c6; background: transparent; border: 0;
-  border-bottom: 2px solid transparent; padding: .5rem .8rem; margin-bottom: -1px; cursor: pointer; white-space: nowrap; }
+  border-bottom: 2px solid transparent; padding: .72rem .9rem; margin-bottom: -1px; cursor: pointer;
+  white-space: nowrap; line-height: 1.2; }                /* taller caption box so labels aren't cramped */
 .stab:hover { color: #d6e6fb; }
 .stab.on { color: #eaf2ff; border-bottom-color: #2f6f93; font-weight: 600; }
-.spanel { min-height: 5rem; }   /* panel <h2> uses the shared .sheet h2 rule */
+/* FIXED panel height (sized to the tallest panel = Channels) so switching tabs never
+   resizes/jumps the overlay. Shorter panels (Connection/Labels/Server info) just pad out. */
+.spanel { min-height: 26rem; }   /* panel <h2> uses the shared .sheet h2 rule */
 .sheet .sub { color: #8e9cb2; font-size: .82rem; margin: 0 0 .7rem; }
 .srow { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; margin: .5rem 0 .8rem; }
 .srow label { font-size: .88rem; color: #c5d2e4; display: flex; align-items: center; gap: .4rem; }
