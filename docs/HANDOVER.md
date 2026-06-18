@@ -17,6 +17,13 @@
 - **Tabbed settings** overlay: Connection · Channels · Labels · Server info.
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
+- **README messaging (2026-06-18):** reframed as a **multi-purpose, toy-agnostic
+  platform** (drives the Mould King BLE hubs, not just the 13112; excavator = reference
+  layout; others add their own via the pluggable system + `ADDING_A_LAYOUT.md`) — intro
+  paragraph + a Highlights bullet, kept honest (only the excavator is hardware-proven).
+  Added an **"Set it up with an AI assistant"** section (hand the repo/README to an agent;
+  QUICKSTART/PROJECT/CLAUDE.md make it agent-friendly) + ToC entry. Docs-only; banner/
+  badges/disclaimer/credits/author/license untouched.
 - **"Connect API" tab + vertical endpoint form (2026-06-18):** settings tab renamed
   **"Connection" → "Connect API"** (de "API verbinden") so it pairs unambiguously with the
   top-left "Connect Excavator"; startup step-1 wording updated to match. The shared endpoint

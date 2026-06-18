@@ -20,6 +20,16 @@ service with a web GUI and a documented API — the foundation for later adding 
 camera, a TOF sensor, and a local AI brain that drives the machine through the
 same API.
 
+**Multi-purpose — not just the excavator.** The protocol and control core are
+*toy-agnostic*: they drive the **Mould King BLE hubs**, not one specific model. So
+anyone with a Mould King set built on these hubs can use moldqueen — the **13112
+excavator** is simply the first, hardware-proven **reference layout**, and the
+**pluggable-layout system** lets you add a layout for **your own toy** (its own
+functions and dashboard) without touching the control core. Honest scope: the
+excavator is what's been verified on real hardware; a different toy will need its own
+layout — which the system now supports. Start here:
+[`docs/ADDING_A_LAYOUT.md`](docs/ADDING_A_LAYOUT.md).
+
 > **Status:** ✅ **core goal achieved** — *two hubs driven simultaneously from a
 > single telegram on a single radio.* Working webservice + a **landscape dashboard**
 > GUI (`/excavator`, chosen from the `/` layout chooser) with drag-joysticks, a
@@ -63,6 +73,7 @@ README is the tour; PROJECT.md is the source of truth.
 - [API server (required) + client UI (optional)](#two-pieces-api-server-required--client-ui-optional)
 - [Hardware](#hardware)
 - [Quick start](#quick-start)
+- [Set it up with an AI assistant](#set-it-up-with-an-ai-assistant)
 - [The WebSocket API](#the-websocket-api)
 - [Channel map](#channel-map)
 - [How the protocol was reverse-engineered](#how-the-protocol-was-reverse-engineered)
@@ -95,6 +106,11 @@ README is the tour; PROJECT.md is the source of truth.
   **channel-assignment** tool (drive a control → see which motor moves → assign it,
   with per-function max speed + reverse trim + invert + EN/DE labels). Responsive:
   top-bar on desktop, left-sidebar on mobile.
+- **Multi-purpose platform.** The control core is **toy-agnostic** — it drives the
+  hubs, not a model. The 13112 excavator is the worked **reference layout**; the
+  **pluggable-layout** system (manifest + per-layout function maps + a copyable
+  template) lets anyone add a layout for a *different* Mould King toy —
+  [`docs/ADDING_A_LAYOUT.md`](docs/ADDING_A_LAYOUT.md).
 - **Safety first.** Disconnect / no-clients / API-death → motors go **neutral**.
   A dry-run mode logs every telegram and transmits nothing.
 
@@ -351,6 +367,18 @@ in the browser and the WebSocket reconnects. The endpoint defaults to the page's
 own host (so the Pi-served UI needs no setup). The Pi's API is **permissive CORS /
 any-WS-origin by design** (LAN hobby tool). Full guide:
 **[`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md)**.
+
+## Set it up with an AI assistant
+
+Comfortable with AI tools? You can hand the install and setup to an agent. Point an
+AI assistant (e.g. Claude Code) at the repo —
+**[`github.com/jrichter24/moldqueen`](https://github.com/jrichter24/moldqueen)** — or
+just paste this README, and ask it to walk you through getting moldqueen running on
+your Pi. The project is written to be **agent-friendly**: [`docs/QUICKSTART.md`](docs/QUICKSTART.md)
+is the fast path, [`docs/PROJECT.md`](docs/PROJECT.md) is the exhaustive reference,
+and the per-folder [`CLAUDE.md`](CLAUDE.md) files hand an agent the must-knows and
+operational gotchas. You still supply the hardware (a Pi, a USB BLE dongle, your
+hubs) — the AI handles the software and configuration steps.
 
 ## The WebSocket API
 
