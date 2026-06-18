@@ -16,8 +16,9 @@ class AssetMapStore(context: Context) : MapStore {
     override fun loadDefault(layoutId: String): String? {
         val override = File(appCtx.filesDir, "channel_map.$layoutId.json")
         if (override.exists()) runCatching { return override.readText() }
+        // Bundled at build time from the repo's config/ (single source).
         return runCatching {
-            appCtx.assets.open("channel_map.$layoutId.json").bufferedReader().use { it.readText() }
+            appCtx.assets.open("config/channel_map.$layoutId.json").bufferedReader().use { it.readText() }
         }.getOrNull()
     }
 

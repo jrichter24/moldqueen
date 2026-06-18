@@ -29,7 +29,28 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
+
+    sourceSets {
+        // The client is single-sourced from bt-core at build time (see :bundleClient).
+        main { assets.srcDirs += layout.buildDirectory.dir("generated/clientAssets").get().asFile }
+    }
 }
+
+// ---- single-source the web client into the APK (NO hand-copy) -------------------
+// Copies the ONE client location (bt-core/mk4web/web) + served assets + per-layout
+// default maps + the asyncapi contract into a generated assets dir that AGP merges.
+// A change under bt-core/mk4web/web/ re-runs this (Copy is up-to-date aware) and flows
+// into the next Android build automatically. Mirrors the Pi's served file set exactly.
+tasks.register('bundleClient', Copy) {
+    description 'Bundle the web client + assets from bt-core/config into the APK.'
+    into layout.buildDirectory.dir('generated/clientAssets')
+    from("$rootDir/../bt-core/mk4web/web") { into 'web' }              // html/js/css/layouts.json
+    from("$rootDir/../assets") { into 'webassets' }                    // served at /assets/**
+    from("$rootDir/../config") { include 'channel_map.*.json'; into 'config' }  // per-layout default maps
+    from("$rootDir/../bt-core/mk4web") { include 'asyncapi.yaml' }     // served at /asyncapi.yaml
+}
+tasks.matching { it.name ==~ /merge.*Assets/ }.configureEach { dependsOn 'bundleClient' }
+tasks.named('preBuild') { dependsOn 'bundleClient' }
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.10.1'
@@ -38,6 +59,8 @@ dependencies {
     // Local WebSocket server (mirrors the Pi's websockets server). Pulls slf4j-api;
     // with no binding on Android it no-ops, which is fine for a LAN tool.
     implementation 'org.java-websocket:Java-WebSocket:1.5.6'
+    // Embedded HTTP server to serve the client (mirrors the Pi's ThreadingHTTPServer).
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'
     testImplementation 'junit:junit:4.13.2'
     // Real org.json for JVM unit tests (Android provides it at runtime; the SDK stub
     // throws "not mocked"). Keeps the pure core's int-vs-float fidelity in tests.

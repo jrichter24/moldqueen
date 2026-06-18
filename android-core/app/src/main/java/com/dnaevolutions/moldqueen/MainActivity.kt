@@ -1,80 +1,65 @@
 package com.dnaevolutions.moldqueen
 
 import android.Manifest
-import android.content.pm.PackageManager
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.widget.Button
-import android.widget.TextView
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import com.dnaevolutions.moldqueen.service.Mk4Service
 
 /**
- * Layer 2 host: starts the local WS API service (ws://localhost:8765) and drives it
- * through the SAME ApiCore the WebView will use — so Connect → Ready → Drive → Stop
- * exercises the full stack (UI → ApiCore → RadioController → BleBroadcaster → hub),
- * re-proving the radio behind the mirror. The WebView client arrives in layer 3.
+ * Layer 3: the app IS the web client. Starts the local service (HTTP client server +
+ * WS API + radio) and points a WebView at http://localhost:8080/ — the SAME chooser →
+ * excavator/raw the Pi serves, byte-identical (single-sourced from bt-core at build time).
+ * The page connects to ws://localhost:8765 and drives the phone's radio. The client has
+ * NO Android knowledge: endpoint, permissions, BT lifecycle and serving are all native.
  */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var service: Mk4Service
-    private lateinit var status: TextView
+    private lateinit var web: WebView
 
-    private val requiredPerms = arrayOf(
-        Manifest.permission.BLUETOOTH_ADVERTISE,
-        Manifest.permission.BLUETOOTH_CONNECT,
-    )
-
+    // BLE runtime permissions for the radio. The client never sees these — once granted
+    // the WS-driven radio just works; if denied, the UI still loads (radio disabled).
     private val permLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { result ->
-        status.text = if (result.values.all { it }) "Ready — WS on ws://localhost:8765"
-        else "Bluetooth permissions DENIED — radio disabled (WS still up)"
-    }
+    ) { /* no client involvement; radio picks up the grant on the next connect */ }
 
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        status = findViewById(R.id.status)
 
         service = Mk4Service(this)
         service.start()
-        status.text = "WS API on ws://localhost:8765 — Connect → Ready → Drive"
 
-        findViewById<Button>(R.id.btnConnect).setOnClickListener {
-            if (ensurePerms()) submit("""{"cmd":"setup","action":"connect"}""", "CONNECT (hub should fast-flash)")
+        web = WebView(this).apply {
+            settings.javaScriptEnabled = true          // the client is a JS app
+            settings.domStorageEnabled = true          // localStorage: endpoint + settings + language
+            settings.mediaPlaybackRequiresUserGesture = false
+            webViewClient = WebViewClient()            // keep navigation in-app (chooser ↔ layouts)
+            webChromeClient = WebChromeClient()        // console, fullscreen, etc.
         }
-        findViewById<Button>(R.id.btnReady).setOnClickListener {
-            submit("""{"cmd":"setup","action":"ready"}""", "READY")
-        }
-        findViewById<Button>(R.id.btnDrive).setOnClickListener {
-            submit("""{"cmd":"set","slot":0,"channel":0,"value":5}""", "DRIVE slot0 ch0 +5")
-        }
-        findViewById<Button>(R.id.btnStop).setOnClickListener {
-            submit("""{"cmd":"stop"}""", "STOP (neutral)")
-        }
+        setContentView(web)
 
-        if (!hasPerms()) permLauncher.launch(requiredPerms)
-    }
+        permLauncher.launch(arrayOf(
+            Manifest.permission.BLUETOOTH_ADVERTISE,
+            Manifest.permission.BLUETOOTH_CONNECT,
+        ))
 
-    private fun submit(cmd: String, label: String) {
-        service.submit(cmd)
-        status.text = label
-    }
-
-    private fun hasPerms(): Boolean = requiredPerms.all {
-        ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun ensurePerms(): Boolean {
-        if (hasPerms()) return true
-        permLauncher.launch(requiredPerms)
-        return false
+        web.loadUrl("http://localhost:${Mk4Service.HTTP_PORT}/")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        service.stop()
+        if (::web.isInitialized) web.destroy()
+        if (::service.isInitialized) service.stop()
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onBackPressed() {
+        if (::web.isInitialized && web.canGoBack()) web.goBack() else super.onBackPressed()
     }
 }

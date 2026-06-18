@@ -4,10 +4,11 @@ import android.content.Context
 import android.util.Log
 import com.dnaevolutions.moldqueen.BleBroadcaster
 import com.dnaevolutions.moldqueen.core.ApiCore
-import com.dnaevolutions.moldqueen.core.ClientSink
+import com.dnaevolutions.moldqueen.core.ClientRoutes
 import com.dnaevolutions.moldqueen.core.ControlApp
 import com.dnaevolutions.moldqueen.core.InfoConfig
 import com.dnaevolutions.moldqueen.core.LayoutRegistry
+import fi.iki.elonen.NanoHTTPD
 import org.json.JSONObject
 import java.net.InetSocketAddress
 
@@ -24,33 +25,42 @@ class Mk4Service(context: Context) {
     private val ble = BleBroadcaster(appCtx)
     private val radio = RadioController(ble)
     private val store = AssetMapStore(appCtx)
-    private val registry = LayoutRegistry(asset("layouts.json"))
+    private val registry = LayoutRegistry(asset("web/layouts.json"))
     private val controlApp = ControlApp(registry, store)
     val core = ApiCore(controlApp, radio, AndroidInfoConfig(appCtx))
+    private val routes = ClientRoutes(asset("web/layouts.json"))
 
-    private var server: Mk4WsServer? = null
-    /** A local, NON-counted sink so the on-device UI can drive the radio before a WebView exists. */
-    private val uiSink = ClientSink { /* replies to UI commands are no-ops; pushes go to real WS clients */ }
+    private var wsServer: Mk4WsServer? = null
+    private var httpServer: ClientHttpServer? = null
 
     fun start() {
-        if (server != null) return
-        server = Mk4WsServer(InetSocketAddress("127.0.0.1", WS_PORT), core).also {
-            it.isReuseAddr = true
-            it.start()
+        if (wsServer == null) {
+            wsServer = Mk4WsServer(InetSocketAddress("127.0.0.1", WS_PORT), core).also {
+                it.isReuseAddr = true
+                it.start()
+            }
         }
-        Log.i(TAG, "Mk4Service started; WS ws://127.0.0.1:$WS_PORT")
+        if (httpServer == null) {
+            httpServer = ClientHttpServer(HTTP_PORT, appCtx.assets, WS_PORT, routes, ::initJson).also {
+                it.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
+            }
+        }
+        Log.i(TAG, "Mk4Service started; client http://127.0.0.1:$HTTP_PORT  ·  WS ws://127.0.0.1:$WS_PORT")
     }
 
     fun stop() {
-        server?.let { runCatching { it.stop(1000) } }
-        server = null
+        wsServer?.let { runCatching { it.stop(1000) } }; wsServer = null
+        httpServer?.let { runCatching { it.stop() } }; httpServer = null
         ble.stop()
     }
 
-    /** Inject a control command from the local UI. The sink is NOT registered as a client
-     *  (only onConnect registers), so it drives the radio + pushes to real WS clients
-     *  without counting toward the disconnect-safety client set. */
-    fun submit(json: String) = core.onMessage(uiSink, json)
+    /** The __INIT_JSON__ the served HTML bootstraps from — mirrors api.py's init dict. */
+    private fun initJson(): String = JSONObject()
+        .put("default", controlApp.defaultMap)
+        .put("active", controlApp.activeMap)
+        .put("device_swap", controlApp.deviceSwap)
+        .put("lifecycle", controlApp.lifecycle)
+        .toString()
 
     val bleReady: Boolean get() = ble.isReady()
 
@@ -64,8 +74,8 @@ class Mk4Service(context: Context) {
         override val dryRun = false
         override val hci = "android-ble"
         override val wsPort = WS_PORT
-        override val httpPort = 8080
-        override val serveClient = false        // layer 3 will serve the client over local HTTP
+        override val httpPort = HTTP_PORT
+        override val serveClient = true         // the client is served over local HTTP (layer 3)
         override fun adapterMac(): String? = null
         override fun hostname() = android.os.Build.MODEL ?: "android"
         override fun bluetoothd(): String? = null
@@ -76,5 +86,6 @@ class Mk4Service(context: Context) {
     companion object {
         private const val TAG = "Mk4Service"
         const val WS_PORT = 8765
+        const val HTTP_PORT = 8080
     }
 }

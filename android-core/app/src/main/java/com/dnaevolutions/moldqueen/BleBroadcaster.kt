@@ -73,10 +73,6 @@ class BleBroadcaster(context: Context) {
             onStatus?.invoke("Bluetooth is OFF — enable it and retry")
             return
         }
-        if (advertising) {
-            adv.stopAdvertising(callback)
-            advertising = false
-        }
         val settings = AdvertiseSettings.Builder()
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
             .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
@@ -88,15 +84,33 @@ class BleBroadcaster(context: Context) {
             .setIncludeTxPowerLevel(false)
             .addManufacturerData(COMPANY_ID, bytes)
             .build()
-        adv.startAdvertising(settings, data, callback)
-        onStatus?.invoke("$label — on-air %dB @0x%04X (~10/s)".format(bytes.size, COMPANY_ID))
+        // Swallow radio errors (e.g. SecurityException when BLUETOOTH_ADVERTISE isn't
+        // granted yet) — like the Pi's IPCClient swallows OSError. A radio failure must
+        // NEVER break the WS exchange/contract; the client stays unaware.
+        try {
+            if (advertising) {
+                adv.stopAdvertising(callback)
+                advertising = false
+            }
+            adv.startAdvertising(settings, data, callback)
+            onStatus?.invoke("$label — on-air %dB @0x%04X (~10/s)".format(bytes.size, COMPANY_ID))
+        } catch (e: Exception) {
+            advertising = false
+            Log.w(TAG, "advertise call failed (${e.javaClass.simpleName}: ${e.message})")
+            onStatus?.invoke("Radio unavailable: ${e.message}")
+        }
     }
 
     @SuppressLint("MissingPermission")
     fun stop() {
-        if (advertising) {
-            advertiser?.stopAdvertising(callback)
+        try {
+            if (advertising) {
+                advertiser?.stopAdvertising(callback)
+                advertising = false
+            }
+        } catch (e: Exception) {
             advertising = false
+            Log.w(TAG, "stopAdvertising failed (${e.javaClass.simpleName}: ${e.message})")
         }
         onStatus?.invoke("Radio stopped")
     }
