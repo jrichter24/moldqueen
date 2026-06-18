@@ -17,6 +17,13 @@
 - **Tabbed settings** overlay: Connection · Channels · Labels · Server info.
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
+- **"Connect API" tab + vertical endpoint form (2026-06-18):** settings tab renamed
+  **"Connection" → "Connect API"** (de "API verbinden") so it pairs unambiguously with the
+  top-left "Connect Excavator"; startup step-1 wording updated to match. The shared endpoint
+  editor (`MK4.buildEndpointRow` + `.eprow`, used by Connect-API tab / startup / RAW /
+  template) is now a tidy **vertical stacked form** — label · full-width input · buttons row
+  (Connect + Use page host) · status · hint — replacing the old cramped single row. Markup
+  change in `clientconfig.js`, layout in `shell.css`. All behavior preserved (IDs unchanged).
 - **Connect-disambiguation + startup overlay (2026-06-18):** the two "connect" concepts
   are now distinct — top-left BLE cold-start is **"Connect Excavator"** (en) / "Bagger
   verbinden" (de), styled prominent (`#menu .connectExc`, bright-blue glow); the settings

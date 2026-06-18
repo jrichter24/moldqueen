@@ -32,12 +32,15 @@ window.MK4 = window.MK4 || {};
   // Build the endpoint editor into `host`. onApply() runs after the value is saved
   // (the layout uses it to reconnect the WebSocket to the new endpoint).
   M.buildEndpointRow = function (host, onApply) {
+    // Vertical stacked form: label · full-width input · buttons row · status · hint.
     host.innerHTML =
-      '<label class="eplabel">API endpoint' +
-      ' <input type="text" id="epInput" spellcheck="false" autocapitalize="off" placeholder="' + M.defaultEndpoint() + '"></label>' +
-      ' <button id="epApply" class="primary">Connect</button>' +
-      ' <button id="epReset">Use page host</button>' +
-      ' <span id="epStatus" class="epstatus"></span>' +
+      '<label class="eplabel" for="epInput">API endpoint</label>' +
+      '<input type="text" id="epInput" spellcheck="false" autocapitalize="off" placeholder="' + M.defaultEndpoint() + '">' +
+      '<div class="epbtns">' +
+      '<button id="epApply" class="primary">Connect</button>' +
+      '<button id="epReset">Use page host</button>' +
+      '</div>' +
+      '<span id="epStatus" class="epstatus"></span>' +
       '<div class="ephint">Empty = this page’s host (default). For a remote Pi set e.g. ' +
       '<code>ws://192.168.178.98:8765</code>. Saved in this browser.</div>';
     var inp = host.querySelector("#epInput");
