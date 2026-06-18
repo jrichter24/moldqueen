@@ -17,6 +17,19 @@
 - **Tabbed settings** overlay: Connection · Channels · Labels · Server info.
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
+- **Connect-disambiguation + startup overlay (2026-06-18):** the two "connect" concepts
+  are now distinct — top-left BLE cold-start is **"Connect Excavator"** (en) / "Bagger
+  verbinden" (de), styled prominent (`#menu .connectExc`, bright-blue glow); the settings
+  **"Connection"** tab stays the API endpoint. New **startup overlay** (`#startup`, built in
+  `buildStartup()`) greets the excavator page with two labelled steps — **Step 1 reach the
+  API** (reuses the endpoint editor; "Next" gated until ws connected, auto-advances on
+  connect) → **Step 2 connect the excavator** (hands off to the existing wizard). Fully
+  **skippable** (Skip button + backdrop click); auto-closes if already READY. The wizard
+  title is now "Excavator setup". All reuse — no behavior change to wizard/lifecycle/endpoint.
+- **Chooser mobile LANDSCAPE fix (2026-06-18):** added `@media (orientation: landscape) and
+  (max-height: 600px)` — the prior `max-width:768px` rule missed wide-but-short landscape
+  phones, so desktop centering clipped the cards' top and made them over-wide. Now scrolls
+  with the top reachable and lays cards ~2-up scaled. Portrait + desktop unchanged.
 - **Cosmetic UI polish (2026-06-18):** excavator settings overlay is now **fixed-height**
   (`.spanel min-height: 26rem`, sized to the tallest = Channels) so switching tabs
   no longer jumps; tab bar **wraps** instead of showing a side scrollbar; taller tab

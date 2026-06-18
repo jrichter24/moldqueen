@@ -16,7 +16,7 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 // ---- i18n (static strings; function titles come from the map labels) ----
 const T = {
-  en: { connect: "Connect", ready: "Ready", reset: "Reset", stop: "STOP", speed: "Speed",
+  en: { connect: "Connect Excavator", ready: "Ready", reset: "Reset", stop: "STOP", speed: "Speed",
         full: "⛶", settings: "⚙", layouts: "Layouts", close: "Close", lang: "DE", deviceSwap: "Swap hubs 0↔1",
         saveClose: "Save and Close", discard: "Discard", promote: "Promote → default",
         resetMap: "Reset to default", labelsBtn: "Labels…", back: "Back", revtrim: "Rev ×",
@@ -37,13 +37,18 @@ const T = {
                out: "Out", in: "In", left: "Left", right: "Right", open: "Open", close: "Close" },
         info: { mode: "Mode", swap: "Hubs", speed: "Speed", batt: "Batt" },
         resume: "Resume setup",
-        wiz: { title: "Connection setup", next: "Next", back: "Back", cancel: "Cancel",
+        su: { title: "Get started", next: "Next — connect excavator →", skip: "Skip — just look around",
+              s1t: "Step 1 — Reach the server",
+              s1b: "This page drives the excavator through the WebSocket <b>API</b> (the “Connection” endpoint — not the toy itself). First make sure it's reachable; set the endpoint if your Pi is elsewhere.",
+              s2t: "Step 2 — Connect the excavator",
+              s2b: "Server reachable ✓ &nbsp;Now power on the hubs and connect the <b>physical excavator</b> over BLE: <b>Connect Excavator</b> → assign slots → <b>Ready</b>." },
+        wiz: { title: "Excavator setup", next: "Next", back: "Back", cancel: "Cancel",
                readyBtn: "Ready", startDriving: "Start driving", placeholder: "📷 placeholder — drop a photo here",
                w1: { t: "Step 1 — Power on", b: "Power on <b>both</b> hubs. Each shows <b>one long flash</b>." },
                w2: { t: "Step 2 — Connecting…", b: "Sending the connect signal — both hubs should now <b>fast-flash</b>." },
                w3: { t: "Step 3 — Assign slots", b: "Press <b>ONE</b> hub's button until it shows <b>two fast flashes</b> (slot&nbsp;1). Leave the other on one flash (slot&nbsp;0)." },
                w4: { t: "Ready ✓", b: "Connected — controls unlocked. You can start driving." } } },
-  de: { connect: "Verbinden", ready: "Bereit", reset: "Reset", stop: "STOPP", speed: "Tempo",
+  de: { connect: "Bagger verbinden", ready: "Bereit", reset: "Reset", stop: "STOPP", speed: "Tempo",
         full: "⛶", settings: "⚙", layouts: "Layouts", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
         saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern",
         resetMap: "Auf Standard zurück", labelsBtn: "Labels…", back: "Zurück", revtrim: "Rev ×",
@@ -64,7 +69,12 @@ const T = {
                out: "Aus", in: "Ein", left: "Links", right: "Rechts", open: "Öffnen", close: "Schließen" },
         info: { mode: "Modus", swap: "Hubs", speed: "Tempo", batt: "Akku" },
         resume: "Setup fortsetzen",
-        wiz: { title: "Verbindungs-Setup", next: "Weiter", back: "Zurück", cancel: "Abbrechen",
+        su: { title: "Loslegen", next: "Weiter — Bagger verbinden →", skip: "Überspringen — nur umsehen",
+              s1t: "Schritt 1 — Server erreichen",
+              s1b: "Diese Seite steuert den Bagger über die WebSocket-<b>API</b> (der „Verbindung“-Endpunkt — nicht das Modell selbst). Zuerst sicherstellen, dass sie erreichbar ist; Endpunkt setzen, falls der Pi woanders läuft.",
+              s2t: "Schritt 2 — Bagger verbinden",
+              s2b: "Server erreichbar ✓ &nbsp;Jetzt die Hubs einschalten und den <b>echten Bagger</b> über BLE verbinden: <b>Bagger verbinden</b> → Slots zuordnen → <b>Bereit</b>." },
+        wiz: { title: "Bagger-Setup", next: "Weiter", back: "Zurück", cancel: "Abbrechen",
                readyBtn: "Bereit", startDriving: "Losfahren", placeholder: "📷 Platzhalter — Foto hier einsetzen",
                w1: { t: "Schritt 1 — Einschalten", b: "<b>Beide</b> Hubs einschalten. Jeder zeigt <b>ein langes Blinken</b>." },
                w2: { t: "Schritt 2 — Verbinden…", b: "Verbindungssignal wird gesendet — beide Hubs sollten jetzt <b>schnell blinken</b>." },
@@ -174,7 +184,7 @@ function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
 
 let wsTries = 0, wsTimer = null, wsStatus = "retrying";
 const WS_MAX_TRIES = 5;                                    // then stop auto-retry (no spam)
-function setWsStatus(s) { wsStatus = s; MK4.setStatus(s); }
+function setWsStatus(s) { wsStatus = s; MK4.setStatus(s); startupOnUpdate(); }
 function scheduleRetry() {
   wsTries++;
   if (wsTries > WS_MAX_TRIES) { setWsStatus("failed"); return; }   // give up — user fixes the endpoint, then Connect
@@ -228,6 +238,7 @@ function setLifecycle(state) {
   renderTopbar(); renderHint(); refreshValues();
   rebuildOpenSettings();
   wizardOnLifecycle(state);
+  startupOnUpdate();
 }
 
 // ---- build the stage overlay ----
@@ -367,7 +378,7 @@ function renderTopbar() {
   const left = el("tgroup");
   const dot = el("dot"); dot.id = "wsDot"; left.appendChild(dot);
   left.appendChild(el("lc", "", "<span id='lcText'>" + lifecycle + "</span>"));
-  if (lifecycle === "IDLE") left.appendChild(tbtn(tr().connect, "primary", openWizard));
+  if (lifecycle === "IDLE") left.appendChild(tbtn(tr().connect, "primary connectExc", openWizard));
   else if (lifecycle === "CONNECTING") {
     left.appendChild(tbtn(tr().resume, "primary", openWizard));
     left.appendChild(tbtn(tr().reset, "", doReset));
@@ -440,6 +451,53 @@ function buildWizard() {
   set("wCancel", wizardCancel); set("wBack", wizardBack); set("wNext", wizardNext);
   set("wReady", () => send({ cmd: "setup", action: "ready" }));   // → READY → step 4 (via lifecycle)
   set("wDone", closeWizard);
+}
+
+// ---- startup overlay: sequence the TWO connects in logical order ----
+// Step 1 = reach the API (WebSocket "Connection"); step 2 = connect the physical
+// excavator over BLE (the wizard). Skippable — never traps a look-around visitor.
+let startupStep = 1;
+function openStartup() {
+  startupStep = (wsStatus === "connected") ? 2 : 1;   // skip step 1 if the API is already reachable
+  buildStartup(); $("startup").classList.remove("hidden");
+}
+function closeStartup() { $("startup").classList.add("hidden"); }
+function startupOnUpdate() {   // live-refresh while open as ws-status / lifecycle change
+  if ($("startup").classList.contains("hidden")) return;
+  if (lifecycle === "READY") { closeStartup(); return; }       // already connected end-to-end → moot
+  if (startupStep === 1 && wsStatus === "connected") startupStep = 2;   // API up → advance to the toy
+  buildStartup();
+}
+function buildStartup() {
+  const t = tr(), s = startupStep, apiOk = wsStatus === "connected";
+  const dots = `<div class="wsteps">
+      <span class="wdot ${s === 1 ? "on" : "done"}"></span>
+      <span class="wdot ${s === 2 ? "on" : ""}"></span></div>`;
+  let body;
+  if (s === 1) {
+    body = `<h3 class="wt">${t.su.s1t}</h3><p class="wbody">${t.su.s1b}</p>
+      <div class="eprow" id="suEpRow"></div>
+      <div class="actions wactions">
+        <button id="suSkip">${t.su.skip}</button>
+        <button class="apply" id="suNext"${apiOk ? "" : " disabled"}>${t.su.next}</button>
+      </div>`;
+  } else {
+    body = `<h3 class="wt">${t.su.s2t}</h3><p class="wbody">${t.su.s2b}</p>
+      <div class="actions wactions">
+        <button id="suSkip">${t.su.skip}</button>
+        <button id="suBack">${t.wiz.back}</button>
+        <button class="apply" id="suConnect">${t.connect}</button>
+      </div>`;
+  }
+  $("startup").innerHTML = `<div class="backdrop"></div><div class="sheet wiz su">
+     <h2>${t.su.title}</h2>${dots}${body}</div>`;
+  $("startup").querySelector(".backdrop").onclick = closeStartup;   // dismissable (don't trap)
+  const set = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
+  set("suSkip", closeStartup);
+  set("suNext", () => { if (wsStatus === "connected") { startupStep = 2; buildStartup(); } });
+  set("suBack", () => { startupStep = 1; buildStartup(); });
+  set("suConnect", () => { closeStartup(); openWizard(); });   // hand off to the existing excavator wizard
+  if (s === 1) { MK4.buildEndpointRow($("suEpRow"), reconnectWS); MK4.setStatus(wsStatus); }
 }
 
 // ---- settings: two CENTERED overlay pages (assignment + labels) ----
@@ -688,3 +746,4 @@ buildStage();
 renderTopbar();
 renderHint();
 connect();
+if (lifecycle !== "READY") openStartup();   // greet with the two-step connect guide (skippable)

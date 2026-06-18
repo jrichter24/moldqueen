@@ -114,6 +114,27 @@
       .card h2 { font-size: 1rem; }
       .card .desc { font-size: .82rem; }
     }
+
+    /* ---- landscape phones (WIDE but SHORT): the max-width rule above misses them, so
+            desktop's vertical-centering clipped the cards' top and full-width was too wide.
+            Detect by orientation+height; keep the page scrollable with the top reachable and
+            lay cards ~2-up scaled to fit the width. (Real laptops are taller → unaffected.) ---- */
+    @media (orientation: landscape) and (max-height: 600px) {
+      html, body { height: auto; }                       /* document grows + scrolls; top reachable */
+      body { justify-content: flex-start; min-height: 100%; padding: 3vh 4vw 4vh;
+             gap: 1rem; background-attachment: scroll; }
+      .actions { position: static; align-self: flex-end; flex-wrap: wrap; justify-content: flex-end; }
+      .brand h1 { font-size: clamp(1.8rem, 6vw, 3rem); }   /* shrink the tall header to save height */
+      .brand img { width: clamp(40px, 8vw, 72px); }
+      header .sub { font-size: .8rem; }
+      .cards { gap: .8rem; }
+      .card { flex: 1 1 42%; max-width: 360px; min-width: 200px; }   /* ~2-up, never over-wide */
+      .card .art { height: clamp(64px, 20vh, 120px); }               /* short viewport → smaller art */
+      .card .art img { width: 54%; height: 70%; }
+      .card .body { padding: .6rem .85rem .8rem; }
+      .card h2 { font-size: .98rem; }
+      .card .desc { font-size: .8rem; }
+    }
   </style>
 </head>
 <body>

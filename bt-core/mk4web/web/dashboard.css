@@ -73,6 +73,16 @@
   font-size: clamp(9px, 1.35cqw, 14px); line-height: 1.35;
 }
 
+/* ---- primary cold-start button: the loudest action in the bar (vs the muted .primary)
+       so "Connect Excavator" (the physical toy) reads as THE next step. Distinct from the
+       settings "Connection" tab (the API endpoint). ---- */
+#menu .connectExc { background: #1f5fa8; border-color: #4f93e0; font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(90,150,230,.4), 0 0 12px rgba(70,140,230,.45); }
+#menu .connectExc:active { background: #2a6fbf; }
+
+/* startup guide sits above the dimmed page but below the wizard it hands off to */
+#startup { z-index: 31; }
+
 /* ---- tabbed settings overlay (dashboard-specific): Connection · Channels · Labels · Server info ---- */
 .stabs { display: flex; flex-wrap: wrap; gap: .2rem; margin: -.3rem -.2rem .8rem; border-bottom: 1px solid #2a313d; }
   /* WRAP (no side scrollbar) if the four captions don't fit one row on a narrow sheet */
