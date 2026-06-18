@@ -124,6 +124,29 @@ table.map .tag { display: inline-block; font-size: .65rem; padding: .05rem .3rem
 .lblf .lc { flex: 0 0 1.7rem; color: #8aa0bd; font-family: ui-monospace, monospace; font-size: .72rem; }
 .sheet .lblgrid input[type=text] { flex: 1 1 auto; width: auto; min-width: 0; }   /* override the compact 7.5rem */
 
+/* ---- Gamepad tab: connection status · live axes/buttons readout · input→function map ---- */
+.padstat { font-size: .82rem; color: #8e9cb2; margin: 0 0 .6rem; padding: .35rem .55rem;
+  background: #15181f; border: 1px solid #2c333f; border-radius: .4rem; word-break: break-word; }
+.padstat.ok { color: #b9e6c9; border-color: #2c5a3a; }
+.padro { margin: 0 0 .8rem; padding: .5rem .6rem; background: #15181f; border: 1px solid #232a35; border-radius: .5rem; }
+.padro .axes { display: flex; flex-direction: column; gap: .25rem; margin-bottom: .5rem; }
+.padro .axrow { display: flex; align-items: center; gap: .5rem; font-size: .76rem; }
+.padro .axk { flex: 0 0 1.8rem; color: #8aa0bd; font-family: ui-monospace, monospace; }
+.padro .axbar { position: relative; flex: 1 1 auto; height: .5rem; background: #0e1218; border: 1px solid #2a313d; border-radius: .3rem; }
+.padro .axbar i { position: absolute; top: -1px; bottom: -1px; width: 3px; margin-left: -1.5px; background: #6ea8ff; border-radius: 2px; }
+.padro .axv { flex: 0 0 2.6rem; text-align: right; color: #cfe0f5; font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
+.padro .pbtns { display: flex; flex-wrap: wrap; gap: .25rem; }
+.padro .pbtn { min-width: 1.5rem; text-align: center; font-size: .7rem; padding: .12rem .25rem; border-radius: .25rem;
+  background: #0e1218; border: 1px solid #2a313d; color: #8aa0bd; font-family: ui-monospace, monospace; }
+.padro .pbtn.on { background: #2f6f93; border-color: #6db0e0; color: #eaf2ff; }
+.padh { margin: .4rem 0 .3rem; font-size: .95rem; color: #cfe0f5; }
+table.padmap select { max-width: 7rem; }
+table.padmap .padlive { text-align: center; color: #ffd56b; font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
+.padbtns { display: inline-flex; align-items: center; gap: .25rem; }
+#menu .padchip { font-size: 1rem; line-height: 1; padding: .3em .5em; }
+#menu .padchip.padon { border-color: #4f9f6a; box-shadow: 0 0 0 1px rgba(80,200,130,.4); }
+#menu .padchip.padoff { opacity: .6; }
+
 /* server-info readout (tier-agnostic key/value list) */
 .infobox:empty { display: none; }
 .infobox { margin-top: .8rem; padding: .6rem .8rem; background: #15181f; border: 1px solid #2c333f;

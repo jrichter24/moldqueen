@@ -21,7 +21,14 @@ const T = {
         saveClose: "Save and Close", discard: "Discard", promote: "Promote → default",
         resetMap: "Reset to default", labelsBtn: "Labels…", back: "Back", revtrim: "Rev ×",
         serverInfo: "ℹ Server info", infoConnectFirst: "Connect first", infoFetching: "Fetching…", infoTier: "tier",
-        tabConnection: "Connect API", tabChannels: "Channels", tabLabels: "Labels", tabServerInfo: "Server info",
+        tabConnection: "Connect API", tabChannels: "Channels", tabLabels: "Labels", tabGamepad: "Gamepad", tabServerInfo: "Server info",
+        padSub: "Drive with a PS5/DualSense (or any) controller paired to THIS device. Move a stick or press a button to see what it reports, then map inputs to functions.",
+        padEnable: "Enable gamepad control", padAssign: "Input mapping", padSource: "Controller input",
+        padInvert: "Invert", padLive: "Live", padAxis: "Axis", padButtons: "Buttons ±", padBtn: "Btn",
+        padNone: "—", padNeg: "−", padPos: "+", padResetDefaults: "Reset to DualSense defaults",
+        padAutosave: "Saved automatically in this browser",
+        padNoController: "No controller — pair one to this device and press a button",
+        padOnTitle: "Gamepad ON — click to disable", padOffTitle: "Gamepad OFF — click to enable",
         connSub: "Set the WebSocket API endpoint this page talks to (empty = this page’s host).",
         infoSub: "What the server reports — depends on its disclosure tier.",
         fn: "Function", slot: "Slot", ch: "Ch", invert: "Inv", maxsp: "Max", test: "Test",
@@ -53,7 +60,14 @@ const T = {
         saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern",
         resetMap: "Auf Standard zurück", labelsBtn: "Labels…", back: "Zurück", revtrim: "Rev ×",
         serverInfo: "ℹ Server-Info", infoConnectFirst: "Erst verbinden", infoFetching: "Lädt…", infoTier: "Stufe",
-        tabConnection: "API verbinden", tabChannels: "Kanäle", tabLabels: "Labels", tabServerInfo: "Server-Info",
+        tabConnection: "API verbinden", tabChannels: "Kanäle", tabLabels: "Labels", tabGamepad: "Gamepad", tabServerInfo: "Server-Info",
+        padSub: "Mit einem PS5/DualSense (oder beliebigen) Controller fahren, der mit DIESEM Gerät gekoppelt ist. Stick/Taste bewegen, um zu sehen was er meldet, dann Eingaben auf Funktionen abbilden.",
+        padEnable: "Gamepad-Steuerung aktivieren", padAssign: "Eingabe-Zuordnung", padSource: "Controller-Eingabe",
+        padInvert: "Invertieren", padLive: "Live", padAxis: "Achse", padButtons: "Tasten ±", padBtn: "Taste",
+        padNone: "—", padNeg: "−", padPos: "+", padResetDefaults: "Auf DualSense-Standard zurück",
+        padAutosave: "Automatisch in diesem Browser gespeichert",
+        padNoController: "Kein Controller — mit diesem Gerät koppeln und eine Taste drücken",
+        padOnTitle: "Gamepad AN — zum Deaktivieren klicken", padOffTitle: "Gamepad AUS — zum Aktivieren klicken",
         connSub: "WebSocket-API-Endpunkt dieser Seite (leer = Host dieser Seite).",
         infoSub: "Was der Server meldet — je nach Offenlegungsstufe.",
         fn: "Funktion", slot: "Slot", ch: "Kan", invert: "Inv", maxsp: "Max", test: "Test",
@@ -407,6 +421,7 @@ function renderTopbar() {
   const right = el("tgroup");
   const sb = tbtn(tr().stop, "", stopAll); sb.id = "stopBtn"; right.appendChild(sb);
   right.appendChild(tbtn(tr().full, "", toggleFullscreen));
+  if (activePad()) right.appendChild(padChip());   // controller indicator + quick enable toggle
   right.appendChild(langSelect());
   right.appendChild(tbtn(tr().layouts, "", () => { location.href = "/?choose=1"; }));
   right.appendChild(tbtn(tr().settings, "", openSettings));
@@ -548,11 +563,12 @@ function buildSettings() {
   if (!editMap) editMap = mapForEdit();   // never null -> always renders, even offline
   const t = tr();
   const TABS = [["connection", t.tabConnection], ["channels", t.tabChannels],
-                ["labels", t.tabLabels], ["info", t.tabServerInfo]];
+                ["labels", t.tabLabels], ["gamepad", t.tabGamepad], ["info", t.tabServerInfo]];
   const bar = TABS.map(([id, lbl]) =>
     `<button class="stab${settingsTab === id ? " on" : ""}" data-tab="${id}">${lbl}</button>`).join("");
   const panel = settingsTab === "connection" ? connectionPanel(t)
               : settingsTab === "labels" ? labelsPanel(t)
+              : settingsTab === "gamepad" ? gamepadPanel(t)
               : settingsTab === "info" ? infoPanel(t)
               : channelsPanel(t);
   $("settings").innerHTML =
@@ -562,7 +578,7 @@ function buildSettings() {
      </div>`;
   $("settings").querySelector(".backdrop").onclick = discardEdits;   // click-out = discard (no silent save)
   $("settings").querySelectorAll(".stab").forEach(b => { b.onclick = () => showTab(b.dataset.tab); });
-  ({ connection: wireConnection, channels: wireChannels, labels: wireLabels, info: wireInfo }[settingsTab])();
+  ({ connection: wireConnection, channels: wireChannels, labels: wireLabels, gamepad: wireGamepad, info: wireInfo }[settingsTab])();
 }
 
 // ---- Connection tab: endpoint editor + status (usable OFFLINE — set endpoint first) ----
@@ -755,6 +771,175 @@ function promoteMap() {
 }
 function flashMsg(text) { const m = $("mapMsg"); if (m) { m.className = "bad"; m.textContent = text; } }
 
+// ====== PS5 / DualSense (or any) GAMEPAD control ======
+// Reads a controller paired to THIS client device via the Gamepad API and drives the
+// SAME functions as the on-screen joysticks (driveFn -> WS drive-by-function), so it
+// reuses the channel map / invert / max / reverse_scale and ALL existing safety:
+// READY-gated, snap-to-neutral on release/disconnect/lifecycle-exit/blur. The on-screen
+// joysticks keep working alongside it (arbitration below stops a resting pad stomping them).
+const PAD_LS_MAP = "mk4_pad_map", PAD_LS_EN = "mk4_pad_enabled";
+const PAD_DEADZONE = 0.18;     // resting-stick dead-zone (fraction of full deflection)
+// Sensible DualSense (browser "standard" mapping) defaults — fully editable in Settings.
+// axes: 0=LSx 1=LSy 2=RSx 3=RSy ; buttons: 0=× 1=○ 2=□ 3=△ 4=L1 5=R1 6=L2 7=R2 …
+const PAD_DEFAULT = {
+  left_track:  { type: "axis",    axis: 1, invert: true },   // left stick Y, up = forward
+  right_track: { type: "axis",    axis: 3, invert: true },   // right stick Y, up = forward
+  arm_lift:    { type: "buttons", neg: 0,  pos: 3 },          // × down / △ up
+  front_arm:   { type: "buttons", neg: 4,  pos: 5 },          // L1 / R1
+  rotation:    { type: "buttons", neg: 2,  pos: 1 },          // □ left / ○ right
+  bucket:      { type: "buttons", neg: 6,  pos: 7 },          // L2 / R2
+};
+function normalizePadMap(m) {     // ensure every function has a sane source (axis|buttons)
+  const out = {};
+  for (const fn of FN) {
+    const s = m && m[fn];
+    out[fn] = (s && (s.type === "axis" || s.type === "buttons")) ? s
+            : JSON.parse(JSON.stringify(PAD_DEFAULT[fn] || { type: "buttons", neg: null, pos: null }));
+  }
+  return out;
+}
+function loadPadMap() {
+  try { const m = JSON.parse(localStorage.getItem(PAD_LS_MAP) || "null");
+        if (m && typeof m === "object") return normalizePadMap(m); } catch {}
+  return normalizePadMap(JSON.parse(JSON.stringify(PAD_DEFAULT)));
+}
+function savePadMap() { localStorage.setItem(PAD_LS_MAP, JSON.stringify(padMap)); }
+
+let padIndex = null;            // index of the active gamepad in navigator.getGamepads()
+let padEnabled = (localStorage.getItem(PAD_LS_EN) || "true") !== "false";
+let padMap = loadPadMap();
+const padOwns = {};            // fn -> is the gamepad currently ASSERTING this function?
+
+function activePad() {          // the tracked pad, or adopt any connected one
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  if (padIndex != null && pads[padIndex]) return pads[padIndex];
+  for (let i = 0; i < pads.length; i++) if (pads[i]) { padIndex = i; return pads[i]; }
+  padIndex = null; return null;
+}
+function padBtnObj(gp, i) { if (i == null) return null; return gp.buttons[i] || null; }
+function padPressed(gp, i) { const b = padBtnObj(gp, i); return !!b && (b.pressed || b.value > 0.5); }
+function padAxisDeflection(gp, idx, invert) {
+  let a = (typeof gp.axes[idx] === "number") ? gp.axes[idx] : 0;
+  if (invert) a = -a;
+  const m = Math.abs(a);
+  if (m < PAD_DEADZONE) return 0;
+  return Math.sign(a) * ((m - PAD_DEADZONE) / (1 - PAD_DEADZONE));   // rescale: just past dead-zone ≈ 0
+}
+function padFnValue(gp, fn) {    // -> signed value -7..+7 for `fn` from the mapped input
+  const s = padMap[fn]; if (!s) return 0;
+  if (s.type === "axis") return Math.round(clamp(padAxisDeflection(gp, s.axis, s.invert), -1, 1) * funcMax(fn));
+  const pos = padPressed(gp, s.pos), neg = padPressed(gp, s.neg);
+  return pos && !neg ? funcMax(fn) : neg && !pos ? -funcMax(fn) : 0;
+}
+// Arbitration: the pad only writes 0 for a function IT was driving — so a resting stick
+// never stomps an on-screen joystick the user is actively dragging.
+function padAssert(fn, v) {
+  if (v !== 0) { padOwns[fn] = true; driveFn(fn, v); }
+  else if (padOwns[fn]) { padOwns[fn] = false; driveFn(fn, 0); }
+}
+function padReleaseOwned() { for (const fn in padOwns) if (padOwns[fn]) { padOwns[fn] = false; driveFn(fn, 0); } }
+
+function gamepadLoop() {
+  requestAnimationFrame(gamepadLoop);
+  const gp = activePad();
+  if (gp && !$("settings").classList.contains("hidden") && settingsTab === "gamepad") updatePadReadout(gp);
+  if (!padEnabled || !gp || lifecycle !== "READY") { padReleaseOwned(); return; }   // SAFETY gate
+  for (const fn of FN) padAssert(fn, padFnValue(gp, fn));
+}
+function setPadEnabled(on) {
+  padEnabled = on; localStorage.setItem(PAD_LS_EN, on ? "true" : "false");
+  if (!on) padReleaseOwned();
+  renderTopbar(); rebuildOpenSettings();
+}
+function padChip() {            // topbar status + quick enable toggle (shown only when a pad is present)
+  const b = tbtn("🎮", padEnabled ? "padchip padon" : "padchip padoff", () => setPadEnabled(!padEnabled));
+  b.title = padEnabled ? tr().padOnTitle : tr().padOffTitle;
+  return b;
+}
+window.addEventListener("gamepadconnected", e => {
+  if (padIndex == null) padIndex = e.gamepad.index;
+  renderTopbar(); rebuildOpenSettings();
+});
+window.addEventListener("gamepaddisconnected", e => {
+  if (e.gamepad.index === padIndex) { padReleaseOwned(); padIndex = null; activePad(); }   // SAFETY: neutralize, adopt another
+  renderTopbar(); rebuildOpenSettings();
+});
+
+// ---- Gamepad settings tab: enable toggle + live readout + input->function mapping ----
+function padCounts() { const gp = activePad(); return { axes: gp ? gp.axes.length : 4, btns: gp ? gp.buttons.length : 18 }; }
+function padRowHtml(t, fn) {
+  const s = padMap[fn], { axes, btns } = padCounts();
+  const typeSel = `<select class="pad-type" data-fn="${fn}">
+      <option value="axis"${s.type === "axis" ? " selected" : ""}>${t.padAxis}</option>
+      <option value="buttons"${s.type === "buttons" ? " selected" : ""}>${t.padButtons}</option></select>`;
+  let detail = "", inv = "";
+  if (s.type === "axis") {
+    const opts = Array.from({ length: axes }, (_, i) => `<option value="${i}"${i === s.axis ? " selected" : ""}>${t.padAxis} ${i}</option>`).join("");
+    detail = `<select class="pad-axis" data-fn="${fn}">${opts}</select>`;
+    inv = `<input type="checkbox" class="pad-inv" data-fn="${fn}"${s.invert ? " checked" : ""}>`;
+  } else {
+    const bopt = sel => `<option value="">${t.padNone}</option>` +
+      Array.from({ length: btns }, (_, i) => `<option value="${i}"${i === sel ? " selected" : ""}>${t.padBtn} ${i}</option>`).join("");
+    detail = `<span class="padbtns">${t.padNeg}<select class="pad-neg" data-fn="${fn}">${bopt(s.neg)}</select>` +
+             ` ${t.padPos}<select class="pad-pos" data-fn="${fn}">${bopt(s.pos)}</select></span>`;
+  }
+  return `<tr data-fn="${fn}">
+    <td class="fn">${funcLabel(fn)}<br><span class="muted">${fn}</span></td>
+    <td>${typeSel} ${detail}</td>
+    <td style="text-align:center">${inv}</td>
+    <td class="padlive" data-fn="${fn}">0</td></tr>`;
+}
+function gamepadPanel(t) {
+  const gp = activePad();
+  const rows = FN.map(fn => padRowHtml(t, fn)).join("");
+  return `<h2>${t.tabGamepad}</h2><p class="sub">${t.padSub}</p>
+    <div class="srow">
+      <label><input type="checkbox" id="padEnable"${padEnabled ? " checked" : ""}> ${t.padEnable}</label>
+      <span class="muted">${lifecycle !== "READY" ? "· " + t.readyOnly : ""}</span>
+    </div>
+    <div class="padstat ${gp ? "ok" : ""}">${gp ? "🎮 " + esc(gp.id || "controller") : t.padNoController}</div>
+    <div class="padro" id="padReadout"></div>
+    <h3 class="padh">${t.padAssign}</h3>
+    <table class="map padmap"><thead><tr><th>${t.fn}</th><th>${t.padSource}</th><th>${t.padInvert}</th><th>${t.padLive}</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    <div class="actions">
+      <button id="padReset">${t.padResetDefaults}</button>
+      <span class="muted">${t.padAutosave}</span>
+    </div>`;
+}
+function setPadSourceType(fn, type) {
+  if (type === "axis") padMap[fn] = { type: "axis", axis: (padMap[fn].axis ?? 0) | 0, invert: !!padMap[fn].invert };
+  else padMap[fn] = { type: "buttons", neg: padMap[fn].neg ?? null, pos: padMap[fn].pos ?? null };
+  savePadMap();
+}
+function wireGamepad() {
+  $("padEnable").onchange = e => setPadEnabled(e.target.checked);
+  $("padReset").onclick = () => { padMap = normalizePadMap(JSON.parse(JSON.stringify(PAD_DEFAULT))); savePadMap(); buildSettings(); };
+  $("settings").querySelectorAll("tr[data-fn]").forEach(trEl => {
+    const fn = trEl.dataset.fn;
+    const tSel = trEl.querySelector(".pad-type"); if (tSel) tSel.onchange = e => { setPadSourceType(fn, e.target.value); buildSettings(); };
+    const ax = trEl.querySelector(".pad-axis"); if (ax) ax.onchange = e => { padMap[fn].axis = +e.target.value; savePadMap(); };
+    const iv = trEl.querySelector(".pad-inv"); if (iv) iv.onchange = e => { padMap[fn].invert = e.target.checked; savePadMap(); };
+    const ng = trEl.querySelector(".pad-neg"); if (ng) ng.onchange = e => { padMap[fn].neg = e.target.value === "" ? null : +e.target.value; savePadMap(); };
+    const ps = trEl.querySelector(".pad-pos"); if (ps) ps.onchange = e => { padMap[fn].pos = e.target.value === "" ? null : +e.target.value; savePadMap(); };
+  });
+}
+function updatePadReadout(gp) {  // live axes/buttons + per-row function values (built once, updated each frame)
+  const box = $("padReadout"); if (!box) return;
+  const na = gp.axes.length, nb = gp.buttons.length;
+  if (box.dataset.na != na || box.dataset.nb != nb) {
+    box.dataset.na = na; box.dataset.nb = nb;
+    const axes = Array.from({ length: na }, (_, i) =>
+      `<div class="axrow"><span class="axk">A${i}</span><span class="axbar"><i id="axb${i}"></i></span><span class="axv" id="axv${i}">0.00</span></div>`).join("");
+    const btns = Array.from({ length: nb }, (_, i) => `<span class="pbtn" id="pbtn${i}">${i}</span>`).join("");
+    box.innerHTML = `<div class="axes">${axes}</div><div class="pbtns">${btns}</div>`;
+  }
+  for (let i = 0; i < na; i++) { const v = gp.axes[i] || 0, b = $("axb" + i), vv = $("axv" + i);
+    if (b) b.style.left = (50 + clamp(v, -1, 1) * 50).toFixed(1) + "%"; if (vv) vv.textContent = v.toFixed(2); }
+  for (let i = 0; i < nb; i++) { const e2 = $("pbtn" + i); if (e2) e2.classList.toggle("on", padPressed(gp, i)); }
+  $("settings").querySelectorAll(".padlive").forEach(td => { td.textContent = padFnValue(gp, td.dataset.fn); });
+}
+
 // ---- wiring ----
 document.addEventListener("keydown", e => {
   if (e.code === "Space" || e.code === "Escape") { e.preventDefault(); stopAll(); }
@@ -779,3 +964,4 @@ renderTopbar();
 renderHint();
 connect();
 if (lifecycle !== "READY") openStartup();   // greet with the two-step connect guide (skippable)
+requestAnimationFrame(gamepadLoop);          // start the gamepad poll loop (no-op until a pad appears)

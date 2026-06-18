@@ -17,6 +17,19 @@
 - **Tabbed settings** overlay: Connection · Channels · Labels · Server info.
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
+- **Gamepad / DualSense control (2026-06-18):** client-only (dashboard.js + dashboard.css,
+  NO Pi/API change). Gamepad API rAF poll loop reads a controller paired to the CLIENT
+  device and calls the SAME `driveFn` (WS drive-by-function) as the joysticks → reuses
+  channel map / invert / max / reverse_scale + all safety (READY-gated; snap-to-neutral on
+  release/disconnect/lifecycle-exit/blur). Dead-zone 0.18 with past-dead-zone rescale.
+  **Anti-stomp arbitration** (`padOwns`): a resting pad never writes 0 over an active
+  on-screen joystick — both inputs coexist. New **Gamepad settings tab**: enable toggle,
+  live axes/buttons readout (per-browser mapping varies — user SEES real values), and an
+  input→function map (axis+invert OR button±), persisted in localStorage (`mk4_pad_map`,
+  `mk4_pad_enabled`) SEPARATE from the channel map; DualSense defaults seeded + "Reset to
+  defaults". Topbar **🎮 chip** (shown only when a pad is present) = status + quick toggle.
+  Verified: JS syntax + dead-zone/invert/arbitration math unit-tested; static served live.
+  Needs a real controller for full browser verification (couldn't exercise hardware here).
 - **README "What you get" (2026-06-18):** added a skimmable feature-bullets section
   before Highlights (+ ToC entry) — multi-hub control, API-first, 6-lang client, RAW mode,
   raw-HCI radio, portable core (honest "architected to / proven on Pi"), pluggable layouts,
