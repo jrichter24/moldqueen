@@ -17,6 +17,10 @@
 - **Tabbed settings** overlay: Connection · Channels · Labels · Server info.
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
+- **Screenshot gallery (2026-06-18):** committed the four `assets/*.PNG` screenshots and
+  added **`docs/SCREENSHOTS.md`** (captioned visual tour: start page → dashboard → connect
+  wizard → channel settings; `../assets/` paths). README links it (ToC + a "Screenshots"
+  section after Highlights) with one clickable hero image (the dashboard → gallery). Docs-only.
 - **README messaging (2026-06-18):** reframed as a **multi-purpose, toy-agnostic
   platform** (drives the Mould King BLE hubs, not just the 13112; excavator = reference
   layout; others add their own via the pluggable system + `ADDING_A_LAYOUT.md`) — intro

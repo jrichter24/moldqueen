@@ -67,6 +67,7 @@ README is the tour; PROJECT.md is the source of truth.
 
 - [Disclaimer](#disclaimer)
 - [Highlights](#highlights)
+- [Screenshots](#screenshots)
 - [How it works](#how-it-works)
 - [The protocol (MK4 12-channel nibble)](#the-protocol-mk4-12-channel-nibble)
 - [Architecture](#architecture)
@@ -113,6 +114,17 @@ README is the tour; PROJECT.md is the source of truth.
   [`docs/ADDING_A_LAYOUT.md`](docs/ADDING_A_LAYOUT.md).
 - **Safety first.** Disconnect / no-clients / API-death → motors go **neutral**.
   A dry-run mode logs every telegram and transmits nothing.
+
+---
+
+## Screenshots
+
+The excavator dashboard — full visual tour (start page · dashboard · wizard ·
+channel settings) in **[`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md)**.
+
+<p align="center">
+  <a href="docs/SCREENSHOTS.md"><img src="assets/excavator_layout.PNG" alt="moldqueen excavator dashboard" width="760"></a>
+</p>
 
 ---
 
