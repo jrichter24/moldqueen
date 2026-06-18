@@ -415,6 +415,9 @@ class WebHandler(BaseHTTPRequestHandler):
         # try/catch (→ null when unreplaced). See web/clientconfig.js.
         with open(os.path.join(WEB_DIR, name)) as f:
             html = f.read().replace("__WS_PORT__", str(WS_PORT))
+        # In-client Fullscreen button: shown on the web (default). A native host that
+        # handles fullscreen itself (the Android app) injects "false" instead.
+        html = html.replace("__SHOW_FULLSCREEN__", "true")
         if "__LAYOUTS_JSON__" in html:  # chooser cards from the manifest (raw-serve falls back to fetch)
             html = html.replace("__LAYOUTS_JSON__", LAYOUTS_JSON.replace("\\", "\\\\").replace('"', '\\"'))
         if "__INIT_JSON__" in html:     # let the page render immediately, before the WS opens

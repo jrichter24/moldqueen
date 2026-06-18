@@ -443,7 +443,7 @@ function renderTopbar() {
   tb.appendChild(el("grow"));
   const right = el("tgroup");
   const sb = tbtn(tr().stop, "", stopAll); sb.id = "stopBtn"; right.appendChild(sb);
-  right.appendChild(tbtn(tr().full, "", toggleFullscreen));
+  if (MK4.showFullscreen()) right.appendChild(tbtn(tr().full, "", toggleFullscreen));
   if (activePad()) right.appendChild(padChip());   // controller indicator + quick enable toggle
   right.appendChild(langSelect());
   right.appendChild(tbtn(tr().layouts, "", () => { location.href = "/?choose=1"; }));

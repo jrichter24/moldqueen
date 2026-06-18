@@ -10,6 +10,7 @@
     // page is served RAW (e.g. the client Docker via nginx) the placeholder stays
     // literal, JSON.parse throws, and the body script falls back to fetch(/layouts.json).
     window.__LAYOUTS__ = (function () { try { return JSON.parse("__LAYOUTS_JSON__"); } catch (e) { return null; } })();
+    window.MK4_SHOW_FULLSCREEN = "__SHOW_FULLSCREEN__";   // "true" (web default) | "false" (native host)
     // Skip straight to the remembered layout (unless ?choose forces the chooser).
     (function () {
       var force = new URLSearchParams(location.search).has("choose");
@@ -264,10 +265,13 @@
     if (window.__LAYOUTS__) renderCards(window.__LAYOUTS__);
     else fetch("/layouts.json").then(function (r) { return r.json(); }).then(renderCards).catch(function () {});
 
-    document.getElementById("fsBtn").onclick = function () {   // consistent with the dashboard ⛶ button
-      if (!document.fullscreenElement) (document.documentElement.requestFullscreen || function () {}).call(document.documentElement);
-      else document.exitFullscreen && document.exitFullscreen();
-    };
+    var fsBtn = document.getElementById("fsBtn");                // optional: hidden when the host injects "false"
+    if (String(window.MK4_SHOW_FULLSCREEN) !== "false") {
+      fsBtn.onclick = function () {   // consistent with the dashboard ⛶ button
+        if (!document.fullscreenElement) (document.documentElement.requestFullscreen || function () {}).call(document.documentElement);
+        else document.exitFullscreen && document.exitFullscreen();
+      };
+    } else { fsBtn.remove(); }
     document.getElementById("aboutBtn").onclick = function () { show("about", true); };
     document.getElementById("aboutLink").onclick = function (e) { e.preventDefault(); show("about", true); };
     document.querySelectorAll("[data-close]").forEach(function (el) {

@@ -23,6 +23,12 @@ window.MK4 = window.MK4 || {};
     return M.wsEndpoint();
   };
 
+  // Optional in-client Fullscreen button. window.MK4_SHOW_FULLSCREEN is injected by the
+  // serving side ("true" for the web default, "false" for a host that handles fullscreen
+  // natively). Unreplaced/absent -> default ON. The client never knows WHO set it — no
+  // host-specific branching here.
+  M.showFullscreen = function () { return String(window.MK4_SHOW_FULLSCREEN) !== "false"; };
+
   // Connection status shown next to the endpoint editor: connected | failed | retrying.
   M.setStatus = function (state) {
     var s = document.getElementById("epStatus");

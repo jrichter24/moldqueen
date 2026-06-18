@@ -46,6 +46,8 @@ class ClientHttpServer(
     private fun html(name: String): Response {
         var s = String(readAsset("web/$name"), Charsets.UTF_8)
         s = s.replace("__WS_PORT__", wsPort.toString())
+        // Native host handles fullscreen itself -> hide the redundant in-client button.
+        s = s.replace("__SHOW_FULLSCREEN__", "false")
         if (s.contains("__LAYOUTS_JSON__")) s = s.replace("__LAYOUTS_JSON__", esc(routes.layoutsJson))
         if (s.contains("__INIT_JSON__")) s = s.replace("__INIT_JSON__", esc(initJson()))
         return newFixedLengthResponse(Response.Status.OK, CTYPES["html"]!!, s)

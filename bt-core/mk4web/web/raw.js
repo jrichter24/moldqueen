@@ -80,7 +80,7 @@ function renderMenu() {
   const right = el("tgroup");
   const sb = mbtn("STOP", "", doStop); sb.id = "stopBtn"; right.appendChild(sb);
   right.appendChild(mbtn("Neutral", "", doNeutral));
-  right.appendChild(mbtn("⛶", "", toggleFull));
+  if (MK4.showFullscreen()) right.appendChild(mbtn("⛶", "", toggleFull));
   right.appendChild(mbtn("Layouts", "", () => location.href = "/?choose=1"));
   m.appendChild(right);
   setDot(ws && ws.readyState === 1);
