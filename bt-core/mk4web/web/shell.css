@@ -32,6 +32,10 @@ body {
   border-radius: .4em; padding: .35em .6em; cursor: pointer; white-space: nowrap; flex: 0 0 auto;
 }
 #menu button:active { background: rgba(60,68,84,.95); }
+#menu select.langsel {        /* language picker — styled to match the menu buttons */
+  font: inherit; color: #e8eef6; background: rgba(40,46,58,.9); border: 1px solid #444c5e;
+  border-radius: .4em; padding: .35em .5em; cursor: pointer; flex: 0 0 auto;
+}
 #menu button:disabled { opacity: .4; cursor: not-allowed; }
 #menu .primary { background: #1d3a4d; border-color: #2f6f93; }
 #menu #stopBtn { background: #7a1d1d; border-color: #a33; font-weight: 700; }

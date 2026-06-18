@@ -1,5 +1,5 @@
 {
-  "_comment": "TEMPLATE default channel map — placeholder. Copy to config/channel_map.<your-id>.json and edit. One function per motor/channel you control; add more entries to the 'functions' object AND to the layout's 'functions' list in web/layouts.json. Each function maps to a (slot, channel) nibble; values are -7..+7 (0x8 + value).",
+  "_comment": "TEMPLATE default channel map — placeholder. Copy to config/channel_map.<your-id>.json and edit. One function per motor/channel you control; add more entries to the 'functions' object AND to the layout's 'functions' list in web/layouts.json. Each function maps to a (slot, channel) nibble; values are -7..+7 (0x8 + value). Labels are a per-language object {en,de,zh,ko,es,fr}; en is the fallback.",
   "version": 1,
   "functions": {
     "knob_1": {
@@ -9,8 +9,14 @@
       "invert": false,
       "max": 7,
       "reverse_scale": 1.0,
-      "label_en": "Knob 1 (TODO)",
-      "label_de": "Regler 1 (TODO)",
+      "labels": {
+        "en": "Knob 1 (TODO)",
+        "de": "Regler 1 (TODO)",
+        "zh": "旋钮 1 (TODO)",
+        "ko": "노브 1 (TODO)",
+        "es": "Mando 1 (TODO)",
+        "fr": "Bouton 1 (TODO)"
+      },
       "confirmed": false
     }
   }

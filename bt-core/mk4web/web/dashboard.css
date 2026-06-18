@@ -112,6 +112,18 @@ table.map .tag { display: inline-block; font-size: .65rem; padding: .05rem .3rem
 .sheet .test { background: #243b27; border-color: #3a6f43; }
 .sheet .test.held { background: #3563a8; border-color: #5b8fd6; }
 .sheet .promote { background: #463016; border-color: #8a5a2a; }
+
+/* ---- Labels tab: one card per function, the 6 languages as a labelled grid ----
+   (auto-fit columns → multi-column on a wide sheet, single column on mobile). */
+.lblcards { display: flex; flex-direction: column; gap: .6rem; }
+.lblcard { border: 1px solid #232a35; border-radius: .5rem; padding: .5rem .6rem; background: #15181f; }
+.lblfn { font-weight: 600; color: #d6e6fb; margin-bottom: .4rem; }
+.lblfn .muted { font-weight: 400; }
+.lblgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .35rem .7rem; }
+.lblf { display: flex; align-items: center; gap: .4rem; font-size: .82rem; color: #c5d2e4; }
+.lblf .lc { flex: 0 0 1.7rem; color: #8aa0bd; font-family: ui-monospace, monospace; font-size: .72rem; }
+.sheet .lblgrid input[type=text] { flex: 1 1 auto; width: auto; min-width: 0; }   /* override the compact 7.5rem */
+
 /* server-info readout (tier-agnostic key/value list) */
 .infobox:empty { display: none; }
 .infobox { margin-top: .8rem; padding: .6rem .8rem; background: #15181f; border: 1px solid #2c333f;

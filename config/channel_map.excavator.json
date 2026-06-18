@@ -5,8 +5,14 @@
       "slot": 1,
       "channel": 0,
       "invert": true,
-      "label_en": "Left track",
-      "label_de": "Linke Kette",
+      "labels": {
+        "en": "Left track",
+        "de": "Linke Kette",
+        "zh": "左履带",
+        "ko": "왼쪽 트랙",
+        "es": "Oruga izquierda",
+        "fr": "Chenille gauche"
+      },
       "confirmed": true,
       "max": 7,
       "reverse_scale": 1
@@ -15,8 +21,14 @@
       "slot": 1,
       "channel": 2,
       "invert": false,
-      "label_en": "Right track",
-      "label_de": "Rechte Kette",
+      "labels": {
+        "en": "Right track",
+        "de": "Rechte Kette",
+        "zh": "右履带",
+        "ko": "오른쪽 트랙",
+        "es": "Oruga derecha",
+        "fr": "Chenille droite"
+      },
       "confirmed": false,
       "max": 7,
       "reverse_scale": 1
@@ -25,8 +37,14 @@
       "slot": 0,
       "channel": 3,
       "invert": false,
-      "label_en": "Arm up/down",
-      "label_de": "Arm heben/senken",
+      "labels": {
+        "en": "Arm up/down",
+        "de": "Arm heben/senken",
+        "zh": "大臂升降",
+        "ko": "암 올림/내림",
+        "es": "Brazo subir/bajar",
+        "fr": "Bras monter/descendre"
+      },
       "confirmed": false,
       "max": 7,
       "reverse_scale": 1
@@ -35,8 +53,14 @@
       "slot": 0,
       "channel": 1,
       "invert": false,
-      "label_en": "Front arm",
-      "label_de": "Vorderarm",
+      "labels": {
+        "en": "Front arm",
+        "de": "Vorderarm",
+        "zh": "前臂",
+        "ko": "앞 암",
+        "es": "Brazo delantero",
+        "fr": "Bras avant"
+      },
       "confirmed": false,
       "max": 7,
       "reverse_scale": 1
@@ -45,8 +69,14 @@
       "slot": 0,
       "channel": 2,
       "invert": false,
-      "label_en": "Rotation",
-      "label_de": "Drehen",
+      "labels": {
+        "en": "Rotation",
+        "de": "Drehen",
+        "zh": "旋转",
+        "ko": "회전",
+        "es": "Rotación",
+        "fr": "Rotation"
+      },
       "confirmed": false,
       "max": 7,
       "reverse_scale": 1
@@ -55,8 +85,14 @@
       "slot": 0,
       "channel": 0,
       "invert": false,
-      "label_en": "Bucket",
-      "label_de": "Schaufel",
+      "labels": {
+        "en": "Bucket",
+        "de": "Schaufel",
+        "zh": "铲斗",
+        "ko": "버킷",
+        "es": "Cazo",
+        "fr": "Godet"
+      },
       "confirmed": true,
       "max": 7,
       "reverse_scale": 1

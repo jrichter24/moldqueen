@@ -17,6 +17,20 @@
 - **Tabbed settings** overlay: Connection · Channels · Labels · Server info.
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
+- **6-language labels (2026-06-18):** per-function labels moved from flat `label_en`/
+  `label_de` to a **`labels: {en,de,zh,ko,es,fr}`** object. `channelmap.py` gained
+  `migrate()` (legacy flat → `labels.{en,de}`, run on load + save) + lenient `validate()`
+  (accepts either shape; `REQUIRED_KEYS` no longer demands labels); `config/channel_map.
+  excavator.json` + template migrated (EN/DE preserved byte-exact; zh/ko/es/fr are
+  **editable seeded placeholders**). Client (`dashboard.js`): mirrored `migrateLabels`,
+  `funcLabel` fallback (picked→en→legacy→fn name), EN/DE **toggle replaced by a 6-language
+  `<select>` picker** (persists `mk4_lang`), `tr()` falls back to en for new langs, and the
+  **Labels tab restructured** into per-function cards with a labelled auto-fit language grid
+  (clean on fixed-height panel + mobile). asyncapi.yaml schema updated. **API restarted**
+  (was 1936 → now ~4680) — broadcaster 1929 untouched. Verified: drive/resolve unchanged,
+  3 tests pass, WS set/promote round-trip the labels object, default serves all 6 langs.
+  Note: a client holding an OLD localStorage active map keeps its en/de and starts the new
+  langs empty until Reset-to-default or editing (by design).
 - **Screenshot gallery (2026-06-18):** committed the four `assets/*.PNG` screenshots and
   added **`docs/SCREENSHOTS.md`** (captioned visual tour: start page → dashboard → connect
   wizard → channel settings; `../assets/` paths). README links it (ToC + a "Screenshots"

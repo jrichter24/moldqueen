@@ -28,7 +28,7 @@ info:
     json`, e.g. `channel_map.excavator.json`) and a session **active** map (default +
     client overrides) the client pushes with `map set`. The `map` messages carry the
     active layout id. Per function: `{slot 0-2, channel 0-3, invert, max?,
-    reverse_scale?, label_en, label_de}`. A session-only **device-0/1 swap** flips
+    reverse_scale?, labels:{en,de,zh,ko,es,fr}}`. A session-only **device-0/1 swap** flips
     slots 0↔1 (slot 2 untouched). `map promote` persists a map as that layout's new
     default. The broadcaster stays dumb (it only ever receives 12 nibbles).
 
@@ -210,15 +210,23 @@ components:
 
     FunctionAssignment:
       type: object
-      required: [slot, channel, invert, label_en, label_de]
+      required: [slot, channel, invert]
       properties:
         slot:      { type: integer, minimum: 0, maximum: 2 }
         channel:   { type: integer, minimum: 0, maximum: 3 }
         invert:    { type: boolean }
         max:       { type: integer, minimum: 1, maximum: 7, description: 'Per-function max speed; the joystick full-deflection value. Client-side scaling; persisted with the map.' }
         reverse_scale: { type: number, minimum: 0.25, maximum: 4.0, description: 'Reverse-speed trim (default 1.0 = identity). Multiplies the reverse magnitude at resolution to match forward speed (hub/motor asymmetry, not the byte mapping).' }
-        label_en:  { type: string }
-        label_de:  { type: string }
+        labels:
+          type: object
+          description: 'Per-language display name {en,de,zh,ko,es,fr}. en is the fallback; a missing language falls back to en then the function name. Legacy flat label_en/label_de are still read and migrated to labels.{en,de}.'
+          properties:
+            en: { type: string }
+            de: { type: string }
+            zh: { type: string }
+            ko: { type: string }
+            es: { type: string }
+            fr: { type: string }
         confirmed: { type: boolean, description: 'UI metadata: verified vs placeholder.' }
 
     ChannelMap:

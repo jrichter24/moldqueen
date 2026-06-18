@@ -83,6 +83,10 @@ const T = {
 };
 
 const FN = ["left_track", "right_track", "arm_lift", "front_arm", "rotation", "bucket"];
+// Supported label languages [code, native picker name]. `en` is the fallback. Function
+// labels are translated per-language (the map's `labels` object); fixed UI strings exist
+// for en/de and fall back to en for the rest (focus = the function labels kids read).
+const LANGS = [["en", "English"], ["de", "Deutsch"], ["zh", "中文"], ["ko", "한국어"], ["es", "Español"], ["fr", "Français"]];
 // Proportional drag joysticks. Track joysticks fill the art's far-left/right button
 // housings (top forward-button .. bottom backward-button) so the art is the visual
 // housing; `kw` = knob width (fraction of zone width), `travel` = knob travel
@@ -127,9 +131,10 @@ const INFOBOXES = [
 // ---- state ----
 let ws = null, lifecycle = "IDLE";
 let lang = localStorage.getItem("mk4_lang") || "en";
+if (!LANGS.some(([c]) => c === lang)) lang = "en";   // guard stale/unknown stored codes
 let defaultMap = null, activeMap = null, deviceSwap = false;
 let grid = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
-const tr = () => T[lang];
+const tr = () => T[lang] || T.en;   // fixed UI strings: en/de exist, others fall back to en
 
 // ---- channel map helpers (client-authoritative active map) ----
 function validMap(mp) {
@@ -144,6 +149,17 @@ function validMap(mp) {
   }
   return true;
 }
+// Legacy label_en/label_de -> labels.{en,de}; ensure a `labels` object over all LANGS
+// (missing langs default to ""). Mirrors channelmap.py's migration so old stored/served
+// maps upgrade transparently on the client too.
+function migrateLabels(a) {
+  const lb = (a.labels && typeof a.labels === "object") ? a.labels : {};
+  if (lb.en == null && typeof a.label_en === "string") lb.en = a.label_en;
+  if (lb.de == null && typeof a.label_de === "string") lb.de = a.label_de;
+  const out = {};
+  LANGS.forEach(([c]) => { out[c] = typeof lb[c] === "string" ? lb[c] : ""; });
+  a.labels = out; delete a.label_en; delete a.label_de;
+}
 function withDefaults(mp) {           // ensure every function has invert/max/labels
   const m = JSON.parse(JSON.stringify(mp));
   for (const f of FN) {
@@ -151,6 +167,7 @@ function withDefaults(mp) {           // ensure every function has invert/max/la
     if (typeof a.invert !== "boolean") a.invert = false;
     if (!Number.isInteger(a.max) || a.max < 1 || a.max > 7) a.max = 7;
     if (typeof a.reverse_scale !== "number" || a.reverse_scale < 0.25 || a.reverse_scale > 4) a.reverse_scale = 1;
+    migrateLabels(a);
   }
   return m;
 }
@@ -163,13 +180,15 @@ function saveActive() { localStorage.setItem("mk4_active_map", JSON.stringify(ac
 function placeholderMap() {
   const fns = {};
   FN.forEach((f, i) => fns[f] = { slot: (i / 4) | 0, channel: i % 4, invert: false, max: 7, reverse_scale: 1,
-    label_en: f.replace(/_/g, " "), label_de: f.replace(/_/g, " "), confirmed: false });
+    labels: Object.fromEntries(LANGS.map(([c]) => [c, f.replace(/_/g, " ")])), confirmed: false });
   return { version: 1, functions: fns };
 }
 function mapForEdit() { return JSON.parse(JSON.stringify(activeMap || loadStoredMap() || placeholderMap())); }
 function funcLabel(fn) {
   const a = activeMap && activeMap.functions[fn];
-  return a ? (lang === "de" ? a.label_de : a.label_en) || fn : fn;
+  if (!a) return fn;
+  const lb = a.labels || {};
+  return lb[lang] || lb.en || a.label_en || fn;   // picked lang → en → legacy → function name
 }
 function funcMax(fn) { const a = activeMap && activeMap.functions[fn]; return (a && a.max) || 7; }
 function resolveSC(fn) {                // client-side resolve for reading the live grid
@@ -215,7 +234,7 @@ function onMap(m) {
   // The server is authoritative ONLY for the persisted default + the session swap.
   // The active map is client-owned (default + our overrides), so we never let a
   // server push clobber it — we push ours instead (see ws.onopen / Apply).
-  defaultMap = m.default; deviceSwap = !!m.device_swap;
+  defaultMap = withDefaults(m.default); deviceSwap = !!m.device_swap;   // migrate labels too
   if (!activeMap) {                       // FIRST map after a no-connection start (e.g. nginx)
     activeMap = loadStoredMap() || withDefaults(m.active);
     if (!$("settings").classList.contains("hidden")) editMap = mapForEdit();  // populate the open settings
@@ -388,7 +407,7 @@ function renderTopbar() {
   const right = el("tgroup");
   const sb = tbtn(tr().stop, "", stopAll); sb.id = "stopBtn"; right.appendChild(sb);
   right.appendChild(tbtn(tr().full, "", toggleFullscreen));
-  right.appendChild(tbtn(tr().lang, "", toggleLang));
+  right.appendChild(langSelect());
   right.appendChild(tbtn(tr().layouts, "", () => { location.href = "/?choose=1"; }));
   right.appendChild(tbtn(tr().settings, "", openSettings));
   tb.appendChild(right);
@@ -401,8 +420,17 @@ function toggleFullscreen() {
   if (!document.fullscreenElement) (document.documentElement.requestFullscreen || (() => {})).call(document.documentElement);
   else document.exitFullscreen && document.exitFullscreen();
 }
-function toggleLang() {
-  lang = lang === "en" ? "de" : "en"; localStorage.setItem("mk4_lang", lang);
+// language picker (6 languages) — replaces the old EN/DE toggle. Persists client-side.
+function langSelect() {
+  const s = document.createElement("select");
+  s.id = "langSel"; s.className = "langsel"; s.title = "Language";
+  s.innerHTML = LANGS.map(([c, name]) => `<option value="${c}"${c === lang ? " selected" : ""}>${name}</option>`).join("");
+  s.onchange = () => setLang(s.value);
+  return s;
+}
+function setLang(code) {
+  if (!LANGS.some(([c]) => c === code)) code = "en";
+  lang = code; localStorage.setItem("mk4_lang", lang);
   document.documentElement.lang = lang;
   buildStage(); renderTopbar(); renderHint();
   rebuildOpenSettings();
@@ -597,29 +625,33 @@ function wireChannels() {
   $("resetMapBtn").onclick = () => { editMap = JSON.parse(JSON.stringify(defaultMap || placeholderMap())); buildSettings(); };
 }
 
-// ---- Labels tab: EN/DE per function + own Save/Discard (folded-in old Labels page) ----
+// ---- Labels tab: per-function card with the 6 languages laid out as a labelled grid
+//      (clean on the fixed-height panel + mobile) + own Save/Discard. ----
 function labelsPanel(t) {
-  const rows = FN.map(fn => {
+  const cards = FN.map(fn => {
     const a = editMap.functions[fn];
-    return `<tr data-fn="${fn}">
-      <td class="fn">${fn}</td>
-      <td><input type="text" class="e-en" value="${(a.label_en || "").replace(/"/g, "&quot;")}"></td>
-      <td><input type="text" class="e-de" value="${(a.label_de || "").replace(/"/g, "&quot;")}"></td>
-    </tr>`;
+    const lb = a.labels || {};
+    const fields = LANGS.map(([code]) =>
+      `<label class="lblf"><span class="lc">${code.toUpperCase()}</span>` +
+      `<input type="text" class="e-lab" data-lang="${code}" value="${(lb[code] || "").replace(/"/g, "&quot;")}"></label>`).join("");
+    return `<div class="lblcard" data-fn="${fn}">
+      <div class="lblfn">${funcLabel(fn)} <span class="muted">${fn}</span></div>
+      <div class="lblgrid">${fields}</div></div>`;
   }).join("");
   return `<h2>${t.labelsTitle}</h2><p class="sub">${t.labelsSub}</p>
-    <table class="map"><thead><tr><th>${t.fn}</th><th>${t.labEn}</th><th>${t.labDe}</th></tr></thead>
-      <tbody>${rows}</tbody></table>
+    <div class="lblcards">${cards}</div>
     <div class="actions">
       <button class="apply" id="lblSaveBtn">${t.saveClose}</button>
       <button id="lblDiscardBtn">${t.discard}</button>
     </div>`;
 }
 function wireLabels() {
-  $("settings").querySelectorAll("tr[data-fn]").forEach(trEl => {
-    const a = editMap.functions[trEl.dataset.fn];
-    trEl.querySelector(".e-en").oninput = e => { a.label_en = e.target.value; };
-    trEl.querySelector(".e-de").oninput = e => { a.label_de = e.target.value; };
+  $("settings").querySelectorAll(".lblcard").forEach(card => {
+    const a = editMap.functions[card.dataset.fn];
+    if (!a.labels || typeof a.labels !== "object") a.labels = {};
+    card.querySelectorAll(".e-lab").forEach(inp => {
+      inp.oninput = e => { a.labels[e.target.dataset.lang] = e.target.value; };
+    });
   });
   $("lblSaveBtn").onclick = saveClose;
   $("lblDiscardBtn").onclick = discardEdits;
@@ -736,7 +768,7 @@ let _rfit; window.addEventListener("resize", () => {   // re-fit labels to the n
 // seed from the server-injected initial state so the UI renders before the WS opens
 if (window.MK4_INIT) {
   const i = window.MK4_INIT;
-  defaultMap = i.default; deviceSwap = !!i.device_swap; lifecycle = i.lifecycle || "IDLE";
+  defaultMap = withDefaults(i.default); deviceSwap = !!i.device_swap; lifecycle = i.lifecycle || "IDLE";
   activeMap = loadStoredMap() || withDefaults(i.active);
 } else {
   activeMap = null;

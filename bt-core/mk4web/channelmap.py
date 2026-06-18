@@ -10,14 +10,43 @@ swap. The broadcaster stays dumb — it only ever receives 12 nibbles, never a f
 name. A layout with NO functions (e.g. RAW) doesn't use any of this.
 
 Schema (per function): {slot:0-2, channel:0-3, invert:bool, max?:1-7,
-reverse_scale?:0.25-4.0, label_en, label_de}. The optional `confirmed` flag is UI
-metadata (verified vs placeholder).
+reverse_scale?:0.25-4.0, labels:{en,de,zh,ko,es,fr}}. The optional `confirmed` flag is
+UI metadata (verified vs placeholder).
+
+LABELS are a per-language object. Older maps used flat `label_en`/`label_de`; `migrate()`
+upgrades those to `labels.{en,de}` on load (and `save()` writes the new shape), so old
+files keep working but are rewritten canonically when promoted.
 """
 import os, json, tempfile, logging
 
 log = logging.getLogger("channelmap")
 
-REQUIRED_KEYS = ("slot", "channel", "invert", "label_en", "label_de")
+REQUIRED_KEYS = ("slot", "channel", "invert")
+LANGS = ("en", "de", "zh", "ko", "es", "fr")   # supported label languages (en is the fallback)
+
+
+def _migrate_function_labels(a):
+    """In place: ensure a['labels'] is a {lang: str} object over LANGS, seeding en/de from
+    legacy flat label_en/label_de when present, then dropping those legacy keys. Tolerant —
+    missing languages default to "" (the UI falls back to en, then the function name)."""
+    if not isinstance(a, dict):
+        return
+    labels = a.get("labels") if isinstance(a.get("labels"), dict) else {}
+    if "en" not in labels and isinstance(a.get("label_en"), str):
+        labels["en"] = a["label_en"]
+    if "de" not in labels and isinstance(a.get("label_de"), str):
+        labels["de"] = a["label_de"]
+    a["labels"] = {L: (labels[L] if isinstance(labels.get(L), str) else "") for L in LANGS}
+    a.pop("label_en", None)
+    a.pop("label_de", None)
+
+
+def migrate(mp):
+    """Upgrade a map IN PLACE to the labels-object schema; returns it. Idempotent."""
+    if isinstance(mp, dict) and isinstance(mp.get("functions"), dict):
+        for a in mp["functions"].values():
+            _migrate_function_labels(a)
+    return mp
 
 
 def functions_of(mp):
@@ -33,7 +62,7 @@ def _placeholder_map(functions):
     for i, f in enumerate(functions):
         title = f.replace("_", " ").title()
         fns[f] = {"slot": i // 4, "channel": i % 4, "invert": False, "max": 7,
-                  "reverse_scale": 1.0, "label_en": title, "label_de": title, "confirmed": False}
+                  "reverse_scale": 1.0, "labels": {L: title for L in LANGS}, "confirmed": False}
     return {"version": 1, "functions": fns}
 
 
@@ -46,6 +75,7 @@ def load(path, functions=None):
     except (OSError, ValueError) as e:
         log.warning("channel map %s unreadable (%s) — using placeholder map", path, e)
         return _placeholder_map(functions or [])
+    migrate(mp)                                      # legacy label_en/label_de -> labels.{en,de}
     ok, errs = validate(mp, functions)
     if not ok:
         log.warning("channel map %s invalid (%s) — using placeholder map", path, "; ".join(errs))
@@ -54,7 +84,9 @@ def load(path, functions=None):
 
 
 def save(path, mp):
-    """Validate then atomically persist `mp` to `path`. Raises ValueError if invalid."""
+    """Migrate to the labels schema, validate, then atomically persist `mp` to `path`.
+    Raises ValueError if invalid."""
+    migrate(mp)                                      # always write the canonical labels shape
     ok, errs = validate(mp)
     if not ok:
         raise ValueError("; ".join(errs))
@@ -106,7 +138,15 @@ def validate(mp, functions=None):
             rs = a["reverse_scale"]
             if not isinstance(rs, (int, float)) or isinstance(rs, bool) or not (0.25 <= rs <= 4.0):
                 errs.append(f"{f}: reverse_scale must be a number 0.25-4.0")
-        for k in ("label_en", "label_de"):
+        if "labels" in a:                            # new shape: {lang: str} over any subset of LANGS
+            lb = a["labels"]
+            if not isinstance(lb, dict):
+                errs.append(f"{f}: labels must be an object")
+            else:
+                for lang_code, v in lb.items():
+                    if not isinstance(v, str):
+                        errs.append(f"{f}: labels.{lang_code} must be text")
+        for k in ("label_en", "label_de"):           # legacy flat keys still tolerated on read
             if k in a and not isinstance(a[k], str):
                 errs.append(f"{f}: {k} must be text")
         if isinstance(slot, int) and not isinstance(slot, bool) and isinstance(ch, int) and not isinstance(ch, bool):
