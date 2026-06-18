@@ -47,7 +47,16 @@
   direction (3rd time) while the other hit **0xF** — press-and-hold keeps missing that extreme.
   Added **`--sweep` mode** (`sudo python3 /tmp/sniff_stock.py --sweep`): ONE slow stick-to-stick
   sweep, lists EVERY nibble per channel + min/max, flags 0x0 vs 0x1 vs capped. This is the way to
-  get the slow direction's bottom value (the decisive 0x1-vs-0x0 datum). Still UNRESOLVED; encoding unchanged.
+  get the slow direction's bottom value (the decisive 0x1-vs-0x0 datum).
+  **RESOLVED (2 sweeps):** across ALL 5 captures the lowest stock nibble ever = **0x3**; **0x0
+  NEVER seen** → "stock uses 0x0 / we're one step short" is **DISPROVEN — encoding NOT changed.**
+  Forward extreme = 0xF (confirmed). Twist: **our app already drives reverse to 0x1 (v-7), a MORE
+  extreme nibble than the stock app produced (0x3, v-5)** → we are not under-driving reverse, so the
+  slow reverse is NOT an encoding deficit. Root cause is the **Rev× direction bug (FIXED, Part B)**
+  and/or a **hub/motor reverse-PWM asymmetry** (hardware; Rev×-now-working compensates mid-throttle;
+  full extreme 0x1 can't be boosted). **NEXT (pivot off stock capture):** drive KNOWN nibbles via the
+  RAW layout `/raw` (phone off, single TX) — slot1/ch0 at value +7 (0xF) vs -7 (0x1), watch motor
+  speed each way → isolates motor-vs-nibble symmetry directly. Broadcaster left IDLE.
 - **Gamepad / DualSense control (2026-06-18):** client-only (dashboard.js + dashboard.css,
   NO Pi/API change). Gamepad API rAF poll loop reads a controller paired to the CLIENT
   device and calls the SAME `driveFn` (WS drive-by-function) as the joysticks → reuses
