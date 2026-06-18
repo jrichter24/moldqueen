@@ -105,7 +105,8 @@ table.map .tag { display: inline-block; font-size: .65rem; padding: .05rem .3rem
 .tag.ok { background: #16361f; color: #5fd98a; } .tag.ph { background: #38301a; color: #d8b75e; }
 .sheet select, .sheet input[type=text], .sheet input[type=number] {
   font: inherit; color: #e8eef6; background: #1d222b; border: 1px solid #38404e; border-radius: .35rem; padding: .2rem .3rem; }
-.sheet input[type=text] { width: 7.5rem; }
+.sheet input[type=text] { width: 7.5rem; }   /* channel-table text inputs stay compact… */
+.sheet .eprow input[type=text] { width: 100%; }   /* …but the API-endpoint field is FULL WIDTH (fits a long ws://host:port URL) */
 .sheet input[type=number] { width: 3.2rem; }
 .sheet input[type=range] { width: 5rem; vertical-align: middle; }
 .sheet .test { background: #243b27; border-color: #3a6f43; }

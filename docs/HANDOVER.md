@@ -24,6 +24,9 @@
   template) is now a tidy **vertical stacked form** — label · full-width input · buttons row
   (Connect + Use page host) · status · hint — replacing the old cramped single row. Markup
   change in `clientconfig.js`, layout in `shell.css`. All behavior preserved (IDs unchanged).
+  Endpoint input is **full width** — a `.sheet .eprow input[type=text]` override in
+  `dashboard.css` beats the compact `.sheet input[type=text]` (7.5rem, channel-table) rule
+  that was capping it, so a long `ws://host:port` URL fits.
 - **Connect-disambiguation + startup overlay (2026-06-18):** the two "connect" concepts
   are now distinct — top-left BLE cold-start is **"Connect Excavator"** (en) / "Bagger
   verbinden" (de), styled prominent (`#menu .connectExc`, bright-blue glow); the settings
