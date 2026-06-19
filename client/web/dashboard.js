@@ -17,7 +17,8 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 // ---- i18n (static strings; function titles come from the map labels) ----
 const T = {
   en: { connect: "Connect Excavator", ready: "Ready", reset: "Reset", stop: "STOP", speed: "Speed",
-        full: "⛶", settings: "⚙", layouts: "Layouts", close: "Close", lang: "DE", deviceSwap: "Swap hubs 0↔1",
+        full: "⛶", settings: "⚙", layouts: "Choose layout", close: "Close", lang: "DE", deviceSwap: "Swap hubs 0↔1",
+        resetConn: "Reset connection", grpConnection: "Connection", grpNavigation: "Navigation", grpSettings: "Settings", collapseMenu: "Collapse menu", expandMenu: "Show menu",
         saveClose: "Save and Close", discard: "Discard", promote: "Save as default (locally)",
         resetMap: "Reset to default", labelsBtn: "Labels…", back: "Back", revtrim: "Rev ×",
         serverInfo: "ℹ Server info", infoConnectFirst: "Connect first", infoFetching: "Fetching…", infoTier: "tier",
@@ -57,7 +58,8 @@ const T = {
                w3: { t: "Step 3 — Assign slots", b: "Press <b>ONE</b> hub's button until it shows <b>two fast flashes</b> (slot&nbsp;1). Leave the other on one flash (slot&nbsp;0)." },
                w4: { t: "Ready ✓", b: "Connected — controls unlocked. You can start driving." } } },
   de: { connect: "Bagger verbinden", ready: "Bereit", reset: "Reset", stop: "STOPP", speed: "Tempo",
-        full: "⛶", settings: "⚙", layouts: "Layouts", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
+        full: "⛶", settings: "⚙", layouts: "Layout wählen", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
+        resetConn: "Verbindung zurücksetzen", grpConnection: "Verbindung", grpNavigation: "Navigation", grpSettings: "Einstellungen", collapseMenu: "Menü einklappen", expandMenu: "Menü zeigen",
         saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern (lokal)",
         resetMap: "Auf Standard zurück", labelsBtn: "Labels…", back: "Zurück", revtrim: "Rev ×",
         serverInfo: "ℹ Server-Info", infoConnectFirst: "Erst verbinden", infoFetching: "Lädt…", infoTier: "Stufe",
@@ -458,37 +460,51 @@ function tbtn(label, cls, on) {
   const b = document.createElement("button"); b.innerHTML = label; if (cls) b.className = cls; b.onclick = on; return b;
 }
 function renderTopbar() {
-  const tb = $("menu"); tb.innerHTML = "";
-  // left cluster: the setup button(s). The connection/lifecycle is shown by the fixed
-  // status LIGHT (upper-right), not text — so Connect Excavator is the first toolbar item
-  // (it sits right below the upper-left chip).
-  const left = el("tgroup");
-  if (lifecycle === "IDLE") left.appendChild(tbtn(tr().connect, "primary connectExc", openWizard));
-  else if (lifecycle === "CONNECTING") {
-    left.appendChild(tbtn(tr().resume, "primary", openWizard));
-    left.appendChild(tbtn(tr().reset, "", doReset));
-  } else left.appendChild(tbtn(tr().reset, "", doReset));
-  tb.appendChild(left);
-  tb.appendChild(el("grow"));
-  const right = el("tgroup");
-  // STOP now lives on the dashboard itself (the red emergency button in the art) so it
-  // stays reachable when the sidebar is collapsed — no separate toolbar STOP.
-  if (MK4.showFullscreen()) right.appendChild(tbtn(tr().full, "", toggleFullscreen));
-  if (activePad()) right.appendChild(padChip());   // controller indicator + quick enable toggle
-  right.appendChild(langSelect());
-  right.appendChild(tbtn(tr().layouts, "", () => { location.href = "/?choose=1"; }));
-  right.appendChild(tbtn(tr().settings, "", openSettings));
-  tb.appendChild(right);
+  const tb = $("menu"); tb.innerHTML = ""; const t = tr();
+  // Grouped toolbar/sidebar: a collapse control on top/right, then labelled groups
+  // (Connection · Navigation · Settings) divided by thin separators. Works as a top BAR
+  // (wide) or a left SIDEBAR (narrow) via CSS; the status LIGHT (upper-right) shows the
+  // connection/lifecycle, so no lifecycle text here. STOP lives on the dashboard art.
+
+  // collapse control — right-aligned "‹" (CSS pushes it to the right end in top-bar mode)
+  const top = el("navtop");
+  const cb = tbtn("‹", "navcollapse", toggleNav); cb.id = "navCollapseBtn"; cb.title = t.collapseMenu;
+  top.appendChild(cb); tb.appendChild(top);
+
+  // GROUP 1 — Connection: connect/resume + reset, clearly labelled
+  const g1 = el("navgroup"); g1.appendChild(el("grouplabel", "", t.grpConnection));
+  const b1 = el("groupbtns"); g1.appendChild(b1);
+  b1.appendChild(lifecycle === "CONNECTING"
+    ? tbtn(t.resume, "primary", openWizard)
+    : tbtn(t.connect, "primary connectExc", openWizard));
+  b1.appendChild(tbtn(t.resetConn, "", doReset));
+  tb.appendChild(g1); tb.appendChild(el("navsep"));
+
+  // GROUP 2 — Navigation: back to the chooser (choose a layout)
+  const g2 = el("navgroup"); g2.appendChild(el("grouplabel", "", t.grpNavigation));
+  const b2 = el("groupbtns"); g2.appendChild(b2);
+  b2.appendChild(tbtn(t.layouts, "", () => { location.href = "/?choose=1"; }));
+  tb.appendChild(g2); tb.appendChild(el("navsep"));
+
+  // GROUP 3 — Settings: language · settings overlay · fullscreen (gated) · gamepad chip
+  const g3 = el("navgroup"); g3.appendChild(el("grouplabel", "", t.grpSettings));
+  const b3 = el("groupbtns"); g3.appendChild(b3);
+  b3.appendChild(langSelect());
+  b3.appendChild(tbtn(t.settings, "", openSettings));
+  if (MK4.showFullscreen()) b3.appendChild(tbtn(t.full, "", toggleFullscreen));   // hidden in the Android app
+  if (activePad()) b3.appendChild(padChip());                                     // controller indicator + toggle
+  tb.appendChild(g3);
+
   updateStatusLight();
 }
-// ---- collapsible menu/sidebar (upper-left chip; persisted) ----
-// Collapsed = #menu fully hidden, ONLY the chip shows (STOP stays reachable on the
-// in-dashboard red button). The chip lives in the corner so it never covers a control.
+// ---- collapsible menu/sidebar (persisted) ----
+// Collapsed = #menu fully hidden, ONLY the floating expand chip "›" shows (STOP stays
+// reachable on the in-dashboard red button). Expanding is the chip; collapsing is the
+// in-menu "‹" control (built in renderTopbar). CSS shows the chip only while collapsed.
 function applyNav() {
   $("app").classList.toggle("navhidden", navCollapsed);
   const chip = $("navChip");
-  // Directional arrow (not an X): ▶ = collapsed → tap to expand; ◀ = expanded → tap to collapse.
-  if (chip) { chip.innerHTML = navCollapsed ? "▶" : "◀"; chip.title = navCollapsed ? "Show menu" : "Hide menu"; }
+  if (chip) { chip.innerHTML = "›"; chip.title = tr().expandMenu; }
 }
 function toggleNav() {
   navCollapsed = !navCollapsed;

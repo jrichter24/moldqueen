@@ -5,25 +5,50 @@
    Overlays placed in % over the 1672×941 art; typography uses cqw (1% of stage width)
    so labels scale with the art and always fit their textboxes on any viewport. */
 
-/* ---- collapsible menu: UPPER-LEFT chip toggles #menu ----
-   The chip sits in the upper-left corner (top of the sidebar); "Connect Excavator" is
-   the toolbar's first item and sits right below/after it (the menu reserves start-space).
-   Collapsed (#app.navhidden): the menu is fully hidden and only the chip shows; the chip
-   stays upper-left. */
+/* ---- collapse: in-menu "‹" control (expanded) + floating "›" chip (collapsed) ----
+   When expanded, the collapse control lives in the menu (top-right). When collapsed
+   (#app.navhidden) the menu is hidden and ONLY the floating chip shows, upper-left. */
 #navChip {
   position: fixed; top: .4em; left: .4em; z-index: 25;
-  width: 2em; height: 2em; padding: 0; display: flex; align-items: center; justify-content: center;
-  font: 600 1.05em/1 system-ui, sans-serif; color: #cfe0f5;
+  width: 2em; height: 2em; padding: 0; display: none; align-items: center; justify-content: center;
+  font: 600 1.2em/1 system-ui, sans-serif; color: #cfe0f5;
   background: rgba(12,15,20,.85); border: 1px solid #2f3947; border-radius: .45em;
   cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
+#app.navhidden #navChip { display: flex; }   /* visible only while collapsed */
 #navChip:hover { background: rgba(28,34,44,.92); }
 #navChip:active { background: rgba(44,52,66,.96); }
 #app.navhidden #menu { display: none; }
-/* reserve room so the first toolbar item clears the upper-left chip and upper-right light */
-#menu { padding-left: 3rem; padding-right: 2.2rem; }   /* top-bar mode */
+#menu { padding-right: 2.2rem; }   /* top-bar: clear the fixed upper-right status light */
 @media (max-width: 768px), (max-height: 540px) {
-  #menu { padding-left: .6em; padding-right: .6em; padding-top: 3rem; }   /* sidebar: Connect below the chip */
+  #menu { padding-right: .6em; }    /* sidebar: the status light is over the stage, not the menu */
+}
+
+/* ---- grouped toolbar/sidebar: collapse + labelled groups + thin separators ---- */
+#menu { align-items: stretch; }
+#menu .navtop { display: flex; align-items: center; justify-content: flex-end; flex: 0 0 auto; }
+#menu .navcollapse { font-size: 1.1em; line-height: 1; padding: .2em .6em; min-width: 2.2em;
+  width: auto; flex: 0 0 auto; }   /* stay compact + right-aligned even in sidebar mode */
+#menu .navgroup { display: flex; flex-direction: column; gap: .35em; flex: 0 0 auto; }
+#menu .grouplabel { font-size: .62rem; letter-spacing: .09em; text-transform: uppercase;
+  color: #7e8ca6; font-weight: 700; white-space: nowrap; }
+#menu .groupbtns { display: flex; gap: .4em; }
+#menu .navsep { flex: 0 0 auto; background: #242c3a; }
+
+/* default = TOP BAR (wide): #menu is a flex ROW — groups side by side, vertical
+   separators, collapse pushed to the far right (separator on its left). */
+#menu .groupbtns { flex-direction: row; align-items: center; }
+#menu .navsep { width: 1px; align-self: stretch; margin: 0 .25em; }
+#menu .navtop { order: 99; margin-left: auto; border-left: 1px solid #242c3a; padding-left: .55em; }
+
+@media (max-width: 768px), (max-height: 540px) {
+  /* SIDEBAR (narrow): #menu is a flex COLUMN — collapse on top, groups stacked,
+     horizontal separators; the collapse separator is the row's bottom border. */
+  #menu .groupbtns { flex-direction: column; }
+  #menu .navsep { width: auto; height: 1px; align-self: auto; margin: .2em 0; }
+  #menu .navtop { order: 0; margin-left: 0; border-left: 0; padding-left: 0;
+    border-bottom: 1px solid #242c3a; padding-bottom: .4em; margin-bottom: .1em; }
+  #menu .navgroup, #menu .groupbtns select.langsel { width: 100%; }
 }
 
 /* ---- live status LIGHT (fixed upper-right; visible regardless of sidebar state) ----
