@@ -5,13 +5,14 @@
    Overlays placed in % over the 1672×941 art; typography uses cqw (1% of stage width)
    so labels scale with the art and always fit their textboxes on any viewport. */
 
-/* ---- collapsible menu: upper-left chip toggles #menu ----
+/* ---- collapsible menu: left-edge chip toggles #menu ----
    Collapsed (#app.navhidden): the menu is fully hidden and only the chip shows; the
-   stage takes the freed width. The chip is small + corner-tucked (over the art's empty
-   top-left / the letterbox margin) so it never covers a control. When expanded, the
-   menu reserves space at its start so the chip doesn't cover the first item. */
+   stage takes the freed width. The chip sits at the LEFT edge, clear of the top status
+   row (it's BELOW the top bar on wide screens; vertically CENTERED in the sidebar's
+   empty middle gap on small screens) so it never covers the "READY" status or a control,
+   in either state. */
 #navChip {
-  position: fixed; top: .4em; left: .4em; z-index: 25;
+  position: fixed; top: 3.6em; left: .5em; z-index: 25;
   width: 2em; height: 2em; padding: 0; display: flex; align-items: center; justify-content: center;
   font: 600 1.05em/1 system-ui, sans-serif; color: #cfe0f5;
   background: rgba(12,15,20,.85); border: 1px solid #2f3947; border-radius: .45em;
@@ -20,9 +21,9 @@
 #navChip:hover { background: rgba(28,34,44,.92); }
 #navChip:active { background: rgba(44,52,66,.96); }
 #app.navhidden #menu { display: none; }
-#menu { padding-left: 3em; }   /* top-bar mode: leave room for the chip at the left */
 @media (max-width: 768px), (max-height: 540px) {
-  #menu { padding-left: .6em; padding-top: 3em; }   /* sidebar mode: chip sits in the top gap */
+  /* sidebar mode: drop into the always-empty middle gap (clear of status + controls) */
+  #navChip { top: 50%; transform: translateY(-50%); }
 }
 
 /* ---- the dashboard stage (art-fitted, never the menu) ---- */
@@ -56,19 +57,17 @@
 
 /* ---- in-dashboard EMERGENCY STOP (over the red button in the v3 art) ----
    Always live: NOT in the .locked dim rules above, so it fires in any lifecycle.
-   The art draws the red outline; this reinforces it and gives press feedback. */
+   FULLY TRANSPARENT — the art already draws the red-outlined button; this is just the
+   word "STOP"/"STOPP" in red text over it (no fill, no border). The whole rect is the
+   hit-zone. Press feedback is a text-colour change only. */
 .estop {
   position: absolute; z-index: 5; display: flex; align-items: center; justify-content: center;
-  border: 0.18cqw solid #ff4d4d; border-radius: 10px; background: rgba(150,22,22,.30);
-  color: #ff6b6b; font-weight: 800; letter-spacing: .14em; font-size: 1.5cqw; line-height: 1;
+  border: 0; background: transparent;
+  color: #ff5252; font-weight: 800; letter-spacing: .14em; font-size: 1.5cqw; line-height: 1;
   cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent;
-  box-shadow: inset 0 0 .9cqw rgba(255,70,70,.30);
 }
-.estop:hover { background: rgba(185,30,30,.40); }
-.estop:active, .estop.hit {
-  background: rgba(255,60,60,.62); color: #fff;
-  box-shadow: inset 0 0 0 2px #fff, 0 0 1cqw rgba(255,70,70,.6);
-}
+.estop:hover { color: #ff7676; }
+.estop:active, .estop.hit { color: #ffd0d0; }
 
 /* ---- proportional drag joysticks (tracks / arm-lift / front-arm) ----
    Transparent so the BACKGROUND ART is the visual housing (track button graphics);

@@ -479,7 +479,8 @@ function renderTopbar() {
 function applyNav() {
   $("app").classList.toggle("navhidden", navCollapsed);
   const chip = $("navChip");
-  if (chip) { chip.innerHTML = navCollapsed ? "☰" : "✕"; chip.title = navCollapsed ? "Show menu" : "Hide menu"; }
+  // Directional arrow (not an X): ▶ = collapsed → tap to expand; ◀ = expanded → tap to collapse.
+  if (chip) { chip.innerHTML = navCollapsed ? "▶" : "◀"; chip.title = navCollapsed ? "Show menu" : "Hide menu"; }
 }
 function toggleNav() {
   navCollapsed = !navCollapsed;
