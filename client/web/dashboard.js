@@ -306,6 +306,9 @@ const controls = [];   // {fn, reset()} — for global neutralize
 const lastVal = {};    // fn -> last value sent (dedup for NON-ZERO only)
 const intent = {};     // fn -> value the active input currently wants; refreshActive() re-affirms
                        // non-zero ones ~10/s so the server holds a channel ONLY while actively driven.
+let stopLatched = false;   // ABSOLUTE STOP: while set, NOTHING may drive (no input, no refresher,
+                           // no gamepad) and we actively assert neutral. Cleared ONLY by a fresh
+                           // deliberate input (a new touch-down / gamepad re-enable).
 
 // Full client-side resolution (the server is dumb transport now). Mirrors the old
 // channelmap.resolve: reverse_scale (gated on the PRE-invert sign) → invert → per-direction
@@ -328,6 +331,7 @@ function resolveDrive(fn, v) {
 }
 function driveFn(fn, v) {
   v = clamp(v | 0, -7, 7);
+  if (stopLatched && v !== 0) return;                        // ABSOLUTE STOP: refuse all motion until a fresh input clears the latch
   intent[fn] = v;                                            // affirmative-keepalive source of truth
   // SAFETY: a 0 (stop/release) is ALWAYS sent — never dropped by the dedup. Only NON-ZERO
   // repeats are deduped (the keepalive re-affirms them); a desynced mirror can't swallow a stop.
@@ -343,6 +347,7 @@ function driveFn(fn, v) {
 const REFRESH_MS = 100;
 function refreshActive() {
   if (!(ws && ws.readyState === 1) || lifecycle !== "READY") return;
+  if (stopLatched) { send({ cmd: "stop" }); return; }   // ABSOLUTE STOP: assert neutral, refresh NOTHING
   for (const fn of FN) {
     const v = intent[fn] | 0;
     if (v === 0) continue;
@@ -401,6 +406,7 @@ function makeJoy(j) {
   const reset = () => { pid = null; knob.style.top = "50%"; joy.classList.remove("active"); driveFn(fn, 0); };
   joy.addEventListener("pointerdown", e => {
     if (lifecycle !== "READY") return;
+    clearStopLatch();                                 // a fresh deliberate touch resumes control
     pid = e.pointerId; try { joy.setPointerCapture(pid); } catch {} e.preventDefault(); setY(e.clientY);
   });
   joy.addEventListener("pointermove", e => { if (e.pointerId === pid) setY(e.clientY); });
@@ -423,6 +429,7 @@ function makeBtn(fn, dir, rect, k) {
   b.title = funcLabel(fn) + " — " + tr().dir[k];
   let on = false;
   const press = e => { e.preventDefault(); if (lifecycle !== "READY" || on) return;
+    clearStopLatch();                                 // a fresh deliberate press resumes control
     on = true; b.classList.add("active"); addHold(fn); driveFn(fn, scaleVal(fn, dir)); };
   const rel = () => { if (!on) return; on = false; b.classList.remove("active"); relHold(fn); };
   b.addEventListener("pointerdown", press);
@@ -532,13 +539,21 @@ function toggleNav() {
 }
 function renderHint() { $("hint").classList.add("hidden"); }   // setup hint replaced by the wizard
 function doReset() { send({ cmd: "setup", action: "reset" }); }
+// ABSOLUTE STOP — overrides EVERYTHING. Latches a hard "stopped" state that nothing
+// (refresher, gamepad, held touch, flickering pad) can override until a fresh deliberate
+// input. Clears all intent, force-sends neutral to EVERY channel (bypassing the dedup),
+// sends cmd:stop, and disables the gamepad.
 function stopAll() {
-  neutralizeAll(); send({ cmd: "stop" });
-  // STOP is a TRUE override: also DISABLE the gamepad so a flickering/stale pad can never
-  // re-drive afterwards. Stays off until the user explicitly re-enables it (🎮 chip).
+  stopLatched = true;
+  neutralizeAll();                         // intent -> 0 for all; reset controls
+  for (let s = 0; s < 3; s++) for (let c = 0; c < 4; c++)
+    send({ cmd: "set", slot: s, channel: c, value: 0 });   // FORCE neutral, every channel, no dedup
+  send({ cmd: "stop" });                   // belt-and-braces all-neutral
   padSuppressed = true;
-  if (padEnabled) setPadEnabled(false);
+  if (padEnabled) setPadEnabled(false);    // disable the gamepad until explicitly re-enabled
 }
+// Clear the hard-stop latch on a FRESH deliberate user input (new touch-down / re-enable).
+function clearStopLatch() { stopLatched = false; }
 function toggleFullscreen() {
   if (!document.fullscreenElement) (document.documentElement.requestFullscreen || (() => {})).call(document.documentElement);
   else document.exitFullscreen && document.exitFullscreen();
@@ -987,6 +1002,7 @@ function gamepadLoop() { requestAnimationFrame(gamepadLoop); gamepadTick(); }
 function setPadEnabled(on) {
   padEnabled = on; localStorage.setItem(PAD_LS_EN, on ? "true" : "false");
   if (!on) padReleaseOwned();
+  else clearStopLatch();          // re-enabling the gamepad is a fresh deliberate input (it still re-arms on center)
   renderTopbar(); rebuildOpenSettings();
 }
 function padChip() {            // topbar status + quick enable toggle (shown only when a pad is present)
