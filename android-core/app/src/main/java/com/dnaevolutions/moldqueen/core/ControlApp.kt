@@ -29,8 +29,6 @@ class ControlApp {
         for (i in nibbles.indices) nibbles[i] = NEUTRAL
     }
 
-    fun isNeutral(): Boolean = nibbles.all { it == NEUTRAL }
-
     companion object {
         const val IDLE = "IDLE"
         const val CONNECTING = "CONNECTING"

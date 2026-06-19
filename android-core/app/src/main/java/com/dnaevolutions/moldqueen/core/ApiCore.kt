@@ -55,10 +55,6 @@ class ApiCore(
 ) {
     private val clients: MutableSet<ClientSink> = Collections.synchronizedSet(LinkedHashSet())
 
-    // Dead-man's-switch: last time ANY client message arrived (heartbeat or otherwise).
-    // A connected-but-quiet client must NOT leave motors latched — see tickWatchdog().
-    @Volatile private var lastClientActivity = System.nanoTime()
-
     fun clientCount(): Int = clients.size
 
     // Serialized to mirror the Pi's single-threaded asyncio handler (Java-WebSocket is
@@ -66,7 +62,6 @@ class ApiCore(
     @Synchronized
     fun onConnect(c: ClientSink) {
         clients.add(c)
-        lastClientActivity = System.nanoTime()   // fresh on connect (watchdog)
         c.send(lifecycleJson())
         c.send(stateJson())
     }
@@ -81,10 +76,8 @@ class ApiCore(
 
     @Synchronized
     fun onMessage(c: ClientSink, raw: String) {
-        lastClientActivity = System.nanoTime()        // ANY message proves the client is alive
         val msg = try { JSONObject(raw) } catch (e: Exception) { return }
         when (msg.optString("cmd")) {
-            "ping" -> { /* heartbeat: activity refreshed above; nothing else to do */ }
             "setup" -> {
                 val action = msg.optString("action")
                 if (action in setOf("connect", "ready", "reset")) {
@@ -149,25 +142,6 @@ class ApiCore(
         return o.toString()
     }
 
-    /**
-     * Dead-man's-switch (clean-room port of api.py's watchdog()): if no client message
-     * (heartbeat or otherwise) has arrived within WATCHDOG_NS while READY and the state is
-     * non-neutral, command NEUTRAL. Protects against ANY quiet client — including the
-     * frozen-gamepad / stalled-loop runaway. Call periodically from a timer. Returns true
-     * if it fired (caller may log).
-     */
-    @Synchronized
-    fun tickWatchdog(): Boolean {
-        if (app.lifecycle == READY && !app.isNeutral() &&
-            System.nanoTime() - lastClientActivity > WATCHDOG_NS) {
-            app.stop()
-            radio.sendNeutral()
-            push(stateJson())
-            return true
-        }
-        return false
-    }
-
     private fun push(text: String) {
         val snapshot = synchronized(clients) { clients.toList() }
         for (cl in snapshot) runCatching { cl.send(text) }
@@ -180,10 +154,5 @@ class ApiCore(
             is Long -> v.toInt()
             else -> null
         }
-    }
-
-    companion object {
-        // Quiet-client window (~2.25 missed 200ms heartbeats). Matches api.py MK4_WATCHDOG=0.45s.
-        private const val WATCHDOG_NS = 450_000_000L
     }
 }

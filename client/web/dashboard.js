@@ -418,12 +418,6 @@ function neutralizeAll() {
   for (const k in holders) holders[k] = 0;
   controls.forEach(c => c.reset());
   FN.forEach(fn => driveFn(fn, 0));
-  // SAFETY: drop gamepad ownership and SUPPRESS the pad so a stuck/frozen axis can't
-  // re-drive on the next poll (STOP must HOLD). Re-arms only when the pad reads true
-  // center on all functions (see gamepadTick). padOwns/padSuppressed are declared with
-  // the gamepad state below; this runs only at event time, after init.
-  for (const k in padOwns) padOwns[k] = false;
-  padSuppressed = true;
 }
 
 // ---- labels / live values ----
@@ -906,10 +900,6 @@ let padIndex = null;            // index of the active gamepad in navigator.getG
 let padEnabled = (localStorage.getItem(PAD_LS_EN) || "true") !== "false";
 let padMap = loadPadMap();
 const padOwns = {};            // fn -> is the gamepad currently ASSERTING this function?
-// SAFETY latches (see audit fixes #2/#3):
-let padSuppressed = false;     // after STOP/neutral: pad can't re-drive until it reads true center
-let padLastSig = NaN, padLastTs = -1, padFrozenSince = 0;   // frozen/stale-axis (liveness) detection
-const PAD_STALE_MS = 450;      // assert with NO data change for this long => treat as frozen, neutralize
 
 function activePad() {          // the tracked pad, or adopt any connected one
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -940,41 +930,13 @@ function padAssert(fn, v) {
 }
 function padReleaseOwned() { for (const fn in padOwns) if (padOwns[fn]) { padOwns[fn] = false; driveFn(fn, 0); } }
 
-function padReadsCenter(gp) { for (const fn of FN) if (padFnValue(gp, fn) !== 0) return false; return true; }
-// Cheap signature of the pad's RAW state — a real held stick jitters (sig changes), a
-// frozen/stale API does not. Used (with gp.timestamp) to tell "held" from "frozen".
-function padRawSig(gp) {
-  let s = 0;
-  for (let i = 0; i < gp.axes.length; i++) s += (gp.axes[i] || 0) * (i + 1);
-  for (let i = 0; i < gp.buttons.length; i++) s += (gp.buttons[i] ? gp.buttons[i].value : 0) * (i + 101);
-  return s;
-}
-// One safety pass. Driven by BOTH rAF (smooth) AND a setInterval fallback (rAF is
-// throttled/paused in some WebViews — the fallback guarantees release/neutralize still runs).
-function gamepadTick() {
+function gamepadLoop() {
+  requestAnimationFrame(gamepadLoop);
   const gp = activePad();
   if (gp && !$("settings").classList.contains("hidden") && settingsTab === "gamepad") updatePadReadout(gp);
-  if (!padEnabled || !gp || lifecycle !== "READY") {            // SAFETY gate
-    padReleaseOwned(); padSuppressed = false; padLastTs = -1; padLastSig = NaN; return;
-  }
-  // STOP/neutral suppression: re-arm ONLY on a true center reading, so a frozen non-zero
-  // axis can never restart motion after a STOP.
-  if (padSuppressed) {
-    if (padReadsCenter(gp)) padSuppressed = false;
-    else { padReleaseOwned(); return; }
-  }
-  // liveness guard: if the pad would assert motion but its data is NOT advancing
-  // (frozen/stale axes), neutralize + suppress instead of latching the last value.
-  const asserting = !padReadsCenter(gp);
-  const now = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
-  const sig = padRawSig(gp), ts = (typeof gp.timestamp === "number") ? gp.timestamp : 0;
-  if (sig !== padLastSig || ts !== padLastTs) { padLastSig = sig; padLastTs = ts; padFrozenSince = now; }
-  if (asserting && (now - padFrozenSince) > PAD_STALE_MS) {     // frozen while asserting -> fail safe
-    padReleaseOwned(); padSuppressed = true; return;
-  }
+  if (!padEnabled || !gp || lifecycle !== "READY") { padReleaseOwned(); return; }   // SAFETY gate
   for (const fn of FN) padAssert(fn, padFnValue(gp, fn));
 }
-function gamepadLoop() { requestAnimationFrame(gamepadLoop); gamepadTick(); }
 function setPadEnabled(on) {
   padEnabled = on; localStorage.setItem(PAD_LS_EN, on ? "true" : "false");
   if (!on) padReleaseOwned();
@@ -1096,12 +1058,3 @@ renderHint();
 connect();
 if (lifecycle !== "READY") openStartup();   // greet with the two-step connect guide (skippable)
 requestAnimationFrame(gamepadLoop);          // start the gamepad poll loop (no-op until a pad appears)
-setInterval(gamepadTick, 80);                // SAFETY fallback: keep the gamepad safety pass running even if rAF is throttled/paused
-
-// ---- SAFETY heartbeat (dead-man's-switch) ----
-// Prove the client is alive on a FIXED timer while READY+connected, independent of
-// driveFn's change-throttle (a legitimately HELD control still heartbeats). If these
-// stop arriving (tab killed, JS dead, network gone but socket open), the server's
-// watchdog neutralizes. Sends nothing when not READY / disconnected.
-const HEARTBEAT_MS = 200;
-setInterval(() => { if (ws && ws.readyState === 1 && lifecycle === "READY") send({ cmd: "ping" }); }, HEARTBEAT_MS);

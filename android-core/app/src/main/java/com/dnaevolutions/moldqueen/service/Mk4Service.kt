@@ -10,9 +10,6 @@ import com.dnaevolutions.moldqueen.core.InfoConfig
 import fi.iki.elonen.NanoHTTPD
 import org.json.JSONObject
 import java.net.InetSocketAddress
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 /**
  * The single service: a DUMB-transport WS API + the local client HTTP server, in one
@@ -32,7 +29,6 @@ class Mk4Service(context: Context) {
 
     private var wsServer: Mk4WsServer? = null
     private var httpServer: ClientHttpServer? = null
-    private var watchdog: ScheduledExecutorService? = null
 
     fun start() {
         if (wsServer == null) {
@@ -46,19 +42,10 @@ class Mk4Service(context: Context) {
                 it.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
             }
         }
-        if (watchdog == null) {
-            // dead-man's-switch: poll ApiCore's watchdog; a quiet client -> NEUTRAL (mirrors api.py)
-            watchdog = Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "mk4-watchdog") }.also {
-                it.scheduleAtFixedRate({
-                    runCatching { if (core.tickWatchdog()) Log.w(TAG, "client quiet -> NEUTRAL (dead-man's-switch)") }
-                }, 100, 100, TimeUnit.MILLISECONDS)
-            }
-        }
         Log.i(TAG, "Mk4Service started; client http://127.0.0.1:$HTTP_PORT  ·  WS ws://127.0.0.1:$WS_PORT")
     }
 
     fun stop() {
-        watchdog?.let { runCatching { it.shutdownNow() } }; watchdog = null
         wsServer?.let { runCatching { it.stop(1000) } }; wsServer = null
         httpServer?.let { runCatching { it.stop() } }; httpServer = null
         ble.stop()
