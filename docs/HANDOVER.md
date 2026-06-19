@@ -154,6 +154,14 @@
   public (manual) and does a front-door skim of the rendered repo.
 
 ## Recent decisions still relevant
+- **DUAL-RADIO finding (2026-06-19) — don't re-investigate.** The Mould King hub is
+  **dual-radio**. **BLE** (company `0xFFF0`) = the MK+tech app path that moldqueen
+  controls → reaches **FAST-FLASH** (drivable). The physical **remote** uses a
+  **SEPARATE proprietary 2.4 GHz radio** → drives the hub to **SOLID-LED**, invisible
+  to a BLE/HCI dongle (zero correlated BLE traffic on remote power-on, confirmed by
+  capture). **Solid-LED is NOT reachable over BLE/`0xFFF0`** (not a telegram or
+  keepalive trick) → our keepalive design stands. Capturing the remote would need an
+  **nRF24 sniffer / SDR**, out of scope.
 - **Dev over plain SSH / on the desktop**, not long on-Pi sessions (1 GB Pi RAM
   thrashes). **Prefer frequent short sessions** — this doc makes ending lossless.
 - Routes derive from layout **id**; **rawhci** default; server-info **tiers**.
