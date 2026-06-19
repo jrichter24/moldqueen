@@ -8,8 +8,8 @@ window.MK4 = window.MK4 || {};
 (function (M) {
   M.LS_ENDPOINT = "mk4_ws_endpoint";
 
-  // Derived default. window.MK4_WS_PORT is injected by the Pi's api.py; when the UI
-  // is served by a plain static server (nginx) it isn't a number → fall back to 8765.
+  // Derived default. window.MK4_WS_PORT is injected by the serving host; when the UI
+  // is served raw (no injection) it isn't a number → fall back to 8765.
   M.defaultEndpoint = function () {
     var port = parseInt(window.MK4_WS_PORT, 10);
     if (!isFinite(port)) port = 8765;

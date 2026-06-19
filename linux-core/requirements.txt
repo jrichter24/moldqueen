@@ -1,4 +1,4 @@
-# bt-core dependencies.
+# linux-core dependencies.
 #
 # The mk4web control service uses one runtime dep: a pure-Python WebSocket server.
 # (stdlib has no WebSocket server; `websockets` is the minimal, dependency-free

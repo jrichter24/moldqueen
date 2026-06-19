@@ -6,7 +6,7 @@ minimal: **vanilla JS + a tiny Node server, no framework.**
 ## Purpose
 
 Give a human a simple browser UI to send commands to the excavator. The UI will
-ask **java-core** to build telegrams, which a **bt-core** worker broadcasts. The
+ask **java-core** to build telegrams, which a **linux-core** worker broadcasts. The
 wiring from this panel to java-core is **TBD**.
 
 ## Stack
@@ -51,4 +51,4 @@ guards against path traversal. That's all it does today.
 - **Downstream:** will talk to [`../java-core/`](../java-core/) to produce
   telegrams (transport **TBD** — e.g. a small HTTP/IPC bridge). web-gui never
   touches the radios and never builds telegrams itself — that's java-core's job,
-  and broadcasting is bt-core's.
+  and broadcasting is linux-core's.

@@ -8,7 +8,7 @@ package com.dnaevolutions.moldqueen;
  * and orchestrating multiple hubs (device 0 / device 1).
  *
  * <p>This module is HARDWARE-INDEPENDENT: pure bytes + logic, no BLE, nothing
- * Pi-only. It emits payload bytes; a bt-core radio worker broadcasts them.
+ * Pi-only. It emits payload bytes; a linux-core radio worker broadcasts them.
  */
 public final class CoreInfo {
 

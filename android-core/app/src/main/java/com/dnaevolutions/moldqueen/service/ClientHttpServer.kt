@@ -13,7 +13,7 @@ import java.io.ByteArrayInputStream
  * WebHandler: same routes (root, /<id>, /layouts.json, /asyncapi.yaml, by-filename
  * static, and the /assets path) and the SAME injection of __WS_PORT__ / __LAYOUTS_JSON__
  * / __INIT_JSON__ into served HTML. Static files (js/css/images) are served verbatim
- * from the assets bundled at build time from bt-core/mk4web/web (plus the repo assets
+ * from the assets bundled at build time from client/web (plus the repo assets
  * dir under the /assets path), so the client is identical to the Pi's served version.
  * Loopback only.
  */

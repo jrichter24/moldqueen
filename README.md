@@ -1,4 +1,4 @@
-<h1><img src="assets/moldqueen_icon.png" alt="" height="34" align="top"> moldqueen</h1>
+<h1><img src="client/assets/moldqueen_icon.png" alt="" height="34" align="top"> moldqueen</h1>
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Python 3.13](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
@@ -8,7 +8,7 @@
 **Drive a [Mould King 13112](https://www.mouldking.com/) RC excavator from a Raspberry Pi — over a reverse-engineered BLE protocol, through a clean WebSocket API.**
 
 <p align="center">
-  <img src="assets/moldqueen_banner.png" alt="moldqueen — Mould King 13112 RC excavator control" width="760">
+  <img src="client/assets/moldqueen_banner.png" alt="moldqueen — Mould King 13112 RC excavator control" width="760">
 </p>
 
 `moldqueen` turns a Lego-compatible building-block excavator (two stock
@@ -169,7 +169,7 @@ it through the browser **Gamepad API**, sending the *same* drive-by-function com
 the on-screen joysticks.
 
 <p align="center">
-  <img src="assets/ps5_controller.png" alt="PS5 DualSense controller driving moldqueen" width="520">
+  <img src="client/assets/ps5_controller.png" alt="PS5 DualSense controller driving moldqueen" width="520">
 </p>
 
 **The controller talks to the client, not the Pi.** Nothing on the Pi or the radio side
@@ -233,7 +233,7 @@ slots:     └── slot 0 ──┘ └── slot 1 ──┘ └────
 The **`MouldKingCrypt`** obfuscation (recovered from the app and verified): fixed
 preamble `C1..C5`, per-byte bit-reversal, CRC-16/CCITT (poly `0x1021`), and two
 7-bit LFSR whitening passes (seeds 63 / 37). See
-[`bt-core/reference/mouldking_crypt.py`](bt-core/reference/mouldking_crypt.py).
+[`linux-core/reference/mouldking_crypt.py`](linux-core/reference/mouldking_crypt.py).
 
 > **Why this matters:** the widely-referenced
 > [`J0EK3R/mkconnect-python`](https://github.com/J0EK3R/mkconnect-python) MK6.0
@@ -249,7 +249,7 @@ uses the *same* API):
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│  bt-core/mk4web/                                                     │
+│  linux-core/mk4web/                                                     │
 │                                                                      │
 │   web page / AI brain / CLI                                          │
 │        │  WebSocket  (JSON, :8765)                                   │
@@ -305,7 +305,7 @@ Three ways to use it:
    [Running the client separately](#running-the-client-separately-docker) and
    [`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md).
 3. **Bring your own client.** Skip the page entirely and talk to the WebSocket from
-   your own code/console/AI — contract in [`asyncapi.yaml`](bt-core/mk4web/asyncapi.yaml).
+   your own code/console/AI — contract in [`asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml).
 
 **Server flags** (the API): `--ws-only` (or `--no-client`, env `MK4_SERVE_CLIENT=0`)
 runs the **WebSocket only — no HTTP server** (headless / bring-your-own-client);
@@ -324,7 +324,7 @@ scripts/start.sh --ws-only            # launcher, websocket-only
 **One-time setup** (Python venv + the one dependency):
 
 ```bash
-cd bt-core
+cd linux-core
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt        # websockets (+ pytest)
 ```
@@ -347,7 +347,7 @@ scripts/start.sh --check    # audit only — report state, change nothing  (= sc
 # what the launcher does: free the adapter from bluetoothd, bring the dongle up
 sudo systemctl mask --now bluetooth
 sudo hciconfig hci1 up
-cd bt-core && source .venv/bin/activate
+cd linux-core && source .venv/bin/activate
 ```
 
 **Dry-run first** (logs the telegrams, transmits *nothing*):
@@ -375,7 +375,7 @@ python -m mk4web.api
    **STOP** (or Space/Esc) = all neutral.
 
 All ports/HCI are env-overridable (`MK4_HCI`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, … —
-see [`bt-core/mk4web/config.py`](bt-core/mk4web/config.py)).
+see [`linux-core/mk4web/config.py`](linux-core/mk4web/config.py)).
 
 ### Layouts: chooser, dashboard, RAW
 
@@ -451,7 +451,7 @@ hubs) — the AI handles the software and configuration steps.
 ## The WebSocket API
 
 The product. Connect to `ws://<pi>:8765`; messages are JSON. Full machine-readable
-contract: **[`bt-core/mk4web/asyncapi.yaml`](bt-core/mk4web/asyncapi.yaml)** (AsyncAPI
+contract: **[`linux-core/mk4web/asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml)** (AsyncAPI
 3.0), also served at `GET /asyncapi.yaml`.
 
 **Client → server**
@@ -482,7 +482,7 @@ contract: **[`bt-core/mk4web/asyncapi.yaml`](bt-core/mk4web/asyncapi.yaml)** (As
 `drive` names a **function**; the **server** resolves it to `(slot, channel, value)`
 against the active map (applying invert, device-swap, and a per-function
 `reverse_scale` trim) so the broadcaster stays dumb. `value` is `-7..+7`; `slot`
-`0..2`, `channel` `0..3`. Full contract: [`asyncapi.yaml`](bt-core/mk4web/asyncapi.yaml).
+`0..2`, `channel` `0..3`. Full contract: [`asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml).
 
 ## Channel map
 
@@ -513,7 +513,7 @@ reverse speed to match forward; `max` caps a function's top speed.
 ## How the protocol was reverse-engineered
 
 A compact case study (details in [`docs/PROJECT.md`](docs/PROJECT.md) and
-[`bt-core/reference/MKtech_reverse_engineering_report.md`](bt-core/reference/MKtech_reverse_engineering_report.md)):
+[`linux-core/reference/MKtech_reverse_engineering_report.md`](linux-core/reference/MKtech_reverse_engineering_report.md)):
 
 1. **Sniffed** the hubs with `btmon` + `hcitool lescan` — they don't advertise;
    they're pure receivers. Dead end for passive discovery.
@@ -564,20 +564,25 @@ moldqueen/
 ├── docs/PROJECT.md            # canonical project reference (read this)
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── config/channel_map.<layout>.json  # per-layout default channel map (e.g. channel_map.excavator.json)
-├── assets/                    # moldqueen_banner.png, moldqueen_icon.png, excavator_icon.png, moldqueen_dashboard_v2.png, wizard/
+├── assets/                    # doc screenshots only (excavator_layout*.PNG, landing_select_layout.PNG)
 ├── scripts/                   # start.sh / check.sh — preflight + launch (no system changes)
-├── bt-core/                   # Python — the radios + the control service
+├── client/                    # INDEPENDENT web client — consumed by the cores + Docker; depends only on the WS API
+│   ├── web/                   #   chooser.html, shell.css, clientconfig.js, layouts.json, dashboard.*, raw.*, template.*
+│   ├── assets/                #   served UI art (icons, LED gifs, dashboard background, banners)
+│   └── serve.py               #   standalone dev server (route derivation + the 4-placeholder injection)
+├── linux-core/                # Python — the Linux/BlueZ radio core + control service (tested target: the Pi)
 │   ├── mk4web/                # broadcaster · api · telegram · channelmap · mouldking_crypt · config
-│   │   ├── asyncapi.yaml       #   WS API contract (served at /asyncapi.yaml)
-│   │   └── web/{chooser.html, shell.css, clientconfig.js, layouts.json, dashboard.*, raw.*, template.*}  # / · /excavator · /raw (template inactive)
+│   │   └── asyncapi.yaml      #   WS API contract (served at /asyncapi.yaml)
 │   └── reference/             # verified protocol snapshots, the codec, the APK report
+├── android-core/              # Kotlin — standalone Android app (radio + local WS API + serves the client)
 ├── java-core/                 # empty Java scaffold — future API client OR retire
 ├── web-gui/                   # original Node scaffold — superseded by mk4web's dashboard
 └── CLAUDE.md                  # terse agent/dev notes (per folder too)
 ```
 
-`java-core/` and `web-gui/` are bootstrap scaffolds the project outgrew; the working
-stack is entirely in `bt-core/mk4web/`.
+The control service is `linux-core/mk4web/` (Pi) and the `android-core/` app; the UI is
+the **independent `client/`** they consume. `java-core/` and `web-gui/` are bootstrap
+scaffolds the project outgrew.
 
 ## Roadmap & open problems
 
@@ -600,7 +605,7 @@ stack is entirely in `bt-core/mk4web/`.
 - **Run on another board / in a container:** [`docs/PORTING.md`](docs/PORTING.md)
   (the radio core is hardware-bound — honest caveats inside).
 - **Minimal dependencies** (1 GB Pi): the service needs only `websockets`.
-- **Tests:** `cd bt-core && source .venv/bin/activate && pytest`.
+- **Tests:** `cd linux-core && source .venv/bin/activate && pytest`.
 - **Conventions:** small, clear conventional commits (`feat:`/`fix:`/`docs:`/`chore:`);
   secrets never committed.
 - Agent/working notes live in the `CLAUDE.md` files (root + per folder).

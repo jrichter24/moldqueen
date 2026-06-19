@@ -31,23 +31,23 @@ android {
     }
 
     sourceSets {
-        // The client is single-sourced from bt-core at build time (see :bundleClient).
+        // The client is single-sourced from the independent client/ peer at build time.
         main { assets.srcDirs += layout.buildDirectory.dir("generated/clientAssets").get().asFile }
     }
 }
 
 // ---- single-source the web client into the APK (NO hand-copy) -------------------
-// Copies the ONE client location (bt-core/mk4web/web) + served assets + per-layout
-// default maps + the asyncapi contract into a generated assets dir that AGP merges.
-// A change under bt-core/mk4web/web/ re-runs this (Copy is up-to-date aware) and flows
-// into the next Android build automatically. Mirrors the Pi's served file set exactly.
+// Copies the independent client peer (client/web + client/assets) + per-layout default
+// maps (config/) + the asyncapi contract (linux-core/, server-side) into a generated
+// assets dir that AGP merges. A change under client/web/ re-runs this (Copy is
+// up-to-date aware) and flows into the next Android build. Mirrors the served file set.
 tasks.register('bundleClient', Copy) {
-    description 'Bundle the web client + assets from bt-core/config into the APK.'
+    description 'Bundle the web client (client/) + config maps + asyncapi into the APK.'
     into layout.buildDirectory.dir('generated/clientAssets')
-    from("$rootDir/../bt-core/mk4web/web") { into 'web' }              // html/js/css/layouts.json
-    from("$rootDir/../assets") { into 'webassets' }                    // served at /assets/**
+    from("$rootDir/../client/web") { into 'web' }                     // html/js/css/layouts.json
+    from("$rootDir/../client/assets") { into 'webassets' }            // served at /assets/**
     from("$rootDir/../config") { include 'channel_map.*.json'; into 'config' }  // per-layout default maps
-    from("$rootDir/../bt-core/mk4web") { include 'asyncapi.yaml' }     // served at /asyncapi.yaml
+    from("$rootDir/../linux-core/mk4web") { include 'asyncapi.yaml' } // served at /asyncapi.yaml (server-side)
 }
 tasks.matching { it.name ==~ /merge.*Assets/ }.configureEach { dependsOn 'bundleClient' }
 tasks.named('preBuild') { dependsOn 'bundleClient' }

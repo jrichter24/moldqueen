@@ -1,4 +1,4 @@
-# bt-core/reference — MK4 protocol reference (working, version-controlled)
+# linux-core/reference — MK4 protocol reference (working, version-controlled)
 
 Snapshot of the **proven** Mould King 13112 control method, copied from the scratch
 work area (`~/scratch/mk-refs/`) so the win is backed up in git. The working

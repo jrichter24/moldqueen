@@ -36,10 +36,11 @@ from . import channelmap
 from .telegram import (value_to_nibble, nibble_to_value, channel_index, N_CHANNELS, NEUTRAL,
                        motion_raw, ad_hex)
 from .config import (HOST, HTTP_PORT, WS_PORT, SOCK_PATH, CONFIG_DIR, channel_map_path,
-                     ASSETS_DIR, SERVE_CLIENT, RADIO_BACKEND, HCI, INFO_LEVEL, DRY_RUN, VERSION)
+                     WEB_DIR, ASSETS_DIR, SERVE_CLIENT, RADIO_BACKEND, HCI, INFO_LEVEL, DRY_RUN, VERSION)
 
 log = logging.getLogger("api")
-WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
+# The web client is an independent peer (client/), located via config.WEB_DIR
+# (MK4_WEB_DIR override). asyncapi.yaml stays here server-side (beside api.py).
 NEUTRAL_STATE = [NEUTRAL] * N_CHANNELS
 IDLE, CONNECTING, READY = "IDLE", "CONNECTING", "READY"
 

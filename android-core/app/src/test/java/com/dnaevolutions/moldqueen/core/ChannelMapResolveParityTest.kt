@@ -8,7 +8,7 @@ import org.junit.Test
 
 /**
  * Resolution parity: every vector here was produced by the AUTHORITATIVE
- * bt-core/mk4web/channelmap.py (see tools that generated resolve_vectors.json).
+ * linux-core/mk4web/channelmap.py (see tools that generated resolve_vectors.json).
  * Same input -> same (slot, channel, value) as the Pi. Covers the excavator map
  * and a synthetic map exercising reverse_scale half-to-even rounding, per-direction
  * caps, invert, legacy `max`, slot-2 (swap-immune), and unknown functions.

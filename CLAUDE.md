@@ -33,10 +33,10 @@ must survive a restart via **[`docs/HANDOVER.md`](docs/HANDOVER.md)** — a shor
   hci0 (Broadcom UART) corrupts frames at the connect transition → disable it
   (`dtoverlay=disable-bt`). Needs a solid **5 V/3 A PSU** (under-voltage caused
   failures). `bluetoothd` must be **stopped + masked**; raw HCI needs root/caps.
-- **Codec verified:** `bt-core/reference/mouldking_crypt.py` (`encode`/`decode`)
+- **Codec verified:** `linux-core/reference/mouldking_crypt.py` (`encode`/`decode`)
   reproduces the app's bytes exactly (13/13 tests). Do NOT reinvent the crypt.
 - **Channel map = DATA, PER-LAYOUT** (each function-mapped layout declares its
-  function set in `bt-core/mk4web/web/layouts.json` + its default in
+  function set in `client/web/layouts.json` + its default in
   [`config/channel_map.<id>.json`](config/), e.g. `channel_map.excavator.json`;
   editable live in the GUI). No global `FUNCTIONS` — `channelmap` is parameterized by
   the layout's set. Drive **by FUNCTION**; the **server** resolves
@@ -47,9 +47,9 @@ must survive a restart via **[`docs/HANDOVER.md`](docs/HANDOVER.md)** — a shor
   swapped from the placeholders); rotation/right_track still placeholders.
   **Two-hub simultaneous CONFIRMED.**
 
-## The working software: `bt-core/mk4web/`
+## The working software: `linux-core/mk4web/`
 
-The control stack is the **`bt-core/mk4web/`** Python webservice: a **broadcaster**
+The control stack is the **`linux-core/mk4web/`** Python webservice: a **broadcaster**
 (owns the radio + 12-nibble state, lifecycle IDLE→CONNECTING→READY, auto-neutral
 safety) + an **API** (the **WebSocket API `:8765` is the product**, always on;
 resolves `drive`-by-function via `channelmap.py`; AsyncAPI at `/asyncapi.yaml`).
@@ -57,7 +57,7 @@ resolves `drive`-by-function via `channelmap.py`; AsyncAPI at `/asyncapi.yaml`).
 slot/ch), `stop`, `state`, `map` (get/set/swap/promote); pushes `lifecycle`/`state`/
 `map`/`mapresult`. Serving the client web page is **OPTIONAL**: on by default,
 `--ws-only` (=`MK4_SERVE_CLIENT=0`) runs WS-only, `--http-port N` overrides the page
-port. Run from `bt-core/` in the venv (or `scripts/start.sh`):
+port. Run from `linux-core/` in the venv (or `scripts/start.sh`):
 
 ```bash
 python -m mk4web.broadcaster --dry-run    # logs telegrams, no transmit (start here)
@@ -77,12 +77,17 @@ to assign function→slot/channel (+ max, reverse-trim, invert, EN/DE labels,
 device-swap, **configurable WS endpoint**, **ℹ server-info readout**, Save/Promote).
 The client can be served separately (Docker, point at the Pi via the endpoint
 setting — see [`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md)). Detail in
-[`bt-core/CLAUDE.md`](bt-core/CLAUDE.md).
+[`linux-core/CLAUDE.md`](linux-core/CLAUDE.md).
 
 ## Components (one repo)
 
-- **[`bt-core/`](bt-core/)** — Python; the radios + the `mk4web` control service.
-  **The only code that touches the radios.**
+- **[`client/`](client/)** — the **independent** web UI (chooser/dashboard/RAW). Depends
+  ONLY on the WS API + its own files; the cores/Docker *consume* it (host → client, never
+  the reverse). Has its own `serve.py` dev server.
+- **[`linux-core/`](linux-core/)** — Python; the Linux/BlueZ radio core + `mk4web` control
+  service (tested target: the Pi). The only code that touches the radios **on Linux**.
+- **[`android-core/`](android-core/)** — Kotlin; standalone Android app (its own native
+  radio + a local WS API that serves `client/`).
 - **[`java-core/`](java-core/)** — empty Java scaffold. The old "java-core builds
   telegrams" plan is **SUPERSEDED** (telegrams are built in Python). **Decision:**
   future API client (a JVM brain) OR retire. Not on the control path.
@@ -117,4 +122,4 @@ yet** — deliberate, later decision.
 ## Toolchains (on this Pi)
 
 JDK 21, Node 20 LTS, Python 3.13 + venv, BlueZ 5.82 (`bluetoothctl`, `hciconfig`,
-`btmgmt`, `btmon`). The bt-core venv has `websockets`.
+`btmgmt`, `btmon`). The linux-core venv has `websockets`.

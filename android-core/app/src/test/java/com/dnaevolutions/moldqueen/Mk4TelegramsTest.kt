@@ -48,7 +48,7 @@ class Mk4TelegramsTest {
     @Test fun stop_roundtrips_through_codec() =
         assertEquals("7dae18" + "888888888888" + "82", MouldKingCrypt.decode(Mk4Telegrams.stop()))
 
-    // Byte-exact vs the WORKING Pi broadcaster on-air payloads (bt-core/mk4web/telegram.py).
+    // Byte-exact vs the WORKING Pi broadcaster on-air payloads (linux-core/mk4web/telegram.py).
     // Confirms the 24-byte manufacturer data is identical to the proven system.
     @Test fun connect_onair_matches_pi_broadcaster() =
         assertEquals("6db643cf7e8f471148b3e638d17ad9e67017131415161718", Mk4Telegrams.connect().toHex())

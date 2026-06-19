@@ -15,7 +15,7 @@
 #
 # The WebSocket API (the product) always runs; serving the client web page is
 # optional. Radio backend defaults to rawhci (raw HCI socket, no hcitool); set
-# MK4_RADIO_BACKEND=hcitool for the legacy fallback. Env overrides (bt-core/mk4web/
+# MK4_RADIO_BACKEND=hcitool for the legacy fallback. Env overrides (linux-core/mk4web/
 # config.py): MK4_DONGLE_MAC, MK4_HCI, MK4_RADIO_BACKEND, MK4_INFO_LEVEL,
 # MK4_HTTP_PORT, MK4_WS_PORT, MK4_SOCK, MK4_SERVE_CLIENT (0 = ws-only).
 set -euo pipefail
@@ -24,8 +24,8 @@ DONGLE_MAC="${MK4_DONGLE_MAC:-00:A6:44:02:21:25}"   # Realtek control dongle
 HTTP_PORT="${MK4_HTTP_PORT:-8080}"
 SOCK="${MK4_SOCK:-/tmp/moldqueen_mk4.sock}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BT_CORE="$REPO_ROOT/bt-core"
-VENV_PY="$BT_CORE/.venv/bin/python"
+LINUX_CORE="$REPO_ROOT/linux-core"
+VENV_PY="$LINUX_CORE/.venv/bin/python"
 
 MODE="live"; WS_ONLY=0; API_EXTRA=()
 while [ $# -gt 0 ]; do
@@ -104,11 +104,11 @@ fi
 # ── 4. venv + websockets ────────────────────────────────────────
 hdr "4. Python venv + dependencies"
 if [ ! -x "$VENV_PY" ]; then
-  fail "venv missing. Set it up: cd bt-core && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt"
+  fail "venv missing. Set it up: cd linux-core && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt"
 elif "$VENV_PY" -c 'import websockets' 2>/dev/null; then
   pass "venv ok — websockets $("$VENV_PY" -c 'import websockets; print(websockets.__version__)' 2>/dev/null)"
 else
-  fail "websockets not installed. Run: cd bt-core && . .venv/bin/activate && pip install -r requirements.txt"
+  fail "websockets not installed. Run: cd linux-core && . .venv/bin/activate && pip install -r requirements.txt"
 fi
 
 # ── result / stop for --check ───────────────────────────────────
@@ -129,14 +129,14 @@ trap cleanup EXIT INT TERM
 
 BC_ARGS=(--hci "$HCI"); [ "$MODE" = "dry-run" ] && BC_ARGS+=(--dry-run)
 [ -S "$SOCK" ] && rm -f "$SOCK" 2>/dev/null || true   # drop a stale socket so the wait below tracks THIS broadcaster
-( cd "$BT_CORE" && exec $BC_SUDO "$VENV_PY" -m mk4web.broadcaster "${BC_ARGS[@]}" ) &
+( cd "$LINUX_CORE" && exec $BC_SUDO "$VENV_PY" -m mk4web.broadcaster "${BC_ARGS[@]}" ) &
 BC_PID=$!
 info "broadcaster started (mode: $MODE) — begins IDLE; transmits NOTHING until you do Connect→Ready in the GUI"
 
 for _ in $(seq 1 50); do if [ -S "$SOCK" ]; then break; fi; sleep 0.1; done
 if [ -S "$SOCK" ]; then pass "IPC socket up: $SOCK"; else info "socket not seen yet ($SOCK) — the api will keep retrying"; fi
 
-( cd "$BT_CORE" && exec "$VENV_PY" -m mk4web.api "${API_EXTRA[@]}" ) &
+( cd "$LINUX_CORE" && exec "$VENV_PY" -m mk4web.api "${API_EXTRA[@]}" ) &
 API_PID=$!
 ip="$(hostname -I 2>/dev/null | awk '{print $1}')"; ip="${ip:-localhost}"
 pass "api started"

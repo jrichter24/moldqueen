@@ -18,7 +18,7 @@
 - **Pre-public secret audit PASSED** — zero secrets in 46 commits of history; the
   dev-path username leak (`/home/jrichter/...`) is fixed (`MK_REFS_DIR`).
 - **README game controller (2026-06-18):** added a "What you get" bullet + a **Game
-  controller** section (ToC + `assets/ps5_controller.png`) — PS5/DualSense via browser
+  controller** section (ToC + `client/assets/ps5_controller.png`) — PS5/DualSense via browser
   Gamepad API; emphasizes the controller talks to the CLIENT not the Pi (API-first demo);
   notes calibration UI + same channel-map/caps/safety. Docs+asset only; banner/badges/
   disclaimer/credits/author/license untouched.

@@ -6,9 +6,9 @@
   <title>moldqueen — choose a layout</title>
   <link rel="icon" href="/assets/moldqueen_icon.png" />
   <script>
-    // Layout manifest = single source of truth. Injected inline by api.py; when this
-    // page is served RAW (e.g. the client Docker via nginx) the placeholder stays
-    // literal, JSON.parse throws, and the body script falls back to fetch(/layouts.json).
+    // Layout manifest = single source of truth. Injected inline by the serving host; when
+    // served raw (no injection) the placeholder stays literal, JSON.parse throws, and the
+    // body script falls back to fetch(/layouts.json).
     window.__LAYOUTS__ = (function () { try { return JSON.parse("__LAYOUTS_JSON__"); } catch (e) { return null; } })();
     window.MK4_SHOW_FULLSCREEN = "__SHOW_FULLSCREEN__";   // "true" (web default) | "false" (native host)
     // Skip straight to the remembered layout (unless ?choose forces the chooser).
@@ -233,14 +233,8 @@
     // that are real layouts use an <img> icon path).
     var BYO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"></rect><path d="M12 9v6M9 12h6"></path></svg>';
 
-    // Target for a layout card. Prefer the server-derived route (/<id>, injected/served
-    // by the Pi). When served RAW by a plain static server (no injection, no derived
-    // routes) fall back to the layout's ACTUAL html file so the card navigates to a real
-    // file (e.g. dashboard.html) instead of a 404'ing /<id>. Last resort: /<id>.
-    function routeOf(L) {
-      if (L.kind === "placeholder") return null;
-      return L.route || (L.files && L.files.html) || ("/" + L.id);
-    }
+    // route is server-derived (/<id>); the serving host maps it to the layout's file.
+    function routeOf(L) { return L.kind === "placeholder" ? null : (L.route || ("/" + L.id)); }
 
     function cardHtml(L) {                       // render ONE manifest entry -> a card (same DOM as before)
       var ghost = L.kind === "placeholder";

@@ -8,7 +8,7 @@ import org.junit.Test
 
 /**
  * End-to-end exchange parity: replays the EXACT client message sequence captured from
- * the authoritative bt-core/mk4web/api.py (parity_golden.json) through [ApiCore], and
+ * the authoritative linux-core/mk4web/api.py (parity_golden.json) through [ApiCore], and
  * asserts the server messages match step-by-step — same types, order, choreography and
  * payloads (lifecycle/state/map/mapresult, incl. resolved nibbles, raw+AD bytes, and
  * map echoes after set/swap/promote).

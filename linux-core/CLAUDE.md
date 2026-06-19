@@ -1,7 +1,10 @@
-# bt-core
+# linux-core
 
-Hardware-**bound** Python. The **only** code in the project that touches the radios.
-It builds and broadcasts **MK4 BLE "telegrams"** that drive the excavator's hubs.
+The **Linux/BlueZ radio core** (Python) — named by OS. It drives the radios via raw HCI
+over BlueZ; the **only tested Linux target is the Raspberry Pi**, but nothing here is
+Pi-specific beyond that. The **only** code in the project that touches the radios on Linux
+(the Android app has its own native radio in `android-core/`). It builds and broadcasts
+**MK4 BLE "telegrams"** that drive the excavator's hubs.
 
 📖 Canonical reference: [`../docs/PROJECT.md`](../docs/PROJECT.md). **Session handover:**
 read [`../docs/HANDOVER.md`](../docs/HANDOVER.md) at the start of a session and update +
@@ -38,7 +41,7 @@ verified codec is [`reference/mouldking_crypt.py`](reference/mouldking_crypt.py)
 ## Setup / test / run
 
 ```bash
-cd bt-core
+cd linux-core
 python3 -m venv .venv            # already created during bootstrap
 source .venv/bin/activate
 pip install -r requirements.txt  # pytest
@@ -131,7 +134,7 @@ dashboard uses **drag joysticks** (tracks/arms; release → neutral) + hold butt
 (rotation/bucket); controls locked until READY; a **connection wizard** drives the
 cold-start. Full contract in `asyncapi.yaml`.
 
-Run (from `bt-core/`, in the venv; or `../scripts/start.sh`):
+Run (from `linux-core/`, in the venv; or `../scripts/start.sh`):
 ```bash
 python -m mk4web.broadcaster --dry-run   # log telegrams, transmit NOTHING (start here)
 python -m mk4web.broadcaster             # live: drives the dongle (needs hci1 up, bluetoothd masked)
@@ -154,11 +157,11 @@ python -m mk4web.api --ws-only             # WebSocket only (no page); --http-po
 ## Layout
 
 ```
-bt-core/
+linux-core/
 ├── mk4web/                # the working control webservice
 │   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
-│   ├── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
-│   └── web/{chooser.html,shell.css,clientconfig.js,layouts.json,dashboard.*,raw.*,template.*}  # / , /excavator , /raw (+ inactive template)
+│   └── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
+│                          # (the web UI is the INDEPENDENT ../client/ peer; api.py serves it via config.WEB_DIR)
 ├── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                          #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
 ├── radio_worker.py        # leftover bootstrap stub (stdin → log hex; NOT used)
@@ -172,6 +175,6 @@ bt-core/
 - **The boundary is the WebSocket API** (`mk4web/api.py`), not java-core. Clients
   (the web page now; a console/AI brain later) drive the hubs through that API; the
   `mouldking_crypt` codec + raw-HCI broadcast stay **here and nowhere else**.
-- The old "java-core emits payload bytes, bt-core re-broadcasts" boundary is
+- The old "java-core emits payload bytes, linux-core re-broadcasts" boundary is
   **superseded** — telegrams are built in Python. See
   [`../docs/PROJECT.md`](../docs/PROJECT.md) §6.

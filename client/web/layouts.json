@@ -1,5 +1,5 @@
 {
-  "_comment": "Layout manifest — the SINGLE source of truth for layouts. The server DERIVES each layout's route as /<id> (route is NOT a field; the title is display-only) and serves its HTML/JS/CSS; the chooser builds its cards from this. active:false hides a layout entirely (no route, no card, not in /layouts.json) until a contributor flips it true — see docs/ADDING_A_LAYOUT.md. Add a layout here and it surfaces in BOTH the chooser and the routes (no api.py edit). id must be URL-safe. kind: function-mapped | generic | placeholder. category is a declared grouping label.",
+  "_comment": "Layout manifest — the SINGLE source of truth for layouts. The server DERIVES each layout's route as /<id> (route is NOT a field; the title is display-only) and serves its HTML/JS/CSS; the chooser builds its cards from this. active:false hides a layout entirely (no route, no card, not in /layouts.json) until a contributor flips it true — see docs/ADDING_A_LAYOUT.md. Add a layout here and it surfaces in BOTH the chooser and the routes (no server-side edit). id must be URL-safe. kind: function-mapped | generic | placeholder. category is a declared grouping label.",
   "layouts": [
     {
       "id": "excavator",

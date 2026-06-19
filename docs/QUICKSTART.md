@@ -12,7 +12,7 @@ The fastest path to driving the Mould King 13112 from a Raspberry Pi. (Deep deta
 - One-time: Python venv
 
   ```bash
-  cd bt-core && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+  cd linux-core && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
   ```
 
 ## 1. Start the API server (owns the radio)
@@ -74,7 +74,7 @@ connection** panel) set `ws://<pi-ip>:8765` → **Connect**. See
 
 **Bring your own client.** Skip the web UI entirely and talk to the WebSocket
 (`ws://<pi>:8765`) from your own code — the full contract is in
-[`../bt-core/mk4web/asyncapi.yaml`](../bt-core/mk4web/asyncapi.yaml) (drive by function,
+[`../linux-core/mk4web/asyncapi.yaml`](../linux-core/mk4web/asyncapi.yaml) (drive by function,
 manage the channel map, raw set/stop).
 
 **Troubleshooting.** `scripts/check.sh` audits the radio/service state without

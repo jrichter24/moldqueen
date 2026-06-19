@@ -40,7 +40,7 @@ share that socket — i.e. same machine; the IPC is local by design.)
 
 Realistically: **any Linux with BlueZ + a compatible USB BLE adapter.**
 
-1. Install Python 3.11+ and create the venv (`pip install -r bt-core/requirements.txt`).
+1. Install Python 3.11+ and create the venv (`pip install -r linux-core/requirements.txt`).
 2. Install BlueZ for `hciconfig` (adapter bring-up). The **default `rawhci` backend
    needs no `hcitool`**, so hcitool's deprecation on modern distros is a non-issue
    unless you opt into the legacy backend (`MK4_RADIO_BACKEND=hcitool`), which then
@@ -77,9 +77,9 @@ Sketch (illustrative — not shipped):
 ```dockerfile
 FROM python:3.12-slim
 RUN apt-get update && apt-get install -y bluez && rm -rf /var/lib/apt/lists/*
-COPY bt-core/ /app/bt-core/
-RUN pip install -r /app/bt-core/requirements.txt
-WORKDIR /app/bt-core
+COPY linux-core/ /app/linux-core/
+RUN pip install -r /app/linux-core/requirements.txt
+WORKDIR /app/linux-core
 # run BOTH processes (broadcaster needs the radio; api serves the WS)
 ```
 ```bash

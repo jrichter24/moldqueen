@@ -4,8 +4,8 @@ moldqueen includes third-party code, retained under its original license.
 
 ## MouldKingCrypt — J0EK3R/mkconnect-python
 
-`bt-core/mk4web/mouldking_crypt.py` (and the snapshot in
-`bt-core/reference/mouldking_crypt.py`) is a **port/derivative** of the
+`linux-core/mk4web/mouldking_crypt.py` (and the snapshot in
+`linux-core/reference/mouldking_crypt.py`) is a **port/derivative** of the
 `MouldKingCrypt` cipher from
 [J0EK3R/mkconnect-python](https://github.com/J0EK3R/mkconnect-python),
 re-expressed in our own module structure and verified byte-exact against the

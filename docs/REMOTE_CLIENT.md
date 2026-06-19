@@ -44,15 +44,16 @@ The Pi's API is **permissive by design** for a LAN hobby tool:
 
 ## 3. Run the client in Docker (on your desktop)
 
-A **client-only** image ([`Dockerfile.client`](../Dockerfile.client)) packages just
-the static UI behind nginx — **no broadcaster, no radio**. nginx mirrors the Pi's
-routes (`/` → chooser, `/excavator`, `/raw`; see
-[`deploy/nginx-client.conf`](../deploy/nginx-client.conf)).
+A **client-only** image ([`Dockerfile.client`](../Dockerfile.client)) packages the
+independent client (`client/`) served by its own [`client/serve.py`](../client/serve.py) —
+**no broadcaster, no radio**. `serve.py` **derives** the routes from `layouts.json` and
+injects the placeholders exactly like the Pi, so a **new layout works with no Docker/route
+config** (the old hardcoded nginx mirror is retired).
 
 ```bash
-# from the repo root (build context must include bt-core/ and assets/)
+# from the repo root (build context must include client/)
 docker build -f Dockerfile.client -t moldqueen-client .
-docker run --rm -p 8080:80 moldqueen-client
+docker run --rm -p 8080:8080 moldqueen-client
 ```
 
 Then:
@@ -65,16 +66,14 @@ Then:
 Notes:
 - The image is meant for a **desktop with Docker** (amd64/arm64). It does not need
   to be built on the Pi.
-- The HTML is served raw by nginx (no server-side injection); that's fine — the
-  endpoint just defaults to the container host until you set it, and the channel
-  map loads from the API once connected.
+- `serve.py` injects the endpoint placeholder; until you set an endpoint it defaults to
+  the container host, and the channel map loads from the API once connected.
 
 The **Pi-served path is unchanged**: `python -m mk4web.api` still serves the same
 UI at `http://<pi>:8080/` with the endpoint defaulting to the Pi.
 
-## 4. No Docker — plain static server (development)
+## 4. No Docker — the client's own dev server
 
-For a zero-tooling dev loop you can skip Docker entirely and serve the client folder
-with any plain static server (`python -m http.server`, `npx serve`), then point it at
-the Pi. See **[DEV_CLIENT.md](DEV_CLIENT.md)** for the exact command, which URL to open
-(`/chooser.html`), and how the client degrades gracefully without the Pi's injection.
+For a zero-tooling dev loop, run the client's own server: `cd client && python serve.py`,
+then point it at the Pi. It reproduces the full serving contract (route derivation +
+injection). See **[DEV_CLIENT.md](DEV_CLIENT.md)**.

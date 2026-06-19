@@ -5,7 +5,7 @@ import org.junit.Test
 
 /**
  * Byte-exact validation of the Kotlin MouldKingCrypt port against the repo's own
- * self-test vectors in bt-core/reference/mouldking_crypt.py.
+ * self-test vectors in linux-core/reference/mouldking_crypt.py.
  *
  * These vectors use the MK6-era raw framing (0x6d/0x61 first byte). The crypt
  * (encode/decode) is identical for MK4 — this test validates the CODEC only.

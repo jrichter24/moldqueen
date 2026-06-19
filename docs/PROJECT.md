@@ -1,7 +1,7 @@
 # moldqueen — project document (canonical reference)
 
 > This is the authoritative project document. Where any other doc (the CLAUDE.md
-> files, or the snapshots in `bt-core/reference/`) disagrees, **this file wins.**
+> files, or the snapshots in `linux-core/reference/`) disagrees, **this file wins.**
 > Last major update: 2026-06-18 (pluggable layouts: manifest + server-derived
 > `/<id>` routes + per-layout function maps + an inactive template; rawhci default
 > radio backend; server-info tiers; shared `shell.css`).
@@ -18,7 +18,7 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
 - ✅ **Core goal achieved** — **two hubs driven simultaneously from one telegram on
   one radio.** The full control chain works end-to-end: captured app protocol →
   verified codec → one BLE advertising telegram → both hubs move.
-- ✅ A working **control webservice** (`bt-core/mk4web/`) with a WebSocket API and a
+- ✅ A working **control webservice** (`linux-core/mk4web/`) with a WebSocket API and a
   **landscape dashboard GUI** served at `/excavator` (a layout chooser is at `/`): proportional drag-joysticks + hold
   buttons, a **connection wizard** for cold-start, and an in-GUI **channel-assignment**
   settings overlay (assign function → slot/channel, per-function max speed, reverse
@@ -84,7 +84,7 @@ CRC-16/CCITT poly `0x1021`, two 7-bit LFSR whitening passes seeded 63/37), then
 advertised as manufacturer data. `mouldking_crypt.py` implements `encode()`/
 `decode()` and **reproduces the app's captured bytes exactly** (13/13 self-tests).
 The decoder is what let us read the app's adverts and discover the MK4 model. APK
-analysis: `bt-core/reference/MKtech_reverse_engineering_report.md`.
+analysis: `linux-core/reference/MKtech_reverse_engineering_report.md`.
 
 ### The MK6.0 detour (why it was wrong — do not repeat)
 We spent a long time on J0EK3R/mkconnect-python's **MK6.0 per-device model**
@@ -148,7 +148,7 @@ box → shovel) **and** `ch4=0xb` (track box → left track) moved both at once 
   by driving. **`max`** caps a function's full-deflection speed (joystick scaling).
 - **device-0/1 swap** (session-only, not persisted) swaps slots 0↔1 at resolution.
 
-> Reconciliation: `bt-core/reference/channel_map.md` and `…/CONNECT_PROCEDURE.md`
+> Reconciliation: `linux-core/reference/channel_map.md` and `…/CONNECT_PROCEDURE.md`
 > are the protocol-level snapshots (nibble↔global-channel). **This file is
 > canonical** for the function map; if they ever drift, trust PROJECT.md.
 
@@ -156,7 +156,7 @@ box → shovel) **and** `ch4=0xb` (track box → left track) moved both at once 
 
 ## 6. Architecture
 
-The real, working control stack is **`bt-core/mk4web/`** (Python). Two processes
+The real, working control stack is **`linux-core/mk4web/`** (Python). Two processes
 over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
 
 - **broadcaster** (`mk4web/broadcaster.py`) — owns the radio + the authoritative
@@ -188,7 +188,7 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   **active** map (default + its overrides) and **pushes it on every connect**;
   `promote` persists it as the new default. Validation rejects duplicate
   `(slot, channel)` pairs.
-- **Layouts + manifest + chooser.** Layouts are declared in **`mk4web/web/
+- **Layouts + manifest + chooser.** Layouts are declared in **`client/web/
   layouts.json`** (single source of truth): per entry `{id, name, description, icon,
   kind: function-mapped|generic|placeholder, category, active, functions?, files}`.
   The **server DERIVES each route as `/<id>`** (not a manifest field; title is
@@ -205,9 +205,9 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   **`shell.css`** (each layout links it + its own css); `clientconfig.js` is the
   configurable WS endpoint (persisted in localStorage — serve a client anywhere and
   point it at the Pi; see "Two-piece split" below + [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md)).
-- **Dashboard** (`mk4web/web/dashboard.{html,js,css}`, served at `/excavator`) — the
+- **Dashboard** (`client/web/dashboard.{html,js,css}`, served at `/excavator`) — the
   main driving GUI, the first client of the API. Laid out over an HMI
-  background (`assets/moldqueen_dashboard_v2.png`,
+  background (`client/assets/moldqueen_dashboard_v2.png`,
   [`docs/mould_king_13112_hmi_layout_spec.md`](mould_king_13112_hmi_layout_spec.md))
   with percent coordinates:
   - **Controls bind to FUNCTIONS** (not raw channels) via the active map. Tracks +
@@ -239,7 +239,7 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   Details: [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md), CORS/WS-origin permissive for LAN.
 
 **`java-core/`** (Java/Gradle scaffold) is **empty** beyond a placeholder + passing
-test. The original idea (java-core builds telegrams, bt-core re-broadcasts) was
+test. The original idea (java-core builds telegrams, linux-core re-broadcasts) was
 **superseded** — telegram building lives in Python (`mouldking_crypt.py`). **Decision
 needed:** either repurpose java-core as a future **API client** (a JVM "brain") or
 **retire it**. It is NOT on the control path.
@@ -251,7 +251,7 @@ own served page; retire or repurpose later.
 
 ## 7. How to run
 
-From `bt-core/` in the venv (`source .venv/bin/activate`):
+From `linux-core/` in the venv (`source .venv/bin/activate`):
 
 ```bash
 # DRY-RUN (logs telegrams, transmits NOTHING — always start here):
@@ -313,16 +313,20 @@ moldqueen/
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── CLAUDE.md                  # terse must-knows (points here)
 ├── config/channel_map.<layout>.json  # per-layout DEFAULT channel map (e.g. channel_map.excavator.json)
-├── assets/                    # moldqueen_banner.png, moldqueen_icon.png, excavator_icon.png, moldqueen_dashboard_v2.png, wizard/
+├── assets/                    # doc screenshots only (excavator_layout*.PNG, landing_select_layout.PNG)
 ├── scripts/                   # start.sh / check.sh (preflight + launch)
-├── bt-core/
-│   ├── CLAUDE.md              # bt-core must-knows
-│   ├── mk4web/                # the control webservice
+├── client/                    # INDEPENDENT web client (consumed by the cores + Docker; depends only on the WS API)
+│   ├── web/{chooser.html, shell.css, clientconfig.js, layouts.json, dashboard.*, raw.*, template.*}  # / · /excavator · /raw
+│   ├── assets/                # served UI art (icons, LED gifs, dashboard background, banners)
+│   └── serve.py               # standalone dev server (route derivation + 4-placeholder injection)
+├── linux-core/
+│   ├── CLAUDE.md              # linux-core must-knows
+│   ├── mk4web/                # the control webservice (points at client/ to serve the UI)
 │   │   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
-│   │   ├── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
-│   │   └── web/{chooser.html, shell.css, clientconfig.js, layouts.json, dashboard.*, raw.*, template.*}   # chooser (/), /excavator, /raw; shell.css=shared shell; template=inactive starter
+│   │   └── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
 │   └── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                              #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
+├── android-core/              # Kotlin — standalone Android app (radio + local WS API + serves client/)
 ├── java-core/                 # empty Java scaffold — future API client OR retire
 └── web-gui/                   # original Node scaffold — superseded by mk4web's dashboard
 ```
@@ -335,4 +339,4 @@ boards / containers — the radio core is hardware-bound).
 
 Scratch working copies live outside the repo in `~/scratch/mk-refs/` (the
 `mkconnect-python` reference clone, the test tools, capture parsers). Not version-
-controlled; the repo's `bt-core/reference/` holds the durable snapshots.
+controlled; the repo's `linux-core/reference/` holds the durable snapshots.

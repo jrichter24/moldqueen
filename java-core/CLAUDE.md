@@ -9,7 +9,7 @@ orchestrate the hubs. **No BLE, no HCI, no Pi-only anything** — pure bytes + l
   channel→speed mapping over the **−7..+7** range, and the rolling counter.
 - Address telegrams **per hub** (device 0 / device 1).
 - Orchestrate **multiple hubs** so both can be driven at once.
-- Emit **payload bytes** for a bt-core radio worker to broadcast. That's the
+- Emit **payload bytes** for a linux-core radio worker to broadcast. That's the
   whole contract on this side: bytes out.
 
 ## The one hard rule
@@ -20,7 +20,7 @@ built artifact deployed to the Pi. So:
 - No `java.net` BLE, no raw sockets, no `/dev`, no OS assumptions.
 - No dependency that only exists or only works on the Pi.
 - If it touches a radio, it does **not** belong here — it belongs in
-  [`../bt-core/`](../bt-core/).
+  [`../linux-core/`](../linux-core/).
 
 Everything here must be **unit-testable without hardware**. Test-first is the
 expectation: write the failing test, then the telegram logic.
@@ -69,8 +69,8 @@ tests. Telegram construction + multi-hub orchestration replace it.
 
 ## Boundaries
 
-- **Downstream:** emits payload bytes to a [`../bt-core/`](../bt-core/) radio
+- **Downstream:** emits payload bytes to a [`../linux-core/`](../linux-core/) radio
   worker. The IPC/protocol is **TBD — keep it pluggable.**
 - **Upstream:** [`../web-gui/`](../web-gui/) will ask java-core to produce
   telegrams (wiring TBD).
-- Never reach into radios directly. That's bt-core's job, always.
+- Never reach into radios directly. That's linux-core's job, always.

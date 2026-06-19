@@ -20,10 +20,13 @@ DWELL      = float(os.environ.get("MK4_DWELL", "10"))         # connect-telegram
 ADV_INTERVAL = int(os.environ.get("MK4_ADV_INTERVAL", "320")) # 0.625ms slots; 320 = 200ms (~5/sec)
 REFRESH    = float(os.environ.get("MK4_REFRESH", "0.5"))      # re-issue set-data at least this often (live)
 
-# Persisted DEFAULT channel map (function -> slot/channel/invert/labels) and the
-# assets dir the web server may serve (dashboard background lives here).
+# Persisted DEFAULT channel map (function -> slot/channel/invert/labels).
 CONFIG_DIR       = os.environ.get("MK4_CONFIG_DIR", os.path.join(REPO_ROOT, "config"))
-ASSETS_DIR       = os.environ.get("MK4_ASSETS_DIR", os.path.join(REPO_ROOT, "assets"))
+# The web client is an INDEPENDENT top-level peer (client/); the core only POINTS at it.
+# WEB_DIR = the client static files (chooser/dashboard/raw + layouts.json); ASSETS_DIR =
+# the client's served UI art (icons/gifs/dashboard background), served at /assets/**.
+WEB_DIR          = os.environ.get("MK4_WEB_DIR", os.path.join(REPO_ROOT, "client", "web"))
+ASSETS_DIR       = os.environ.get("MK4_ASSETS_DIR", os.path.join(REPO_ROOT, "client", "assets"))
 
 
 def channel_map_path(layout_id):

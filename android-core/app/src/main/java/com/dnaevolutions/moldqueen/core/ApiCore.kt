@@ -38,7 +38,7 @@ interface InfoConfig {
 }
 
 /**
- * The WebSocket control API, clean-room port of bt-core/mk4web/api.py's handler + push
+ * The WebSocket control API, clean-room port of linux-core/mk4web/api.py's handler + push
  * choreography. Pure (no Android/transport): the Android layer feeds it onConnect/
  * onMessage/onDisconnect and implements [ClientSink]/[Radio]/[InfoConfig].
  *

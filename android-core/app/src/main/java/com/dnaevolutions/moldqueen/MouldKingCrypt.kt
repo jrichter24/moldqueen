@@ -4,7 +4,7 @@ package com.dnaevolutions.moldqueen
  * MouldKing BLE telegram codec (company 0xFFF0).
  *
  * Clean-room Kotlin reimplementation of the algorithm described in
- * bt-core/reference/mouldking_crypt.py (itself a derivative of
+ * linux-core/reference/mouldking_crypt.py (itself a derivative of
  * J0EK3R/mkconnect-python's MouldKingCrypt, MIT). Pure software, no BLE here.
  *
  * encode(rawHex) -> 24-byte on-air manufacturer data

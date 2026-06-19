@@ -45,7 +45,7 @@ You write 3 client files and add **one manifest entry**. **No Python/route/choos
 edits** — the server derives the route from the id, serves the files by filename, and
 the chooser builds the card from the manifest.
 
-### 1. Create the client files (`bt-core/mk4web/web/`)
+### 1. Create the client files (`client/web/`)
 
 - `mytoy.html` — copy `raw.html`; it already pulls in the shell:
   ```html
@@ -67,10 +67,10 @@ the chooser builds the card from the manifest.
   - Build your toolbar into `#menu` (reuse `.tgroup`/`.dot`/`#stopBtn` classes) — you
     get the top-bar/sidebar responsive behavior for free.
   - Optional: copy RAW's condensed connection **wizard** (`.modal`/`.sheet.wiz`
-    classes in `shell.css`, LED-flash GIFs in `assets/*_flash.gif`).
+    classes in `shell.css`, LED-flash GIFs in `client/assets/*_flash.gif`).
 - `mytoy.css` — only your layout-specific styles (the shared shell lives in `shell.css`).
 
-### 2. Add ONE manifest entry (`bt-core/mk4web/web/layouts.json`)
+### 2. Add ONE manifest entry (`client/web/layouts.json`)
 
 ```json
 { "id": "mytoy", "name": "My Toy", "description": "One line.",
@@ -87,14 +87,13 @@ That's the whole registration. The server then, with **no api.py change**:
   the derived route (the chooser reads the route the server injects, or falls back to
   `/<id>` when served raw).
 
-### 3. (Optional) Serve it separately (Docker)
+### 3. (Optional) Serve it separately (Docker / standalone)
 
-If you serve the client via the Docker image, add your files to `Dockerfile.client`
-(it copies all of `web/`, so they're included) and a route line in
-`deploy/nginx-client.conf` (`location = /mytoy { try_files /mytoy.html =404; }`) — the
-**static nginx mirror is the one place that still needs a per-layout line** (the Pi's
-api.py derives it automatically; a static server can't). Then point it at the Pi via
-the in-app endpoint setting (see [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md)).
+Nothing to do for routing: the Docker image and the standalone dev server both run
+[`client/serve.py`](../client/serve.py), which **derives** your layout's route from
+`layouts.json` automatically (same as the Pi's api.py) — **no per-layout serve config**.
+Your files under `client/web/` are picked up as-is. Then point it at the Pi via the
+in-app endpoint setting (see [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md)).
 
 That's the whole clean path. You inherit the radio, lifecycle, safety, endpoint
 config, responsive chrome, and routing; you only write the toy's control surface over
@@ -133,7 +132,7 @@ show on the chooser or get a route until you turn it on:
 
 - manifest entry `id:"template"`, `active:false`, `category:"template"`, one function
   `knob_1`
-- `bt-core/mk4web/web/template.{html,js,css}` — connect/lifecycle wiring + ONE knob
+- `client/web/template.{html,js,css}` — connect/lifecycle wiring + ONE knob
   that drives `knob_1` by name + a client channel-map override, all marked with `TODO`
 - `config/channel_map.template.json` — that one function's placeholder default map
 
@@ -141,9 +140,9 @@ It's a *working skeleton*: set `active:true` and it would connect + drive one ch
 
 ### 1. Copy + rename to a unique id
 ```bash
-cp bt-core/mk4web/web/template.html bt-core/mk4web/web/mytoy.html
-cp bt-core/mk4web/web/template.js   bt-core/mk4web/web/mytoy.js
-cp bt-core/mk4web/web/template.css  bt-core/mk4web/web/mytoy.css
+cp client/web/template.html client/web/mytoy.html
+cp client/web/template.js   client/web/mytoy.js
+cp client/web/template.css  client/web/mytoy.css
 cp config/channel_map.template.json config/channel_map.mytoy.json
 ```
 In `mytoy.html` point the `<link>`/`<script>` at `mytoy.css` / `mytoy.js`. The **route
@@ -176,8 +175,8 @@ appears on the chooser automatically — **no `api.py` edits**.
 ### Current limitations (be honest)
 - The **client is hand-written** (no auto-generated controls from the function set yet).
 - One **global** lifecycle/state on the server — fine for one driver.
-- The **Docker** static client (`deploy/nginx-client.conf`) still needs a per-layout
-  `location` line; the Pi's `api.py` derives routes automatically.
+- Routes are derived from `layouts.json` on every host (Pi `api.py`, `client/serve.py`,
+  Docker) — no per-layout serve config anywhere.
 
 ---
 

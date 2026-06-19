@@ -24,7 +24,7 @@ object Mk4Telegrams {
     private const val NEUTRAL_NIBBLE = 0x8
     // Full on-air advertising-data prefix the Pi/stock app use: Flags AD (02 01 02) +
     // manufacturer AD header (len 1b, type ff, company f0 ff = 0xFFF0). The 24 crypted
-    // bytes follow. Mirrors bt-core/mk4web/telegram.py _AD_PREFIX.
+    // bytes follow. Mirrors linux-core/mk4web/telegram.py _AD_PREFIX.
     private const val AD_PREFIX_HEX = "1f0201021bfff0ff"
 
     /** value (-7..+7) -> nibble (0x1..0xF); 0 -> 0x8 neutral. Clamps out-of-range. */
