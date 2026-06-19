@@ -245,7 +245,7 @@ function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
 
 let wsTries = 0, wsTimer = null, wsStatus = "retrying";
 const WS_MAX_TRIES = 5;                                    // then stop auto-retry (no spam)
-function setWsStatus(s) { wsStatus = s; MK4.setStatus(s); startupOnUpdate(); }
+function setWsStatus(s) { wsStatus = s; MK4.setStatus(s); updateStatusLight(); startupOnUpdate(); }
 function scheduleRetry() {
   wsTries++;
   if (wsTries > WS_MAX_TRIES) { setWsStatus("failed"); return; }   // give up — user fixes the endpoint, then Connect
@@ -256,8 +256,8 @@ function scheduleRetry() {
 function connect() {
   clearTimeout(wsTimer);
   try { ws = new WebSocket(MK4.wsEndpoint()); } catch (e) { scheduleRetry(); return; }
-  ws.onopen = () => { wsTries = 0; setDot(true); setWsStatus("connected"); };   // no map push — client owns the map
-  ws.onclose = () => { setDot(false); neutralizeAll(); scheduleRetry(); };
+  ws.onopen = () => { wsTries = 0; setWsStatus("connected"); };   // no map push — client owns the map
+  ws.onclose = () => { neutralizeAll(); scheduleRetry(); updateStatusLight(); };
   ws.onerror = () => { try { ws.close(); } catch (e) {} };   // onclose handles status + retry
   ws.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch { return; }
@@ -273,7 +273,16 @@ function reconnectWS() { wsTries = 0; clearTimeout(wsTimer); try { if (ws) ws.cl
 function okMsg(text) { const el = $("mapMsg"); if (el) { el.className = "ok"; el.textContent = text; } }
 
 // ---- lifecycle / setup ----
-function setDot(ok) { const d = $("wsDot"); if (d) d.className = "dot" + (ok ? " ok" : ""); }
+// Fixed upper-right status light: RED = no server (WS down), YELLOW = server up but not
+// READY (IDLE/CONNECTING), GREEN = READY. Driven by the live WS state + lifecycle.
+function updateStatusLight() {
+  const el = $("statusLight"); if (!el) return;
+  const wsUp = !!(ws && ws.readyState === 1);
+  const c = !wsUp ? "red" : (lifecycle === "READY" ? "green" : "yellow");
+  el.className = "statuslight " + c;
+  el.title = !wsUp ? "No server (WebSocket disconnected)"
+           : (lifecycle === "READY" ? "READY (server + excavator connected)" : "Server connected — " + lifecycle);
+}
 function setLifecycle(state) {
   lifecycle = state;
   $("overlay").classList.toggle("locked", state !== "READY");
@@ -450,11 +459,10 @@ function tbtn(label, cls, on) {
 }
 function renderTopbar() {
   const tb = $("menu"); tb.innerHTML = "";
-  // left cluster: connection dot + lifecycle label + setup button — in one flex group
-  // so they never stack/overlap regardless of width.
+  // left cluster: the setup button(s). The connection/lifecycle is shown by the fixed
+  // status LIGHT (upper-right), not text — so Connect Excavator is the first toolbar item
+  // (it sits right below the upper-left chip).
   const left = el("tgroup");
-  const dot = el("dot"); dot.id = "wsDot"; left.appendChild(dot);
-  left.appendChild(el("lc", "", "<span id='lcText'>" + lifecycle + "</span>"));
   if (lifecycle === "IDLE") left.appendChild(tbtn(tr().connect, "primary connectExc", openWizard));
   else if (lifecycle === "CONNECTING") {
     left.appendChild(tbtn(tr().resume, "primary", openWizard));
@@ -471,7 +479,7 @@ function renderTopbar() {
   right.appendChild(tbtn(tr().layouts, "", () => { location.href = "/?choose=1"; }));
   right.appendChild(tbtn(tr().settings, "", openSettings));
   tb.appendChild(right);
-  setDot(ws && ws.readyState === 1);
+  updateStatusLight();
 }
 // ---- collapsible menu/sidebar (upper-left chip; persisted) ----
 // Collapsed = #menu fully hidden, ONLY the chip shows (STOP stays reachable on the

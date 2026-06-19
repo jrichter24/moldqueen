@@ -5,14 +5,13 @@
    Overlays placed in % over the 1672×941 art; typography uses cqw (1% of stage width)
    so labels scale with the art and always fit their textboxes on any viewport. */
 
-/* ---- collapsible menu: left-edge chip toggles #menu ----
-   Collapsed (#app.navhidden): the menu is fully hidden and only the chip shows; the
-   stage takes the freed width. The chip sits at the LEFT edge, clear of the top status
-   row (it's BELOW the top bar on wide screens; vertically CENTERED in the sidebar's
-   empty middle gap on small screens) so it never covers the "READY" status or a control,
-   in either state. */
+/* ---- collapsible menu: UPPER-LEFT chip toggles #menu ----
+   The chip sits in the upper-left corner (top of the sidebar); "Connect Excavator" is
+   the toolbar's first item and sits right below/after it (the menu reserves start-space).
+   Collapsed (#app.navhidden): the menu is fully hidden and only the chip shows; the chip
+   stays upper-left. */
 #navChip {
-  position: fixed; top: 3.6em; left: .5em; z-index: 25;
+  position: fixed; top: .4em; left: .4em; z-index: 25;
   width: 2em; height: 2em; padding: 0; display: flex; align-items: center; justify-content: center;
   font: 600 1.05em/1 system-ui, sans-serif; color: #cfe0f5;
   background: rgba(12,15,20,.85); border: 1px solid #2f3947; border-radius: .45em;
@@ -21,10 +20,23 @@
 #navChip:hover { background: rgba(28,34,44,.92); }
 #navChip:active { background: rgba(44,52,66,.96); }
 #app.navhidden #menu { display: none; }
+/* reserve room so the first toolbar item clears the upper-left chip and upper-right light */
+#menu { padding-left: 3rem; padding-right: 2.2rem; }   /* top-bar mode */
 @media (max-width: 768px), (max-height: 540px) {
-  /* sidebar mode: drop into the always-empty middle gap (clear of status + controls) */
-  #navChip { top: 50%; transform: translateY(-50%); }
+  #menu { padding-left: .6em; padding-right: .6em; padding-top: 3rem; }   /* sidebar: Connect below the chip */
 }
+
+/* ---- live status LIGHT (fixed upper-right; visible regardless of sidebar state) ----
+   RED = no server (WS down) · YELLOW = server up, not READY · GREEN = READY. A small
+   glowing indicator, no text. */
+.statuslight {
+  position: fixed; top: .6em; right: .6em; z-index: 25;
+  width: 1em; height: 1em; border-radius: 50%; border: 1px solid rgba(0,0,0,.45);
+  background: #e0473d; box-shadow: 0 0 .5em 1px rgba(224,71,61,.85);
+}
+.statuslight.red    { background: #e0473d; box-shadow: 0 0 .5em 1px rgba(224,71,61,.9); }
+.statuslight.yellow { background: #e6b033; box-shadow: 0 0 .5em 1px rgba(230,176,51,.9); }
+.statuslight.green  { background: #43d17a; box-shadow: 0 0 .55em 1px rgba(67,209,122,.95); }
 
 /* ---- the dashboard stage (art-fitted, never the menu) ---- */
 #stagewrap {
