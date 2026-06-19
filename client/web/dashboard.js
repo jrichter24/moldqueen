@@ -18,7 +18,7 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const T = {
   en: { connect: "Connect Excavator", ready: "Ready", reset: "Reset", stop: "STOP", speed: "Speed",
         full: "⛶", settings: "⚙", layouts: "Layouts", close: "Close", lang: "DE", deviceSwap: "Swap hubs 0↔1",
-        saveClose: "Save and Close", discard: "Discard", promote: "Promote → default",
+        saveClose: "Save and Close", discard: "Discard", promote: "Save as default (locally)",
         resetMap: "Reset to default", labelsBtn: "Labels…", back: "Back", revtrim: "Rev ×",
         serverInfo: "ℹ Server info", infoConnectFirst: "Connect first", infoFetching: "Fetching…", infoTier: "tier",
         tabConnection: "Connect API", tabChannels: "Channels", tabLabels: "Labels", tabGamepad: "Gamepad", tabServerInfo: "Server info",
@@ -34,10 +34,10 @@ const T = {
         fn: "Function", slot: "Slot", ch: "Ch", invert: "Inv", maxFwd: "Max ▲", maxRev: "Max ▼", test: "Test",
         maxRevNote: "Max ▲ / ▼ cap forward / reverse speed (1–7). Reverse default is 5: setting Max ▼ too HIGH can drive the motor into a stall near full reverse (it stops moving).",
         labEn: "Label EN", labDe: "Label DE", assign: "Channel assignment",
-        assignSub: "Drag/Test a control, see which motor moves, then set its slot/channel, max and reverse-trim here. Rev× boosts PARTIAL-throttle reverse toward forward speed (it can't exceed full speed). Save for this session, or Promote to save as the new default. Occupied target channels are swapped automatically.",
+        assignSub: "Drag/Test a control, see which motor moves, then set its slot/channel, max and reverse-trim here. Rev× boosts PARTIAL-throttle reverse toward forward speed (it can't exceed full speed). Save for this session, or Save as default (locally) to persist it in this browser. Occupied target channels are swapped automatically.",
         labelsTitle: "Function labels (EN / DE)", labelsSub: "The display name of each function, per language.",
         readyOnly: "test needs READY", confirmed: "confirmed", placeholder: "placeholder",
-        applied: "Applied for this session ✓", promoted: "Saved as default ✓",
+        applied: "Applied for this session ✓", promoted: "Saved as default (locally) ✓",
         swapOn: "swapped", swapOff: "normal", hold: "hold",
         hIdle: "Power on both hubs (one long flash), then press <b>Connect</b>.",
         hConnecting: "Button <b>ONE</b> hub to <b>two fast flashes</b> (slot&nbsp;1); leave the other on one flash (slot&nbsp;0). Then <b>Ready</b>.",
@@ -58,7 +58,7 @@ const T = {
                w4: { t: "Ready ✓", b: "Connected — controls unlocked. You can start driving." } } },
   de: { connect: "Bagger verbinden", ready: "Bereit", reset: "Reset", stop: "STOPP", speed: "Tempo",
         full: "⛶", settings: "⚙", layouts: "Layouts", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
-        saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern",
+        saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern (lokal)",
         resetMap: "Auf Standard zurück", labelsBtn: "Labels…", back: "Zurück", revtrim: "Rev ×",
         serverInfo: "ℹ Server-Info", infoConnectFirst: "Erst verbinden", infoFetching: "Lädt…", infoTier: "Stufe",
         tabConnection: "API verbinden", tabChannels: "Kanäle", tabLabels: "Labels", tabGamepad: "Gamepad", tabServerInfo: "Server-Info",
@@ -74,10 +74,10 @@ const T = {
         fn: "Funktion", slot: "Slot", ch: "Kan", invert: "Inv", maxFwd: "Max ▲", maxRev: "Max ▼", test: "Test",
         maxRevNote: "Max ▲ / ▼ begrenzen Vorwärts- / Rückwärtstempo (1–7). Rückwärts-Standard ist 5: ein zu HOHES Max ▼ kann den Motor nahe Vollgas-Rückwärts in einen Stillstand treiben (er bewegt sich nicht mehr).",
         labEn: "Label EN", labDe: "Label DE", assign: "Kanalzuordnung",
-        assignSub: "Steuerung ziehen/testen, sehen welcher Motor läuft, dann Slot/Kanal, Max und Rückwärts-Trim setzen. Rev× hebt TEILGAS-Rückwärts Richtung Vorwärtstempo an (kann Vollgas nicht überschreiten). Für die Sitzung speichern oder als Standard speichern. Belegte Zielkanäle werden automatisch getauscht.",
+        assignSub: "Steuerung ziehen/testen, sehen welcher Motor läuft, dann Slot/Kanal, Max und Rückwärts-Trim setzen. Rev× hebt TEILGAS-Rückwärts Richtung Vorwärtstempo an (kann Vollgas nicht überschreiten). Für die Sitzung speichern oder lokal als Standard speichern (in diesem Browser). Belegte Zielkanäle werden automatisch getauscht.",
         labelsTitle: "Funktions-Labels (EN / DE)", labelsSub: "Anzeigename jeder Funktion, je Sprache.",
         readyOnly: "Test braucht BEREIT", confirmed: "bestätigt", placeholder: "Platzhalter",
-        applied: "Für Sitzung übernommen ✓", promoted: "Als Standard gespeichert ✓",
+        applied: "Für Sitzung übernommen ✓", promoted: "Als Standard gespeichert (lokal) ✓",
         swapOn: "getauscht", swapOff: "normal", hold: "halten",
         hIdle: "Beide Hubs einschalten (ein langes Blinken), dann <b>Verbinden</b>.",
         hConnecting: "<b>EINEN</b> Hub auf <b>zwei schnelle Blinks</b> (Slot&nbsp;1); den anderen auf einem Blink (Slot&nbsp;0). Dann <b>Bereit</b>.",
@@ -623,9 +623,8 @@ function channelsPanel(t) {
     const opt = (n, sel) => `<option value="${n}"${n === sel ? " selected" : ""}>${n}</option>`;
     const slots = [0, 1, 2].map(n => opt(n, a.slot)).join("");
     const chans = [0, 1, 2, 3].map(n => opt(n, a.channel)).join("");
-    const tag = a.confirmed ? `<span class="tag ok">${t.confirmed}</span>` : `<span class="tag ph">${t.placeholder}</span>`;
     return `<tr data-fn="${fn}">
-      <td class="fn">${funcLabel(fn)}<br><span class="muted">${fn}</span> ${tag}</td>
+      <td class="fn">${funcLabel(fn)}<br><span class="muted">${fn}</span></td>
       <td><select class="e-slot">${slots}</select></td>
       <td><select class="e-ch">${chans}</select></td>
       <td><input type="number" class="e-maxf" min="1" max="7" value="${a.max_fwd || 7}"></td>

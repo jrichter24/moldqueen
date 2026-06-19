@@ -37,7 +37,7 @@
     },
     "arm_lift": {
       "slot": 0,
-      "channel": 1,
+      "channel": 3,
       "invert": false,
       "labels": {
         "en": "Arm up/down",
@@ -54,7 +54,7 @@
     },
     "front_arm": {
       "slot": 0,
-      "channel": 2,
+      "channel": 1,
       "invert": false,
       "labels": {
         "en": "Front arm",
@@ -71,7 +71,7 @@
     },
     "rotation": {
       "slot": 0,
-      "channel": 3,
+      "channel": 2,
       "invert": false,
       "labels": {
         "en": "Rotation",
