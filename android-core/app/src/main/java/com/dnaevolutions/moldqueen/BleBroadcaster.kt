@@ -3,12 +3,12 @@ package com.dnaevolutions.moldqueen
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
-import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
-import android.bluetooth.le.AdvertiseSettings
+import android.bluetooth.le.AdvertisingSet
+import android.bluetooth.le.AdvertisingSetCallback
+import android.bluetooth.le.AdvertisingSetParameters
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
-import android.os.SystemClock
 import android.util.Log
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -28,21 +28,23 @@ interface BleSink {
  * data is:  02 01 02  (Flags AD)  +  1b ff f0 ff <24 crypted bytes>  (manufacturer AD)
  * = 3 + 28 = 31 bytes, exactly the legacy limit. The hub needs that leading Flags
  * structure; Android only emits a Flags AD when the advertisement is CONNECTABLE, so
- * we advertise connectable (with name + TX-power suppressed to stay within 31 bytes).
+ * we advertise legacy + connectable (name + TX-power suppressed to stay within 31 bytes).
  *
- * Repetition comes from the radio itself: ADVERTISE_MODE_LOW_LATENCY re-emits the
- * advert roughly every 100 ms (~10/sec), so a single startAdvertising() keeps the
- * connect/motion frame on-air continuously until the payload changes.
+ * IMPORTANT — keep the hub connected: we use the **AdvertisingSet** API so a NORMAL payload
+ * change (drive / per-channel / release-to-neutral) is applied IN PLACE with
+ * `AdvertisingSet.setAdvertisingData()` on the CONTINUOUSLY-RUNNING advertiser — NO stop/start,
+ * so there is NO transmission gap. The radio re-emits the frame ~10/s (interval 100ms) without
+ * interruption, so the hub never times out to slow-flash. The ONLY teardown is [hardStop]
+ * (cmd:stop): stop the set, then reconnect into a clean neutral. (The legacy startAdvertising +
+ * stop/start-per-change approach starved the hub during driving — that was the regression.)
  */
 class BleBroadcaster(context: Context) : BleSink {
 
     companion object {
         private const val TAG = "Mk4Ble"
         const val COMPANY_ID = 0xFFF0
-        // After ANY stopAdvertising, wait this long before the next startAdvertising. stop/start
-        // are async; starting too soon races -> ADVERTISE_FAILED_ALREADY_STARTED -> the new frame
-        // is dropped and the OLD one keeps repeating. A settle makes every change reliably apply.
-        private const val SETTLE_MS = 110L
+        private const val INTERVAL = 160                 // 0.625ms units; 160 = 100ms (~10/s), matches LOW_LATENCY
+        private const val SETTLE_MS = 120L               // gap after a STOP teardown before re-starting (start/stop are async)
     }
 
     private val adapter: BluetoothAdapter? =
@@ -51,114 +53,100 @@ class BleBroadcaster(context: Context) : BleSink {
     private val advertiser: BluetoothLeAdvertiser?
         get() = adapter?.bluetoothLeAdvertiser
 
-    @Volatile private var advertising = false
-
-    // Serialize all advertiser control on ONE thread; `desired` is the latest wanted payload
-    // (null = OFF). `reconcile()` drives the radio toward `desired`, never starting within
-    // SETTLE_MS of a stop (avoids the ALREADY_STARTED race that drops frames).
+    // All advertiser control (and callbacks) is funnelled onto this ONE thread, so `set`/`starting`
+    // are touched single-threaded.
     private val exec = Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "mk4-ble").apply { isDaemon = true } }
-    @Volatile private var desired: ByteArray? = null
+    @Volatile private var desired: ByteArray? = null     // latest payload wanted (null = OFF)
     @Volatile private var desiredLabel = ""
-    private var started = false          // exec-thread only: startAdvertising issued, not yet stopped
-    private var cooldownUntil = 0L       // exec-thread only: don't start before this (post-stop settle)
+    private var set: AdvertisingSet? = null              // the running advertising set (in-place updatable)
+    private var starting = false                         // startAdvertisingSet issued, awaiting the started callback
 
     /** UI status sink. */
     var onStatus: ((String) -> Unit)? = null
 
-    private val callback = object : AdvertiseCallback() {
-        override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
-            advertising = true
-            Log.i(TAG, "advertising started")
+    private val setCallback = object : AdvertisingSetCallback() {
+        override fun onAdvertisingSetStarted(s: AdvertisingSet?, txPower: Int, status: Int) {
+            exec.execute {
+                starting = false
+                if (status == ADVERTISE_SUCCESS && s != null) { set = s; Log.i(TAG, "advertising set started"); apply() }
+                else { set = null; Log.e(TAG, "advertising set start failed: status=$status"); onStatus?.invoke("Advertise FAILED: status $status") }
+            }
         }
-
-        override fun onStartFailure(errorCode: Int) {
-            advertising = false
-            if (errorCode == ADVERTISE_FAILED_ALREADY_STARTED) {   // our state desynced -> recover
-                exec.execute { started = false; cooldownUntil = SystemClock.elapsedRealtime() + SETTLE_MS; reconcile() }
-            }
-            val msg = when (errorCode) {
-                ADVERTISE_FAILED_DATA_TOO_LARGE -> "DATA_TOO_LARGE (needs extended advertising)"
-                ADVERTISE_FAILED_TOO_MANY_ADVERTISERS -> "TOO_MANY_ADVERTISERS"
-                ADVERTISE_FAILED_ALREADY_STARTED -> "ALREADY_STARTED"
-                ADVERTISE_FAILED_INTERNAL_ERROR -> "INTERNAL_ERROR"
-                ADVERTISE_FAILED_FEATURE_UNSUPPORTED -> "FEATURE_UNSUPPORTED"
-                else -> "error $errorCode"
-            }
-            Log.e(TAG, "advertise failed: $msg")
-            onStatus?.invoke("Advertise FAILED: $msg")
+        override fun onAdvertisingSetStopped(s: AdvertisingSet?) { exec.execute { set = null } }
+        override fun onAdvertisingDataSet(s: AdvertisingSet?, status: Int) {
+            if (status != ADVERTISE_SUCCESS) Log.w(TAG, "setAdvertisingData status=$status")
         }
     }
 
     fun isReady(): Boolean = adapter?.isEnabled == true && advertiser != null
 
-    /** Set the broadcast payload (the radio reconciles to it on its own thread). */
+    /** NORMAL update: set the payload; applied IN PLACE on the running set (no stop/start, no gap). */
     override fun setPayload(bytes: ByteArray, label: String) {
         desired = bytes; desiredLabel = label
-        exec.execute { reconcile() }
+        exec.execute { apply() }
     }
 
     /** Tear the advertiser DOWN (radio OFF). */
     override fun stop() {
         desired = null
-        exec.execute { reconcile() }
+        exec.execute { apply() }
         onStatus?.invoke("Radio stopped")
     }
 
-    /** STOP: KILL the advertiser, then reconnect into a CLEAN neutral — re-send the connect
-     *  telegram, then hold the all-neutral motion frame. The repeated state ends up neutral, so
-     *  no stale non-zero frame can survive. Sequenced (with settles) on the radio thread so each
-     *  start is clean (from a stopped state). */
+    /** STOP only: KILL the advertiser, then RECONNECT into a clean neutral — re-send the connect
+     *  telegram (fresh start), then swap to the all-neutral motion frame IN PLACE. The repeated
+     *  state ends up neutral, so no stale non-zero frame can survive. */
     override fun hardStop(connect: ByteArray, neutral: ByteArray) {
         exec.execute {
-            desired = null; reconcile()                                   // kill (advertiser off)
-            exec.schedule({ desired = connect; desiredLabel = "CONNECT"; reconcile() }, SETTLE_MS, TimeUnit.MILLISECONDS)
-            exec.schedule({ desired = neutral; desiredLabel = "STOP-NEUTRAL"; reconcile() }, SETTLE_MS * 4, TimeUnit.MILLISECONDS)
+            desired = null; apply()                                       // KILL (stop the set)
+            exec.schedule({ desired = connect; desiredLabel = "CONNECT"; apply() }, SETTLE_MS, TimeUnit.MILLISECONDS)
+            exec.schedule({ desired = neutral; desiredLabel = "STOP-NEUTRAL"; apply() }, SETTLE_MS * 3, TimeUnit.MILLISECONDS)
         }
     }
 
-    /** Drive the radio toward `desired`. Runs ONLY on `exec` (single-threaded). Legacy advertising
-     *  can't update data in place, so a change = stop + (settle) + start; a start never happens
-     *  within SETTLE_MS of a stop. */
+    /** Drive the radio toward `desired`. Runs ONLY on `exec`. A running set is updated IN PLACE
+     *  (no gap); starting/stopping the set is the only stop/start, and only happens for the first
+     *  start or a [hardStop]/[stop] teardown. */
     @SuppressLint("MissingPermission")
-    private fun reconcile() {
+    private fun apply() {
         val adv = advertiser
-        if (adapter?.isEnabled != true || adv == null) {
-            onStatus?.invoke("Bluetooth is OFF — enable it and retry"); return
-        }
+        if (adapter?.isEnabled != true || adv == null) { onStatus?.invoke("Bluetooth is OFF — enable it and retry"); return }
         val want = desired
-        val nowMs = SystemClock.elapsedRealtime()
         if (want == null) {                                  // want OFF
-            if (started) { runCatching { adv.stopAdvertising(callback) }; started = false; advertising = false; cooldownUntil = nowMs + SETTLE_MS }
+            if (set != null || starting) { runCatching { adv.stopAdvertisingSet(setCallback) }; set = null; starting = false }
             return
         }
-        if (started) {                                       // replacing -> stop, then restart after the settle
-            runCatching { adv.stopAdvertising(callback) }; started = false; advertising = false; cooldownUntil = nowMs + SETTLE_MS
-            exec.schedule({ reconcile() }, SETTLE_MS, TimeUnit.MILLISECONDS); return
-        }
-        if (nowMs < cooldownUntil) {                         // still settling from a stop -> try again after
-            exec.schedule({ reconcile() }, cooldownUntil - nowMs, TimeUnit.MILLISECONDS); return
-        }
-        val settings = AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-            .setConnectable(true)   // forces Android to prepend the Flags AD the hub expects
-            .setTimeout(0)
-            .build()
-        val data = AdvertiseData.Builder()
-            .setIncludeDeviceName(false)
-            .setIncludeTxPowerLevel(false)
-            .addManufacturerData(COMPANY_ID, want)
-            .build()
-        // Swallow radio errors (e.g. SecurityException without BLUETOOTH_ADVERTISE) — a radio
-        // failure must NEVER break the WS exchange; the client stays unaware.
-        try {
-            adv.startAdvertising(settings, data, callback)
-            started = true
+        val s = set
+        if (s != null) {                                     // RUNNING -> in-place data swap (continuous, no gap)
+            runCatching { s.setAdvertisingData(dataFor(want)) }
+                .onFailure { Log.w(TAG, "setAdvertisingData failed (${it.javaClass.simpleName}: ${it.message})") }
             onStatus?.invoke("$desiredLabel — on-air %dB @0x%04X (~10/s)".format(want.size, COMPANY_ID))
-        } catch (e: Exception) {
-            started = false; advertising = false
-            Log.w(TAG, "advertise call failed (${e.javaClass.simpleName}: ${e.message})")
-            onStatus?.invoke("Radio unavailable: ${e.message}")
+            return
         }
+        if (!starting) {                                     // not running -> start the set ONCE
+            try {
+                adv.startAdvertisingSet(paramsFor(), dataFor(want), null, null, null, setCallback)
+                starting = true
+            } catch (e: Exception) {
+                starting = false
+                Log.w(TAG, "startAdvertisingSet failed (${e.javaClass.simpleName}: ${e.message})")
+                onStatus?.invoke("Radio unavailable: ${e.message}")
+            }
+        }
+        // else: a start is in flight — onAdvertisingSetStarted applies the latest `desired`.
     }
+
+    private fun paramsFor() = AdvertisingSetParameters.Builder()
+        .setLegacyMode(true)                 // legacy 31-byte advertising (what the hub parses)
+        .setConnectable(true)                // -> ADV_IND, Android prepends the Flags AD the hub needs
+        .setScannable(true)                  // legacy connectable == scannable (ADV_IND)
+        .setInterval(INTERVAL)               // ~100ms (10/s), continuous — holds the hub connected
+        .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_HIGH)
+        .build()
+
+    private fun dataFor(bytes: ByteArray) = AdvertiseData.Builder()
+        .setIncludeDeviceName(false)
+        .setIncludeTxPowerLevel(false)
+        .addManufacturerData(COMPANY_ID, bytes)
+        .build()
 }
