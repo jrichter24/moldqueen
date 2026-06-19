@@ -71,3 +71,10 @@ Notes:
 
 The **Pi-served path is unchanged**: `python -m mk4web.api` still serves the same
 UI at `http://<pi>:8080/` with the endpoint defaulting to the Pi.
+
+## 4. No Docker — plain static server (development)
+
+For a zero-tooling dev loop you can skip Docker entirely and serve the client folder
+with any plain static server (`python -m http.server`, `npx serve`), then point it at
+the Pi. See **[DEV_CLIENT.md](DEV_CLIENT.md)** for the exact command, which URL to open
+(`/chooser.html`), and how the client degrades gracefully without the Pi's injection.
