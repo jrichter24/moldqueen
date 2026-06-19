@@ -27,6 +27,11 @@ from .config import SOCK_PATH, HCI, ADV_INTERVAL, REFRESH, RADIO_BACKEND
 log = logging.getLogger("broadcaster")
 NEUTRAL_STATE = [NEUTRAL] * N_CHANNELS
 IDLE, CONNECTING, READY = "IDLE", "CONNECTING", "READY"
+# Independent dead-man's-switch (defense in depth): if the API goes silent (no IPC,
+# incl. forwarded client pings) while READY + non-neutral, NEUTRAL here too. Longer
+# than the API's window so the API neutralizes first in the normal client-quiet case;
+# this catches an API that is alive-but-not-sending.
+WATCHDOG_TIMEOUT = float(os.environ.get("MK4_BCAST_WATCHDOG", "0.7"))
 
 
 class Controller:
@@ -35,7 +40,11 @@ class Controller:
         self.lifecycle = IDLE
         self.nibbles = list(NEUTRAL_STATE)
         self.version = 0
+        self.last_activity = time.monotonic()   # last IPC msg from the API (dead-man's-switch)
         self._lock = threading.Lock()
+
+    def touch(self):
+        self.last_activity = time.monotonic()   # any IPC msg (incl. forwarded client ping) = alive
 
     def set_lifecycle(self, lc):
         with self._lock:
@@ -237,6 +246,11 @@ def broadcast_loop(ctrl, backend, dry, stop_evt):
     while not stop_evt.is_set():
         lc, nibbles, ver = ctrl.snapshot()
         now = time.monotonic()
+        # dead-man's-switch (defense in depth): API silent while READY+non-neutral -> NEUTRAL
+        if lc == READY and nibbles != NEUTRAL_STATE and (now - ctrl.last_activity) > WATCHDOG_TIMEOUT:
+            log.warning("API silent > %dms while READY -> NEUTRAL (broadcaster watchdog)", int(WATCHDOG_TIMEOUT * 1000))
+            ctrl.neutral()
+            lc, nibbles, ver = ctrl.snapshot()   # re-read so this pass broadcasts the neutral
         if lc != prev_lc:
             _enter(prev_lc, lc, nibbles, backend, dry)
             prev_lc, last_ver, last_refresh = lc, ver, now
@@ -299,6 +313,7 @@ def ipc_server(ctrl, stop_evt):
                         msg = json.loads(line)
                     except ValueError:
                         continue
+                    ctrl.touch()                       # any IPC = API alive (feeds the watchdog)
                     cmd = msg.get("cmd")
                     if cmd == "connect":
                         ctrl.set_lifecycle(CONNECTING)
@@ -308,6 +323,8 @@ def ipc_server(ctrl, stop_evt):
                         ctrl.reset_idle()
                     elif msg.get("neutral"):
                         ctrl.neutral()
+                    elif msg.get("ping"):
+                        pass                           # heartbeat: activity already touched above
                     elif "state" in msg:
                         ctrl.set_nibbles(msg["state"])
         finally:

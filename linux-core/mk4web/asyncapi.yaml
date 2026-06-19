@@ -34,6 +34,11 @@ info:
     ## Safety
     On any client disconnect (or no clients), the server commands NEUTRAL. If the
     API process itself dies, the broadcaster reverts to IDLE (advertising off).
+    **Dead-man's-switch:** the client heartbeats (`ping`) ~5/s while READY; if no client
+    message arrives within ~450 ms while READY and state is non-neutral, the server
+    auto-neutrals — so a connected-but-quiet client (frozen tab, stalled input loop,
+    etc.) cannot leave motors latched. The broadcaster has an independent longer-window
+    watchdog (defense in depth) for an API that goes silent.
 
 servers:
   default:
@@ -57,6 +62,7 @@ channels:
     messages:
       set: { $ref: '#/components/messages/Set' }
       stop: { $ref: '#/components/messages/Stop' }
+      ping: { $ref: '#/components/messages/Ping' }
       stateRequest: { $ref: '#/components/messages/StateRequest' }
       setup: { $ref: '#/components/messages/Setup' }
       infoRequest: { $ref: '#/components/messages/InfoRequest' }
@@ -73,6 +79,7 @@ operations:
       - { $ref: '#/channels/control/messages/setup' }
       - { $ref: '#/channels/control/messages/set' }
       - { $ref: '#/channels/control/messages/stop' }
+      - { $ref: '#/channels/control/messages/ping' }
       - { $ref: '#/channels/control/messages/stateRequest' }
       - { $ref: '#/channels/control/messages/infoRequest' }
 
@@ -103,6 +110,16 @@ components:
       title: Stop (all neutral)
       summary: Set all 12 nibbles to neutral. Accepted in any lifecycle state.
       payload: { $ref: '#/components/schemas/StopPayload' }
+    Ping:
+      name: ping
+      title: Heartbeat (dead-man's-switch)
+      summary: |
+        Client liveness heartbeat. The client SHOULD send this on a fixed timer
+        (~5/s) while in READY, independently of motion (so a legitimately held
+        control still heartbeats). If NO client message (ping or any other) arrives
+        within the watchdog window (~450 ms) while READY and state is non-neutral,
+        the server commands NEUTRAL. No response is sent.
+      payload: { $ref: '#/components/schemas/PingPayload' }
     StateRequest:
       name: state
       title: Request current state
@@ -161,6 +178,15 @@ components:
         cmd: { type: string, const: stop }
       examples:
         - { cmd: stop }
+
+    PingPayload:
+      type: object
+      additionalProperties: false
+      required: [cmd]
+      properties:
+        cmd: { type: string, const: ping }
+      examples:
+        - { cmd: ping }
 
     StateRequestPayload:
       type: object

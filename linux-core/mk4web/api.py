@@ -24,7 +24,7 @@ SAFETY: on a client disconnect (or no clients), command the broadcaster to NEUTR
 
 Run:  python -m mk4web.api
 """
-import os, re, json, socket, asyncio, threading, logging, argparse, subprocess, platform
+import os, re, json, time, socket, asyncio, threading, logging, argparse, subprocess, platform
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from websockets.asyncio.server import serve
@@ -143,6 +143,7 @@ class IPCClient:
     def setup(self, action):   self._send({"cmd": action})         # connect|ready|reset
     def send_state(self, nb):  self._send({"state": nb})
     def send_neutral(self):    self._send({"neutral": True})
+    def ping(self):            self._send({"ping": True})           # forward client heartbeat (broadcaster watchdog)
 
 
 class App:
@@ -167,6 +168,12 @@ class App:
 ipc = IPCClient(SOCK_PATH)
 app = App()
 clients = set()
+
+# ---- dead-man's-switch: a connected-but-quiet client must NOT leave motors latched.
+# The client heartbeats ({cmd:ping}) ~5/s while READY; ANY message refreshes activity.
+# If nothing arrives within WATCHDOG_TIMEOUT while READY and state != neutral, NEUTRAL.
+WATCHDOG_TIMEOUT = float(os.environ.get("MK4_WATCHDOG", "0.45"))   # seconds (~2.25 missed 200ms pings)
+last_client_activity = 0.0
 
 
 def state_json():
@@ -222,19 +229,40 @@ async def push(msg):
         await asyncio.gather(*(c.send(msg) for c in list(clients)), return_exceptions=True)
 
 
+async def watchdog():
+    """Dead-man's-switch: if no client message (heartbeat or otherwise) arrives within
+    WATCHDOG_TIMEOUT while READY and the state is non-neutral, command NEUTRAL. Protects
+    against ANY quiet client (joystick, gamepad, custom) — including the frozen-gamepad /
+    stalled-loop runaway. Keyed on the CLIENT heartbeat, NOT the broadcaster's keepalive."""
+    while True:
+        await asyncio.sleep(0.1)
+        if (app.lifecycle == READY and app.nibbles != NEUTRAL_STATE
+                and (time.monotonic() - last_client_activity) > WATCHDOG_TIMEOUT):
+            log.warning("client quiet > %dms while READY -> NEUTRAL (dead-man's-switch)",
+                        int(WATCHDOG_TIMEOUT * 1000))
+            app.stop()
+            ipc.send_neutral()
+            await push(state_json())
+
+
 async def handler(websocket):
+    global last_client_activity
     clients.add(websocket)
+    last_client_activity = time.monotonic()           # fresh on connect (watchdog)
     log.info("WS client connected; clients=%d", len(clients))
     try:
         await websocket.send(lifecycle_json())
         await websocket.send(state_json())
         async for raw in websocket:
+            last_client_activity = time.monotonic()    # ANY message proves the client is alive
             try:
                 msg = json.loads(raw)
             except ValueError:
                 continue
             cmd = msg.get("cmd")
-            if cmd == "setup":
+            if cmd == "ping":                          # heartbeat: refresh activity (above) + feed broadcaster
+                ipc.ping()
+            elif cmd == "setup":
                 action = msg.get("action")
                 if action in ("connect", "ready", "reset"):
                     app.lifecycle = {"connect": CONNECTING, "ready": READY, "reset": IDLE}[action]
@@ -370,6 +398,7 @@ async def amain(serve_client, http_port):
     # the Pi and is unaffected — only this API faces clients.
     async with serve(handler, HOST, WS_PORT):
         log.info("WebSocket API on ws://%s:%d (any origin accepted — LAN tool)", HOST, WS_PORT)
+        asyncio.create_task(watchdog())     # dead-man's-switch: quiet client -> NEUTRAL
         await asyncio.Future()
 
 
