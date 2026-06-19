@@ -347,7 +347,7 @@ function driveFn(fn, v) {
 const REFRESH_MS = 100;
 function refreshActive() {
   if (!(ws && ws.readyState === 1) || lifecycle !== "READY") return;
-  if (stopLatched) { send({ cmd: "stop" }); return; }   // ABSOLUTE STOP: assert neutral, refresh NOTHING
+  if (stopLatched) return;   // ABSOLUTE STOP: refresh NOTHING (the one cmd:stop already killed+reconnected the radio to neutral)
   for (const fn of FN) {
     const v = intent[fn] | 0;
     if (v === 0) continue;
@@ -545,10 +545,8 @@ function doReset() { send({ cmd: "setup", action: "reset" }); }
 // sends cmd:stop, and disables the gamepad.
 function stopAll() {
   stopLatched = true;
-  neutralizeAll();                         // intent -> 0 for all; reset controls
-  for (let s = 0; s < 3; s++) for (let c = 0; c < 4; c++)
-    send({ cmd: "set", slot: s, channel: c, value: 0 });   // FORCE neutral, every channel, no dedup
-  send({ cmd: "stop" });                   // belt-and-braces all-neutral
+  neutralizeAll();                         // intent -> 0 for all; reset controls (force-sends per-fn 0)
+  send({ cmd: "stop" });                   // -> server TEARS DOWN the radio and RECONNECTS it at neutral
   padSuppressed = true;
   if (padEnabled) setPadEnabled(false);    // disable the gamepad until explicitly re-enabled
 }

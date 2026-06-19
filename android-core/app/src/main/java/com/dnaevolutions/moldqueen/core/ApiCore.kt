@@ -18,6 +18,7 @@ interface Radio {
     fun setup(action: String)          // connect | ready | reset
     fun sendState(nibbles: IntArray)   // motion nibbles changed
     fun sendNeutral()                  // force neutral
+    fun hardStop()                     // STOP: tear the radio down + reconnect at neutral
 }
 
 /** Supplies the server-info field VALUES; ApiCore applies the tier logic (api.py info_json). */
@@ -69,8 +70,8 @@ class ApiCore(
     @Synchronized
     fun onDisconnect(c: ClientSink) {
         clients.remove(c)
-        app.stop()                         // SAFETY: client gone -> neutral
-        radio.sendNeutral()
+        app.stop()                         // SAFETY: client gone -> kill the radio + reconnect at neutral
+        radio.hardStop()
         push(stateJson())
     }
 
@@ -97,7 +98,7 @@ class ApiCore(
             }
             "stop" -> {
                 app.stop()
-                radio.sendNeutral()
+                radio.hardStop()           // KILL the radio + RECONNECT at neutral (no stale frame survives)
                 push(stateJson())
             }
             "state" -> {

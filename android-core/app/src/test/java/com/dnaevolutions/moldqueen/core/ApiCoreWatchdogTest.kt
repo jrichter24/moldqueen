@@ -23,6 +23,7 @@ class ApiCoreWatchdogTest {
             override fun setup(action: String) {}
             override fun sendState(nibbles: IntArray) {}
             override fun sendNeutral() {}
+            override fun hardStop() {}
         }
         val info = object : InfoConfig {
             override val level = "safe"; override val version = "t"; override val radioBackend = "x"

@@ -143,6 +143,7 @@ class IPCClient:
     def setup(self, action):   self._send({"cmd": action})         # connect|ready|reset
     def send_state(self, nb):  self._send({"state": nb})
     def send_neutral(self):    self._send({"neutral": True})
+    def hard_stop(self):       self._send({"killreconnect": True})  # STOP: tear down radio + reconnect at neutral
 
 
 class App:
@@ -282,7 +283,7 @@ async def handler(websocket):
                     await push(state_json())
             elif cmd == "stop":
                 app.stop()
-                ipc.send_neutral()
+                ipc.hard_stop()        # KILL the radio + RECONNECT at neutral (no stale state can be repeated)
                 await push(state_json())
             elif cmd == "state":
                 await websocket.send(lifecycle_json())

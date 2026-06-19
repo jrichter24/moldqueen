@@ -2,11 +2,13 @@ package com.dnaevolutions.moldqueen.service
 
 import com.dnaevolutions.moldqueen.BleSink
 import com.dnaevolutions.moldqueen.Mk4Telegrams
+import com.dnaevolutions.moldqueen.MouldKingCrypt
 import com.dnaevolutions.moldqueen.core.ApiCore
 import com.dnaevolutions.moldqueen.core.ClientSink
 import com.dnaevolutions.moldqueen.core.ControlApp
 import com.dnaevolutions.moldqueen.core.InfoConfig
 import org.json.JSONObject
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -18,9 +20,11 @@ import org.junit.Test
 class RadioControllerDedupTest {
 
     private class FakeBle : BleSink {
-        var motion = 0
+        var motion = 0; var hardStops = 0
+        var lastConnect: ByteArray? = null; var lastNeutral: ByteArray? = null
         override fun setPayload(bytes: ByteArray, label: String) { if (label == "MOTION") motion++ }
         override fun stop() {}
+        override fun hardStop(connect: ByteArray, neutral: ByteArray) { hardStops++; lastConnect = connect; lastNeutral = neutral }
     }
 
     private fun neutral() = IntArray(Mk4Telegrams.N_CHANNELS) { Mk4Telegrams.NEUTRAL }
@@ -52,6 +56,17 @@ class RadioControllerDedupTest {
         val c = ble.motion
         rc.sendNeutral()                                   // gamepad-disconnect / per-channel timeout path
         assertEquals("sendNeutral after drive advertises", c + 1, ble.motion)
+    }
+
+    @Test
+    fun hardStopKillsAndReconnectsAtNeutral() {
+        val ble = FakeBle(); val rc = RadioController(ble)
+        rc.setup("ready"); rc.sendState(drive(4))          // driving a non-zero
+        rc.hardStop()                                      // STOP
+        assertEquals("STOP tears down + reconnects the radio once", 1, ble.hardStops)
+        val neutralMotion = MouldKingCrypt.encode(Mk4Telegrams.motionRawHexNibbles(neutral()))
+        assertArrayEquals("reconnect payload = all-neutral (0x8) motion telegram", neutralMotion, ble.lastNeutral)
+        assertArrayEquals("reconnect re-sends the connect telegram", Mk4Telegrams.connect(), ble.lastConnect)
     }
 
     // End-to-end through the real ApiCore: the client keepalive re-sends the same `set` ~10/s,

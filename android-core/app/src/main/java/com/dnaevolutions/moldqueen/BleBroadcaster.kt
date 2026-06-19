@@ -8,12 +8,16 @@ import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
+import android.os.SystemClock
 import android.util.Log
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /** Minimal advertiser seam (so RadioController is unit-testable without the Android radio). */
 interface BleSink {
     fun setPayload(bytes: ByteArray, label: String)
     fun stop()
+    fun hardStop(connect: ByteArray, neutral: ByteArray)   // STOP: kill the radio + reconnect at neutral
 }
 
 /**
@@ -35,6 +39,10 @@ class BleBroadcaster(context: Context) : BleSink {
     companion object {
         private const val TAG = "Mk4Ble"
         const val COMPANY_ID = 0xFFF0
+        // After ANY stopAdvertising, wait this long before the next startAdvertising. stop/start
+        // are async; starting too soon races -> ADVERTISE_FAILED_ALREADY_STARTED -> the new frame
+        // is dropped and the OLD one keeps repeating. A settle makes every change reliably apply.
+        private const val SETTLE_MS = 110L
     }
 
     private val adapter: BluetoothAdapter? =
@@ -44,6 +52,15 @@ class BleBroadcaster(context: Context) : BleSink {
         get() = adapter?.bluetoothLeAdvertiser
 
     @Volatile private var advertising = false
+
+    // Serialize all advertiser control on ONE thread; `desired` is the latest wanted payload
+    // (null = OFF). `reconcile()` drives the radio toward `desired`, never starting within
+    // SETTLE_MS of a stop (avoids the ALREADY_STARTED race that drops frames).
+    private val exec = Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "mk4-ble").apply { isDaemon = true } }
+    @Volatile private var desired: ByteArray? = null
+    @Volatile private var desiredLabel = ""
+    private var started = false          // exec-thread only: startAdvertising issued, not yet stopped
+    private var cooldownUntil = 0L       // exec-thread only: don't start before this (post-stop settle)
 
     /** UI status sink. */
     var onStatus: ((String) -> Unit)? = null
@@ -56,6 +73,9 @@ class BleBroadcaster(context: Context) : BleSink {
 
         override fun onStartFailure(errorCode: Int) {
             advertising = false
+            if (errorCode == ADVERTISE_FAILED_ALREADY_STARTED) {   // our state desynced -> recover
+                exec.execute { started = false; cooldownUntil = SystemClock.elapsedRealtime() + SETTLE_MS; reconcile() }
+            }
             val msg = when (errorCode) {
                 ADVERTISE_FAILED_DATA_TOO_LARGE -> "DATA_TOO_LARGE (needs extended advertising)"
                 ADVERTISE_FAILED_TOO_MANY_ADVERTISERS -> "TOO_MANY_ADVERTISERS"
@@ -71,15 +91,52 @@ class BleBroadcaster(context: Context) : BleSink {
 
     fun isReady(): Boolean = adapter?.isEnabled == true && advertiser != null
 
-    /** Replace the broadcast payload; restarts advertising so the new frame goes out.
-     *  MUST be called only on a CHANGE (RadioController dedups) — calling it at the keepalive
-     *  rate churns the async start/stop and drops frames (incl. the release neutral). */
-    @SuppressLint("MissingPermission")
+    /** Set the broadcast payload (the radio reconciles to it on its own thread). */
     override fun setPayload(bytes: ByteArray, label: String) {
+        desired = bytes; desiredLabel = label
+        exec.execute { reconcile() }
+    }
+
+    /** Tear the advertiser DOWN (radio OFF). */
+    override fun stop() {
+        desired = null
+        exec.execute { reconcile() }
+        onStatus?.invoke("Radio stopped")
+    }
+
+    /** STOP: KILL the advertiser, then reconnect into a CLEAN neutral — re-send the connect
+     *  telegram, then hold the all-neutral motion frame. The repeated state ends up neutral, so
+     *  no stale non-zero frame can survive. Sequenced (with settles) on the radio thread so each
+     *  start is clean (from a stopped state). */
+    override fun hardStop(connect: ByteArray, neutral: ByteArray) {
+        exec.execute {
+            desired = null; reconcile()                                   // kill (advertiser off)
+            exec.schedule({ desired = connect; desiredLabel = "CONNECT"; reconcile() }, SETTLE_MS, TimeUnit.MILLISECONDS)
+            exec.schedule({ desired = neutral; desiredLabel = "STOP-NEUTRAL"; reconcile() }, SETTLE_MS * 4, TimeUnit.MILLISECONDS)
+        }
+    }
+
+    /** Drive the radio toward `desired`. Runs ONLY on `exec` (single-threaded). Legacy advertising
+     *  can't update data in place, so a change = stop + (settle) + start; a start never happens
+     *  within SETTLE_MS of a stop. */
+    @SuppressLint("MissingPermission")
+    private fun reconcile() {
         val adv = advertiser
         if (adapter?.isEnabled != true || adv == null) {
-            onStatus?.invoke("Bluetooth is OFF — enable it and retry")
+            onStatus?.invoke("Bluetooth is OFF — enable it and retry"); return
+        }
+        val want = desired
+        val nowMs = SystemClock.elapsedRealtime()
+        if (want == null) {                                  // want OFF
+            if (started) { runCatching { adv.stopAdvertising(callback) }; started = false; advertising = false; cooldownUntil = nowMs + SETTLE_MS }
             return
+        }
+        if (started) {                                       // replacing -> stop, then restart after the settle
+            runCatching { adv.stopAdvertising(callback) }; started = false; advertising = false; cooldownUntil = nowMs + SETTLE_MS
+            exec.schedule({ reconcile() }, SETTLE_MS, TimeUnit.MILLISECONDS); return
+        }
+        if (nowMs < cooldownUntil) {                         // still settling from a stop -> try again after
+            exec.schedule({ reconcile() }, cooldownUntil - nowMs, TimeUnit.MILLISECONDS); return
         }
         val settings = AdvertiseSettings.Builder()
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
@@ -90,36 +147,18 @@ class BleBroadcaster(context: Context) : BleSink {
         val data = AdvertiseData.Builder()
             .setIncludeDeviceName(false)
             .setIncludeTxPowerLevel(false)
-            .addManufacturerData(COMPANY_ID, bytes)
+            .addManufacturerData(COMPANY_ID, want)
             .build()
-        // Swallow radio errors (e.g. SecurityException when BLUETOOTH_ADVERTISE isn't
-        // granted yet) — like the Pi's IPCClient swallows OSError. A radio failure must
-        // NEVER break the WS exchange/contract; the client stays unaware.
+        // Swallow radio errors (e.g. SecurityException without BLUETOOTH_ADVERTISE) — a radio
+        // failure must NEVER break the WS exchange; the client stays unaware.
         try {
-            if (advertising) {
-                adv.stopAdvertising(callback)
-                advertising = false
-            }
             adv.startAdvertising(settings, data, callback)
-            onStatus?.invoke("$label — on-air %dB @0x%04X (~10/s)".format(bytes.size, COMPANY_ID))
+            started = true
+            onStatus?.invoke("$desiredLabel — on-air %dB @0x%04X (~10/s)".format(want.size, COMPANY_ID))
         } catch (e: Exception) {
-            advertising = false
+            started = false; advertising = false
             Log.w(TAG, "advertise call failed (${e.javaClass.simpleName}: ${e.message})")
             onStatus?.invoke("Radio unavailable: ${e.message}")
         }
-    }
-
-    @SuppressLint("MissingPermission")
-    override fun stop() {
-        try {
-            if (advertising) {
-                advertiser?.stopAdvertising(callback)
-                advertising = false
-            }
-        } catch (e: Exception) {
-            advertising = false
-            Log.w(TAG, "stopAdvertising failed (${e.javaClass.simpleName}: ${e.message})")
-        }
-        onStatus?.invoke("Radio stopped")
     }
 }

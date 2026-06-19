@@ -41,6 +41,15 @@ class RadioController(private val ble: BleSink) : Radio {
         if (lifecycle == "READY") advertiseMotion()   // CONNECTING keeps the connect telegram
     }
 
+    // STOP: KILL the radio + RECONNECT at neutral. The BLE keepalive repeats its last frame
+    // forever, so a dropped neutral leaves a stale non-zero running; tearing the advertiser down
+    // and re-establishing a clean neutral guarantees the repeated frame is neutral.
+    override fun hardStop() {
+        nibbles = neutral()
+        ble.hardStop(Mk4Telegrams.connect(),
+                     MouldKingCrypt.encode(Mk4Telegrams.motionRawHexNibbles(nibbles)))
+    }
+
     private fun advertiseMotion() =
         ble.setPayload(MouldKingCrypt.encode(Mk4Telegrams.motionRawHexNibbles(nibbles)), "MOTION")
 

@@ -40,10 +40,24 @@ class Controller:
         self.nibbles = list(NEUTRAL_STATE)
         self.version = 0
         self.last_activity = time.monotonic()   # last IPC from the API (coarse dead-man's-switch)
+        self.restart = False                    # STOP requested a radio teardown + reconnect-at-neutral
         self._lock = threading.Lock()
 
     def touch(self):
         self.last_activity = time.monotonic()   # any IPC message = API alive
+
+    def request_restart(self):
+        """STOP: force NEUTRAL and request a full radio kill+reconnect (the broadcast loop
+        tears the advertiser down and re-establishes a clean neutral, so the keepalive can
+        NEVER repeat a stale non-zero frame)."""
+        with self._lock:
+            self.nibbles = list(NEUTRAL_STATE)
+            self.restart = True
+            self.version += 1
+
+    def take_restart(self):
+        with self._lock:
+            r = self.restart; self.restart = False; return r
 
     def set_lifecycle(self, lc):
         with self._lock:
@@ -240,11 +254,34 @@ def _enter(prev, lc, nibbles, backend, dry):
         _preview(backend, ops)
 
 
+def _kill_reconnect(backend, dry):
+    """STOP: tear the advertiser DOWN, then reconnect into a CLEAN neutral state — re-send the
+    connect telegram, then broadcast the all-neutral motion telegram. The repeated/keepalive
+    state is now neutral, so no stale non-zero frame can survive anywhere."""
+    neutral_raw = motion_raw(NEUTRAL_STATE)
+    ops = [("adv", False), ("params", None), ("data", CONNECT_RAW), ("adv", True), ("data", neutral_raw)]
+    if dry:
+        log.warning("[dry-run] STOP kill+reconnect: adv OFF -> connect=%s -> neutral motion=%s (held=%s)",
+                    CONNECT_RAW, neutral_raw, " ".join("%x" % n for n in NEUTRAL_STATE))
+        _preview(backend, ops)
+    else:
+        _run_ops(backend, ops)
+        log.warning("STOP: radio torn down + reconnected at NEUTRAL (held = %s)",
+                    " ".join("%x" % n for n in NEUTRAL_STATE))
+
+
 def broadcast_loop(ctrl, backend, dry, stop_evt):
     prev_lc, last_ver, last_refresh = None, -1, 0.0
     while not stop_evt.is_set():
         lc, nibbles, ver = ctrl.snapshot()
         now = time.monotonic()
+        # STOP: kill the radio + reconnect at neutral (defeats the keepalive's stale-state repeat)
+        if ctrl.take_restart():
+            if lc == READY:
+                _kill_reconnect(backend, dry)
+            lc, nibbles, ver = ctrl.snapshot()       # nibbles are neutral now
+            prev_lc, last_ver, last_refresh = lc, ver, now   # resync (don't double-enter/re-broadcast)
+            time.sleep(0.05); continue
         # coarse dead-man's-switch (defense in depth): API silent while READY+non-neutral -> NEUTRAL
         if lc == READY and nibbles != NEUTRAL_STATE and (now - ctrl.last_activity) > WATCHDOG_TIMEOUT:
             log.warning("API silent > %dms while READY -> NEUTRAL (broadcaster watchdog)", int(WATCHDOG_TIMEOUT * 1000))
@@ -320,6 +357,8 @@ def ipc_server(ctrl, stop_evt):
                         ctrl.set_lifecycle(READY)
                     elif cmd == "reset":
                         ctrl.reset_idle()
+                    elif msg.get("killreconnect"):
+                        ctrl.request_restart()         # STOP: kill the radio + reconnect at neutral
                     elif msg.get("neutral"):
                         ctrl.neutral()
                     elif "state" in msg:
