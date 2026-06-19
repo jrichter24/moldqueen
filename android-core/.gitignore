@@ -10,3 +10,6 @@ local.properties
 .idea/
 captures/
 .cxx/
+
+# local monotonic build-number counter (baked into the APK; not tracked to avoid churn)
+app/buildnum.properties

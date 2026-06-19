@@ -91,7 +91,7 @@ class ApiCore(
                 }
             }
             "set" -> if (app.lifecycle == READY) {   // the ONLY motion primitive
-                app.set(optIntOrNull(msg, "slot"), optIntOrNull(msg, "channel"), optIntOrNull(msg, "value"))
+                app.set(optIntOrNull(msg, "slot"), optIntOrNull(msg, "channel"), optIntOrNull(msg, "value"), System.nanoTime())
                 radio.sendState(app.nibbles)
                 push(stateJson())
             }
@@ -142,6 +142,22 @@ class ApiCore(
         return o.toString()
     }
 
+    /**
+     * Per-channel dead-man's-switch (parity with api.py channel_watchdog): neutralize any
+     * channel the client stopped re-affirming. Covers gamepad death, frozen axis, stalled
+     * loop AND client death with one mechanism. Call periodically from a timer. Returns true
+     * if it fired.
+     */
+    @Synchronized
+    fun tickWatchdog(): Boolean {
+        if (app.lifecycle == READY && app.reapStale(System.nanoTime(), CHANNEL_TIMEOUT_NS)) {
+            radio.sendState(app.nibbles)
+            push(stateJson())
+            return true
+        }
+        return false
+    }
+
     private fun push(text: String) {
         val snapshot = synchronized(clients) { clients.toList() }
         for (cl in snapshot) runCatching { cl.send(text) }
@@ -154,5 +170,10 @@ class ApiCore(
             is Long -> v.toInt()
             else -> null
         }
+    }
+
+    companion object {
+        // Per-channel refresh window (matches api.py MK4_CHANNEL_TIMEOUT=0.3s). Client re-affirms ~10/s.
+        private const val CHANNEL_TIMEOUT_NS = 300_000_000L
     }
 }

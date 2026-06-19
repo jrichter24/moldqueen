@@ -10,6 +10,9 @@ import com.dnaevolutions.moldqueen.core.InfoConfig
 import fi.iki.elonen.NanoHTTPD
 import org.json.JSONObject
 import java.net.InetSocketAddress
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 /**
  * The single service: a DUMB-transport WS API + the local client HTTP server, in one
@@ -29,6 +32,7 @@ class Mk4Service(context: Context) {
 
     private var wsServer: Mk4WsServer? = null
     private var httpServer: ClientHttpServer? = null
+    private var watchdog: ScheduledExecutorService? = null
 
     fun start() {
         if (wsServer == null) {
@@ -42,10 +46,19 @@ class Mk4Service(context: Context) {
                 it.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
             }
         }
+        if (watchdog == null) {
+            // per-channel dead-man's-switch: poll ApiCore; un-refreshed channels -> NEUTRAL (parity with api.py)
+            watchdog = Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "mk4-watchdog") }.also {
+                it.scheduleAtFixedRate({
+                    runCatching { if (core.tickWatchdog()) Log.w(TAG, "channel not refreshed -> NEUTRAL (dead-man's-switch)") }
+                }, 50, 50, TimeUnit.MILLISECONDS)
+            }
+        }
         Log.i(TAG, "Mk4Service started; client http://127.0.0.1:$HTTP_PORT  ·  WS ws://127.0.0.1:$WS_PORT")
     }
 
     fun stop() {
+        watchdog?.let { runCatching { it.shutdownNow() } }; watchdog = null
         wsServer?.let { runCatching { it.stop(1000) } }; wsServer = null
         httpServer?.let { runCatching { it.stop() } }; httpServer = null
         ble.stop()
@@ -58,7 +71,9 @@ class Mk4Service(context: Context) {
 
     private class AndroidInfoConfig(private val ctx: Context) : InfoConfig {
         override val level = "light"
-        override val version = "0.1.0"          // matches config.VERSION
+        // version + BUILD NUMBER — shows in the client's Server-info tab so the running build
+        // is verifiable on-device (also in the APK versionName via adb).
+        override val version = "0.1.0+build.${com.dnaevolutions.moldqueen.BuildConfig.BUILD_NUMBER}"
         override val radioBackend = "android-ble"
         override val dryRun = false
         override val hci = "android-ble"

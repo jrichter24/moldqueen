@@ -31,9 +31,16 @@ info:
     `0` = `0x8` neutral/stop, `+7` = `0xF` (one direction), `-7` = `0x1` (the other).
     State is reported back as the signed `value` (`-7..+7`), not the raw nibble.
 
-    ## Safety
-    On any client disconnect (or no clients), the server commands NEUTRAL. If the
-    API process itself dies, the broadcaster reverts to IDLE (advertising off).
+    ## Safety — affirmative motion-keepalive (dead-man's-switch)
+    Motion is HELD ONLY WHILE ACTIVELY RE-AFFIRMED. The client re-sends each non-neutral
+    channel's `set` on a ~100 ms timer for as long as a live input is producing it; the
+    server NEUTRALIZES any non-neutral channel not refreshed within ~300 ms (per channel).
+    So a channel goes neutral the moment refresh stops — gamepad disconnect/death, a frozen
+    axis, a stalled input loop, or a dead client all converge to "no refresh -> neutral",
+    with no input-specific logic. (There is no blind heartbeat; the refresh IS the liveness
+    signal.) On any client disconnect (or no clients) the server also commands NEUTRAL, and
+    if the API process dies the broadcaster reverts to IDLE (advertising off). The broadcaster
+    keeps an independent coarse no-IPC watchdog as defense in depth.
 
 servers:
   default:

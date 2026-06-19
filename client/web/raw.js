@@ -10,6 +10,8 @@ const NEUTRAL_NIB = 0x8;
 
 let ws = null, lifecycle = "IDLE";
 let slotCount = 1;                                   // active slots (1-3)
+let rawDriving = false;                              // affirm vals only after an explicit Send
+                                                     // (cleared by Neutral/Stop/leaving READY)
 const vals = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];  // signed value per slot/channel
 let pendingSend = null;                              // {raw, fallback timer}
 
@@ -56,8 +58,19 @@ function onState(m) {
 function setDot(ok) { const d = $("wsDot"); if (d) d.className = "dot" + (ok ? " ok" : ""); }
 function setLifecycle(state) {
   const prev = lifecycle; lifecycle = state;
+  if (state !== "READY") rawDriving = false;          // leaving READY stops affirming
   if (prev !== state) logInfo("lifecycle → " + state + (state === "CONNECTING" ? "  (connect telegram: adae18808080f352)" : ""));
   renderMenu(); updateGate(); wizardOnLifecycle(state);
+}
+// Affirmative motion-keepalive (mirrors dashboard.js): the server times out any non-neutral
+// channel not refreshed ~3/0.3s, so re-send the sent vals ~10/s while DRIVING + READY.
+const REFRESH_MS = 100;
+function refreshActive() {
+  if (!(ws && ws.readyState === 1) || lifecycle !== "READY" || !rawDriving) return;
+  for (let s = 0; s < 3; s++) for (let c = 0; c < 4; c++) {
+    const v = s < slotCount ? vals[s][c] : 0;
+    if (v !== 0) send({ cmd: "set", slot: s, channel: c, value: v });   // re-affirm active channels
+  }
 }
 
 // ---- menu (same shell/look as the dashboard) ----
@@ -90,8 +103,9 @@ function toggleFull() {
   else document.exitFullscreen && document.exitFullscreen();
 }
 function doReset() { send({ cmd: "setup", action: "reset" }); }
-function doStop() { send({ cmd: "stop" }); logInfo("STOP — all neutral"); }
+function doStop() { rawDriving = false; send({ cmd: "stop" }); logInfo("STOP — all neutral"); }
 function doNeutral() {
+  rawDriving = false;
   for (let s = 0; s < 3; s++) for (let c = 0; c < 4; c++) vals[s][c] = 0;
   buildSlots(); updatePreview();
   send({ cmd: "stop" }); logInfo("NEUTRAL — channels zeroed");
@@ -262,6 +276,7 @@ function updateGate() {
 
 function doSend() {
   if (lifecycle !== "READY") { logInfo("Send ignored — not READY"); return; }
+  rawDriving = true;                          // start affirming (keepalive holds it on the server)
   const target = motionRaw();
   // send a raw set for every channel (active = value, inactive slot = neutral)
   for (let s = 0; s < 3; s++) for (let c = 0; c < 4; c++) send({ cmd: "set", slot: s, channel: c, value: s < slotCount ? vals[s][c] : 0 });
@@ -289,3 +304,4 @@ buildMain();
 renderMenu();
 logInfo("RAW debug — Connect → Ready, set channels, Send. Dry-run safe on isolated ports.");
 connect();
+setInterval(refreshActive, REFRESH_MS);   // affirmative motion-keepalive (server times out un-refreshed channels)

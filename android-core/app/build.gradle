@@ -3,6 +3,19 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+// Monotonic BUILD NUMBER (not a release version) — auto-increments each Gradle configuration
+// so every APK is uniquely identifiable. Baked into versionName AND BuildConfig.BUILD_NUMBER
+// (surfaced in-app via server-info) so we can confirm WHICH build is on the device. The counter
+// file is local-only (.gitignored) to avoid commit churn; a fresh clone starts at 1.
+def buildNumberFile = file('buildnum.properties')
+def buildNumber = 1
+if (buildNumberFile.exists()) {
+    def p = new Properties()
+    buildNumberFile.withInputStream { p.load(it) }
+    buildNumber = ((p.getProperty('build') ?: '0') as int) + 1
+}
+buildNumberFile.text = "build=${buildNumber}\n"
+
 android {
     namespace 'com.dnaevolutions.moldqueen'
     compileSdk 33
@@ -12,8 +25,13 @@ android {
         applicationId 'com.dnaevolutions.moldqueen'
         minSdk 31
         targetSdk 33
-        versionCode 1
-        versionName '0.1-radio-proof'
+        versionCode buildNumber
+        versionName "0.1-radio-proof+build.${buildNumber}"
+        buildConfigField 'int', 'BUILD_NUMBER', "${buildNumber}"
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     buildTypes {

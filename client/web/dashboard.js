@@ -303,7 +303,9 @@ function el(cls, style, html) {
 }
 
 const controls = [];   // {fn, reset()} — for global neutralize
-const lastVal = {};    // fn -> last value sent (throttle)
+const lastVal = {};    // fn -> last value sent (dedup for NON-ZERO only)
+const intent = {};     // fn -> value the active input currently wants; refreshActive() re-affirms
+                       // non-zero ones ~10/s so the server holds a channel ONLY while actively driven.
 
 // Full client-side resolution (the server is dumb transport now). Mirrors the old
 // channelmap.resolve: reverse_scale (gated on the PRE-invert sign) → invert → per-direction
@@ -326,10 +328,27 @@ function resolveDrive(fn, v) {
 }
 function driveFn(fn, v) {
   v = clamp(v | 0, -7, 7);
-  if (lastVal[fn] === v) return;
+  intent[fn] = v;                                            // affirmative-keepalive source of truth
+  // SAFETY: a 0 (stop/release) is ALWAYS sent — never dropped by the dedup. Only NON-ZERO
+  // repeats are deduped (the keepalive re-affirms them); a desynced mirror can't swallow a stop.
+  if (v !== 0 && lastVal[fn] === v) return;
   lastVal[fn] = v;
   const r = resolveDrive(fn, v);                              // client owns resolution
   if (r) send({ cmd: "set", slot: r.slot, channel: r.channel, value: r.value });   // honored only in READY
+}
+// Affirmative motion-keepalive: re-send every ACTIVE non-neutral channel ~10/s while READY.
+// A channel is held alive ONLY by active refresh — when the input stops producing it (stick
+// released, gamepad dies, loop stalls, client dies), the refresh stops and the server times
+// the channel out. Neutral channels are NOT refreshed. This REPLACES the old blind heartbeat.
+const REFRESH_MS = 100;
+function refreshActive() {
+  if (!(ws && ws.readyState === 1) || lifecycle !== "READY") return;
+  for (const fn of FN) {
+    const v = intent[fn] | 0;
+    if (v === 0) continue;
+    const r = resolveDrive(fn, v);
+    if (r) send({ cmd: "set", slot: r.slot, channel: r.channel, value: r.value });   // re-affirm (no dedup)
+  }
 }
 
 function buildStage() {
@@ -513,7 +532,13 @@ function toggleNav() {
 }
 function renderHint() { $("hint").classList.add("hidden"); }   // setup hint replaced by the wizard
 function doReset() { send({ cmd: "setup", action: "reset" }); }
-function stopAll() { neutralizeAll(); send({ cmd: "stop" }); }
+function stopAll() {
+  neutralizeAll(); send({ cmd: "stop" });
+  // STOP is a TRUE override: also DISABLE the gamepad so a flickering/stale pad can never
+  // re-drive afterwards. Stays off until the user explicitly re-enables it (🎮 chip).
+  padSuppressed = true;
+  if (padEnabled) setPadEnabled(false);
+}
 function toggleFullscreen() {
   if (!document.fullscreenElement) (document.documentElement.requestFullscreen || (() => {})).call(document.documentElement);
   else document.exitFullscreen && document.exitFullscreen();
@@ -900,11 +925,17 @@ let padIndex = null;            // index of the active gamepad in navigator.getG
 let padEnabled = (localStorage.getItem(PAD_LS_EN) || "true") !== "false";
 let padMap = loadPadMap();
 const padOwns = {};            // fn -> is the gamepad currently ASSERTING this function?
+// SAFETY latch: after a STOP or a pad DISCONNECT/absence/identity-change, the gamepad is
+// SUPPRESSED — it cannot drive until it reads TRUE CENTER again on a present, live pad. A
+// flickering/dying pad therefore can NEVER re-drive on its own.
+let padSuppressed = false;
+let padLastId = null;          // identity (id#index) of the adopted pad — a change == disconnect
 
-function activePad() {          // the tracked pad, or adopt any connected one
+function activePad() {          // the tracked pad, or adopt any CONNECTED one (reject connected:false)
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-  if (padIndex != null && pads[padIndex]) return pads[padIndex];
-  for (let i = 0; i < pads.length; i++) if (pads[i]) { padIndex = i; return pads[i]; }
+  const ok = p => !!p && p.connected !== false;          // a disconnected-but-present pad is NOT usable
+  if (padIndex != null && ok(pads[padIndex])) return pads[padIndex];
+  for (let i = 0; i < pads.length; i++) if (ok(pads[i])) { padIndex = i; return pads[i]; }
   padIndex = null; return null;
 }
 function padBtnObj(gp, i) { if (i == null) return null; return gp.buttons[i] || null; }
@@ -929,14 +960,30 @@ function padAssert(fn, v) {
   else if (padOwns[fn]) { padOwns[fn] = false; driveFn(fn, 0); }
 }
 function padReleaseOwned() { for (const fn in padOwns) if (padOwns[fn]) { padOwns[fn] = false; driveFn(fn, 0); } }
+function padReadsCenter(gp) { for (const fn of FN) if (padFnValue(gp, fn) !== 0) return false; return true; }
 
-function gamepadLoop() {
-  requestAnimationFrame(gamepadLoop);
+// One safety pass — driven by BOTH rAF (smooth) AND a setInterval fallback (rAF throttles/
+// pauses in some WebViews). Disconnect detection is by ABSENCE / connected:false / identity
+// change (NOT a "frozen axis" heuristic — a dying battery drifts, it doesn't freeze).
+function gamepadTick() {
   const gp = activePad();
   if (gp && !$("settings").classList.contains("hidden") && settingsTab === "gamepad") updatePadReadout(gp);
-  if (!padEnabled || !gp || lifecycle !== "READY") { padReleaseOwned(); return; }   // SAFETY gate
+  if (!gp) {                                   // pad ABSENT / disconnected (battery died, unplugged…)
+    padReleaseOwned();                         // force-send 0 for whatever it drove (refresh also stops)
+    padSuppressed = true; padLastId = null;    // LATCH: a flicker/reappear can't re-drive
+    return;
+  }
+  const id = (gp.id || "pad") + "#" + gp.index;
+  if (padLastId !== null && id !== padLastId) { padReleaseOwned(); padSuppressed = true; }   // swapped pad == disconnect
+  padLastId = id;
+  if (!padEnabled || lifecycle !== "READY") { padReleaseOwned(); return; }   // gate (disabled / not READY)
+  if (padSuppressed) {                         // re-arm ONLY on a present, live, centered pad
+    if (padReadsCenter(gp)) padSuppressed = false;
+    else { padReleaseOwned(); return; }
+  }
   for (const fn of FN) padAssert(fn, padFnValue(gp, fn));
 }
+function gamepadLoop() { requestAnimationFrame(gamepadLoop); gamepadTick(); }
 function setPadEnabled(on) {
   padEnabled = on; localStorage.setItem(PAD_LS_EN, on ? "true" : "false");
   if (!on) padReleaseOwned();
@@ -952,7 +999,9 @@ window.addEventListener("gamepadconnected", e => {
   renderTopbar(); rebuildOpenSettings();
 });
 window.addEventListener("gamepaddisconnected", e => {
-  if (e.gamepad.index === padIndex) { padReleaseOwned(); padIndex = null; activePad(); }   // SAFETY: neutralize, adopt another
+  // SAFETY: neutralize + LATCH suppression (re-arm needs true center on a live pad). Belt to
+  // the polling absence-branch's suspenders — the event often doesn't fire in WebView.
+  padReleaseOwned(); padSuppressed = true; padIndex = null; padLastId = null;
   renderTopbar(); rebuildOpenSettings();
 });
 
@@ -1058,3 +1107,5 @@ renderHint();
 connect();
 if (lifecycle !== "READY") openStartup();   // greet with the two-step connect guide (skippable)
 requestAnimationFrame(gamepadLoop);          // start the gamepad poll loop (no-op until a pad appears)
+setInterval(gamepadTick, 80);                // SAFETY fallback: keep the gamepad pass running even if rAF is throttled/paused
+setInterval(refreshActive, REFRESH_MS);      // affirmative motion-keepalive (re-affirm active channels; replaces the blind ping)

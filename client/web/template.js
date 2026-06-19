@@ -23,6 +23,7 @@ var FN = ["knob_1"];
 
 var ws = null, lifecycle = "IDLE", wsStatus = "retrying", wsTries = 0, wsTimer = null;
 var defaultMap = null, activeMap = null;     // channel map: server DEFAULT + client overrides
+var tplIntent = 0;                           // last driven value (affirmative motion-keepalive)
 
 function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
 function clone(x) { return JSON.parse(JSON.stringify(x)); }
@@ -44,7 +45,14 @@ function reconnectWS() { try { if (ws) ws.close(); } catch (e) {} connectWS(); }
 function setStatus(s) { wsStatus = s; MK4.setStatus(s); }
 
 // ---- lifecycle -------------------------------------------------------------------
-function setLifecycle(s) { lifecycle = s; renderMenu(); updateGate(); }
+function setLifecycle(s) { if (s !== "READY") tplIntent = 0; lifecycle = s; renderMenu(); updateGate(); }
+// Affirmative motion-keepalive: the server times out any non-neutral channel not refreshed
+// ~within 0.3s, so re-affirm the held value ~10/s while READY (replaces relying on the hold).
+function refreshActive() {
+  if (!(ws && ws.readyState === 1) || lifecycle !== "READY" || !tplIntent) return;
+  var r = resolve(FN[0], tplIntent);
+  if (r) send({ cmd: "set", slot: r.slot, channel: r.channel, value: r.value });
+}
 // Client-side resolution: function → (slot, channel, value) with invert + per-direction cap.
 // (The server is dumb transport — it never resolves anything.)
 function resolve(fn, v) {
@@ -107,6 +115,7 @@ function buildMain() {
   var k = $("knob1");
   var drive = function (v) {
     $("knob1v").textContent = v;
+    tplIntent = +v;                                      // keepalive source of truth
     var r = resolve(FN[0], +v);                          // client resolves → low-level set
     if (r) send({ cmd: "set", slot: r.slot, channel: r.channel, value: r.value });
   };
@@ -135,6 +144,7 @@ function updateGate() { var k = $("knob1"); if (k) k.disabled = lifecycle !== "R
 
 // ---- boot ------------------------------------------------------------------------
 renderMenu(); buildMain(); connectWS();
+setInterval(refreshActive, 100);   // affirmative motion-keepalive (server times out un-refreshed channels)
 // Client owns the map: load this layout's bundled default (client overrides layer on top).
 fetch("/channel_map." + LAYOUT_ID + ".json").then(function (r) { return r.json(); })
   .then(function (def) { defaultMap = def; if (!activeMap) activeMap = clone(def); fillOverride(); })

@@ -24,7 +24,7 @@ SAFETY: on a client disconnect (or no clients), command the broadcaster to NEUTR
 
 Run:  python -m mk4web.api
 """
-import os, re, json, socket, asyncio, threading, logging, argparse, subprocess, platform
+import os, re, json, time, socket, asyncio, threading, logging, argparse, subprocess, platform
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from websockets.asyncio.server import serve
@@ -152,13 +152,28 @@ class App:
     def __init__(self):
         self.lifecycle = IDLE
         self.nibbles = list(NEUTRAL_STATE)
+        self.last_refresh = [0.0] * N_CHANNELS   # per-channel: last time a `set` refreshed it (dead-man)
 
     def slots_grid(self):
         return [[nibble_to_value(self.nibbles[s * 4 + c]) for c in range(4)] for s in range(3)]
 
-    def set(self, slot, channel, value):
+    def set(self, slot, channel, value, now):
         if isinstance(slot, int) and isinstance(channel, int) and 0 <= slot <= 2 and 0 <= channel <= 3:
-            self.nibbles[channel_index(slot, channel)] = value_to_nibble(value)
+            ci = channel_index(slot, channel)
+            self.nibbles[ci] = value_to_nibble(value)
+            self.last_refresh[ci] = now          # affirmative-keepalive: this channel is actively driven
+
+    def reap_stale(self, now, timeout):
+        """Per-channel dead-man's-switch: NEUTRALIZE any non-neutral channel not refreshed
+        within `timeout`. A channel is held alive ONLY by active client refresh — gamepad
+        death, frozen axis, stalled loop or client death all stop the refresh -> neutral.
+        Returns True if anything changed."""
+        changed = False
+        for ci in range(N_CHANNELS):
+            if self.nibbles[ci] != NEUTRAL and (now - self.last_refresh[ci]) > timeout:
+                self.nibbles[ci] = NEUTRAL
+                changed = True
+        return changed
 
     def stop(self):
         self.nibbles = list(NEUTRAL_STATE)
@@ -167,6 +182,11 @@ class App:
 ipc = IPCClient(SOCK_PATH)
 app = App()
 clients = set()
+
+# Per-channel refresh timeout (dead-man's-switch): a non-neutral channel auto-neutralizes
+# if the client stops re-affirming it. The client re-sends active channels ~10/s; this
+# must comfortably exceed that interval. Covers ALL input death (gamepad, frozen, stall, dead client).
+CHANNEL_TIMEOUT = float(os.environ.get("MK4_CHANNEL_TIMEOUT", "0.3"))
 
 
 def state_json():
@@ -222,6 +242,18 @@ async def push(msg):
         await asyncio.gather(*(c.send(msg) for c in list(clients)), return_exceptions=True)
 
 
+async def channel_watchdog():
+    """Affirmative dead-man's-switch: per-channel, neutralize anything the client stopped
+    re-affirming (CHANNEL_TIMEOUT). The ONE mechanism that covers gamepad death, frozen
+    axis, stalled loop AND client death — a held control stays alive only while refreshed."""
+    while True:
+        await asyncio.sleep(0.05)
+        if app.lifecycle == READY and app.reap_stale(time.monotonic(), CHANNEL_TIMEOUT):
+            log.warning("channel(s) not refreshed > %dms -> NEUTRAL (dead-man's-switch)", int(CHANNEL_TIMEOUT * 1000))
+            ipc.send_state(app.nibbles)
+            await push(state_json())
+
+
 async def handler(websocket):
     clients.add(websocket)
     log.info("WS client connected; clients=%d", len(clients))
@@ -245,7 +277,7 @@ async def handler(websocket):
                     await push(state_json())
             elif cmd == "set":                    # the ONLY motion primitive (raw slot/channel/value)
                 if app.lifecycle == READY:        # motion only when READY
-                    app.set(msg.get("slot"), msg.get("channel"), msg.get("value"))
+                    app.set(msg.get("slot"), msg.get("channel"), msg.get("value"), time.monotonic())
                     ipc.send_state(app.nibbles)
                     await push(state_json())
             elif cmd == "stop":
@@ -370,6 +402,7 @@ async def amain(serve_client, http_port):
     # the Pi and is unaffected — only this API faces clients.
     async with serve(handler, HOST, WS_PORT):
         log.info("WebSocket API on ws://%s:%d (any origin accepted — LAN tool)", HOST, WS_PORT)
+        asyncio.create_task(channel_watchdog())   # per-channel dead-man's-switch
         await asyncio.Future()
 
 

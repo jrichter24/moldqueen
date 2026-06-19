@@ -27,6 +27,10 @@ from .config import SOCK_PATH, HCI, ADV_INTERVAL, REFRESH, RADIO_BACKEND
 log = logging.getLogger("broadcaster")
 NEUTRAL_STATE = [NEUTRAL] * N_CHANNELS
 IDLE, CONNECTING, READY = "IDLE", "CONNECTING", "READY"
+# Coarse dead-man's-switch (defense in depth): if the API goes silent (no IPC at all) while
+# READY + non-neutral, NEUTRAL here too. Fed by the API's affirmative refreshes (~10/s while
+# driving); longer than the API's per-channel window so the API neutralizes first normally.
+WATCHDOG_TIMEOUT = float(os.environ.get("MK4_BCAST_WATCHDOG", "0.5"))
 
 
 class Controller:
@@ -35,7 +39,11 @@ class Controller:
         self.lifecycle = IDLE
         self.nibbles = list(NEUTRAL_STATE)
         self.version = 0
+        self.last_activity = time.monotonic()   # last IPC from the API (coarse dead-man's-switch)
         self._lock = threading.Lock()
+
+    def touch(self):
+        self.last_activity = time.monotonic()   # any IPC message = API alive
 
     def set_lifecycle(self, lc):
         with self._lock:
@@ -237,6 +245,11 @@ def broadcast_loop(ctrl, backend, dry, stop_evt):
     while not stop_evt.is_set():
         lc, nibbles, ver = ctrl.snapshot()
         now = time.monotonic()
+        # coarse dead-man's-switch (defense in depth): API silent while READY+non-neutral -> NEUTRAL
+        if lc == READY and nibbles != NEUTRAL_STATE and (now - ctrl.last_activity) > WATCHDOG_TIMEOUT:
+            log.warning("API silent > %dms while READY -> NEUTRAL (broadcaster watchdog)", int(WATCHDOG_TIMEOUT * 1000))
+            ctrl.neutral()
+            lc, nibbles, ver = ctrl.snapshot()   # re-read so this pass broadcasts the neutral
         if lc != prev_lc:
             _enter(prev_lc, lc, nibbles, backend, dry)
             prev_lc, last_ver, last_refresh = lc, ver, now
@@ -299,6 +312,7 @@ def ipc_server(ctrl, stop_evt):
                         msg = json.loads(line)
                     except ValueError:
                         continue
+                    ctrl.touch()                       # any IPC = API alive (feeds the coarse watchdog)
                     cmd = msg.get("cmd")
                     if cmd == "connect":
                         ctrl.set_lifecycle(CONNECTING)
