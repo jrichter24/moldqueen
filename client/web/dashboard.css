@@ -5,6 +5,26 @@
    Overlays placed in % over the 1672×941 art; typography uses cqw (1% of stage width)
    so labels scale with the art and always fit their textboxes on any viewport. */
 
+/* ---- collapsible menu: upper-left chip toggles #menu ----
+   Collapsed (#app.navhidden): the menu is fully hidden and only the chip shows; the
+   stage takes the freed width. The chip is small + corner-tucked (over the art's empty
+   top-left / the letterbox margin) so it never covers a control. When expanded, the
+   menu reserves space at its start so the chip doesn't cover the first item. */
+#navChip {
+  position: fixed; top: .4em; left: .4em; z-index: 25;
+  width: 2em; height: 2em; padding: 0; display: flex; align-items: center; justify-content: center;
+  font: 600 1.05em/1 system-ui, sans-serif; color: #cfe0f5;
+  background: rgba(12,15,20,.85); border: 1px solid #2f3947; border-radius: .45em;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+#navChip:hover { background: rgba(28,34,44,.92); }
+#navChip:active { background: rgba(44,52,66,.96); }
+#app.navhidden #menu { display: none; }
+#menu { padding-left: 3em; }   /* top-bar mode: leave room for the chip at the left */
+@media (max-width: 768px), (max-height: 540px) {
+  #menu { padding-left: .6em; padding-top: 3em; }   /* sidebar mode: chip sits in the top gap */
+}
+
 /* ---- the dashboard stage (art-fitted, never the menu) ---- */
 #stagewrap {
   flex: 1 1 auto; min-width: 0; min-height: 0;
@@ -33,6 +53,22 @@
 .hot.active { background: rgba(74,150,255,.30); box-shadow: inset 0 0 0 3px rgba(130,185,255,.9); }
 #overlay.locked .hot, #overlay.locked .joy { opacity: .45; cursor: not-allowed; }
 #overlay.locked .hot:hover { background: transparent; }
+
+/* ---- in-dashboard EMERGENCY STOP (over the red button in the v3 art) ----
+   Always live: NOT in the .locked dim rules above, so it fires in any lifecycle.
+   The art draws the red outline; this reinforces it and gives press feedback. */
+.estop {
+  position: absolute; z-index: 5; display: flex; align-items: center; justify-content: center;
+  border: 0.18cqw solid #ff4d4d; border-radius: 10px; background: rgba(150,22,22,.30);
+  color: #ff6b6b; font-weight: 800; letter-spacing: .14em; font-size: 1.5cqw; line-height: 1;
+  cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent;
+  box-shadow: inset 0 0 .9cqw rgba(255,70,70,.30);
+}
+.estop:hover { background: rgba(185,30,30,.40); }
+.estop:active, .estop.hit {
+  background: rgba(255,60,60,.62); color: #fff;
+  box-shadow: inset 0 0 0 2px #fff, 0 0 1cqw rgba(255,70,70,.6);
+}
 
 /* ---- proportional drag joysticks (tracks / arm-lift / front-arm) ----
    Transparent so the BACKGROUND ART is the visual housing (track button graphics);
@@ -83,7 +119,12 @@
 /* startup guide sits above the dimmed page but below the wizard it hands off to */
 #startup { z-index: 31; }
 
-/* ---- tabbed settings overlay (dashboard-specific): Connection · Channels · Labels · Server info ---- */
+/* ---- tabbed settings overlay (dashboard-specific): Connection · Channels · Labels · Server info ----
+   The sheet is a flex column: the TAB BAR is fixed (never scrolls — it wraps to fit), and
+   ONLY the panel CONTENT scrolls when it overflows. */
+#settings .sheet { display: flex; flex-direction: column; overflow: hidden; }
+#settings .stabs { flex: 0 0 auto; padding-right: 2rem; }   /* fixed; clear the top-right X */
+#settings .spanel { flex: 1 1 auto; overflow-y: auto; min-height: 0; }   /* the scroll viewport */
 .stabs { display: flex; flex-wrap: wrap; gap: .2rem; margin: -.3rem -.2rem .8rem; border-bottom: 1px solid #2a313d; }
   /* WRAP (no side scrollbar) if the four captions don't fit one row on a narrow sheet */
 .stab { flex: 0 0 auto; font: inherit; color: #9fb0c6; background: transparent; border: 0;
@@ -91,9 +132,11 @@
   white-space: nowrap; line-height: 1.2; }                /* taller caption box so labels aren't cramped */
 .stab:hover { color: #d6e6fb; }
 .stab.on { color: #eaf2ff; border-bottom-color: #2f6f93; font-weight: 600; }
-/* FIXED panel height (sized to the tallest panel = Channels) so switching tabs never
-   resizes/jumps the overlay. Shorter panels (Connection/Labels/Server info) just pad out. */
-.spanel { min-height: 26rem; }   /* panel <h2> uses the shared .sheet h2 rule */
+/* FIXED content height (sized to the tallest panel = Channels) so switching tabs never
+   resizes/jumps the overlay. Shorter panels (Connection/Labels/Server info) just pad out.
+   On min-height lives on the INNER content (not the scroll viewport) so a short viewport
+   still scrolls instead of being clipped. */
+.spanelinner { min-height: 26rem; }   /* panel <h2> uses the shared .sheet h2 rule */
 .sheet .sub { color: #8e9cb2; font-size: .82rem; margin: 0 0 .7rem; }
 .srow { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; margin: .5rem 0 .8rem; }
 .srow label { font-size: .88rem; color: #c5d2e4; display: flex; align-items: center; gap: .4rem; }

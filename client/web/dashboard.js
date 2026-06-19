@@ -141,14 +141,18 @@ const INFOBOXES = [
   { id: "ib_row1",  rect: [1124, 548, 162, 41], key: "mode" },
   { id: "ib_row2",  rect: [1124, 642, 162, 41], key: "swap" },
   { id: "ib_row3",  rect: [1124, 736, 162, 41], key: "speed" },
-  { id: "ib_row4",  rect: [1124, 832, 162, 41], static: "—" },
 ];
+// In-art EMERGENCY STOP: % hit-zone over the red STOP button the v3 art draws at the
+// bottom-right (where the 4th telemetry row used to be). Part of the dashboard, so it's
+// always visible regardless of the sidebar, and live in any lifecycle (stop is always honored).
+const ESTOP = [1044, 820, 250, 74];
 
 // ---- state ----
 let ws = null, lifecycle = "IDLE";
 let lang = localStorage.getItem("mk4_lang") || "en";
 if (!LANGS.some(([c]) => c === lang)) lang = "en";   // guard stale/unknown stored codes
 let defaultMap = null, activeMap = null, deviceSwap = localStorage.getItem("mk4_device_swap") === "1";
+let navCollapsed = localStorage.getItem("mk4_nav_collapsed") === "1";   // sidebar hidden? (chip-toggled, persisted)
 const MAP_URL = "/channel_map.excavator.json";   // this layout's bundled default map (client owns it)
 let grid = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
 const tr = () => T[lang] || T.en;   // fixed UI strings: en/de exist, others fall back to en
@@ -329,7 +333,21 @@ function buildStage() {
   }
   for (const j of JOYS) ov.appendChild(makeJoy(j));
   for (const b of BTNS) ov.appendChild(makeBtn(b.fn, b.dir, b.rect, b.k));
+  ov.appendChild(makeEstop());
   renderLabels();
+}
+
+// the in-dashboard emergency STOP button (same all-neutral as the sidebar STOP)
+function makeEstop() {
+  const b = el("estop", pct(ESTOP), `<span>${tr().stop}</span>`);
+  b.id = "estopBtn";
+  b.addEventListener("pointerdown", e => {
+    e.preventDefault(); b.classList.add("hit"); stopAll();
+    try { b.setPointerCapture(e.pointerId); } catch {}
+  });
+  const up = () => b.classList.remove("hit");
+  b.addEventListener("pointerup", up); b.addEventListener("pointercancel", up);
+  return b;
 }
 
 // ---- proportional drag joystick (up = +, down = -, release -> 0) ----
@@ -445,7 +463,8 @@ function renderTopbar() {
   tb.appendChild(left);
   tb.appendChild(el("grow"));
   const right = el("tgroup");
-  const sb = tbtn(tr().stop, "", stopAll); sb.id = "stopBtn"; right.appendChild(sb);
+  // STOP now lives on the dashboard itself (the red emergency button in the art) so it
+  // stays reachable when the sidebar is collapsed — no separate toolbar STOP.
   if (MK4.showFullscreen()) right.appendChild(tbtn(tr().full, "", toggleFullscreen));
   if (activePad()) right.appendChild(padChip());   // controller indicator + quick enable toggle
   right.appendChild(langSelect());
@@ -453,6 +472,19 @@ function renderTopbar() {
   right.appendChild(tbtn(tr().settings, "", openSettings));
   tb.appendChild(right);
   setDot(ws && ws.readyState === 1);
+}
+// ---- collapsible menu/sidebar (upper-left chip; persisted) ----
+// Collapsed = #menu fully hidden, ONLY the chip shows (STOP stays reachable on the
+// in-dashboard red button). The chip lives in the corner so it never covers a control.
+function applyNav() {
+  $("app").classList.toggle("navhidden", navCollapsed);
+  const chip = $("navChip");
+  if (chip) { chip.innerHTML = navCollapsed ? "☰" : "✕"; chip.title = navCollapsed ? "Show menu" : "Hide menu"; }
+}
+function toggleNav() {
+  navCollapsed = !navCollapsed;
+  localStorage.setItem("mk4_nav_collapsed", navCollapsed ? "1" : "0");
+  applyNav();
 }
 function renderHint() { $("hint").classList.add("hidden"); }   // setup hint replaced by the wizard
 function doReset() { send({ cmd: "setup", action: "reset" }); }
@@ -599,10 +631,12 @@ function buildSettings() {
               : channelsPanel(t);
   $("settings").innerHTML =
     `<div class="backdrop"></div><div class="sheet">
+       <button class="sheetx" id="settingsX" type="button" aria-label="${t.close}" title="${t.close}">✕</button>
        <div class="stabs">${bar}</div>
-       <div class="spanel">${panel}</div>
+       <div class="spanel"><div class="spanelinner">${panel}</div></div>
      </div>`;
   $("settings").querySelector(".backdrop").onclick = discardEdits;   // click-out = discard (no silent save)
+  $("settingsX").onclick = discardEdits;                              // top-right X = dismiss (same as click-out)
   $("settings").querySelectorAll(".stab").forEach(b => { b.onclick = () => showTab(b.dataset.tab); });
   ({ connection: wireConnection, channels: wireChannels, labels: wireLabels, gamepad: wireGamepad, info: wireInfo }[settingsTab])();
 }
@@ -993,6 +1027,8 @@ fetch(MAP_URL).then(r => r.json()).then(applyMaps).catch(() => applyMaps(placeho
 document.documentElement.lang = lang;
 buildStage();
 renderTopbar();
+$("navChip").onclick = toggleNav;
+applyNav();
 renderHint();
 connect();
 if (lifecycle !== "READY") openStartup();   // greet with the two-step connect guide (skippable)

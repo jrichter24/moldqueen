@@ -20,10 +20,11 @@
        small ones) + a dashboard AREA. The stage scales to fit the area (contain),
        preserving the percent-coordinate control positioning. No page scrolling. -->
   <div id="app">
+    <button id="navChip" type="button" aria-label="Toggle menu" title="Menu">☰</button>  <!-- collapses/expands #menu -->
     <nav id="menu"></nav>                     <!-- toolbar; built by dashboard.js -->
     <div id="stagewrap">
       <div id="stage">
-        <img id="bg" src="/assets/moldqueen_dashboard_v2.png" alt="" draggable="false" />
+        <img id="bg" src="/assets/moldqueen_dashboard_v3.png" alt="" draggable="false" />
         <div id="overlay"></div>              <!-- hotspots + joysticks + titles + telemetry -->
         <div id="hint" class="hidden"></div>
       </div>
