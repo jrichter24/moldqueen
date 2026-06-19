@@ -10,6 +10,12 @@ import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
 import android.util.Log
 
+/** Minimal advertiser seam (so RadioController is unit-testable without the Android radio). */
+interface BleSink {
+    fun setPayload(bytes: ByteArray, label: String)
+    fun stop()
+}
+
 /**
  * Broadcasts MK4 telegrams as BLE manufacturer-specific advertising data under
  * company id 0xFFF0. No GATT — control is pure broadcast advertising.
@@ -24,7 +30,7 @@ import android.util.Log
  * advert roughly every 100 ms (~10/sec), so a single startAdvertising() keeps the
  * connect/motion frame on-air continuously until the payload changes.
  */
-class BleBroadcaster(context: Context) {
+class BleBroadcaster(context: Context) : BleSink {
 
     companion object {
         private const val TAG = "Mk4Ble"
@@ -65,9 +71,11 @@ class BleBroadcaster(context: Context) {
 
     fun isReady(): Boolean = adapter?.isEnabled == true && advertiser != null
 
-    /** Replace the broadcast payload; restarts advertising so the new frame goes out. */
+    /** Replace the broadcast payload; restarts advertising so the new frame goes out.
+     *  MUST be called only on a CHANGE (RadioController dedups) — calling it at the keepalive
+     *  rate churns the async start/stop and drops frames (incl. the release neutral). */
     @SuppressLint("MissingPermission")
-    fun setPayload(bytes: ByteArray, label: String) {
+    override fun setPayload(bytes: ByteArray, label: String) {
         val adv = advertiser
         if (adapter?.isEnabled != true || adv == null) {
             onStatus?.invoke("Bluetooth is OFF — enable it and retry")
@@ -102,7 +110,7 @@ class BleBroadcaster(context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    fun stop() {
+    override fun stop() {
         try {
             if (advertising) {
                 advertiser?.stopAdvertising(callback)

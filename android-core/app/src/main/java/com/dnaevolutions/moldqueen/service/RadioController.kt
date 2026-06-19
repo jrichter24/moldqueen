@@ -1,18 +1,21 @@
 package com.dnaevolutions.moldqueen.service
 
-import com.dnaevolutions.moldqueen.BleBroadcaster
+import com.dnaevolutions.moldqueen.BleSink
 import com.dnaevolutions.moldqueen.Mk4Telegrams
 import com.dnaevolutions.moldqueen.MouldKingCrypt
 import com.dnaevolutions.moldqueen.core.Radio
 
 /**
  * Bridges the pure [Radio] interface (api.py's broadcaster role) to the proven
- * [BleBroadcaster]. Holds the lifecycle + current nibbles and drives advertising:
+ * [BleSink]/BleBroadcaster. Holds the lifecycle + current nibbles and drives advertising:
  * CONNECTING → connect telegram; READY → motion telegram of the current nibbles;
- * IDLE → advertising off. Keepalive/repetition is inherent to the advertiser's
- * ADVERTISE_MODE_LOW_LATENCY (~10 frames/sec on air), so no churn-y re-assert loop.
+ * IDLE → advertising off. On-air repetition is inherent to ADVERTISE_MODE_LOW_LATENCY
+ * (~10/sec), so we RE-ADVERTISE ON CHANGE ONLY — re-issuing the same frame at the client's
+ * affirmative-keepalive rate (~10/s) churns the advertiser's async start/stop and DROPS
+ * frames (incl. the release NEUTRAL → motor never stops). The keepalive's liveness job is the
+ * server-side per-channel timeout (ControlApp), not the radio; the radio just mirrors changes.
  */
-class RadioController(private val ble: BleBroadcaster) : Radio {
+class RadioController(private val ble: BleSink) : Radio {
 
     @Volatile private var lifecycle = "IDLE"
     @Volatile private var nibbles = IntArray(Mk4Telegrams.N_CHANNELS) { Mk4Telegrams.NEUTRAL }
@@ -26,12 +29,15 @@ class RadioController(private val ble: BleBroadcaster) : Radio {
     }
 
     override fun sendState(nb: IntArray) {
+        if (nb.contentEquals(nibbles)) return         // CHANGE ONLY — don't churn the BLE advertiser
         nibbles = nb.copyOf()
         if (lifecycle == "READY") advertiseMotion()
     }
 
     override fun sendNeutral() {
-        nibbles = neutral()
+        val n = neutral()
+        if (n.contentEquals(nibbles)) return          // already neutral on-air (radio keeps repeating it)
+        nibbles = n
         if (lifecycle == "READY") advertiseMotion()   // CONNECTING keeps the connect telegram
     }
 
