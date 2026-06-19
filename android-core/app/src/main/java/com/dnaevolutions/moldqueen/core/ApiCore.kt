@@ -13,7 +13,7 @@ fun interface ClientSink {
     fun send(text: String)
 }
 
-/** The radio side (api.py's IPCClient -> broadcaster). Android wires this to BleBroadcaster. */
+/** The radio side (broadcaster). Android wires this to BleBroadcaster. */
 interface Radio {
     fun setup(action: String)          // connect | ready | reset
     fun sendState(nibbles: IntArray)   // motion nibbles changed
@@ -38,18 +38,15 @@ interface InfoConfig {
 }
 
 /**
- * The WebSocket control API, clean-room port of linux-core/mk4web/api.py's handler + push
- * choreography. Pure (no Android/transport): the Android layer feeds it onConnect/
- * onMessage/onDisconnect and implements [ClientSink]/[Radio]/[InfoConfig].
+ * The DUMB-transport WebSocket API, clean-room port of linux-core/mk4web/api.py's handler.
+ * Pure (no Android/transport): the Android layer feeds it onConnect/onMessage/onDisconnect
+ * and implements [ClientSink]/[Radio]/[InfoConfig].
  *
- * Push choreography matches api.py exactly:
- *  - on connect: send lifecycle, then state, then map (to the new client);
- *  - setup: push lifecycle + state to all;
- *  - set/drive: push state to all (READY only);
- *  - map get: reply map to requester; map set/promote: reply mapresult to requester,
- *    and on success push map + state to all; map swap: push map + state to all;
- *  - stop: push state to all; state: reply lifecycle + state; info: reply info;
- *  - on disconnect: NEUTRAL + push state to all (safety).
+ * The server knows NOTHING about functions/maps/invert/caps/labels — the client owns all
+ * that and sends only low-level `set`. Choreography:
+ *  - on connect: send lifecycle, then state;
+ *  - setup: push lifecycle + state; set: push state (READY only); stop: push state;
+ *  - state: reply lifecycle + state; info: reply info; on disconnect: NEUTRAL + push state.
  */
 class ApiCore(
     val app: ControlApp,
@@ -67,7 +64,6 @@ class ApiCore(
         clients.add(c)
         c.send(lifecycleJson())
         c.send(stateJson())
-        c.send(mapJson())
     }
 
     @Synchronized
@@ -94,19 +90,11 @@ class ApiCore(
                     push(stateJson())
                 }
             }
-            "set" -> if (app.lifecycle == READY) {
+            "set" -> if (app.lifecycle == READY) {   // the ONLY motion primitive
                 app.set(optIntOrNull(msg, "slot"), optIntOrNull(msg, "channel"), optIntOrNull(msg, "value"))
                 radio.sendState(app.nibbles)
                 push(stateJson())
             }
-            "drive" -> if (app.lifecycle == READY) {
-                val fn = if (msg.has("function")) msg.optString("function") else null
-                if (app.drive(fn, optIntOrNull(msg, "value")) != null) {
-                    radio.sendState(app.nibbles)
-                    push(stateJson())
-                }
-            }
-            "map" -> handleMap(c, msg)
             "stop" -> {
                 app.stop()
                 radio.sendNeutral()
@@ -117,34 +105,6 @@ class ApiCore(
                 c.send(stateJson())
             }
             "info" -> c.send(infoJson(info.level))
-        }
-    }
-
-    private fun handleMap(c: ClientSink, msg: JSONObject) {
-        val layout = if (msg.has("layout")) msg.optString("layout") else ""
-        if (layout.isNotEmpty() && app.setLayout(layout)) {
-            app.stop(); radio.sendNeutral()
-            push(mapJson()); push(stateJson())
-        }
-        when (msg.optString("action")) {
-            "get" -> c.send(mapJson())
-            "set" -> {
-                val (ok, errs) = app.setActiveMap(msg.optJSONObject("map") ?: JSONObject())
-                if (ok) { app.stop(); radio.sendNeutral() }
-                c.send(mapResultJson("set", ok, errs))
-                if (ok) { push(mapJson()); push(stateJson()) }
-            }
-            "swap" -> {
-                app.setSwap(msg.optBoolean("value"))
-                app.stop(); radio.sendNeutral()
-                push(mapJson()); push(stateJson())
-            }
-            "promote" -> {
-                val (ok, errs) = app.promote(msg.optJSONObject("map"))
-                if (ok) { app.stop(); radio.sendNeutral() }
-                c.send(mapResultJson("promote", ok, errs))
-                if (ok) { push(mapJson()); push(stateJson()) }
-            }
         }
     }
 
@@ -165,23 +125,6 @@ class ApiCore(
             .toString()
     }
 
-    fun mapJson(): String =
-        JSONObject()
-            .put("type", "map")
-            .put("layout", app.layoutId ?: JSONObject.NULL)
-            .put("default", app.defaultMap)
-            .put("active", app.activeMap)
-            .put("device_swap", app.deviceSwap)
-            .toString()
-
-    private fun mapResultJson(action: String, ok: Boolean, errors: List<String>): String =
-        JSONObject()
-            .put("type", "mapresult")
-            .put("action", action)
-            .put("ok", ok)
-            .put("errors", JSONArray(errors))
-            .toString()
-
     fun infoJson(level: String): String {
         val o = JSONObject()
             .put("type", "info").put("app", "moldqueen").put("version", info.version)
@@ -189,7 +132,7 @@ class ApiCore(
         if (level == "light" || level == "debug") {
             o.put("radio_backend", info.radioBackend).put("dry_run", info.dryRun).put("hci", info.hci)
                 .put("ws_port", info.wsPort).put("http_port", info.httpPort)
-                .put("serve_client", info.serveClient).put("layout", app.layoutId ?: JSONObject.NULL)
+                .put("serve_client", info.serveClient)
         }
         if (level == "debug") {
             o.put("adapter_mac", info.adapterMac() ?: JSONObject.NULL).put("hostname", info.hostname())
@@ -204,7 +147,6 @@ class ApiCore(
         for (cl in snapshot) runCatching { cl.send(text) }
     }
 
-    /** Python-ish: present integer field or null (missing/non-int -> null, no coercion of bools). */
     private fun optIntOrNull(o: JSONObject, key: String): Int? {
         val v = o.opt(key)
         return when (v) {

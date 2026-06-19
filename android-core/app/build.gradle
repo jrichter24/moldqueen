@@ -37,16 +37,15 @@ android {
 }
 
 // ---- single-source the web client into the APK (NO hand-copy) -------------------
-// Copies the independent client peer (client/web + client/assets) + per-layout default
-// maps (config/) + the asyncapi contract (linux-core/, server-side) into a generated
-// assets dir that AGP merges. A change under client/web/ re-runs this (Copy is
-// up-to-date aware) and flows into the next Android build. Mirrors the served file set.
+// Copies the independent client peer (client/web + client/assets) + the asyncapi contract
+// (linux-core/, server-side) into a generated assets dir that AGP merges. The client owns
+// the channel maps now (client/web/channel_map.<id>.json — no server-side config/). A
+// change under client/web/ re-runs this (Copy is up-to-date aware). Mirrors the served set.
 tasks.register('bundleClient', Copy) {
-    description 'Bundle the web client (client/) + config maps + asyncapi into the APK.'
+    description 'Bundle the web client (client/) + asyncapi into the APK.'
     into layout.buildDirectory.dir('generated/clientAssets')
-    from("$rootDir/../client/web") { into 'web' }                     // html/js/css/layouts.json
+    from("$rootDir/../client/web") { into 'web' }                     // html/js/css/layouts.json + channel_map.*.json
     from("$rootDir/../client/assets") { into 'webassets' }            // served at /assets/**
-    from("$rootDir/../config") { include 'channel_map.*.json'; into 'config' }  // per-layout default maps
     from("$rootDir/../linux-core/mk4web") { include 'asyncapi.yaml' } // served at /asyncapi.yaml (server-side)
 }
 tasks.matching { it.name ==~ /merge.*Assets/ }.configureEach { dependsOn 'bundleClient' }

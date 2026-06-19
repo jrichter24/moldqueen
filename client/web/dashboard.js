@@ -148,7 +148,8 @@ const INFOBOXES = [
 let ws = null, lifecycle = "IDLE";
 let lang = localStorage.getItem("mk4_lang") || "en";
 if (!LANGS.some(([c]) => c === lang)) lang = "en";   // guard stale/unknown stored codes
-let defaultMap = null, activeMap = null, deviceSwap = false;
+let defaultMap = null, activeMap = null, deviceSwap = localStorage.getItem("mk4_device_swap") === "1";
+const MAP_URL = "/channel_map.excavator.json";   // this layout's bundled default map (client owns it)
 let grid = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
 const tr = () => T[lang] || T.en;   // fixed UI strings: en/de exist, others fall back to en
 
@@ -251,39 +252,21 @@ function scheduleRetry() {
 function connect() {
   clearTimeout(wsTimer);
   try { ws = new WebSocket(MK4.wsEndpoint()); } catch (e) { scheduleRetry(); return; }
-  ws.onopen = () => { wsTries = 0; setDot(true); setWsStatus("connected"); pushActiveMap(); };
+  ws.onopen = () => { wsTries = 0; setDot(true); setWsStatus("connected"); };   // no map push — client owns the map
   ws.onclose = () => { setDot(false); neutralizeAll(); scheduleRetry(); };
   ws.onerror = () => { try { ws.close(); } catch (e) {} };   // onclose handles status + retry
   ws.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch { return; }
     if (m.type === "lifecycle") setLifecycle(m.state);
     else if (m.type === "state" && m.slots) { grid = m.slots; refreshValues(); }
-    else if (m.type === "map") onMap(m);
-    else if (m.type === "mapresult") onMapResult(m);
     else if (m.type === "info") onInfo(m);
   };
 }
-function pushActiveMap() { if (activeMap) send({ cmd: "map", action: "set", map: activeMap }); }
 // explicit (re)connect from the endpoint editor: reset the retry budget, connect now.
 function reconnectWS() { wsTries = 0; clearTimeout(wsTimer); try { if (ws) ws.close(); } catch (e) {} connect(); }
 
-function onMap(m) {
-  // The server is authoritative ONLY for the persisted default + the session swap.
-  // The active map is client-owned (default + our overrides), so we never let a
-  // server push clobber it — we push ours instead (see ws.onopen / Apply).
-  defaultMap = withDefaults(m.default); deviceSwap = !!m.device_swap;   // migrate labels too
-  if (!activeMap) {                       // FIRST map after a no-connection start (e.g. nginx)
-    activeMap = loadStoredMap() || withDefaults(m.active);
-    if (!$("settings").classList.contains("hidden")) editMap = mapForEdit();  // populate the open settings
-  }
-  renderLabels();
-  rebuildOpenSettings();
-}
-function onMapResult(m) {
-  const el = $("mapMsg"); if (!el) return;
-  if (m.ok) { el.className = "ok"; el.textContent = m.action === "promote" ? tr().promoted : tr().applied; }
-  else { el.className = "bad"; el.textContent = (m.errors || ["error"]).join("; "); }
-}
+// Local Apply/Promote feedback (no server round-trip — the client owns the map).
+function okMsg(text) { const el = $("mapMsg"); if (el) { el.className = "ok"; el.textContent = text; } }
 
 // ---- lifecycle / setup ----
 function setDot(ok) { const d = $("wsDot"); if (d) d.className = "dot" + (ok ? " ok" : ""); }
@@ -307,11 +290,31 @@ function el(cls, style, html) {
 const controls = [];   // {fn, reset()} — for global neutralize
 const lastVal = {};    // fn -> last value sent (throttle)
 
+// Full client-side resolution (the server is dumb transport now). Mirrors the old
+// channelmap.resolve: reverse_scale (gated on the PRE-invert sign) → invert → per-direction
+// cap → device-swap. `v` is the pre-invert, output-capped value from scaleVal, so this
+// reproduces exactly the (slot, channel, nibble) the server used to compute from cmd:drive.
+function resolveDrive(fn, v) {
+  const a = activeMap && activeMap.functions[fn];
+  if (!a) return null;
+  let slot = a.slot | 0; const ch = a.channel | 0;
+  if (deviceSwap && (slot === 0 || slot === 1)) slot = 1 - slot;
+  let mag = Math.abs(v | 0);
+  if (v < 0 && typeof a.reverse_scale === "number" && a.reverse_scale !== 1)
+    mag = Math.max(0, Math.min(7, Math.round(mag * a.reverse_scale)));
+  let sign = v < 0 ? -1 : (v > 0 ? 1 : 0);
+  if (a.invert) sign = -sign;
+  let out = sign * mag;
+  if (out > 0) out = Math.min(out, capFor(a, true));        // max_fwd
+  else if (out < 0) out = -Math.min(-out, capFor(a, false)); // max_rev
+  return { slot, channel: ch, value: out };
+}
 function driveFn(fn, v) {
   v = clamp(v | 0, -7, 7);
   if (lastVal[fn] === v) return;
   lastVal[fn] = v;
-  send({ cmd: "drive", function: fn, value: v });   // server honors only in READY
+  const r = resolveDrive(fn, v);                              // client owns resolution
+  if (r) send({ cmd: "set", slot: r.slot, channel: r.channel, value: r.value });   // honored only in READY
 }
 
 function buildStage() {
@@ -660,7 +663,12 @@ function wireChannels() {
     trEl.querySelector(".e-inv").onchange = e => { a.invert = e.target.checked; };
     bindTest(trEl.querySelector(".test"), fn);
   });
-  $("swapChk").onchange = e => { send({ cmd: "map", action: "swap", value: e.target.checked }); };
+  $("swapChk").onchange = e => {           // device-swap is now a local toggle + re-resolve
+    deviceSwap = e.target.checked;
+    localStorage.setItem("mk4_device_swap", deviceSwap ? "1" : "0");
+    neutralizeAll(); send({ cmd: "stop" });   // routing changed → neutralize for safety
+    refreshValues();
+  };
   $("saveBtn").onclick = saveClose;
   $("discardBtn").onclick = discardEdits;
   $("promoteBtn").onclick = promoteMap;
@@ -785,15 +793,14 @@ function assignCell(fn, slot, channel) {
 // ---- commit / discard / promote ----
 function saveClose() {
   if (!validMap(editMap)) { flashMsg("invalid map (duplicate slot/channel)"); return; }
-  activeMap = withDefaults(editMap); saveActive(); renderLabels();
-  send({ cmd: "map", action: "set", map: activeMap });   // session active map
+  activeMap = withDefaults(editMap); saveActive(); renderLabels();   // client-owned: persist locally
   closeAll();
 }
 function discardEdits() { editMap = null; closeAll(); }   // revert unsaved edits
 function promoteMap() {
   if (!validMap(editMap)) { flashMsg("invalid map (duplicate slot/channel)"); return; }
-  activeMap = withDefaults(editMap); saveActive(); renderLabels();
-  send({ cmd: "map", action: "promote", map: activeMap });  // persist as default (stays open; shows result)
+  activeMap = withDefaults(editMap); saveActive(); renderLabels();   // persist as this browser's default
+  okMsg(tr().promoted);
 }
 function flashMsg(text) { const m = $("mapMsg"); if (m) { m.className = "bad"; m.textContent = text; } }
 
@@ -976,14 +983,14 @@ let _rfit; window.addEventListener("resize", () => {   // re-fit labels to the n
   clearTimeout(_rfit); _rfit = setTimeout(() => { if (activeMap) renderLabels(); }, 150);
 });
 
-// seed from the server-injected initial state so the UI renders before the WS opens
-if (window.MK4_INIT) {
-  const i = window.MK4_INIT;
-  defaultMap = withDefaults(i.default); deviceSwap = !!i.device_swap; lifecycle = i.lifecycle || "IDLE";
-  activeMap = loadStoredMap() || withDefaults(i.active);
-} else {
-  activeMap = null;
+// Client owns the channel map: load this layout's bundled default file, then layer a
+// localStorage override on top. (The server is dumb transport — it never sends a map.)
+function applyMaps(def) {
+  defaultMap = withDefaults(def);
+  activeMap = loadStoredMap() || withDefaults(def);
+  renderLabels(); rebuildOpenSettings();
 }
+fetch(MAP_URL).then(r => r.json()).then(applyMaps).catch(() => applyMaps(placeholderMap()));
 document.documentElement.lang = lang;
 buildStage();
 renderTopbar();

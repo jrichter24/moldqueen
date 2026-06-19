@@ -4,20 +4,21 @@
 // What it shows: connect/lifecycle wiring, ONE function driven BY NAME ("knob_1"),
 // and a client OVERRIDE (slot/channel/invert) of the channel map. Look for TODO.
 //
-// The server gives you for free: the radio, the IDLE→CONNECTING→READY lifecycle,
-// auto-neutral safety, the per-layout channel map (config/channel_map.template.json),
-// the shared shell/menu CSS, and the configurable WS endpoint (clientconfig.js).
+// The server is pure TRANSPORT: it gives you the radio, the IDLE→CONNECTING→READY
+// lifecycle, and auto-neutral safety — you send only low-level {cmd:set,slot,channel,
+// value}. The CLIENT owns the channel map (web/channel_map.template.json) + resolution
+// (function→slot/channel, invert, caps). Shared shell/menu CSS + the configurable WS
+// endpoint (clientconfig.js) come along too.
 // ============================================================================
 "use strict";
 var $ = function (id) { return document.getElementById(id); };
 
-// ── TODO: set this to YOUR layout id (must match the manifest `id`). The client tells
-//    the server which layout it is, so the server loads THIS layout's function set +
-//    channel map (config/channel_map.<id>.json) instead of another layout's. ──
+// ── TODO: set this to YOUR layout id (must match the manifest `id`). It also names this
+//    layout's bundled channel-map file the client loads: web/channel_map.<id>.json. ──
 var LAYOUT_ID = "template";
 
 // ── TODO: your layout's FUNCTION SET. One name per motor/channel you control. Mirror
-//    this list in web/layouts.json ("functions") AND config/channel_map.<id>.json. ──
+//    this list in web/layouts.json ("functions") AND web/channel_map.<id>.json. ──
 var FN = ["knob_1"];
 
 var ws = null, lifecycle = "IDLE", wsStatus = "retrying", wsTries = 0, wsTimer = null;
@@ -29,18 +30,13 @@ function clone(x) { return JSON.parse(JSON.stringify(x)); }
 // ---- WebSocket (reuses the shared, configurable endpoint) ------------------------
 function connectWS() {
   try { ws = new WebSocket(MK4.wsEndpoint()); } catch (e) { return scheduleRetry(); }
-  ws.onopen = function () {
-    wsTries = 0; setStatus("connected");
-    send({ cmd: "map", layout: LAYOUT_ID });   // select THIS layout → server loads its function set + map
-  };
+  ws.onopen = function () { wsTries = 0; setStatus("connected"); };   // client owns the map; nothing to select
   ws.onclose = function () { setStatus("retrying"); scheduleRetry(); };
   ws.onerror = function () { try { ws.close(); } catch (e) {} };
   ws.onmessage = function (ev) {
     var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
     if (m.type === "lifecycle") setLifecycle(m.state);
-    else if (m.type === "map") onMap(m);
     // else if (m.type === "state") { /* TODO: reflect m.slots if useful */ }
-    // else if (m.type === "mapresult") { /* TODO: if you add Save/Promote UI */ }
   };
 }
 function scheduleRetry() { clearTimeout(wsTimer); wsTimer = setTimeout(connectWS, Math.min(1000 + wsTries++ * 500, 5000)); }
@@ -49,10 +45,19 @@ function setStatus(s) { wsStatus = s; MK4.setStatus(s); }
 
 // ---- lifecycle -------------------------------------------------------------------
 function setLifecycle(s) { lifecycle = s; renderMenu(); updateGate(); }
-function onMap(m) {                                  // server pushes default + active map on connect
-  defaultMap = m["default"];
-  if (!activeMap) activeMap = clone(m.active || m["default"]);
-  fillOverride();
+// Client-side resolution: function → (slot, channel, value) with invert + per-direction cap.
+// (The server is dumb transport — it never resolves anything.)
+function resolve(fn, v) {
+  var a = activeMap && activeMap.functions && activeMap.functions[fn];
+  if (!a) return null;
+  var mag = Math.abs(v | 0);
+  var sign = v < 0 ? -1 : (v > 0 ? 1 : 0);
+  if (a.invert) sign = -sign;
+  var out = sign * mag;
+  var cf = (a.max_fwd >= 1 && a.max_fwd <= 7) ? a.max_fwd : 7;
+  var cr = (a.max_rev >= 1 && a.max_rev <= 7) ? a.max_rev : 5;
+  if (out > 0) out = Math.min(out, cf); else if (out < 0) out = -Math.min(-out, cr);
+  return { slot: a.slot | 0, channel: a.channel | 0, value: out };
 }
 
 // ---- menu (reuses the shared shell classes: .tgroup/.dot/.lc/.grow/#stopBtn) ------
@@ -95,12 +100,16 @@ function buildMain() {
     '    <label>channel <input id="ovCh" type="number" min="0" max="3"></label>' +
     '    <label><input id="ovInv" type="checkbox"> invert</label>' +
     '    <button id="ovApply" class="primary">Apply override</button>' +
-    '    <!-- TODO: add Save (this is map set) + Promote ({cmd:map,action:promote}) like the dashboard. -->' +
+    '    <!-- TODO: persist edits to localStorage like the dashboard (the client owns the map). -->' +
     '  </div>' +
     '</div>';
   MK4.buildEndpointRow($("epRow"), reconnectWS);       // configurable WS endpoint, for free
   var k = $("knob1");
-  var drive = function (v) { $("knob1v").textContent = v; send({ cmd: "drive", function: FN[0], value: +v }); };
+  var drive = function (v) {
+    $("knob1v").textContent = v;
+    var r = resolve(FN[0], +v);                          // client resolves → low-level set
+    if (r) send({ cmd: "set", slot: r.slot, channel: r.channel, value: r.value });
+  };
   k.addEventListener("input", function () { drive(k.value); });
   var release = function () { k.value = 0; drive(0); };  // release → neutral (motion is momentary)
   k.addEventListener("pointerup", release);
@@ -119,13 +128,16 @@ function applyOverride() {                             // push a client override
   var a = activeMap.functions[FN[0]];
   a.slot = Math.max(0, Math.min(2, parseInt($("ovSlot").value, 10) || 0));
   a.channel = Math.max(0, Math.min(3, parseInt($("ovCh").value, 10) || 0));
-  a.invert = $("ovInv").checked;
-  send({ cmd: "map", action: "set", map: activeMap });  // server validates against this layout's function set
+  a.invert = $("ovInv").checked;   // client-owned override — re-resolves on the next drive (nothing sent to the server)
 }
 
 function updateGate() { var k = $("knob1"); if (k) k.disabled = lifecycle !== "READY"; }  // motion only in READY
 
 // ---- boot ------------------------------------------------------------------------
 renderMenu(); buildMain(); connectWS();
+// Client owns the map: load this layout's bundled default (client overrides layer on top).
+fetch("/channel_map." + LAYOUT_ID + ".json").then(function (r) { return r.json(); })
+  .then(function (def) { defaultMap = def; if (!activeMap) activeMap = clone(def); fillOverride(); })
+  .catch(function () {});
 // TODO: replace name/description/icon (web/layouts.json), the FN set (here + manifest +
-// config/channel_map.<id>.json), and these controls with your toy's real layout.
+// web/channel_map.<id>.json), and these controls with your toy's real layout.

@@ -22,7 +22,6 @@ class ClientHttpServer(
     private val assets: AssetManager,
     private val wsPort: Int,
     private val routes: ClientRoutes,
-    private val initJson: () -> String,
 ) : NanoHTTPD("127.0.0.1", port) {
 
     override fun serve(session: IHTTPSession): Response {
@@ -49,7 +48,6 @@ class ClientHttpServer(
         // Native host handles fullscreen itself -> hide the redundant in-client button.
         s = s.replace("__SHOW_FULLSCREEN__", "false")
         if (s.contains("__LAYOUTS_JSON__")) s = s.replace("__LAYOUTS_JSON__", esc(routes.layoutsJson))
-        if (s.contains("__INIT_JSON__")) s = s.replace("__INIT_JSON__", esc(initJson()))
         return newFixedLengthResponse(Response.Status.OK, CTYPES["html"]!!, s)
     }
 

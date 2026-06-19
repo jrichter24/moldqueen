@@ -7,28 +7,25 @@ import com.dnaevolutions.moldqueen.core.ApiCore
 import com.dnaevolutions.moldqueen.core.ClientRoutes
 import com.dnaevolutions.moldqueen.core.ControlApp
 import com.dnaevolutions.moldqueen.core.InfoConfig
-import com.dnaevolutions.moldqueen.core.LayoutRegistry
 import fi.iki.elonen.NanoHTTPD
 import org.json.JSONObject
 import java.net.InetSocketAddress
 
 /**
- * The single service that fuses broadcaster-logic + the local WS API (api.py + the Pi
- * broadcaster, in one process). Owns: the pure [ApiCore]/[ControlApp], the [RadioController]
- * driving the proven [BleBroadcaster], the asset/override [AssetMapStore], and the
- * [Mk4WsServer] bound to loopback. Layer 3 (the WebView) connects to ws://localhost:8765
- * and sees the same contract as the Pi — no Android knowledge in the client.
+ * The single service: a DUMB-transport WS API + the local client HTTP server, in one
+ * process. Owns the pure [ApiCore]/[ControlApp] (lifecycle + 12 nibbles only), the
+ * [RadioController] driving the proven [BleBroadcaster], and the loopback servers. The
+ * client (served from bundled assets) owns the channel map — no map state here. The WebView
+ * connects to ws://localhost:8765 and sees the same dumb contract as the Pi.
  */
 class Mk4Service(context: Context) {
 
     private val appCtx = context.applicationContext
     private val ble = BleBroadcaster(appCtx)
     private val radio = RadioController(ble)
-    private val store = AssetMapStore(appCtx)
-    private val registry = LayoutRegistry(asset("web/layouts.json"))
-    private val controlApp = ControlApp(registry, store)
+    private val controlApp = ControlApp()
     val core = ApiCore(controlApp, radio, AndroidInfoConfig(appCtx))
-    private val routes = ClientRoutes(asset("web/layouts.json"))
+    private val routes = ClientRoutes(asset("web/layouts.json"))   // HTML route derivation for serving
 
     private var wsServer: Mk4WsServer? = null
     private var httpServer: ClientHttpServer? = null
@@ -41,7 +38,7 @@ class Mk4Service(context: Context) {
             }
         }
         if (httpServer == null) {
-            httpServer = ClientHttpServer(HTTP_PORT, appCtx.assets, WS_PORT, routes, ::initJson).also {
+            httpServer = ClientHttpServer(HTTP_PORT, appCtx.assets, WS_PORT, routes).also {
                 it.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
             }
         }
@@ -53,14 +50,6 @@ class Mk4Service(context: Context) {
         httpServer?.let { runCatching { it.stop() } }; httpServer = null
         ble.stop()
     }
-
-    /** The __INIT_JSON__ the served HTML bootstraps from — mirrors api.py's init dict. */
-    private fun initJson(): String = JSONObject()
-        .put("default", controlApp.defaultMap)
-        .put("active", controlApp.activeMap)
-        .put("device_swap", controlApp.deviceSwap)
-        .put("lifecycle", controlApp.lifecycle)
-        .toString()
 
     val bleReady: Boolean get() = ble.isReady()
 
