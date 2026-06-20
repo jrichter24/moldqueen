@@ -195,8 +195,9 @@ function updateStatusLight() {
   const wsUp = !!(ws && ws.readyState === 1);
   const c = !wsUp ? "red" : (lifecycle === "READY" ? "green" : "yellow");
   el.className = "statuslight " + c;
-  el.title = !wsUp ? "No server (WebSocket disconnected)"
-           : (lifecycle === "READY" ? "READY (server + excavator connected)" : "Server connected — " + lifecycle);
+  const t = tr();
+  el.title = !wsUp ? t.statusNoServer
+           : (lifecycle === "READY" ? t.statusReadyT : t.statusConnectedT + lifecycle);
 }
 function setLifecycle(state) {
   lifecycle = state;
@@ -405,9 +406,10 @@ function renderTopbar() {
   // (wide) or a left SIDEBAR (narrow) via CSS; the status LIGHT (upper-right) shows the
   // connection/lifecycle, so no lifecycle text here. STOP lives on the dashboard art.
 
-  // collapse control — right-aligned "‹" (CSS pushes it to the right end in top-bar mode)
+  // collapse control — chevron points the way the menu folds: DOWN in the horizontal top
+  // bar, LEFT in the vertical sidebar (see navChevrons()). CSS pushes it to the right end.
   const top = el("navtop");
-  const cb = tbtn("‹", "navcollapse", toggleNav); cb.id = "navCollapseBtn"; cb.title = t.collapseMenu;
+  const cb = tbtn(collapseGlyph(), "navcollapse", toggleNav); cb.id = "navCollapseBtn"; cb.title = t.collapseMenu;
   top.appendChild(cb); tb.appendChild(top);
 
   // GROUP 1 — Connection: connect/resume + reset, clearly labelled
@@ -440,10 +442,20 @@ function renderTopbar() {
 // Collapsed = #menu fully hidden, ONLY the floating expand chip "›" shows (STOP stays
 // reachable on the in-dashboard red button). Expanding is the chip; collapsing is the
 // in-menu "‹" control (built in renderTopbar). CSS shows the chip only while collapsed.
+// Chevron direction follows the menu orientation (mirrors shell.css's sidebar breakpoint):
+// HORIZONTAL top bar → collapse "⌄" (down) / expand "⌃" (up); VERTICAL sidebar → "‹" / "›".
+const SIDEBAR_MQ = "(max-width: 768px), (max-height: 540px)";
+function isSidebar() { return window.matchMedia(SIDEBAR_MQ).matches; }
+function collapseGlyph() { return isSidebar() ? "‹" : "⌄"; }
+function expandGlyph() { return isSidebar() ? "›" : "⌃"; }
+function updateNavGlyphs() {                                  // re-point on resize (orientation can flip)
+  const cb = $("navCollapseBtn"); if (cb) cb.textContent = collapseGlyph();
+  const chip = $("navChip"); if (chip) chip.innerHTML = expandGlyph();
+}
 function applyNav() {
   $("app").classList.toggle("navhidden", navCollapsed);
   const chip = $("navChip");
-  if (chip) { chip.innerHTML = "›"; chip.title = tr().expandMenu; }
+  if (chip) { chip.innerHTML = expandGlyph(); chip.title = tr().expandMenu; }
 }
 function toggleNav() {
   navCollapsed = !navCollapsed;
@@ -472,7 +484,7 @@ function toggleFullscreen() {
 // language picker (6 languages) — replaces the old EN/DE toggle. Persists client-side.
 function langSelect() {
   const s = document.createElement("select");
-  s.id = "langSel"; s.className = "langsel"; s.title = "Language";
+  s.id = "langSel"; s.className = "langsel"; s.title = tr().langTitle;
   s.innerHTML = LANGS.map(([c, name]) => `<option value="${c}"${c === lang ? " selected" : ""}>${name}</option>`).join("");
   s.onchange = () => setLang(s.value);
   return s;
@@ -747,7 +759,7 @@ function onInfo(m) {
     if (v === null || v === undefined) return "<span class='muted'>—</span>";
     if (Array.isArray(v)) return v.map(esc).join(", ");
     if (typeof v === "object") return Object.entries(v).map(([k, val]) => `${esc(k)}: ${esc(val)}`).join("<br>");
-    if (typeof v === "boolean") return v ? "yes" : "no";
+    if (typeof v === "boolean") return v ? tr().infoYes : tr().infoNo;
     return esc(v);
   };
   const keys = Object.keys(m).filter(k => k !== "type")     // iterate WHATEVER came back (tier-agnostic)
@@ -1013,7 +1025,8 @@ document.addEventListener("keydown", e => {
 });
 window.addEventListener("blur", neutralizeAll);
 document.addEventListener("visibilitychange", () => { if (document.hidden) neutralizeAll(); });
-let _rfit; window.addEventListener("resize", () => {   // re-fit labels to the new stage size
+let _rfit; window.addEventListener("resize", () => {   // re-fit labels + re-point the collapse chevron
+  updateNavGlyphs();
   clearTimeout(_rfit); _rfit = setTimeout(() => { if (activeMap) renderLabels(); }, 150);
 });
 

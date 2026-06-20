@@ -29,26 +29,33 @@ window.MK4 = window.MK4 || {};
   // host-specific branching here.
   M.showFullscreen = function () { return String(window.MK4_SHOW_FULLSCREEN) !== "false"; };
 
+  // Shared UI strings (EN-fallback) from the single i18n source; null-safe if i18n absent.
+  function T() { return window.MK4I18N ? window.MK4I18N.dict() : null; }
+
   // Connection status shown next to the endpoint editor: connected | failed | retrying.
   M.setStatus = function (state) {
     var s = document.getElementById("epStatus");
-    if (s) { s.textContent = "● " + state + " — " + M.wsEndpoint(); s.className = "epstatus " + state; }
+    if (!s) return;
+    var t = T(), word = (t && t.statusW && t.statusW[state]) || state;   // translated status word
+    s.textContent = "● " + word + " — " + M.wsEndpoint(); s.className = "epstatus " + state;
   };
 
   // Build the endpoint editor into `host`. onApply() runs after the value is saved
   // (the layout uses it to reconnect the WebSocket to the new endpoint).
   M.buildEndpointRow = function (host, onApply) {
+    var t = T();   // translated labels/hint (EN fallback)
+    var L = function (k, en) { return (t && t[k]) || en; };
     // Vertical stacked form: label · full-width input · buttons row · status · hint.
     host.innerHTML =
-      '<label class="eplabel" for="epInput">API endpoint</label>' +
+      '<label class="eplabel" for="epInput">' + L("epLabel", "API endpoint") + '</label>' +
       '<input type="text" id="epInput" spellcheck="false" autocapitalize="off" placeholder="' + M.defaultEndpoint() + '">' +
       '<div class="epbtns">' +
-      '<button id="epApply" class="primary">Connect</button>' +
-      '<button id="epReset">Use page host</button>' +
+      '<button id="epApply" class="primary">' + L("epConnect", "Connect") + '</button>' +
+      '<button id="epReset">' + L("epUseHost", "Use page host") + '</button>' +
       '</div>' +
       '<span id="epStatus" class="epstatus"></span>' +
-      '<div class="ephint">Empty = this page’s host (default). For a remote Pi set e.g. ' +
-      '<code>ws://192.168.178.98:8765</code>. Saved in this browser.</div>';
+      '<div class="ephint">' + L("epHint", "Empty = this page’s host (default). For a remote Pi set e.g. " +
+      "<code>ws://192.168.178.98:8765</code>. Saved in this browser.") + '</div>';
     var inp = host.querySelector("#epInput");
     inp.value = M.storedEndpoint();
     host.querySelector("#epApply").onclick = function () { M.setEndpoint(inp.value); onApply(); };

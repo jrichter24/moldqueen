@@ -7,7 +7,7 @@
 const $ = id => document.getElementById(id);
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const NEUTRAL_NIB = 0x8;
-const tr = () => MK4I18N.dict();   // shared UI strings (menu chrome); EN-fallback. Debug log stays EN.
+const tr = () => MK4I18N.dict();   // shared UI strings (EN-fallback). RAW is DEVICE-AGNOSTIC → uses t.raw.* (generic "device").
 
 let ws = null, lifecycle = "IDLE";
 let slotCount = 1;                                   // active slots (1-3)
@@ -84,8 +84,8 @@ function renderMenu() {
   const dot = el("dot"); dot.id = "wsDot"; left.appendChild(dot);
   left.appendChild(el("lc", "", "<span id='lcText'>RAW · " + lifecycle + "</span>"));
   if (lifecycle === "IDLE") {
-    left.appendChild(mbtn(t.rawWizard, "primary", openWizard));   // guided on-ramp
-    left.appendChild(mbtn(t.connect, "", () => send({ cmd: "setup", action: "connect" })));  // manual
+    left.appendChild(mbtn(t.raw.wizard, "primary", openWizard));   // guided on-ramp
+    left.appendChild(mbtn(t.raw.connect, "", () => send({ cmd: "setup", action: "connect" })));  // manual (generic device)
   } else if (lifecycle === "CONNECTING") {
     left.appendChild(mbtn(t.ready, "primary", () => send({ cmd: "setup", action: "ready" })));
     left.appendChild(mbtn(t.reset, "", doReset));
@@ -94,8 +94,8 @@ function renderMenu() {
   m.appendChild(el("grow"));
   const right = el("tgroup");
   const sb = mbtn(t.stop, "", doStop); sb.id = "stopBtn"; right.appendChild(sb);
-  right.appendChild(mbtn(t.rawNeutral, "", doNeutral));
-  right.appendChild(MK4I18N.picker(renderMenu));   // language picker (persists mk4_lang; applies everywhere)
+  right.appendChild(mbtn(t.raw.neutral, "", doNeutral));
+  right.appendChild(MK4I18N.picker(applyRawLang));   // language picker (persists mk4_lang; applies everywhere)
   if (MK4.showFullscreen()) right.appendChild(mbtn("⛶", "", toggleFull));
   right.appendChild(mbtn(t.layouts, "", () => location.href = "/?choose=1"));
   m.appendChild(right);
@@ -105,13 +105,19 @@ function toggleFull() {
   if (!document.fullscreenElement) (document.documentElement.requestFullscreen || (() => {})).call(document.documentElement);
   else document.exitFullscreen && document.exitFullscreen();
 }
+// Language switch: re-render the WHOLE RAW page (menu + panels + open wizard) in the new
+// language. Rebuilding the panels clears the console log — acceptable for a manual switch.
+function applyRawLang() {
+  buildMain(); renderMenu();
+  if ($("wizard") && !$("wizard").classList.contains("hidden")) buildWizard();
+}
 function doReset() { send({ cmd: "setup", action: "reset" }); }
-function doStop() { rawDriving = false; send({ cmd: "stop" }); logInfo("STOP — all neutral"); }
+function doStop() { rawDriving = false; send({ cmd: "stop" }); logInfo(tr().raw.logStop); }
 function doNeutral() {
   rawDriving = false;
   for (let s = 0; s < 3; s++) for (let c = 0; c < 4; c++) vals[s][c] = 0;
   buildSlots(); updatePreview();
-  send({ cmd: "stop" }); logInfo("NEUTRAL — channels zeroed");
+  send({ cmd: "stop" }); logInfo(tr().raw.logNeutral);
 }
 
 // ---- condensed connection wizard (1-3 boxes); reuses the dashboard's .modal/.wiz
@@ -141,32 +147,27 @@ function wizBack() {
   buildWizard();
 }
 function wizReady() { send({ cmd: "setup", action: "ready" }); }   // → READY → step 4 (via lifecycle)
-function wAssign(n) {
-  if (n === 2) return "Set the boxes to <b>different</b> slots: <b>box 1 → ONE flash</b> (slot 0), " +
-    "<b>box 2 → TWO flashes</b> (slot 1). They must differ or they'll move together.";
-  return "Set each box to a <b>different</b> slot: <b>box 1 → ONE flash</b> (slot 0), " +
-    "<b>box 2 → TWO flashes</b> (slot 1), <b>box 3 → THREE flashes</b> (slot 2). All must differ.";
-}
 function wbtn(id, label, primary) { return `<button id="${id}"${primary ? ' class="apply"' : ""}>${label}</button>`; }
 function buildWizard() {
-  const n = slotCount, s = wizStep;
-  const boxes = n === 1 ? "your box" : "your " + n + " boxes";
+  const t = tr(), r = t.raw, n = slotCount, s = wizStep;
+  const boxesPhrase = n === 1 ? r.yourBox : r.yourBoxes.replace("{n}", n);
+  const whoPhrase = n === 1 ? r.yourBox : r.theBoxes;
   const txt = {
-    1: { t: "Step 1 — Power on", b: "Power on " + boxes + " — each shows <b>one long flash</b>." },
-    2: { t: "Step 2 — Connect", b: "Sending the MK4 connect telegram — " + (n === 1 ? "your box" : "the boxes") + " should now <b>fast-flash</b> (connected)." },
-    3: { t: "Step 3 — Assign slots", b: wAssign(n) },
-    4: { t: "Ready ✓", b: "Connected — RAW controls unlocked. Set channels and Send." },
+    1: { t: r.w1t, b: r.w1b.replace("{boxes}", boxesPhrase) },
+    2: { t: r.w2t, b: r.w2b.replace("{who}", whoPhrase) },
+    3: { t: r.w3t, b: n === 2 ? r.wAssign2 : r.wAssign3 },
+    4: { t: r.w4t, b: r.w4b },
   }[s];
   let btns;
-  if (s === 1) btns = wbtn("wCancel", "Cancel") + wbtn("wNext", "Next", 1);
-  else if (s === 2) btns = wbtn("wCancel", "Cancel") + wbtn("wBack", "Back") + (n > 1 ? wbtn("wNext", "Next", 1) : wbtn("wReady", "Ready", 1));
-  else if (s === 3) btns = wbtn("wCancel", "Cancel") + wbtn("wBack", "Back") + wbtn("wReady", "Ready", 1);
-  else btns = wbtn("wDone", "Start", 1);
+  if (s === 1) btns = wbtn("wCancel", t.wiz.cancel) + wbtn("wNext", t.wiz.next, 1);
+  else if (s === 2) btns = wbtn("wCancel", t.wiz.cancel) + wbtn("wBack", t.wiz.back) + (n > 1 ? wbtn("wNext", t.wiz.next, 1) : wbtn("wReady", t.wiz.readyBtn, 1));
+  else if (s === 3) btns = wbtn("wCancel", t.wiz.cancel) + wbtn("wBack", t.wiz.back) + wbtn("wReady", t.wiz.readyBtn, 1);
+  else btns = wbtn("wDone", r.start, 1);
   const dots = n > 1 ? [1, 2, 3, 4] : [1, 2, 4];
   const gif = { 1: "long_flash", 2: "short_flash", 3: "double_short_flash" }[s];   // real LED-flash GIFs
   const media = gif ? `<div class="media"><img src="/assets/${gif}.gif" alt=""></div>` : "";
   $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
-    <h2>RAW — connection setup <span class="muted" style="font-size:.8rem">(${n} box${n > 1 ? "es" : ""})</span></h2>
+    <h2>${r.wzTitle} <span class="muted" style="font-size:.8rem">(${n} ${n > 1 ? r.boxes : r.box})</span></h2>
     <div class="wsteps">${dots.map(d => `<span class="wdot${d === s ? " on" : d < s ? " done" : ""}"></span>`).join("")}</div>
     ${media}
     <h3 class="wt">${txt.t}</h3><p class="wbody">${txt.b}</p>
@@ -179,44 +180,45 @@ function buildWizard() {
 
 // ---- controls (slots / channels / send) ----
 function buildMain() {
+  const r = tr().raw;
   $("rawmain").innerHTML =
     `<div class="rawcol controls">
        <div class="panel">
-         <h2>API connection</h2>
+         <h2>${r.apiConnection}</h2>
          <div class="eprow" id="epRow"></div>
        </div>
        <div class="panel">
-         <h2>Active devices / slots</h2>
-         <p class="hint">One MK4 telegram carries 3 slots × 4 channels; inactive slots stay neutral (0x8).</p>
+         <h2>${r.activeDevices}</h2>
+         <p class="hint">${r.slotsHint}</p>
          <div class="slotsel" id="slotsel"></div>
          <div id="slots"></div>
          <div class="preview" id="preview"></div>
          <div class="sendrow">
-           <button class="btn send" id="sendBtn">Send telegram</button>
-           <button class="btn neutral" id="neutralBtn">Neutral</button>
+           <button class="btn send" id="sendBtn">${r.send}</button>
+           <button class="btn neutral" id="neutralBtn">${r.neutral}</button>
            <span class="gate" id="gate"></span>
          </div>
        </div>
      </div>
      <div class="rawcol console">
        <div class="panel console">
-         <h2>Console <span class="tools">
-           <button class="btn" id="copyBtn">Copy</button>
-           <button class="btn" id="clearBtn">Clear</button></span></h2>
-         <p class="hint">Each telegram sent — raw bytes + on-air AD — newest at the bottom. Read-only.</p>
+         <h2>${r.consoleH} <span class="tools">
+           <button class="btn" id="copyBtn">${r.copy}</button>
+           <button class="btn" id="clearBtn">${r.clear}</button></span></h2>
+         <p class="hint">${r.consoleHint}</p>
          <div id="log"></div>
          <div class="apilist" style="margin-top:.6rem">
-           <b>WS API</b> (raw path): <code>{cmd:set,slot,channel,value}</code> ·
+           <b>WS API</b> ${r.apiPath} <code>{cmd:set,slot,channel,value}</code> ·
            <code>{cmd:stop}</code> · <code>{cmd:setup,action:connect|ready|reset}</code> ·
-           <code>{cmd:state}</code>. Pushes: <code>lifecycle</code>, <code>state{slots,raw,ad}</code>.
+           <code>{cmd:state}</code>. ${r.apiPushes} <code>lifecycle</code>, <code>state{slots,raw,ad}</code>.
          </div>
-         <details class="api"><summary>Full AsyncAPI contract (/asyncapi.yaml)</summary><pre id="apispec">loading…</pre></details>
+         <details class="api"><summary>${r.fullApi}</summary><pre id="apispec">${r.loading}</pre></details>
        </div>
      </div>`;
   // slot-count selector
   const ss = $("slotsel");
   [1, 2, 3].forEach(n => {
-    const b = mbtn(n + (n === 1 ? " slot" : " slots"), n === slotCount ? "btn on" : "btn", () => { slotCount = n; refreshSel(); buildSlots(); updatePreview(); });
+    const b = mbtn(n + " " + (n === 1 ? r.slotWord : r.slotsWord), n === slotCount ? "btn on" : "btn", () => { slotCount = n; refreshSel(); buildSlots(); updatePreview(); });
     b.dataset.n = n; ss.appendChild(b);
   });
   $("sendBtn").onclick = doSend;
@@ -231,14 +233,15 @@ function buildMain() {
 function refreshSel() { $("slotsel").querySelectorAll("button").forEach(b => b.className = (+b.dataset.n === slotCount ? "btn on" : "btn")); }
 
 function buildSlots() {
+  const r = tr().raw;
   const host = $("slots"); host.innerHTML = "";
   for (let s = 0; s < slotCount; s++) {
-    const slot = el("slot"); slot.innerHTML = `<div class="sh">Slot ${s} &nbsp;(global ch ${s * 4}–${s * 4 + 3})</div>`;
+    const slot = el("slot"); slot.innerHTML = `<div class="sh">${r.slot} ${s} &nbsp;(${r.globalCh} ${s * 4}–${s * 4 + 3})</div>`;
     for (let c = 0; c < 4; c++) {
       const g = s * 4 + c, v = vals[s][c];
       const row = el("chrow");
       row.innerHTML =
-        `<label>ch ${c} <span style="color:#7f8ea4">g${g}</span></label>` +
+        `<label>${r.ch} ${c} <span style="color:#7f8ea4">g${g}</span></label>` +
         `<input type="range" min="-7" max="7" step="1" value="${v}" data-s="${s}" data-c="${c}" class="rg">` +
         `<input type="number" min="-7" max="7" step="1" value="${v}" data-s="${s}" data-c="${c}" class="nm">` +
         `<span class="nib" id="nib-${s}-${c}">0x${toNib(v).toString(16)}</span>`;
@@ -262,23 +265,24 @@ function updatePreview() {
   const raw = motionRaw();
   const p = $("preview");
   if (!p) return;
+  const r = tr().raw;
   const nibs = raw.slice(6, 18).replace(/(..)/g, "$1 ").trim();
   // block-level rows (not <br>); a raw-specific label class avoids the dashboard's
   // global ".lbl { position:absolute }" rule (which made the two lines overlap).
   p.innerHTML =
-    `<div class="prow"><span class="plbl">telegram to send →</span> <span class="pval">${raw}</span></div>` +
-    `<div class="prow"><span class="plbl">nibbles →</span> <span class="pval">${nibs}</span></div>`;
+    `<div class="prow"><span class="plbl">${r.previewTelegram}</span> <span class="pval">${raw}</span></div>` +
+    `<div class="prow"><span class="plbl">${r.previewNibbles}</span> <span class="pval">${nibs}</span></div>`;
 }
 function updateGate() {
   const g = $("gate"), b = $("sendBtn");
   if (!g || !b) return;
   const ready = lifecycle === "READY";
   b.disabled = !ready;
-  g.textContent = ready ? "" : "Send needs READY — Connect → Ready first";
+  g.textContent = ready ? "" : tr().raw.gate;
 }
 
 function doSend() {
-  if (lifecycle !== "READY") { logInfo("Send ignored — not READY"); return; }
+  if (lifecycle !== "READY") { logInfo(tr().raw.logSendIgnored); return; }
   rawDriving = true;                          // start affirming (keepalive holds it on the server)
   const target = motionRaw();
   // send a raw set for every channel (active = value, inactive slot = neutral)
@@ -298,13 +302,13 @@ function setLive() { /* live on-air readout is the preview; state echoes confirm
 function copyLog() {
   const txt = [...$("log").querySelectorAll(".logline")].map(l => l.textContent).join("\n");
   (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(
-    () => { const b = $("copyBtn"); b.textContent = "Copied ✓"; setTimeout(() => b.textContent = "Copy", 1200); }, () => {});
+    () => { const b = $("copyBtn"); b.textContent = tr().raw.copied; setTimeout(() => b.textContent = tr().raw.copy, 1200); }, () => {});
 }
 
 // ---- wiring ----
 document.addEventListener("keydown", e => { if (e.code === "Space" || e.code === "Escape") { e.preventDefault(); doStop(); } });
 buildMain();
 renderMenu();
-logInfo("RAW debug — Connect → Ready, set channels, Send. Dry-run safe on isolated ports.");
+logInfo(tr().raw.bootHint);
 connect();
 setInterval(refreshActive, REFRESH_MS);   // affirmative motion-keepalive (server times out un-refreshed channels)

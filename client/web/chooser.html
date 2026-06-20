@@ -181,37 +181,38 @@
          BLE protocol, through a clean WebSocket API.</p>
 
       <h3 id="aboutDiscH">Disclaimer</h3>
-      <p>A <b>private, independent, unofficial hobby project</b> — <b>not</b> affiliated with, authorized by,
+      <p><span id="aboutDisc">A <b>private, independent, unofficial hobby project</b> — <b>not</b> affiliated with, authorized by,
          endorsed by, or sponsored by <b>Mould King</b> / Shenzhen Yuxing. “Mould King” and “MK+tech” are
          trademarks of their owners, used only descriptively for interoperability. The protocol was
-         reverse-engineered for interoperability with hardware the author owns, for educational/personal use.
+         reverse-engineered for interoperability with hardware the author owns, for educational/personal use.</span>
+         <!-- license / warranty clause stays ENGLISH (legal text is not translated) -->
          Provided <b>“as is”, no warranty — use at your own risk</b>. Licensed under the <b>MIT License</b>.</p>
 
       <h3 id="aboutCredH">Credits</h3>
       <ul>
         <li><a href="https://github.com/J0EK3R/mkconnect-python" target="_blank" rel="noopener">J0EK3R/mkconnect-python</a>
-            (MIT) — the <code>MouldKingCrypt</code> cipher (ported byte-for-byte here) and the MK4/MK6 protocol
+            (MIT) — <span id="aboutCredMk">the <code>MouldKingCrypt</code> cipher (ported byte-for-byte here) and the MK4/MK6 protocol
             groundwork. Our hubs turned out to be the MK4 12-channel nibble variant (found by capturing the
-            MK+tech app); the codec is <b>verified byte-exact against the app's adverts</b>.</li>
+            MK+tech app); the codec is <b>verified byte-exact against the app's adverts</b>.</span></li>
         <li><a href="https://github.com/imurvai/brickcontroller2" target="_blank" rel="noopener">BrickController2</a>
-            — additional protocol reference.</li>
+            <span id="aboutCredBc">— additional protocol reference.</span></li>
       </ul>
 
       <h3 id="aboutBuiltH">How MoldQueen was built</h3>
       <p class="ainote"><span id="aboutBuiltLead">How MoldQueen was built</span><br>
-        MoldQueen was built with help from AI coding assistants. Early work used Claude (Fable), later work
-        used Claude Opus 4.8. All design decisions and the code review were done by the human developer.</p>
+        <span id="aboutBuiltNote">MoldQueen was built with help from AI coding assistants. Early work used Claude (Fable), later work
+        used Claude Opus 4.8. All design decisions and the code review were done by the human developer.</span></p>
 
       <h3 id="aboutAuthH">Author</h3>
-      <p>Built by Jens Richter. Background in physics and electrical engineering; by day I work on
+      <p id="aboutAuthor">Built by Jens Richter. Background in physics and electrical engineering; by day I work on
         tour optimization with genetic and AI algorithms at
         <a href="https://www.dna-evolutions.com/" target="_blank" rel="noopener">DNA Evolutions</a>.
         Find me on <a href="https://www.linkedin.com/in/li-jens-richter" target="_blank" rel="noopener">LinkedIn</a>.<br>
         <span class="muted">Built for my son Jonas, who loves excavators and helicopters.</span></p>
 
       <p class="muted" style="margin-top:1rem">
-        Source &amp; issues: <a href="https://github.com/jrichter24/moldqueen" target="_blank" rel="noopener">github.com/jrichter24/moldqueen</a>
-        · <a href="https://github.com/jrichter24/moldqueen/issues" target="_blank" rel="noopener">report an issue</a></p>
+        <span id="aboutSource">Source &amp; issues:</span> <a href="https://github.com/jrichter24/moldqueen" target="_blank" rel="noopener">github.com/jrichter24/moldqueen</a>
+        · <a href="https://github.com/jrichter24/moldqueen/issues" target="_blank" rel="noopener" id="aboutReport">report an issue</a></p>
     </div>
   </div>
 
@@ -289,6 +290,10 @@
         setTxt("aboutTitle", d.about.title); setHtml("aboutIntro", d.about.intro);
         setTxt("aboutDiscH", d.about.discH); setTxt("aboutCredH", d.about.credH);
         setTxt("aboutBuiltH", d.about.builtH); setTxt("aboutBuiltLead", d.about.builtH); setTxt("aboutAuthH", d.about.authH);
+        // About CONTENT (prose). License/warranty clause + names/links stay EN (hardcoded, not set here).
+        setHtml("aboutDisc", d.about.disc); setHtml("aboutCredMk", d.about.credMk); setHtml("aboutCredBc", d.about.credBc);
+        setHtml("aboutBuiltNote", d.about.builtNote); setHtml("aboutAuthor", d.about.authorHtml);
+        setTxt("aboutSource", d.about.source); setTxt("aboutReport", d.about.reportIssue);
         setTxt("byoTitle", d.byo.title); setHtml("byoP1", d.byo.p1); setHtml("byoP2", d.byo.p2);
       }
       renderCards();   // card text is language-dependent too
