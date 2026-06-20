@@ -69,6 +69,8 @@ let lang = MK4I18N.lang();   // shared persisted choice (mk4_lang), normalized t
 let defaultMap = null, activeMap = null, deviceSwap = localStorage.getItem("mk4_device_swap") === "1";
 let navCollapsed = localStorage.getItem("mk4_nav_collapsed") === "1";   // sidebar hidden? (chip-toggled, persisted)
 const MAP_URL = "/channel_map.excavator.json";   // this layout's bundled default map (client owns it)
+const LAYOUT_ID = "excavator", LAYOUT_TITLE_DEFAULT = "Excavator 13112";   // editable titlebar title (per-layout)
+let autoReady = false;   // one-shot: "toy already connected" → auto-send ready once CONNECTING is reached
 let grid = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
 const tr = () => MK4I18N.dict(lang);   // selected language DEEP-MERGED over EN (per-key fallback)
 
@@ -207,6 +209,10 @@ function setLifecycle(state) {
   rebuildOpenSettings();
   wizardOnLifecycle(state);
   startupOnUpdate();
+  if (autoReady) {   // "toy already connected" handoff: connect → auto-ready → close the guide
+    if (state === "CONNECTING") send({ cmd: "setup", action: "ready" });
+    else if (state === "READY") { autoReady = false; closeWizard(); closeStartup(); }
+  }
 }
 
 // ---- build the stage overlay ----
@@ -395,6 +401,26 @@ function refreshValues() {
 }
 function setInfo(id, text) { const b = $(id); if (b && !b.dataset.static) b.innerHTML = text; }
 
+// ---- editable layout title (per-layout, persisted; falls back to the layout default) ----
+function getTitle() { const v = (localStorage.getItem("mk4_title_" + LAYOUT_ID) || "").trim(); return v || LAYOUT_TITLE_DEFAULT; }
+function setTitle(v) {
+  v = (v || "").trim();
+  if (v && v !== LAYOUT_TITLE_DEFAULT) localStorage.setItem("mk4_title_" + LAYOUT_ID, v);
+  else localStorage.removeItem("mk4_title_" + LAYOUT_ID);   // empty / default → fall back to the layout name
+  const e = $("navTitle"); if (e) e.textContent = getTitle();
+}
+// "Toy already connected" shortcut: skip the guided power-on/flash steps. Assume the hub is
+// still connected (e.g. after an app restart) and drive the lifecycle straight to READY — which
+// makes the broadcaster TRANSMIT neutral keepalive so the still-connected hub keeps receiving
+// and doesn't time out. connect → (CONNECTING) → ready, via the normal setup path.
+function skipToReady() {
+  clearStopLatch();                                              // deliberate user action → clear any hard-stop latch
+  if (lifecycle === "READY") { autoReady = false; closeWizard(); closeStartup(); return; }
+  autoReady = true;
+  if (lifecycle === "CONNECTING") send({ cmd: "setup", action: "ready" });
+  else send({ cmd: "setup", action: "connect" });               // IDLE → CONNECTING; setLifecycle then auto-sends ready
+}
+
 // ---- top toolbar ----
 function tbtn(label, cls, on) {
   const b = document.createElement("button"); b.innerHTML = label; if (cls) b.className = cls; b.onclick = on; return b;
@@ -411,6 +437,9 @@ function renderTopbar() {
   const top = el("navtop");
   const cb = tbtn(collapseGlyph(), "navcollapse", toggleNav); cb.id = "navCollapseBtn"; cb.title = t.collapseMenu;
   top.appendChild(cb); tb.appendChild(top);
+
+  // centered, editable layout title (replaces the old lifecycle text — the status light shows state)
+  const title = el("navtitle"); title.id = "navTitle"; title.textContent = getTitle(); tb.appendChild(title);
 
   // GROUP 1 — Connection: connect/resume + reset, clearly labelled
   const g1 = el("navgroup"); g1.appendChild(el("grouplabel", "", t.grpConnection));
@@ -524,7 +553,7 @@ function wizardOnLifecycle(state) {     // keep the wizard in step with the real
 function buildWizard() {
   const t = tr(), s = wizardStep, w = t.wiz["w" + s];
   let btns;
-  if (s === 1) btns = `<button id="wCancel">${t.wiz.cancel}</button><button class="apply" id="wNext">${t.wiz.next}</button>`;
+  if (s === 1) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wAlready">${t.wiz.already}</button><button class="apply" id="wNext">${t.wiz.next}</button>`;
   else if (s === 2) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wBack">${t.wiz.back}</button><button class="apply" id="wNext">${t.wiz.next}</button>`;
   else if (s === 3) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wBack">${t.wiz.back}</button><button class="apply" id="wReady">${t.wiz.readyBtn}</button>`;
   else btns = `<button class="apply" id="wDone">${t.wiz.startDriving}</button>`;
@@ -540,6 +569,7 @@ function buildWizard() {
   const set = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
   set("wCancel", wizardCancel); set("wBack", wizardBack); set("wNext", wizardNext);
   set("wReady", () => send({ cmd: "setup", action: "ready" }));   // → READY → step 4 (via lifecycle)
+  set("wAlready", skipToReady);   // "toy already connected" → straight to READY + transmit neutral
   set("wDone", closeWizard);
 }
 
@@ -576,6 +606,7 @@ function buildStartup() {
       <div class="actions wactions">
         <button id="suSkip">${t.su.skip}</button>
         <button id="suBack">${t.wiz.back}</button>
+        <button id="suAlready">${t.wiz.already}</button>
         <button class="apply" id="suConnect">${t.connect}</button>
       </div>`;
   }
@@ -586,6 +617,7 @@ function buildStartup() {
   set("suSkip", closeStartup);
   set("suNext", () => { if (wsStatus === "connected") { startupStep = 2; buildStartup(); } });
   set("suBack", () => { startupStep = 1; buildStartup(); });
+  set("suAlready", skipToReady);   // "toy already connected" → straight to READY + transmit neutral
   set("suConnect", () => { closeStartup(); openWizard(); });   // hand off to the existing excavator wizard
   if (s === 1) { MK4.buildEndpointRow($("suEpRow"), reconnectWS); MK4.setStatus(wsStatus); }
 }
@@ -632,9 +664,19 @@ function buildSettings() {
 
 // ---- Connection tab: endpoint editor + status (usable OFFLINE — set endpoint first) ----
 function connectionPanel(t) {
-  return `<h2>${t.tabConnection}</h2><p class="sub">${t.connSub}</p><div class="eprow" id="epRow"></div>`;
+  return `<h2>${t.tabConnection}</h2>
+    <div class="eprow" style="margin-bottom:.9rem">
+      <label class="eplabel" for="titleInput">${t.titleLabel}</label>
+      <input type="text" id="titleInput" maxlength="40" spellcheck="false" placeholder="${esc(LAYOUT_TITLE_DEFAULT)}">
+    </div>
+    <p class="sub">${t.connSub}</p><div class="eprow" id="epRow"></div>`;
 }
 function wireConnection() {
+  const ti = $("titleInput");
+  if (ti) {                                   // empty field shows the layout default as placeholder
+    ti.value = localStorage.getItem("mk4_title_" + LAYOUT_ID) || "";
+    ti.oninput = () => setTitle(ti.value);    // live: persist + update the centered titlebar title
+  }
   MK4.buildEndpointRow($("epRow"), reconnectWS);
   MK4.setStatus(wsStatus);   // restore last known status into the freshly-built #epStatus
 }

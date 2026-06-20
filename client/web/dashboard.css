@@ -31,6 +31,15 @@
 /* ---- grouped toolbar/sidebar: collapse + labelled groups + thin separators ---- */
 #menu { align-items: stretch; }
 #menu .navtop { display: flex; align-items: center; justify-content: flex-end; flex: 0 0 auto; }
+
+/* editable layout TITLE (replaces the old lifecycle text — the status light shows state).
+   TOP BAR: a flex item that fills + centers in the space between the control groups and the
+   collapse control, so it never overlaps them; long/custom names ellipsize. */
+#navTitle {
+  order: 50; flex: 1 1 auto; min-width: 0; text-align: center; padding: 0 .6em; pointer-events: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: #dce8f7; font-weight: 700; font-size: 1.05em; letter-spacing: .02em;
+}
 #menu .navcollapse { font-size: 1.1em; line-height: 1; padding: .2em .6em; min-width: 2.2em;
   width: auto; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; }   /* compact; glyph centered */
 #menu .navgroup { display: flex; flex-direction: column; gap: .35em; flex: 0 0 auto; }
@@ -53,6 +62,8 @@
   #menu .navtop { order: 0; margin-left: 0; border-left: 0; padding-left: 0;
     border-bottom: 1px solid #242c3a; padding-bottom: .4em; margin-bottom: .1em; }
   #menu .navgroup, #menu .groupbtns select.langsel { width: 100%; }
+  /* SIDEBAR: title is a normal centered header just below the collapse control */
+  #navTitle { flex: 0 0 auto; order: 0; width: 100%; padding: .15em 0 .1em; font-size: 1em; }
 }
 
 /* ---- live status LIGHT (fixed upper-right; visible regardless of sidebar state) ----

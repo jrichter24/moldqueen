@@ -96,7 +96,7 @@ README is the tour; PROJECT.md is the source of truth.
 - **A clean WebSocket API first** — the control core is an API; build your own client
   (console, app, AI agent) against a documented **AsyncAPI 3.0** spec.
 - **Multi-language web client** — a polished dashboard with a **6-language picker**
-  (EN/DE/ZH/KO/ES/FR) so kids can drive in their own language; run it on the Pi or
+  (EN/DE/ZH/KO/ES/FR) so people can drive in their own language; run it on the Pi or
   anywhere as a container.
 - **Game controller support** — drive with a **PS5/DualSense** gamepad. It connects to
   the **client device** (your phone/laptop), not the Pi — just another input sending the
