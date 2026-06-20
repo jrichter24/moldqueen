@@ -14,97 +14,11 @@ const pct = ([x, y, w, h]) =>
   `width:${(w / W * 100).toFixed(3)}%;height:${(h / H * 100).toFixed(3)}%;`;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-// ---- i18n (static strings; function titles come from the map labels) ----
-const T = {
-  en: { connect: "Connect Excavator", ready: "Ready", reset: "Reset", stop: "STOP", speed: "Speed",
-        full: "⛶", settings: "⚙", layouts: "Choose layout", close: "Close", lang: "DE", deviceSwap: "Swap hubs 0↔1",
-        resetConn: "Reset connection", grpConnection: "Connection", grpNavigation: "Navigation", grpSettings: "Settings", collapseMenu: "Collapse menu", expandMenu: "Show menu",
-        saveClose: "Save and Close", discard: "Discard", promote: "Save as default (locally)",
-        resetMap: "Reset to default", labelsBtn: "Labels…", back: "Back", revtrim: "Rev ×",
-        serverInfo: "ℹ Server info", infoConnectFirst: "Connect first", infoFetching: "Fetching…", infoTier: "tier",
-        tabConnection: "Connect API", tabChannels: "Channels", tabLabels: "Labels", tabGamepad: "Gamepad", tabServerInfo: "Server info",
-        padSub: "Drive with a PS5/DualSense (or any) controller paired to THIS device. Move a stick or press a button to see what it reports, then map inputs to functions.",
-        padEnable: "Enable gamepad control", padAssign: "Input mapping", padSource: "Controller input",
-        padInvert: "Invert", padLive: "Live", padAxis: "Axis", padButtons: "Buttons ±", padBtn: "Btn",
-        padNone: "—", padNeg: "−", padPos: "+", padResetDefaults: "Reset to DualSense defaults",
-        padAutosave: "Saved automatically in this browser",
-        padNoController: "No controller — pair one to this device and press a button",
-        padOnTitle: "Gamepad ON — click to disable", padOffTitle: "Gamepad OFF — click to enable",
-        connSub: "Set the WebSocket API endpoint this page talks to (empty = this page’s host).",
-        infoSub: "What the server reports — depends on its disclosure tier.",
-        fn: "Function", slot: "Slot", ch: "Ch", invert: "Inv", maxFwd: "Max ▲", maxRev: "Max ▼", test: "Test",
-        maxRevNote: "Max ▲ / ▼ cap forward / reverse speed (1–7). Reverse default is 5: setting Max ▼ too HIGH can drive the motor into a stall near full reverse (it stops moving).",
-        labEn: "Label EN", labDe: "Label DE", assign: "Channel assignment",
-        assignSub: "Drag/Test a control, see which motor moves, then set its slot/channel, max and reverse-trim here. Rev× boosts PARTIAL-throttle reverse toward forward speed (it can't exceed full speed). Save for this session, or Save as default (locally) to persist it in this browser. Occupied target channels are swapped automatically.",
-        labelsTitle: "Function labels (EN / DE)", labelsSub: "The display name of each function, per language.",
-        readyOnly: "test needs READY", confirmed: "confirmed", placeholder: "placeholder",
-        applied: "Applied for this session ✓", promoted: "Saved as default (locally) ✓",
-        swapOn: "swapped", swapOff: "normal", hold: "hold",
-        hIdle: "Power on both hubs (one long flash), then press <b>Connect</b>.",
-        hConnecting: "Button <b>ONE</b> hub to <b>two fast flashes</b> (slot&nbsp;1); leave the other on one flash (slot&nbsp;0). Then <b>Ready</b>.",
-        dir: { forward: "Forward", backward: "Backward", up: "Up", down: "Down",
-               out: "Out", in: "In", left: "Left", right: "Right", open: "Open", close: "Close" },
-        info: { mode: "Mode", swap: "Hubs", speed: "Speed", batt: "Batt" },
-        resume: "Resume setup",
-        su: { title: "Get started", next: "Next — connect excavator →", skip: "Skip — just look around",
-              s1t: "Step 1 — Reach the server",
-              s1b: "This page drives the excavator through the WebSocket <b>API</b> (the “Connect API” endpoint — not the toy itself). First make sure it's reachable; set the endpoint if your Pi is elsewhere.",
-              s2t: "Step 2 — Connect the excavator",
-              s2b: "Server reachable ✓ &nbsp;Now power on the hubs and connect the <b>physical excavator</b> over BLE: <b>Connect Excavator</b> → assign slots → <b>Ready</b>." },
-        wiz: { title: "Excavator setup", next: "Next", back: "Back", cancel: "Cancel",
-               readyBtn: "Ready", startDriving: "Start driving", placeholder: "📷 placeholder — drop a photo here",
-               w1: { t: "Step 1 — Power on", b: "Power on <b>both</b> hubs. Each shows <b>one long flash</b>." },
-               w2: { t: "Step 2 — Connecting…", b: "Sending the connect signal — both hubs should now <b>fast-flash</b>." },
-               w3: { t: "Step 3 — Assign slots", b: "Press <b>ONE</b> hub's button until it shows <b>two fast flashes</b> (slot&nbsp;1). Leave the other on one flash (slot&nbsp;0)." },
-               w4: { t: "Ready ✓", b: "Connected — controls unlocked. You can start driving." } } },
-  de: { connect: "Bagger verbinden", ready: "Bereit", reset: "Reset", stop: "STOPP", speed: "Tempo",
-        full: "⛶", settings: "⚙", layouts: "Layout wählen", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
-        resetConn: "Verbindung zurücksetzen", grpConnection: "Verbindung", grpNavigation: "Navigation", grpSettings: "Einstellungen", collapseMenu: "Menü einklappen", expandMenu: "Menü zeigen",
-        saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern (lokal)",
-        resetMap: "Auf Standard zurück", labelsBtn: "Labels…", back: "Zurück", revtrim: "Rev ×",
-        serverInfo: "ℹ Server-Info", infoConnectFirst: "Erst verbinden", infoFetching: "Lädt…", infoTier: "Stufe",
-        tabConnection: "API verbinden", tabChannels: "Kanäle", tabLabels: "Labels", tabGamepad: "Gamepad", tabServerInfo: "Server-Info",
-        padSub: "Mit einem PS5/DualSense (oder beliebigen) Controller fahren, der mit DIESEM Gerät gekoppelt ist. Stick/Taste bewegen, um zu sehen was er meldet, dann Eingaben auf Funktionen abbilden.",
-        padEnable: "Gamepad-Steuerung aktivieren", padAssign: "Eingabe-Zuordnung", padSource: "Controller-Eingabe",
-        padInvert: "Invertieren", padLive: "Live", padAxis: "Achse", padButtons: "Tasten ±", padBtn: "Taste",
-        padNone: "—", padNeg: "−", padPos: "+", padResetDefaults: "Auf DualSense-Standard zurück",
-        padAutosave: "Automatisch in diesem Browser gespeichert",
-        padNoController: "Kein Controller — mit diesem Gerät koppeln und eine Taste drücken",
-        padOnTitle: "Gamepad AN — zum Deaktivieren klicken", padOffTitle: "Gamepad AUS — zum Aktivieren klicken",
-        connSub: "WebSocket-API-Endpunkt dieser Seite (leer = Host dieser Seite).",
-        infoSub: "Was der Server meldet — je nach Offenlegungsstufe.",
-        fn: "Funktion", slot: "Slot", ch: "Kan", invert: "Inv", maxFwd: "Max ▲", maxRev: "Max ▼", test: "Test",
-        maxRevNote: "Max ▲ / ▼ begrenzen Vorwärts- / Rückwärtstempo (1–7). Rückwärts-Standard ist 5: ein zu HOHES Max ▼ kann den Motor nahe Vollgas-Rückwärts in einen Stillstand treiben (er bewegt sich nicht mehr).",
-        labEn: "Label EN", labDe: "Label DE", assign: "Kanalzuordnung",
-        assignSub: "Steuerung ziehen/testen, sehen welcher Motor läuft, dann Slot/Kanal, Max und Rückwärts-Trim setzen. Rev× hebt TEILGAS-Rückwärts Richtung Vorwärtstempo an (kann Vollgas nicht überschreiten). Für die Sitzung speichern oder lokal als Standard speichern (in diesem Browser). Belegte Zielkanäle werden automatisch getauscht.",
-        labelsTitle: "Funktions-Labels (EN / DE)", labelsSub: "Anzeigename jeder Funktion, je Sprache.",
-        readyOnly: "Test braucht BEREIT", confirmed: "bestätigt", placeholder: "Platzhalter",
-        applied: "Für Sitzung übernommen ✓", promoted: "Als Standard gespeichert (lokal) ✓",
-        swapOn: "getauscht", swapOff: "normal", hold: "halten",
-        hIdle: "Beide Hubs einschalten (ein langes Blinken), dann <b>Verbinden</b>.",
-        hConnecting: "<b>EINEN</b> Hub auf <b>zwei schnelle Blinks</b> (Slot&nbsp;1); den anderen auf einem Blink (Slot&nbsp;0). Dann <b>Bereit</b>.",
-        dir: { forward: "Vorwärts", backward: "Rückwärts", up: "Hoch", down: "Runter",
-               out: "Aus", in: "Ein", left: "Links", right: "Rechts", open: "Öffnen", close: "Schließen" },
-        info: { mode: "Modus", swap: "Hubs", speed: "Tempo", batt: "Akku" },
-        resume: "Setup fortsetzen",
-        su: { title: "Loslegen", next: "Weiter — Bagger verbinden →", skip: "Überspringen — nur umsehen",
-              s1t: "Schritt 1 — Server erreichen",
-              s1b: "Diese Seite steuert den Bagger über die WebSocket-<b>API</b> (der „API verbinden“-Endpunkt — nicht das Modell selbst). Zuerst sicherstellen, dass sie erreichbar ist; Endpunkt setzen, falls der Pi woanders läuft.",
-              s2t: "Schritt 2 — Bagger verbinden",
-              s2b: "Server erreichbar ✓ &nbsp;Jetzt die Hubs einschalten und den <b>echten Bagger</b> über BLE verbinden: <b>Bagger verbinden</b> → Slots zuordnen → <b>Bereit</b>." },
-        wiz: { title: "Bagger-Setup", next: "Weiter", back: "Zurück", cancel: "Abbrechen",
-               readyBtn: "Bereit", startDriving: "Losfahren", placeholder: "📷 Platzhalter — Foto hier einsetzen",
-               w1: { t: "Schritt 1 — Einschalten", b: "<b>Beide</b> Hubs einschalten. Jeder zeigt <b>ein langes Blinken</b>." },
-               w2: { t: "Schritt 2 — Verbinden…", b: "Verbindungssignal wird gesendet — beide Hubs sollten jetzt <b>schnell blinken</b>." },
-               w3: { t: "Schritt 3 — Slots zuweisen", b: "<b>EINEN</b> Hub auf <b>zwei schnelle Blinks</b> stellen (Slot&nbsp;1). Den anderen auf einem Blink lassen (Slot&nbsp;0)." },
-               w4: { t: "Bereit ✓", b: "Verbunden — Steuerung entsperrt. Du kannst losfahren." } } },
-};
-
+// ---- i18n: ALL fixed UI strings live in the shared single source web/i18n.js
+// (MK4I18N). en/de are complete; zh/ko/es/fr seed the chrome and fall back to en.
+// Function titles come from the map labels (per-language), not from here. ----
 const FN = ["left_track", "right_track", "arm_lift", "front_arm", "rotation", "bucket"];
-// Supported label languages [code, native picker name]. `en` is the fallback. Function
-// labels are translated per-language (the map's `labels` object); fixed UI strings exist
-// for en/de and fall back to en for the rest (focus = the function labels kids read).
-const LANGS = [["en", "English"], ["de", "Deutsch"], ["zh", "中文"], ["ko", "한국어"], ["es", "Español"], ["fr", "Français"]];
+const LANGS = MK4I18N.LANGS;   // [code, native name] for the language picker
 // Proportional drag joysticks. Track joysticks fill the art's far-left/right button
 // housings (top forward-button .. bottom backward-button) so the art is the visual
 // housing; `kw` = knob width (fraction of zone width), `travel` = knob travel
@@ -151,13 +65,12 @@ const ESTOP = [1044, 820, 250, 74];
 
 // ---- state ----
 let ws = null, lifecycle = "IDLE";
-let lang = localStorage.getItem("mk4_lang") || "en";
-if (!LANGS.some(([c]) => c === lang)) lang = "en";   // guard stale/unknown stored codes
+let lang = MK4I18N.lang();   // shared persisted choice (mk4_lang), normalized to a known code
 let defaultMap = null, activeMap = null, deviceSwap = localStorage.getItem("mk4_device_swap") === "1";
 let navCollapsed = localStorage.getItem("mk4_nav_collapsed") === "1";   // sidebar hidden? (chip-toggled, persisted)
 const MAP_URL = "/channel_map.excavator.json";   // this layout's bundled default map (client owns it)
 let grid = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
-const tr = () => T[lang] || T.en;   // fixed UI strings: en/de exist, others fall back to en
+const tr = () => MK4I18N.dict(lang);   // selected language DEEP-MERGED over EN (per-key fallback)
 
 // ---- channel map helpers (client-authoritative active map) ----
 function validMap(mp) {
@@ -565,10 +478,10 @@ function langSelect() {
   return s;
 }
 function setLang(code) {
-  if (!LANGS.some(([c]) => c === code)) code = "en";
-  lang = code; localStorage.setItem("mk4_lang", lang);
-  document.documentElement.lang = lang;
+  lang = MK4I18N.setLang(code);   // persist mk4_lang (shared) + normalize; sets <html lang>
   buildStage(); renderTopbar(); renderHint();
+  if (!$("startup").classList.contains("hidden")) buildStartup();   // re-render any OPEN overlay in the new language
+  if (!$("wizard").classList.contains("hidden")) buildWizard();
   rebuildOpenSettings();
 }
 

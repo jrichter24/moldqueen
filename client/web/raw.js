@@ -7,6 +7,7 @@
 const $ = id => document.getElementById(id);
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const NEUTRAL_NIB = 0x8;
+const tr = () => MK4I18N.dict();   // shared UI strings (menu chrome); EN-fallback. Debug log stays EN.
 
 let ws = null, lifecycle = "IDLE";
 let slotCount = 1;                                   // active slots (1-3)
@@ -77,24 +78,26 @@ function refreshActive() {
 function el(cls, style, html) { const d = document.createElement("div"); d.className = cls; if (style) d.style.cssText = style; if (html != null) d.innerHTML = html; return d; }
 function mbtn(label, cls, on) { const b = document.createElement("button"); b.innerHTML = label; if (cls) b.className = cls; b.onclick = on; return b; }
 function renderMenu() {
+  const t = tr();
   const m = $("menu"); m.innerHTML = "";
   const left = el("tgroup");
   const dot = el("dot"); dot.id = "wsDot"; left.appendChild(dot);
   left.appendChild(el("lc", "", "<span id='lcText'>RAW · " + lifecycle + "</span>"));
   if (lifecycle === "IDLE") {
-    left.appendChild(mbtn("⮕ Wizard", "primary", openWizard));   // guided on-ramp
-    left.appendChild(mbtn("Connect", "", () => send({ cmd: "setup", action: "connect" })));  // manual
+    left.appendChild(mbtn(t.rawWizard, "primary", openWizard));   // guided on-ramp
+    left.appendChild(mbtn(t.connect, "", () => send({ cmd: "setup", action: "connect" })));  // manual
   } else if (lifecycle === "CONNECTING") {
-    left.appendChild(mbtn("Ready", "primary", () => send({ cmd: "setup", action: "ready" })));
-    left.appendChild(mbtn("Reset", "", doReset));
-  } else left.appendChild(mbtn("Reset", "", doReset));
+    left.appendChild(mbtn(t.ready, "primary", () => send({ cmd: "setup", action: "ready" })));
+    left.appendChild(mbtn(t.reset, "", doReset));
+  } else left.appendChild(mbtn(t.reset, "", doReset));
   m.appendChild(left);
   m.appendChild(el("grow"));
   const right = el("tgroup");
-  const sb = mbtn("STOP", "", doStop); sb.id = "stopBtn"; right.appendChild(sb);
-  right.appendChild(mbtn("Neutral", "", doNeutral));
+  const sb = mbtn(t.stop, "", doStop); sb.id = "stopBtn"; right.appendChild(sb);
+  right.appendChild(mbtn(t.rawNeutral, "", doNeutral));
+  right.appendChild(MK4I18N.picker(renderMenu));   // language picker (persists mk4_lang; applies everywhere)
   if (MK4.showFullscreen()) right.appendChild(mbtn("⛶", "", toggleFull));
-  right.appendChild(mbtn("Layouts", "", () => location.href = "/?choose=1"));
+  right.appendChild(mbtn(t.layouts, "", () => location.href = "/?choose=1"));
   m.appendChild(right);
   setDot(ws && ws.readyState === 1);
 }

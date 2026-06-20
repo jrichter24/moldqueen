@@ -44,6 +44,10 @@
       padding: .35rem .6rem; cursor: pointer; text-decoration: none; backdrop-filter: blur(3px); }
     .actions a:hover, .actions button:hover { border-color: var(--glow); }
     .actions svg { width: 1.05em; height: 1.05em; }
+    .actions select.langsel { font: inherit; font-size: .82rem; color: #cfe0f5; background: rgba(15,20,28,.7);
+      border: 1px solid #2b3647; border-radius: .5rem; padding: .35rem .5rem; cursor: pointer; backdrop-filter: blur(3px); }
+    .actions select.langsel:hover { border-color: var(--glow); }
+    .actions select.langsel option { background: #11161e; color: #e8eef6; }
     header { display: flex; flex-direction: column; align-items: center; gap: .4rem; text-align: center; }
     .brand { display: flex; align-items: center; gap: clamp(.5rem, 1.6vw, 1rem); }
     .brand img { width: clamp(48px, 11vw, 96px); height: auto; filter: drop-shadow(0 3px 12px rgba(0,0,0,.7)); }
@@ -52,9 +56,12 @@
                 color: transparent; text-shadow: 0 4px 24px rgba(0,0,0,.55); }
     header .sub { font-size: clamp(.78rem, 2.2vw, 1rem); font-weight: 500; color: #b6c6dc; letter-spacing: .03em;
                  text-shadow: 0 2px 10px rgba(0,0,0,.7); }
-    .cards { display: flex; gap: clamp(1rem, 3vw, 1.8rem); flex-wrap: wrap; justify-content: center; width: 100%; }
+    /* Responsive grid: each column is capped 180–230px (never oversized), as many as fit
+       per row, row stays centered → ~3-4 across in landscape, 1-2 in portrait. */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 230px));
+             justify-content: center; gap: clamp(.8rem, 2vw, 1.4rem); width: 100%; max-width: 1000px; }
     .card {
-      flex: 1 1 260px; max-width: 320px; min-width: 220px;
+      width: 100%; min-width: 0;
       display: flex; flex-direction: column; cursor: pointer; color: inherit; font: inherit; text-align: left;
       background: linear-gradient(180deg, rgba(22,28,38,.92), rgba(13,17,24,.96));
       border: 1px solid #2b3647; border-radius: 1rem; overflow: hidden; padding: 0;
@@ -107,8 +114,7 @@
       body { justify-content: flex-start; min-height: 100%; padding: 2.5vh 4vw 5vh;
              background-attachment: scroll; }            /* fixed bg janks while scrolling on mobile */
       .actions { position: static; align-self: flex-end; flex-wrap: wrap; justify-content: flex-end; }
-      .cards { gap: .9rem; }
-      .card { flex: 1 1 100%; max-width: 480px; min-width: 0; }   /* one readable, full-width column */
+      .cards { gap: .9rem; max-width: 520px; }                    /* grid gives 1-2 columns; keep it tidy */
       .card .art { height: clamp(84px, 15vh, 130px); }            /* smaller art so cards fit on a phone */
       .card .art img { width: 56%; height: 72%; }
       .card .body { padding: .7rem .95rem .9rem; }
@@ -128,8 +134,7 @@
       .brand h1 { font-size: clamp(1.8rem, 6vw, 3rem); }   /* shrink the tall header to save height */
       .brand img { width: clamp(40px, 8vw, 72px); }
       header .sub { font-size: .8rem; }
-      .cards { gap: .8rem; }
-      .card { flex: 1 1 42%; max-width: 360px; min-width: 200px; }   /* ~2-up, never over-wide */
+      .cards { gap: .8rem; }                                          /* grid gives ~3-4 across here */
       .card .art { height: clamp(64px, 20vh, 120px); }               /* short viewport → smaller art */
       .card .art img { width: 54%; height: 70%; }
       .card .body { padding: .6rem .85rem .8rem; }
@@ -137,9 +142,11 @@
       .card .desc { font-size: .8rem; }
     }
   </style>
+  <script src="/i18n.js"></script>   <!-- shared UI translations (MK4I18N); single source across all pages -->
 </head>
 <body>
   <div class="actions">
+    <span id="langSlot"></span>   <!-- language picker (MK4I18N) injected here: pick once, applies everywhere -->
     <a href="https://github.com/jrichter24/moldqueen" target="_blank" rel="noopener" title="moldqueen on GitHub">
       <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
       GitHub</a>
@@ -153,13 +160,13 @@
         <img src="/assets/moldqueen_icon.png" alt="" />
         <h1>MoldQueen</h1>
       </div>
-      <span class="sub">Choose a layout — remembered for next time</span>
+      <span class="sub" id="chooseLayout">Choose your layout</span>
     </header>
     <div class="cards" id="cards"></div>   <!-- built from the layout manifest (see scripts below) -->
   </div>
 
   <footer>
-    Private, independent hobby project — not affiliated with or endorsed by Mould King · MIT licensed ·
+    <span id="footerText">Private, independent hobby project — not affiliated with or endorsed by Mould King · MIT licensed ·</span>
     <a href="https://github.com/jrichter24/moldqueen" target="_blank" rel="noopener">GitHub</a> ·
     <a href="#" id="aboutLink">About &amp; credits</a>
   </footer>
@@ -169,18 +176,18 @@
     <div class="back" data-close></div>
     <div class="sheet">
       <button class="x" data-close aria-label="Close">×</button>
-      <h2><img src="/assets/moldqueen_icon.png" alt="" /> About MoldQueen</h2>
-      <p>Control a <b>Mould King 13112</b> RC excavator from a Raspberry Pi over a reverse-engineered
+      <h2><img src="/assets/moldqueen_icon.png" alt="" /> <span id="aboutTitle">About MoldQueen</span></h2>
+      <p id="aboutIntro">Control a <b>Mould King 13112</b> RC excavator from a Raspberry Pi over a reverse-engineered
          BLE protocol, through a clean WebSocket API.</p>
 
-      <h3>Disclaimer</h3>
+      <h3 id="aboutDiscH">Disclaimer</h3>
       <p>A <b>private, independent, unofficial hobby project</b> — <b>not</b> affiliated with, authorized by,
          endorsed by, or sponsored by <b>Mould King</b> / Shenzhen Yuxing. “Mould King” and “MK+tech” are
          trademarks of their owners, used only descriptively for interoperability. The protocol was
          reverse-engineered for interoperability with hardware the author owns, for educational/personal use.
          Provided <b>“as is”, no warranty — use at your own risk</b>. Licensed under the <b>MIT License</b>.</p>
 
-      <h3>Credits</h3>
+      <h3 id="aboutCredH">Credits</h3>
       <ul>
         <li><a href="https://github.com/J0EK3R/mkconnect-python" target="_blank" rel="noopener">J0EK3R/mkconnect-python</a>
             (MIT) — the <code>MouldKingCrypt</code> cipher (ported byte-for-byte here) and the MK4/MK6 protocol
@@ -190,12 +197,12 @@
             — additional protocol reference.</li>
       </ul>
 
-      <h3>How MoldQueen was built</h3>
-      <p class="ainote">How MoldQueen was built<br>
+      <h3 id="aboutBuiltH">How MoldQueen was built</h3>
+      <p class="ainote"><span id="aboutBuiltLead">How MoldQueen was built</span><br>
         MoldQueen was built with help from AI coding assistants. Early work used Claude (Fable), later work
         used Claude Opus 4.8. All design decisions and the code review were done by the human developer.</p>
 
-      <h3>Author</h3>
+      <h3 id="aboutAuthH">Author</h3>
       <p>Built by Jens Richter. Background in physics and electrical engineering; by day I work on
         tour optimization with genetic and AI algorithms at
         <a href="https://www.dna-evolutions.com/" target="_blank" rel="noopener">DNA Evolutions</a>.
@@ -213,10 +220,10 @@
     <div class="back" data-close></div>
     <div class="sheet">
       <button class="x" data-close aria-label="Close">×</button>
-      <h2><img src="/assets/moldqueen_icon.png" alt="" /> Bring your own dashboard</h2>
-      <p>Layouts are pluggable — the Excavator and RAW views are just the first two. Got a different
+      <h2><img src="/assets/moldqueen_icon.png" alt="" /> <span id="byoTitle">Bring your own dashboard</span></h2>
+      <p id="byoP1">Layouts are pluggable — the Excavator and RAW views are just the first two. Got a different
          Mould King (or other) toy, or a better control layout in mind?</p>
-      <p><b>We'd love your contribution.</b> Open an issue or a pull request on GitHub to propose or add a
+      <p id="byoP2"><b>We'd love your contribution.</b> Open an issue or a pull request on GitHub to propose or add a
          new layout — the more toys, the better.</p>
       <p style="margin-top:1rem">
         👉 <a href="https://github.com/jrichter24/moldqueen" target="_blank" rel="noopener">github.com/jrichter24/moldqueen</a>
@@ -236,20 +243,28 @@
     // route is server-derived (/<id>); the serving host maps it to the layout's file.
     function routeOf(L) { return L.kind === "placeholder" ? null : (L.route || ("/" + L.id)); }
 
-    function cardHtml(L) {                       // render ONE manifest entry -> a card (same DOM as before)
+    // Current language dictionary (EN-fallback). Null only if i18n.js failed to load → EN markup stays.
+    function D() { return window.MK4I18N ? MK4I18N.dict() : null; }
+
+    function cardHtml(L) {                       // render ONE manifest entry -> a card (translated text)
+      var d = D(), tc = (d && d.cards && d.cards[L.id]) || null;
       var ghost = L.kind === "placeholder";
       var art = ghost ? BYO_SVG : '<img src="' + esc(L.icon) + '" alt="" />';
-      var cta = ghost ? "Contribute ▸" : "Open ▸";
+      var name = (tc && tc.name) || L.name;
+      var desc = (tc && tc.desc) || L.description;
+      var cta = ghost ? ((d && d.ctaContribute) || "Contribute ▸") : ((d && d.ctaOpen) || "Open ▸");
       var route = routeOf(L);
       var attrs = 'data-id="' + esc(L.id) + '"' + (route ? ' data-route="' + esc(route) + '"' : '') + (ghost ? ' data-byo="1"' : '');
       return '<button class="card' + (ghost ? ' ghost' : '') + '" ' + attrs + '>' +
              '<div class="art">' + art + '</div>' +
-             '<div class="body"><h2>' + esc(L.name) + '</h2><div class="desc">' + esc(L.description) + '</div>' +
-             '<div class="go">' + cta + '</div></div></button>';
+             '<div class="body"><h2>' + esc(name) + '</h2><div class="desc">' + esc(desc) + '</div>' +
+             '<div class="go">' + esc(cta) + '</div></div></button>';
     }
 
+    var lastManifest = null;                     // remembered so we can re-render cards on language change
     function renderCards(m) {
-      var layouts = (m && m.layouts) || [];
+      if (m) lastManifest = m;
+      var layouts = (lastManifest && lastManifest.layouts) || [];
       document.getElementById("cards").innerHTML = layouts.map(cardHtml).join("");
       document.querySelectorAll(".card[data-route]").forEach(function (c) {   // real layouts: remember + navigate
         c.addEventListener("click", function () {
@@ -261,9 +276,32 @@
       if (byo) byo.addEventListener("click", function () { show("byo", true); });
     }
 
-    // Render from the injected manifest; if served raw (no injection), fetch it.
-    if (window.__LAYOUTS__) renderCards(window.__LAYOUTS__);
-    else fetch("/layouts.json").then(function (r) { return r.json(); }).then(renderCards).catch(function () {});
+    // Apply translations to the static chrome + re-render the cards. Re-run on language change.
+    function setTxt(id, v) { var e = document.getElementById(id); if (e && v != null) e.textContent = v; }
+    function setHtml(id, v) { var e = document.getElementById(id); if (e && v != null) e.innerHTML = v; }
+    function applyI18n() {
+      var d = D();
+      if (d) {
+        document.documentElement.lang = MK4I18N.lang();
+        setTxt("chooseLayout", d.chooseLayout);
+        setTxt("fsBtn", d.actFullscreen); setTxt("aboutBtn", d.actAbout);
+        setTxt("footerText", d.footerText); setTxt("aboutLink", d.footerAbout);
+        setTxt("aboutTitle", d.about.title); setHtml("aboutIntro", d.about.intro);
+        setTxt("aboutDiscH", d.about.discH); setTxt("aboutCredH", d.about.credH);
+        setTxt("aboutBuiltH", d.about.builtH); setTxt("aboutBuiltLead", d.about.builtH); setTxt("aboutAuthH", d.about.authH);
+        setTxt("byoTitle", d.byo.title); setHtml("byoP1", d.byo.p1); setHtml("byoP2", d.byo.p2);
+      }
+      renderCards();   // card text is language-dependent too
+    }
+
+    // Inject the language picker (persists mk4_lang, applies everywhere); re-translate on change.
+    var langSlot = document.getElementById("langSlot");
+    if (window.MK4I18N && langSlot) langSlot.appendChild(MK4I18N.picker(applyI18n));
+
+    // Load the manifest (injected, or fetched when served raw), then translate the whole page.
+    if (window.__LAYOUTS__) { renderCards(window.__LAYOUTS__); applyI18n(); }
+    else fetch("/layouts.json").then(function (r) { return r.json(); })
+           .then(function (m) { renderCards(m); applyI18n(); }).catch(function () { applyI18n(); });
 
     var fsBtn = document.getElementById("fsBtn");                // optional: hidden when the host injects "false"
     if (String(window.MK4_SHOW_FULLSCREEN) !== "false") {

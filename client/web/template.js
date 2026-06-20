@@ -71,21 +71,24 @@ function resolve(fn, v) {
 // ---- menu (reuses the shared shell classes: .tgroup/.dot/.lc/.grow/#stopBtn) ------
 function el(cls, html) { var d = document.createElement("div"); if (cls) d.className = cls; if (html != null) d.innerHTML = html; return d; }
 function btn(label, cls, on) { var b = document.createElement("button"); b.innerHTML = label; if (cls) b.className = cls; b.onclick = on; return b; }
+function tr() { return MK4I18N.dict(); }   // shared UI strings (EN-fallback); single source web/i18n.js
 function renderMenu() {
+  var t = tr();
   var m = $("menu"); m.innerHTML = "";
   var left = el("tgroup");
   left.appendChild(el("lc", "<span>TEMPLATE · " + lifecycle + "</span>"));
   // Lifecycle buttons. TODO: for a guided cold-start, copy raw.js's buildWizard().
-  if (lifecycle === "IDLE") left.appendChild(btn("Connect", "primary", function () { send({ cmd: "setup", action: "connect" }); }));
+  if (lifecycle === "IDLE") left.appendChild(btn(t.connect, "primary", function () { send({ cmd: "setup", action: "connect" }); }));
   else if (lifecycle === "CONNECTING") {
-    left.appendChild(btn("Ready", "primary", function () { send({ cmd: "setup", action: "ready" }); }));
-    left.appendChild(btn("Reset", "", function () { send({ cmd: "setup", action: "reset" }); }));
-  } else left.appendChild(btn("Reset", "", function () { send({ cmd: "setup", action: "reset" }); }));
+    left.appendChild(btn(t.ready, "primary", function () { send({ cmd: "setup", action: "ready" }); }));
+    left.appendChild(btn(t.reset, "", function () { send({ cmd: "setup", action: "reset" }); }));
+  } else left.appendChild(btn(t.reset, "", function () { send({ cmd: "setup", action: "reset" }); }));
   m.appendChild(left);
   m.appendChild(el("grow"));
   var right = el("tgroup");
-  var stop = btn("STOP", "", function () { send({ cmd: "stop" }); }); stop.id = "stopBtn"; right.appendChild(stop);
-  right.appendChild(btn("Layouts", "", function () { location.href = "/?choose=1"; }));
+  var stop = btn(t.stop, "", function () { send({ cmd: "stop" }); }); stop.id = "stopBtn"; right.appendChild(stop);
+  right.appendChild(MK4I18N.picker(renderMenu));   // language picker (persists mk4_lang; applies everywhere)
+  right.appendChild(btn(t.layouts, "", function () { location.href = "/?choose=1"; }));
   m.appendChild(right);
 }
 
