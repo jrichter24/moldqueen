@@ -145,7 +145,9 @@ box → shovel) **and** `ch4=0xb` (track box → left track) moved both at once 
   the app capture and the mkconnect encoder: `0xFF` fwd / `0x00` rev / `0x80` stop),
   so any forward/reverse *speed* difference is the **hub PWM curve / motor**, not the
   encoding. `reverse_scale > 1` boosts reverse magnitude to match forward; calibrate
-  by driving. **`max`** caps a function's full-deflection speed (joystick scaling).
+  by driving. **`max_fwd` / `max_rev`** cap full-deflection speed per direction (1–7);
+  **both default to 5** (gentle, controllable, anti-stall) — raise per-channel in the
+  Channels tab. (Legacy single `max` migrates to both.)
 - **device-0/1 swap** (session-only, not persisted) swaps slots 0↔1 at resolution.
 
 > Reconciliation: `linux-core/reference/channel_map.md` and `…/CONNECT_PROCEDURE.md`
@@ -246,6 +248,36 @@ needed:** either repurpose java-core as a future **API client** (a JVM "brain") 
 
 `web-gui/` (the original minimal Node scaffold) is also superseded by `mk4web`'s
 own served page; retire or repurpose later.
+
+### 6a. Safety / STOP architecture (verified on Pi + S25, 2026-06-20)
+
+The control radio is **broadcast advertising that REPEATS the last held state forever**
+(the broadcaster keepalive re-emits the held 12 nibbles continuously, ~10/s). Everything
+below follows from that fact — a motor keeps moving as long as a non-neutral frame is the
+held/repeated state, so safety = **make the held state neutral**, not "send a zero once."
+
+- **Held-state, not one-shot.** A release MUST update the broadcaster's **held nibble** to
+  neutral (Pi `Controller.set_nibbles`; Android `RadioController` nibbles + advertise). A lone
+  `cmd:set 0` that the held state doesn't absorb is overwritten by the next keepalive repeat.
+- **Affirmative motion-keepalive.** The CLIENT re-sends each active **non-neutral** channel
+  ~10/s; the SERVER **per-channel auto-neutralizes** any channel not refreshed within ~300 ms.
+  One mechanism covers gamepad death, frozen axis, stalled loop, and dead client — there is **no
+  blind heartbeat** (the refresh IS the liveness signal). Held controls keep refreshing, so they
+  are not falsely stopped.
+- **STOP = KILL + RECONNECT at neutral** (never "send a zero"). Pi: `cmd:stop` → IPC
+  `{killreconnect}` → advertiser OFF → connect telegram → all-neutral motion. Android:
+  `radio.hardStop()` tears down the advertiser then re-establishes connect → neutral. The
+  client STOP is an **absolute latch** — nothing re-drives (refresher, held touch, gamepad)
+  until a fresh deliberate input — and it disables the gamepad.
+- **Android advertiser = `AdvertisingSet`.** Legacy `startAdvertising` can't change data in
+  place, so stop/start **per payload change** dropped frames (`ALREADY_STARTED`) *and* gapped
+  the carrier (hub starves → slow-flash disconnect). Fix: start the set **once** and update via
+  **`AdvertisingSet.setAdvertisingData()` IN PLACE** on the continuously-running advertiser;
+  **only STOP tears down** (`BleBroadcaster`). The Pi (raw-HCI `set_data`) overwrites the adv-data
+  register in place and never had this problem.
+- Gamepad disconnect is detected by **absence / `connected:false`** (a dying battery drifts —
+  do NOT rely on a "frozen axis" heuristic). The Android APK stamps an auto-increment **build
+  number** into `versionName` (`+build.N`) and Server-info so the running build is verifiable.
 
 ---
 

@@ -3,9 +3,33 @@
 > Living "current state" doc for starting fresh sessions without losing context.
 > **Not** a project reference — that's [`PROJECT.md`](PROJECT.md). Read this first
 > (~30s) at the start of a session; update + commit it before ending one.
-> **Last updated: 2026-06-18.**
+> **Last updated: 2026-06-20.**
 
 ## Current state (done / working)
+- **SAFETY: gamepad runaway / STOP failures FIXED — verified on Pi + S25 (2026-06-20).**
+  Hard-won insights (do NOT re-learn):
+  * **The broadcaster REPEATS its last held state forever** (keepalive re-broadcasts the
+    held 12 nibbles continuously). So a **release must update the broadcaster's HELD nibble
+    to neutral** — a one-shot `cmd:set 0` that the held-state doesn't absorb is overwritten
+    by the next keepalive repeat. (Pi: `Controller.set_nibbles`; Android: `RadioController`
+    nibbles + advertise.)
+  * **STOP = KILL the radio + RECONNECT at neutral** — NOT "send a zero" (a zero loses to the
+    repeating loop). Pi: `cmd:stop`→`{killreconnect}`→adv OFF→connect telegram→neutral motion.
+    Android: `radio.hardStop()` tears down the advertiser, then re-establishes connect→neutral.
+  * **Android root cause = advertiser race.** Legacy `startAdvertising` can't update data in
+    place, so stop/start **per payload change** dropped frames (ALREADY_STARTED) AND starved the
+    hub (gaps → slow-flash disconnect). **Fix: the `AdvertisingSet` API** — start ONCE, update
+    via `setAdvertisingData()` IN PLACE on the continuously-running advertiser; **only STOP tears
+    down.** (`BleBroadcaster`.)
+  * **Affirmative motion-keepalive:** the CLIENT re-sends each active non-neutral channel ~10/s;
+    the SERVER per-channel auto-neutralizes any channel not refreshed within ~300ms (covers
+    gamepad death / frozen axis / stalled loop / dead client — one mechanism, no blind ping).
+  * Client STOP is an **absolute latch** (nothing re-drives until a fresh deliberate input; STOP
+    also disables the gamepad). Gamepad disconnect detected by **absence/connected:false** (not
+    a "frozen axis" — a dying battery drifts).
+  * **Default `max_fwd` is now 5** (matches `max_rev=5`; gentler — raise per-channel in Channels).
+  * Android APK carries an auto-increment **build number** in `versionName` (`+build.N`) +
+    Server-info, so the running build is verifiable on-device.
 - **Pluggable layout system complete** — Stages 1–4: manifest (`web/layouts.json`),
   **server-derived `/<id>` routes**, per-layout function maps, `active`/`category`
   schema, an **inactive template** (`template.*` + `channel_map.template.json`), shared
