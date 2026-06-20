@@ -62,7 +62,7 @@ function resolve(fn, v) {
   var sign = v < 0 ? -1 : (v > 0 ? 1 : 0);
   if (a.invert) sign = -sign;
   var out = sign * mag;
-  var cf = (a.max_fwd >= 1 && a.max_fwd <= 7) ? a.max_fwd : 7;
+  var cf = (a.max_fwd >= 1 && a.max_fwd <= 7) ? a.max_fwd : 5;
   var cr = (a.max_rev >= 1 && a.max_rev <= 7) ? a.max_rev : 5;
   if (out > 0) out = Math.min(out, cf); else if (out < 0) out = -Math.min(-out, cr);
   return { slot: a.slot | 0, channel: a.channel | 0, value: out };

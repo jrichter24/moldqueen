@@ -184,10 +184,10 @@ function migrateLabels(a) {
   a.labels = out; delete a.label_en; delete a.label_de;
 }
 // Legacy single `max` -> per-direction max_fwd/max_rev (mirrors channelmap.py). A symmetric
-// `max` applies to both (backward-compat); otherwise max_fwd 7 / max_rev 5 (5 = anti-stall).
+// `max` applies to both (backward-compat); otherwise BOTH default to 5 (gentle + anti-stall).
 function migrateCaps(a) {
   const legacy = (Number.isInteger(a.max) && a.max >= 1 && a.max <= 7) ? a.max : null;
-  if (!(Number.isInteger(a.max_fwd) && a.max_fwd >= 1 && a.max_fwd <= 7)) a.max_fwd = legacy != null ? legacy : 7;
+  if (!(Number.isInteger(a.max_fwd) && a.max_fwd >= 1 && a.max_fwd <= 7)) a.max_fwd = legacy != null ? legacy : 5;
   if (!(Number.isInteger(a.max_rev) && a.max_rev >= 1 && a.max_rev <= 7)) a.max_rev = legacy != null ? legacy : 5;
   delete a.max;
 }
@@ -210,7 +210,7 @@ function saveActive() { localStorage.setItem("mk4_active_map", JSON.stringify(ac
 // A valid 6-function placeholder so Settings ALWAYS opens, even with no connection/map.
 function placeholderMap() {
   const fns = {};
-  FN.forEach((f, i) => fns[f] = { slot: (i / 4) | 0, channel: i % 4, invert: false, max_fwd: 7, max_rev: 5, reverse_scale: 1,
+  FN.forEach((f, i) => fns[f] = { slot: (i / 4) | 0, channel: i % 4, invert: false, max_fwd: 5, max_rev: 5, reverse_scale: 1,
     labels: Object.fromEntries(LANGS.map(([c]) => [c, f.replace(/_/g, " ")])), confirmed: false });
   return { version: 1, functions: fns };
 }
@@ -724,7 +724,7 @@ function channelsPanel(t) {
       <td class="fn">${funcLabel(fn)}<br><span class="muted">${fn}</span></td>
       <td><select class="e-slot">${slots}</select></td>
       <td><select class="e-ch">${chans}</select></td>
-      <td><input type="number" class="e-maxf" min="1" max="7" value="${a.max_fwd || 7}"></td>
+      <td><input type="number" class="e-maxf" min="1" max="7" value="${a.max_fwd || 5}"></td>
       <td><input type="number" class="e-maxr" min="1" max="7" value="${a.max_rev || 5}"></td>
       <td><input type="number" class="e-rev" min="0.25" max="4" step="0.05" value="${a.reverse_scale ?? 1}"></td>
       <td style="text-align:center"><input type="checkbox" class="e-inv"${a.invert ? " checked" : ""}></td>
@@ -855,7 +855,7 @@ function bindTest(tb, fn) {
     e.preventDefault(); if (lifecycle !== "READY") return;
     const a = editMap.functions[fn];
     tb.classList.add("held");
-    send({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: a.max_fwd || 7 });
+    send({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: a.max_fwd || 5 });
   };
   const stop = () => {
     if (!tb.classList.contains("held")) return;
