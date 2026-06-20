@@ -105,6 +105,7 @@
     .sheet .x { position: absolute; top: .7rem; right: .9rem; background: none; border: 0; color: #8ea0b8;
       font-size: 1.4rem; line-height: 1; cursor: pointer; }
     .sheet .muted { color: #7d8ba0; font-size: .82rem; }
+    #aboutAuthor .muted { display: block; text-align: center; margin-top: .5rem; }   /* center the "Built for my son Jonas…" line */
     .sheet .ainote { background: #0d1320; border: 1px solid #243049; border-radius: .5rem; padding: .7rem .9rem; }
 
     /* ---- mobile / narrow viewport: let the page SCROLL and shrink the cards so every
@@ -199,8 +200,7 @@
       </ul>
 
       <h3 id="aboutBuiltH">How MoldQueen was built</h3>
-      <p class="ainote"><span id="aboutBuiltLead">How MoldQueen was built</span><br>
-        <span id="aboutBuiltNote">MoldQueen was built with help from AI coding assistants. Early work used Claude (Fable), later work
+      <p class="ainote"><span id="aboutBuiltNote">MoldQueen was built with help from AI coding assistants. Early work used Claude (Fable), later work
         used Claude Opus 4.8. All design decisions and the code review were done by the human developer.</span></p>
 
       <h3 id="aboutAuthH">Author</h3>
@@ -289,7 +289,7 @@
         setTxt("footerText", d.footerText); setTxt("aboutLink", d.footerAbout);
         setTxt("aboutTitle", d.about.title); setHtml("aboutIntro", d.about.intro);
         setTxt("aboutDiscH", d.about.discH); setTxt("aboutCredH", d.about.credH);
-        setTxt("aboutBuiltH", d.about.builtH); setTxt("aboutBuiltLead", d.about.builtH); setTxt("aboutAuthH", d.about.authH);
+        setTxt("aboutBuiltH", d.about.builtH); setTxt("aboutAuthH", d.about.authH);
         // About CONTENT (prose). License/warranty clause + names/links stay EN (hardcoded, not set here).
         setHtml("aboutDisc", d.about.disc); setHtml("aboutCredMk", d.about.credMk); setHtml("aboutCredBc", d.about.credBc);
         setHtml("aboutBuiltNote", d.about.builtNote); setHtml("aboutAuthor", d.about.authorHtml);

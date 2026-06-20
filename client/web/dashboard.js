@@ -443,11 +443,11 @@ function renderTopbar() {
 // reachable on the in-dashboard red button). Expanding is the chip; collapsing is the
 // in-menu "‹" control (built in renderTopbar). CSS shows the chip only while collapsed.
 // Chevron direction follows the menu orientation (mirrors shell.css's sidebar breakpoint):
-// HORIZONTAL top bar → collapse "⌄" (down) / expand "⌃" (up); VERTICAL sidebar → "‹" / "›".
+// HORIZONTAL top bar → collapse "▾" (down) / expand "▴" (up); VERTICAL sidebar → "‹" / "›".
 const SIDEBAR_MQ = "(max-width: 768px), (max-height: 540px)";
 function isSidebar() { return window.matchMedia(SIDEBAR_MQ).matches; }
-function collapseGlyph() { return isSidebar() ? "‹" : "⌄"; }
-function expandGlyph() { return isSidebar() ? "›" : "⌃"; }
+function collapseGlyph() { return isSidebar() ? "‹" : "▾"; }   // sidebar: left · top bar: down (vertically centered glyph)
+function expandGlyph() { return isSidebar() ? "›" : "▴"; }     // sidebar: right · top bar: up
 function updateNavGlyphs() {                                  // re-point on resize (orientation can flip)
   const cb = $("navCollapseBtn"); if (cb) cb.textContent = collapseGlyph();
   const chip = $("navChip"); if (chip) chip.innerHTML = expandGlyph();

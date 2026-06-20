@@ -5,11 +5,12 @@
    Overlays placed in % over the 1672×941 art; typography uses cqw (1% of stage width)
    so labels scale with the art and always fit their textboxes on any viewport. */
 
-/* ---- collapse: in-menu "‹" control (expanded) + floating "›" chip (collapsed) ----
-   When expanded, the collapse control lives in the menu (top-right). When collapsed
-   (#app.navhidden) the menu is hidden and ONLY the floating chip shows, upper-left. */
+/* ---- collapse control: in-menu chevron (expanded) + floating chip (collapsed) ----
+   Both sit UPPER-RIGHT (just left of the status light) so collapsing never jumps the
+   control to another corner. Glyph direction is set in dashboard.js: down/up "▾▴" in
+   the horizontal top bar, left/right "‹›" in the vertical sidebar. */
 #navChip {
-  position: fixed; top: .4em; left: .4em; z-index: 25;
+  position: fixed; top: .5em; right: 2.2em; left: auto; z-index: 25;
   width: 2em; height: 2em; padding: 0; display: none; align-items: center; justify-content: center;
   font: 600 1.2em/1 system-ui, sans-serif; color: #cfe0f5;
   background: rgba(12,15,20,.85); border: 1px solid #2f3947; border-radius: .45em;
@@ -28,7 +29,7 @@
 #menu { align-items: stretch; }
 #menu .navtop { display: flex; align-items: center; justify-content: flex-end; flex: 0 0 auto; }
 #menu .navcollapse { font-size: 1.1em; line-height: 1; padding: .2em .6em; min-width: 2.2em;
-  width: auto; flex: 0 0 auto; }   /* stay compact + right-aligned even in sidebar mode */
+  width: auto; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; }   /* compact; glyph centered */
 #menu .navgroup { display: flex; flex-direction: column; gap: .35em; flex: 0 0 auto; }
 #menu .grouplabel { font-size: .62rem; letter-spacing: .09em; text-transform: uppercase;
   color: #7e8ca6; font-weight: 700; white-space: nowrap; }
