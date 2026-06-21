@@ -51,8 +51,8 @@ const DIRLABELS = [   // fixed "Forward/Backward" hints under the two track joys
   { k: "backward", rect: [1441, 715, 114, 26] },
 ];
 const INFOBOXES = [
-  { id: "ib_title", rect: [747, 33, 198, 49], static: "moldqueen" },
-  { id: "ib_mode",  rect: [1093, 37, 91, 44] },
+  { id: "ib_title", rect: [646, 33, 380, 49] },   // editable custom title (getTitle), centered in the top strip; renderTitle()
+  { id: "ib_mode",  rect: [1093, 37, 91, 44] },   // (was lifecycle text — now blank; status light shows state)
   { id: "ib_batt",  rect: [1347, 41, 106, 36], static: "—" },
   { id: "ib_row1",  rect: [1124, 548, 162, 41], key: "mode" },
   { id: "ib_row2",  rect: [1124, 642, 162, 41], key: "swap" },
@@ -281,6 +281,7 @@ function buildStage() {
   ov.innerHTML = ""; controls.length = 0;
   for (const d of DIRLABELS) ov.appendChild(el("lbl dir", pct(d.rect), tr().dir[d.k]));
   for (const b of INFOBOXES) { const box = el("lbl info", pct(b.rect)); box.id = b.id; ov.appendChild(box); }
+  renderTitle();   // custom title into #ib_title (overlay rebuilds clear it)
   for (const t of TITLES) {
     const box = el("lbl title", pct(t.rect));
     box.id = "title_" + t.fn + (t.k ? "_" + t.k : "");
@@ -394,20 +395,23 @@ function refreshValues() {
     if (span) span.textContent = v ? (v > 0 ? "+" + v : "" + v) : "";
     box.classList.toggle("driving", !!v);
   }
-  setInfo("ib_mode", lifecycle);
-  setInfo("ib_row1", tr().info.mode + ": " + lifecycle);
-  setInfo("ib_row2", tr().info.swap + ": " + (deviceSwap ? tr().swapOn : tr().swapOff));
-  setInfo("ib_row3", tr().info.speed + ": drag");
+  // lifecycle state is shown ONLY by the status light — no lifecycle text on the dashboard.
+  // (ib_mode + the old "Mode" row are intentionally left blank; Hubs/Speed shift up.)
+  setInfo("ib_row1", tr().info.swap + ": " + (deviceSwap ? tr().swapOn : tr().swapOff));
+  setInfo("ib_row2", tr().info.speed + ": drag");
 }
 function setInfo(id, text) { const b = $(id); if (b && !b.dataset.static) b.innerHTML = text; }
 
 // ---- editable layout title (per-layout, persisted; falls back to the layout default) ----
 function getTitle() { const v = (localStorage.getItem("mk4_title_" + LAYOUT_ID) || "").trim(); return v || LAYOUT_TITLE_DEFAULT; }
+function renderTitle() {   // paint the title into the dashboard overlay's top-center title zone (#ib_title)
+  const b = $("ib_title"); if (b) b.innerHTML = '<span class="ttl">' + esc(getTitle()) + '</span>';
+}
 function setTitle(v) {
   v = (v || "").trim();
   if (v && v !== LAYOUT_TITLE_DEFAULT) localStorage.setItem("mk4_title_" + LAYOUT_ID, v);
   else localStorage.removeItem("mk4_title_" + LAYOUT_ID);   // empty / default → fall back to the layout name
-  const e = $("navTitle"); if (e) e.textContent = getTitle();
+  renderTitle();
 }
 // "Toy already connected" shortcut: skip the guided power-on/flash steps. Assume the hub is
 // still connected (e.g. after an app restart) and drive the lifecycle straight to READY — which
@@ -437,9 +441,7 @@ function renderTopbar() {
   const top = el("navtop");
   const cb = tbtn(collapseGlyph(), "navcollapse", toggleNav); cb.id = "navCollapseBtn"; cb.title = t.collapseMenu;
   top.appendChild(cb); tb.appendChild(top);
-
-  // centered, editable layout title (replaces the old lifecycle text — the status light shows state)
-  const title = el("navtitle"); title.id = "navTitle"; title.textContent = getTitle(); tb.appendChild(title);
+  // (the editable layout title is on the DASHBOARD overlay — #ib_title — so collapsing the menu never hides it)
 
   // GROUP 1 — Connection: connect/resume + reset, clearly labelled
   const g1 = el("navgroup"); g1.appendChild(el("grouplabel", "", t.grpConnection));
