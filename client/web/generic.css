@@ -1,0 +1,56 @@
+/* moldqueen — GENERIC layout engine styles. Shared by every generic controller (12-axis,
+   brick, …); the stage size/aspect is set per-layout in JS. shell.css is linked BEFORE this. */
+
+/* ---- live status LIGHT (fixed upper-right; same as the dashboard) ---- */
+.statuslight { position: fixed; top: .6em; right: .6em; z-index: 25;
+  width: 1em; height: 1em; border-radius: 50%; border: 1px solid rgba(0,0,0,.45);
+  background: #e0473d; box-shadow: 0 0 .5em 1px rgba(224,71,61,.85); }
+.statuslight.red    { background: #e0473d; box-shadow: 0 0 .5em 1px rgba(224,71,61,.9); }
+.statuslight.yellow { background: #e6b033; box-shadow: 0 0 .5em 1px rgba(230,176,51,.9); }
+.statuslight.green  { background: #43d17a; box-shadow: 0 0 .55em 1px rgba(67,209,122,.95); }
+
+/* ---- stage: contain-fits the controller art; transparent control overlays on top ---- */
+#stagewrap { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center;
+  container-type: size; overflow: hidden; }
+#stage { position: relative; container-type: size; }   /* width + aspect-ratio set inline by generic.js */
+#bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; -webkit-user-drag: none; pointer-events: none; }
+#overlay { position: absolute; inset: 0; z-index: 1; }
+#overlay.locked .gx-zone, #overlay.locked .gx-dpadbtn, #overlay.locked .gx-btn { opacity: .5; cursor: not-allowed; }
+
+/* ---- control widgets (transparent hit-zones over the painted controls) ---- */
+.gx-zone { position: absolute; touch-action: none; cursor: grab; border-radius: 1rem; }
+.gx-zone.active { cursor: grabbing; }
+.gx-knob { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 34%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(70% 70% at 50% 38%, rgba(120,160,220,.95), rgba(40,60,95,.95));
+  border: 1px solid rgba(150,190,255,.5); box-shadow: 0 0 0 2px rgba(150,190,255,.4), 0 .3cqw .6cqw rgba(0,0,0,.45); }
+.gx-one .gx-knob { width: 56%; }                       /* one-axis: bigger knob on the narrow vertical track */
+.gx-two .gx-knob { width: 30%; }
+.gx-zone.active .gx-knob { border-color: #aacdff; box-shadow: 0 0 0 3px rgba(170,205,255,.85), 0 .3cqw .8cqw rgba(0,0,0,.5); }
+.gx-zone.unassigned .gx-knob { opacity: .28; }         /* unmapped control: faint knob, emits nothing */
+
+.gx-dpadbtn, .gx-btn { position: absolute; background: transparent; border: 0; padding: 0; cursor: pointer;
+  border-radius: .6rem; touch-action: none; -webkit-tap-highlight-color: transparent; }
+.gx-dpadbtn.active, .gx-btn.active { background: rgba(120,170,255,.28); box-shadow: inset 0 0 0 2px rgba(150,190,255,.7); }
+.gx-dpadbtn.unassigned, .gx-btn.unassigned { opacity: .35; }
+
+.gx-stop { position: absolute; background: transparent; border: 0; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; border-radius: 50%; touch-action: none; -webkit-tap-highlight-color: transparent; }
+.gx-stop span { color: #ff5252; font-weight: 800; letter-spacing: .12em; font-size: 1.4cqw; line-height: 1; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
+.gx-stop.hit { background: rgba(224,71,61,.22); box-shadow: inset 0 0 0 3px rgba(255,82,82,.7); }
+
+/* ---- auto-assign wizard ---- */
+.gx-count { display: flex; justify-content: center; margin: .5rem 0; }
+.gx-count input { width: 5rem; font: inherit; font-size: 1.5rem; text-align: center; color: #e8eef6;
+  background: #1d222b; border: 1px solid #38404e; border-radius: .4rem; padding: .3rem; }
+.gx-preview { margin: .5rem 0 .2rem; font-size: .85rem; color: #c0ccdc; line-height: 1.55; max-height: 32vh; overflow: auto; text-align: left; }
+
+/* ---- lean channels editor table (settings) ---- */
+.sub { color: #8e9cb2; font-size: .82rem; margin: .1rem 0 .6rem; }
+.map { width: 100%; border-collapse: collapse; font-size: .85rem; margin: .3rem 0; }
+.map th { color: #8aa0bd; font-weight: 600; text-align: left; padding: .25rem .35rem; font-size: .76rem; }
+.map td { padding: .25rem .35rem; border-top: 1px solid #20262f; vertical-align: middle; }
+.map td.fn { color: #d6e6fb; }
+.map td.fn .muted { font-size: .72rem; }
+.map select, .map input { font: inherit; color: #e8eef6; background: #1d222b; border: 1px solid #38404e; border-radius: .3rem; padding: .2rem .3rem; }
+.map input[type=number] { width: 3.2rem; }

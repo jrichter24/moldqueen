@@ -1,5 +1,5 @@
 {
-  "_comment": "Layout manifest — the SINGLE source of truth for layouts. The server DERIVES each layout's route as /<id> (route is NOT a field; the title is display-only) and serves its HTML/JS/CSS; the chooser builds its cards from this. active:false hides a layout entirely (no route, no card, not in /layouts.json) until a contributor flips it true — see docs/ADDING_A_LAYOUT.md. Add a layout here and it surfaces in BOTH the chooser and the routes (no server-side edit). id must be URL-safe. kind: function-mapped | generic | placeholder. category is a declared grouping label.",
+  "_comment": "Layout manifest — the SINGLE source of truth for layouts. The server DERIVES each layout's route as /<id> (route is NOT a field; the title is display-only) and serves its HTML/JS/CSS; the chooser builds its cards from this. active:false hides a layout entirely (no route, no card, not in /layouts.json) until a contributor flips it true — see docs/ADDING_A_LAYOUT.md. Add a layout here and it surfaces in BOTH the chooser and the routes (no server-side edit). id must be URL-safe. kind: function-mapped | generic | placeholder. category is a declared grouping label. generic:true marks a MODEL-AGNOSTIC controller: its channel map ships UNMAPPED (slot/channel null) and the layout shows an auto-assign wizard on first use; it still resolves function->channel like any function-mapped layout (orthogonal to kind).",
   "layouts": [
     {
       "id": "excavator",
@@ -21,6 +21,18 @@
       "category": "debug",
       "active": true,
       "files": { "html": "raw.html", "js": "raw.js", "css": "raw.css" }
+    },
+    {
+      "id": "generic_12axis",
+      "name": "12-axis controller",
+      "description": "Model-agnostic gamepad — two sticks, two tracks, buttons. Auto-assign to any toy.",
+      "icon": "/assets/generic_icon.png",
+      "kind": "function-mapped",
+      "generic": true,
+      "category": "generic",
+      "active": false,
+      "functions": ["lstick_x", "lstick_y", "rstick_x", "rstick_y", "laxis", "raxis", "dpad_x", "dpad_y", "btn1", "btn2", "btn3", "btn4", "btnA", "btnB", "btnC", "btnD"],
+      "files": { "html": "generic_12axis.html", "js": "generic.js", "css": "generic.css" }
     },
     {
       "id": "byo",
