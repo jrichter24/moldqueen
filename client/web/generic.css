@@ -14,14 +14,18 @@
 /* ---- control widgets (transparent hit-zones over the painted controls) ---- */
 .gx-zone { position: absolute; touch-action: none; cursor: grab; border-radius: 1rem; }
 .gx-zone.active { cursor: grabbing; }
+/* black circular knob — reads as a physical thumb-stick sitting on the rendered sticks
+   (matches the dark controller art; glossy top highlight + inner shadow give it depth). */
 .gx-knob { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: 34%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(70% 70% at 50% 38%, rgba(120,160,220,.95), rgba(40,60,95,.95));
-  border: 1px solid rgba(150,190,255,.5); box-shadow: 0 0 0 2px rgba(150,190,255,.4), 0 .3cqw .6cqw rgba(0,0,0,.45); }
+  background: radial-gradient(circle at 50% 32%, #4a4e55, #15171b 60%, #050608);
+  border: 1px solid rgba(0,0,0,.75);
+  box-shadow: 0 .25cqw .6cqw rgba(0,0,0,.6), inset 0 .12cqw .28cqw rgba(255,255,255,.16), inset 0 -.16cqw .3cqw rgba(0,0,0,.65); }
 .gx-one .gx-knob { width: 56%; }                       /* one-axis: bigger knob on the narrow vertical track */
 .gx-two .gx-knob { width: 30%; }
-.gx-zone.active .gx-knob { border-color: #aacdff; box-shadow: 0 0 0 3px rgba(170,205,255,.85), 0 .3cqw .8cqw rgba(0,0,0,.5); }
-.gx-zone.unassigned .gx-knob { opacity: .28; }         /* unmapped control: faint knob, emits nothing */
+.gx-zone.active .gx-knob { box-shadow: 0 0 0 2px rgba(190,205,230,.5), 0 .25cqw .7cqw rgba(0,0,0,.65),
+  inset 0 .12cqw .28cqw rgba(255,255,255,.2), inset 0 -.16cqw .3cqw rgba(0,0,0,.65); }   /* subtle light ring while driving (no blue) */
+.gx-zone.unassigned .gx-knob { opacity: .4; }          /* unmapped control: faint knob, emits nothing */
 
 .gx-dpadbtn, .gx-btn { position: absolute; background: transparent; border: 0; padding: 0; cursor: pointer;
   border-radius: .6rem; touch-action: none; -webkit-tap-highlight-color: transparent; }
