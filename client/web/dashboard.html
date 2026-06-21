@@ -6,7 +6,8 @@
   <title>moldqueen — dashboard</title>
   <link rel="icon" href="/assets/moldqueen_icon.png" />
   <link rel="stylesheet" href="/shell.css" />       <!-- shared shell + menu + modal/wizard base -->
-  <link rel="stylesheet" href="/dashboard.css" />   <!-- excavator-specific: stage/art/joysticks -->
+  <link rel="stylesheet" href="/chrome.css" />      <!-- shared chrome: menu/chevron/status/settings/wizard/title -->
+  <link rel="stylesheet" href="/dashboard.css" />   <!-- excavator control surface: stage/art/joysticks -->
 
   <script>
     // Injected by the serving host; stay valid when served raw (no injection): each is a
@@ -39,6 +40,7 @@
 
   <script src="/i18n.js"></script>          <!-- shared UI translations (MK4I18N); load FIRST so clientconfig can use it -->
   <script src="/clientconfig.js"></script>
+  <script src="/chrome.js"></script>        <!-- shared chrome + runtime core (MK4Chrome); before the layout -->
   <script src="/dashboard.js"></script>
 </body>
 </html>

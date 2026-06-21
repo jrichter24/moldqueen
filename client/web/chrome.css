@@ -1,0 +1,156 @@
+/* moldqueen — SHARED chrome styling (goes with chrome.js / MK4Chrome). Linked by EVERY layout
+   AFTER shell.css and BEFORE the layout's own css. Covers everything AROUND the control surface:
+   the collapse chevron/chip, the grouped menu, the status light, the tabbed settings overlay, the
+   custom title, the connect button, and the auto-assign wizard. Per-layout css keeps ONLY the
+   control surface (stage/art + its widgets). */
+
+/* ---- collapse control: in-menu chevron (expanded) + floating chip (collapsed) ----
+   The chip matches where the in-menu chevron sits in each layout, so collapsing never jumps the
+   control to another corner: TOP BAR (desktop) → upper-RIGHT (just left of the status light);
+   SIDEBAR (mobile) → upper-LEFT. Glyph direction is set in chrome.js (top bar collapse "▴" up /
+   expand "▾" down; sidebar "‹" left / "›" right). */
+#navChip {
+  position: fixed; top: .5em; right: 2.2em; left: auto; z-index: 25;
+  width: 2em; height: 2em; padding: 0; display: none; align-items: center; justify-content: center;
+  font: 600 1.2em/1 system-ui, sans-serif; color: #cfe0f5;
+  background: rgba(12,15,20,.85); border: 1px solid #2f3947; border-radius: .45em;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+#app.navhidden #navChip { display: flex; }
+#navChip:hover { background: rgba(28,34,44,.92); }
+#navChip:active { background: rgba(44,52,66,.96); }
+#app.navhidden #menu { display: none; }
+#menu { padding-right: 2.2rem; }
+@media (max-width: 768px), (max-height: 540px) {
+  #menu { padding-right: .6em; }
+  #navChip { left: .4em; right: auto; }
+}
+
+/* ---- grouped toolbar/sidebar: collapse + labelled groups + thin separators ---- */
+#menu { align-items: stretch; }
+#menu .navtop { display: flex; align-items: center; justify-content: flex-end; flex: 0 0 auto; }
+#menu .navcollapse { font-size: 1.1em; line-height: 1; padding: .2em .6em; min-width: 2.2em;
+  width: auto; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; }
+#menu .navgroup { display: flex; flex-direction: column; gap: .35em; flex: 0 0 auto; }
+#menu .grouplabel { font-size: .62rem; letter-spacing: .09em; text-transform: uppercase;
+  color: #7e8ca6; font-weight: 700; white-space: nowrap; }
+#menu .groupbtns { display: flex; gap: .4em; }
+#menu .navsep { flex: 0 0 auto; background: #242c3a; }
+/* default = TOP BAR (wide): a flex ROW — groups side by side, vertical separators, collapse far right */
+#menu .groupbtns { flex-direction: row; align-items: center; }
+#menu .navsep { width: 1px; align-self: stretch; margin: 0 .25em; }
+#menu .navtop { order: 99; margin-left: auto; border-left: 1px solid #242c3a; padding-left: .55em; }
+@media (max-width: 768px), (max-height: 540px) {
+  /* SIDEBAR (narrow): a flex COLUMN — collapse on top, groups stacked, horizontal separators */
+  #menu .groupbtns { flex-direction: column; }
+  #menu .navsep { width: auto; height: 1px; align-self: auto; margin: .2em 0; }
+  #menu .navtop { order: 0; margin-left: 0; border-left: 0; padding-left: 0;
+    border-bottom: 1px solid #242c3a; padding-bottom: .4em; margin-bottom: .1em; }
+  #menu .navgroup, #menu .groupbtns select.langsel { width: 100%; }
+}
+/* loud cold-start button: "Connect …" reads as THE next step (vs the muted .primary) */
+#menu .connectExc { background: #1f5fa8; border-color: #4f93e0; font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(90,150,230,.4), 0 0 12px rgba(70,140,230,.45); }
+#menu .connectExc:active { background: #2a6fbf; }
+
+/* ---- live status LIGHT (fixed upper-right) ---- RED = no server · YELLOW = up, not READY · GREEN = READY */
+.statuslight { position: fixed; top: .6em; right: .6em; z-index: 25;
+  width: 1em; height: 1em; border-radius: 50%; border: 1px solid rgba(0,0,0,.45);
+  background: #e0473d; box-shadow: 0 0 .5em 1px rgba(224,71,61,.85); }
+.statuslight.red    { background: #e0473d; box-shadow: 0 0 .5em 1px rgba(224,71,61,.9); }
+.statuslight.yellow { background: #e6b033; box-shadow: 0 0 .5em 1px rgba(230,176,51,.9); }
+.statuslight.green  { background: #43d17a; box-shadow: 0 0 .55em 1px rgba(67,209,122,.95); }
+
+/* ---- editable custom title: rendered into the control surface overlay (#ib_title), positioned
+       per-layout via an inline style; bold + readable over the art, long names ellipsize. ---- */
+#ib_title { color: #eaf2ff; font-family: system-ui, -apple-system, sans-serif;
+  position: absolute; display: flex; align-items: center; justify-content: center; text-align: center;
+  pointer-events: none; overflow: hidden; line-height: 1; }
+#ib_title .ttl { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-weight: 800; font-size: 1.5cqw; letter-spacing: .04em; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
+
+/* startup guide sits above the dimmed page but below the wizard it hands off to */
+#startup { z-index: 31; }
+
+/* ---- tabbed settings overlay: Connection · Channels · Labels · Gamepad · Server info · Auto-assign ----
+   The sheet is a flex column: the TAB BAR is fixed (wraps, never scrolls), only the panel scrolls. */
+#settings .sheet { display: flex; flex-direction: column; overflow: hidden; }
+#settings .stabs { flex: 0 0 auto; padding-right: 2rem; }
+#settings .spanel { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+.stabs { display: flex; flex-wrap: wrap; gap: .2rem; margin: -.3rem -.2rem .8rem; border-bottom: 1px solid #2a313d; }
+.stab { flex: 0 0 auto; font: inherit; color: #9fb0c6; background: transparent; border: 0;
+  border-bottom: 2px solid transparent; padding: .72rem .9rem; margin-bottom: -1px; cursor: pointer;
+  white-space: nowrap; line-height: 1.2; }
+.stab:hover { color: #d6e6fb; }
+.stab.on { color: #eaf2ff; border-bottom-color: #2f6f93; font-weight: 600; }
+.spanelinner { min-height: 26rem; }
+.sheet .sub { color: #8e9cb2; font-size: .82rem; margin: 0 0 .7rem; }
+.srow { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; margin: .5rem 0 .8rem; }
+.srow label { font-size: .88rem; color: #c5d2e4; display: flex; align-items: center; gap: .4rem; }
+table.map { width: 100%; border-collapse: collapse; font-size: .82rem; }
+table.map th, table.map td { padding: .35rem .3rem; border-bottom: 1px solid #232a35; text-align: left; vertical-align: middle; }
+table.map th { color: #8e9cb2; font-weight: 600; }
+table.map .fn { font-weight: 600; color: #d6e6fb; white-space: nowrap; }
+table.map .tag { display: inline-block; font-size: .65rem; padding: .05rem .3rem; border-radius: .3rem; margin-top: .15rem; }
+.tag.ok { background: #16361f; color: #5fd98a; } .tag.ph { background: #38301a; color: #d8b75e; }
+.sheet select, .sheet input[type=text], .sheet input[type=number] {
+  font: inherit; color: #e8eef6; background: #1d222b; border: 1px solid #38404e; border-radius: .35rem; padding: .2rem .3rem; }
+.sheet input[type=text] { width: 7.5rem; }
+.sheet .eprow input[type=text] { width: 100%; }
+.sheet input[type=number] { width: 3.2rem; }
+.sheet input[type=range] { width: 5rem; vertical-align: middle; }
+.sheet .test { background: #243b27; border-color: #3a6f43; }
+.sheet .test.held { background: #3563a8; border-color: #5b8fd6; }
+.sheet .promote { background: #463016; border-color: #8a5a2a; }
+.sheet .maxnote { color: #d8b75e; font-size: .76rem; margin: .4rem 0 0; }
+
+/* Labels tab: one card per function, the 6 languages as a labelled grid */
+.lblcards { display: flex; flex-direction: column; gap: .6rem; }
+.lblcard { border: 1px solid #232a35; border-radius: .5rem; padding: .5rem .6rem; background: #15181f; }
+.lblfn { font-weight: 600; color: #d6e6fb; margin-bottom: .4rem; }
+.lblfn .muted { font-weight: 400; }
+.lblgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .35rem .7rem; }
+.lblf { display: flex; align-items: center; gap: .4rem; font-size: .82rem; color: #c5d2e4; }
+.lblf .lc { flex: 0 0 1.7rem; color: #8aa0bd; font-family: ui-monospace, monospace; font-size: .72rem; }
+.sheet .lblgrid input[type=text] { flex: 1 1 auto; width: auto; min-width: 0; }
+
+/* Gamepad tab: status · live axes/buttons readout · input→function map */
+.padstat { font-size: .82rem; color: #8e9cb2; margin: 0 0 .6rem; padding: .35rem .55rem;
+  background: #15181f; border: 1px solid #2c333f; border-radius: .4rem; word-break: break-word; }
+.padstat.ok { color: #b9e6c9; border-color: #2c5a3a; }
+.padro { margin: 0 0 .8rem; padding: .5rem .6rem; background: #15181f; border: 1px solid #232a35; border-radius: .5rem; }
+.padro .axes { display: flex; flex-direction: column; gap: .25rem; margin-bottom: .5rem; }
+.padro .axrow { display: flex; align-items: center; gap: .5rem; font-size: .76rem; }
+.padro .axk { flex: 0 0 1.8rem; color: #8aa0bd; font-family: ui-monospace, monospace; }
+.padro .axbar { position: relative; flex: 1 1 auto; height: .5rem; background: #0e1218; border: 1px solid #2a313d; border-radius: .3rem; }
+.padro .axbar i { position: absolute; top: -1px; bottom: -1px; width: 3px; margin-left: -1.5px; background: #6ea8ff; border-radius: 2px; }
+.padro .axv { flex: 0 0 2.6rem; text-align: right; color: #cfe0f5; font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
+.padro .pbtns { display: flex; flex-wrap: wrap; gap: .25rem; }
+.padro .pbtn { min-width: 1.5rem; text-align: center; font-size: .7rem; padding: .12rem .25rem; border-radius: .25rem;
+  background: #0e1218; border: 1px solid #2a313d; color: #8aa0bd; font-family: ui-monospace, monospace; }
+.padro .pbtn.on { background: #2f6f93; border-color: #6db0e0; color: #eaf2ff; }
+.padh { margin: .4rem 0 .3rem; font-size: .95rem; color: #cfe0f5; }
+table.padmap select { max-width: 7rem; }
+table.padmap .padlive { text-align: center; color: #ffd56b; font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
+.padbtns { display: inline-flex; align-items: center; gap: .25rem; }
+#menu .padchip { font-size: 1rem; line-height: 1; padding: .3em .5em; }
+#menu .padchip.padon { border-color: #4f9f6a; box-shadow: 0 0 0 1px rgba(80,200,130,.4); }
+#menu .padchip.padoff { opacity: .6; }
+
+/* server-info readout (tier-agnostic key/value list) */
+.infobox:empty { display: none; }
+.infobox { margin-top: .8rem; padding: .6rem .8rem; background: #15181f; border: 1px solid #2c333f; border-radius: .5rem; font-size: .82rem; }
+.infobox .ihead { display: flex; align-items: center; gap: .5rem; font-weight: 600; color: #cdd9ea; margin-bottom: .45rem; }
+.infobox .mini { margin-left: auto; padding: .1rem .45rem; font-size: .8rem; line-height: 1; }
+.infobox .kv { display: flex; gap: .8rem; padding: .15rem 0; border-top: 1px solid #20262f; }
+.infobox .kv:first-of-type { border-top: 0; }
+.infobox .k { flex: 0 0 38%; color: #8aa0bd; font-family: ui-monospace, monospace; }
+.infobox .v { flex: 1 1 auto; color: #e3e9f2; font-family: ui-monospace, monospace; word-break: break-word; }
+#mapMsg { font-size: .82rem; flex-basis: 100%; }
+#mapMsg.ok { color: #5fd98a; } #mapMsg.bad { color: #e06b5a; }
+
+/* ---- auto-assign wizard (chrome; only present when a layout supplies config.autoAssign) ---- */
+.gx-count { display: flex; justify-content: center; margin: .5rem 0; }
+.gx-count input { width: 5rem; font: inherit; font-size: 1.5rem; text-align: center; color: #e8eef6;
+  background: #1d222b; border: 1px solid #38404e; border-radius: .4rem; padding: .3rem; }
+.gx-preview { margin: .5rem 0 .2rem; font-size: .85rem; color: #c0ccdc; line-height: 1.55; max-height: 32vh; overflow: auto; text-align: left; }
