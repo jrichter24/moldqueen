@@ -54,10 +54,13 @@ def _load_layouts():
         return []
 
 
-def _build_routes(active):
-    """Derive /<id> per active layout (augmenting each with `route`); -> {route: html}."""
+def _build_routes(layouts):
+    """Derive /<id> per layout (augmenting each with `route`); -> {route: html}.
+    Built for EVERY layout (active and inactive): `active` gates the chooser CARD, not the
+    ROUTE — an inactive layout stays reachable by direct URL so it can be verified before
+    activation. (collision suffixes are deduped across the whole set.)"""
     routes, used = {}, set()
-    for lay in active:
+    for lay in layouts:
         html = (lay.get("files") or {}).get("html")
         sid = _safe_id(lay.get("id"))
         if not sid or not html:
@@ -74,9 +77,10 @@ def _build_routes(active):
     return routes
 
 
-ACTIVE = [l for l in _load_layouts() if l.get("active", True)]
-HTML_ROUTES = _build_routes(ACTIVE)
-LAYOUTS_JSON = json.dumps({"layouts": ACTIVE})
+ALL_LAYOUTS = _load_layouts()
+ACTIVE = [l for l in ALL_LAYOUTS if l.get("active", True)]
+HTML_ROUTES = _build_routes(ALL_LAYOUTS)             # routes for ALL layouts (active gates the card, not the route)
+LAYOUTS_JSON = json.dumps({"layouts": ACTIVE})       # chooser sees ONLY active layouts -> no card for inactive ones
 
 
 class Handler(BaseHTTPRequestHandler):
