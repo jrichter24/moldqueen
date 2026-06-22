@@ -1,0 +1,30 @@
+{
+  "_comment": "GENERIC brick-style (PS-like) controller default map — UNMAPPED. SAME 12-motor function set as generic_12axis (each motor = ONE slot/channel driven both ways +/-; vertically/horizontally-opposite controls share a motor). Only the bg image + control hotspots differ; the engine, channel map schema, and profile auto-assign are shared. Every motor starts unmapped (slot/channel null) -> no motion until the auto-assign wizard (or hand-tune) assigns it. Persisted to localStorage (mk4_active_map_generic_brick). values -7..+7. labels are per-language {en,de,zh,ko,es,fr}; en is the fallback.",
+  "version": 1,
+  "functions": {
+    "lstick_v": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "Left stick ↕", "de": "Linker Stick ↕", "zh": "左摇杆 ↕", "ko": "왼쪽 스틱 ↕", "es": "Joystick izq. ↕", "fr": "Stick gauche ↕" } },
+    "lstick_h": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "Left stick ↔", "de": "Linker Stick ↔", "zh": "左摇杆 ↔", "ko": "왼쪽 스틱 ↔", "es": "Joystick izq. ↔", "fr": "Stick gauche ↔" } },
+    "rstick_v": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "Right stick ↕", "de": "Rechter Stick ↕", "zh": "右摇杆 ↕", "ko": "오른쪽 스틱 ↕", "es": "Joystick der. ↕", "fr": "Stick droit ↕" } },
+    "rstick_h": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "Right stick ↔", "de": "Rechter Stick ↔", "zh": "右摇杆 ↔", "ko": "오른쪽 스틱 ↔", "es": "Joystick der. ↔", "fr": "Stick droit ↔" } },
+    "laxis": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "Left axis ↕", "de": "Linke Achse ↕", "zh": "左轴 ↕", "ko": "왼쪽 축 ↕", "es": "Eje izq. ↕", "fr": "Axe gauche ↕" } },
+    "raxis": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "Right axis ↕", "de": "Rechte Achse ↕", "zh": "右轴 ↕", "ko": "오른쪽 축 ↕", "es": "Eje der. ↕", "fr": "Axe droit ↕" } },
+    "dpad_v": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "D-pad ↕", "de": "Steuerkreuz ↕", "zh": "方向键 ↕", "ko": "방향패드 ↕", "es": "Cruceta ↕", "fr": "Croix dir. ↕" } },
+    "dpad_h": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "D-pad ↔", "de": "Steuerkreuz ↔", "zh": "方向键 ↔", "ko": "방향패드 ↔", "es": "Cruceta ↔", "fr": "Croix dir. ↔" } },
+    "btn_13": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "Buttons 1/3", "de": "Tasten 1/3", "zh": "按键 1/3", "ko": "버튼 1/3", "es": "Botones 1/3", "fr": "Boutons 1/3" } },
+    "btn_24": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "Buttons 2/4", "de": "Tasten 2/4", "zh": "按键 2/4", "ko": "버튼 2/4", "es": "Botones 2/4", "fr": "Boutons 2/4" } },
+    "face_v": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "Face A/D", "de": "Tasten A/D", "zh": "面键 A/D", "ko": "페이스 A/D", "es": "Frontal A/D", "fr": "Façade A/D" } },
+    "face_h": { "slot": null, "channel": null, "invert": false, "reverse_scale": 1.0, "max_fwd": 5, "max_rev": 5,
+      "labels": { "en": "Face B/C", "de": "Tasten B/C", "zh": "面键 B/C", "ko": "페이스 B/C", "es": "Frontal B/C", "fr": "Façade B/C" } }
+  }
+}

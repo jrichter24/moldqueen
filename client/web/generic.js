@@ -38,6 +38,32 @@ const SPECS = {
       { type: "stop", rect: [44.53, 69.90, 9.86, 19.73], cap: [49.98, 64.5] },   // cap = [painted-dot centerX%, caption bottomY%] — bottomY gives a clear gap above the button (dot top ≈70.7%)
     ],
   },
+  // Brick-style (PS-like) controller — SAME motor model + engine + auto-assign, only the bg image
+  // and hotspot rects differ. Rects transcribed from ps_like_gampepad_layout_spec.md (1717×916).
+  generic_brick: {
+    image: "/assets/generic_layouts/ps_like_gampepad.png",
+    aspect: [1717, 916],
+    title: { default: "Brick controller", rect: [29.1, 7, 40.8, 9] },
+    controls: [
+      // d-pad (top-left cluster): up/down -> dpad_v, left/right -> dpad_h
+      { type: "dpad", motors: ["dpad_h", "dpad_v"], h: "dpad_h", v: "dpad_v", parts: {
+          up: [10.7, 16.4, 6.1, 13.1], down: [10.5, 42.0, 6.4, 12.6],
+          left: [3.4, 28.9, 7.6, 11.5], right: [17.2, 28.9, 7.6, 11.5] } },
+      // one-axis lower outer joysticks (vertical only)
+      { type: "oneaxis", id: "laxis", motors: ["laxis"], v: "laxis", rect: [2.0, 74.5, 9.9, 18.6] },
+      { type: "oneaxis", id: "raxis", motors: ["raxis"], v: "raxis", rect: [87.9, 74.5, 9.9, 18.6] },
+      // two-axis main sticks: vertical + horizontal = two motors
+      { type: "twoaxis", id: "lstick", motors: ["lstick_h", "lstick_v"], h: "lstick_h", v: "lstick_v", rect: [22.8, 49.7, 16.0, 31.1] },
+      { type: "twoaxis", id: "rstick", motors: ["rstick_h", "rstick_v"], h: "rstick_h", v: "rstick_v", rect: [61.2, 49.7, 16.0, 31.1] },
+      // top-row buttons 1-4: pair 1/3 and 2/4 share a motor (1,2 = +, 3,4 = -) — same model as the 12-axis
+      { type: "btnpair", motors: ["btn_13"], motor: "btn_13", plus: [36.1, 29.8, 5.2, 6.3], minus: [51.5, 29.8, 5.2, 6.3] },
+      { type: "btnpair", motors: ["btn_24"], motor: "btn_24", plus: [43.7, 29.8, 5.2, 6.3], minus: [59.3, 29.8, 5.2, 6.3] },
+      // face diamond: A(top)+ / D(bottom)- vertical ; B(right)+ / C(left)- horizontal
+      { type: "btnpair", motors: ["face_v"], motor: "face_v", plus: [86.6, 10.4, 6.7, 12.6], minus: [86.2, 42.6, 6.7, 12.6] },
+      { type: "btnpair", motors: ["face_h"], motor: "face_h", plus: [91.9, 26.7, 6.7, 12.6], minus: [78.3, 26.7, 6.7, 12.6] },
+      { type: "stop", rect: [45.7, 72.8, 8.7, 16.4], cap: [49.99, 68] },   // painted dot centerX 49.99%, dot top ≈74.45%
+    ],
+  },
 };
 const LAYOUT_ID = window.MK4_LAYOUT_ID || "generic_12axis";
 const SPEC = SPECS[LAYOUT_ID];
@@ -185,5 +211,7 @@ else MK4Chrome.create({
     motorLabel: m => MOTOR_LABELS[m] || m,
   },
   zeroBoxHint: t => t.gen.zeroBoxConnect,               // one-liner in the connect-wizard slot step
+  // device-neutral startup/connect-guide wording for generic layouts (excavator passes nothing -> keeps its own)
+  wizardText: t => ({ next: t.suGen.next, s1b: t.suGen.s1b, s2t: t.suGen.s2t, s2b: t.suGen.s2b, wizTitle: t.suGen.wizTitle }),
   buildSurface,
 });

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>moldqueen — brick controller</title>
+  <link rel="icon" href="/assets/moldqueen_icon.png" />
+  <link rel="stylesheet" href="/shell.css" />       <!-- shared shell + menu + modal/wizard base -->
+  <link rel="stylesheet" href="/chrome.css" />      <!-- shared chrome: menu/chevron/status/settings/wizard/title -->
+  <link rel="stylesheet" href="/generic.css" />     <!-- generic control surface: stage + widgets -->
+  <script>
+    // Injected by the serving host; stay valid when served raw. This thin page just names the
+    // layout id; the SHARED engine (generic.js) loads its spec + channel map by that id.
+    window.MK4_WS_PORT = "__WS_PORT__";
+    window.MK4_SHOW_FULLSCREEN = "__SHOW_FULLSCREEN__";
+    window.MK4_LAYOUT_ID = "generic_brick";
+  </script>
+</head>
+<body>
+  <!-- Viewport-sized shell: a menu STRIP (top bar / left sidebar) + a controller AREA. The
+       stage contains-fits the controller art; transparent control overlays sit on top. -->
+  <div id="app">
+    <button id="navChip" type="button" aria-label="Show menu" title="Show menu">›</button>  <!-- expand chip (chrome) -->
+    <div id="statusLight" class="statuslight red" title="No server"></div>  <!-- live status: red/yellow/green -->
+    <nav id="menu"></nav>                     <!-- toolbar; built by generic.js -->
+    <div id="stagewrap">
+      <div id="stage">
+        <img id="bg" alt="" draggable="false" />   <!-- src set from the layout spec -->
+        <div id="overlay"></div>              <!-- percent-positioned control widgets -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Centered modal overlays (built by chrome.js / generic.js): -->
+  <div id="startup" class="modal hidden"></div>    <!-- startup guide: reach the API, then connect the toy -->
+  <div id="wizard" class="modal hidden"></div>     <!-- cold-start connect lifecycle wizard -->
+  <div id="assign" class="modal hidden"></div>     <!-- auto-assign wizard (controls -> channels) -->
+  <div id="settings" class="modal hidden"></div>   <!-- tabbed settings (Connection · Channels · Labels · Server info) -->
+
+  <script src="/i18n.js"></script>          <!-- shared UI translations (MK4I18N); load FIRST so clientconfig can use it -->
+  <script src="/clientconfig.js"></script>
+  <script src="/chrome.js"></script>        <!-- shared chrome + runtime core (MK4Chrome); before the layout -->
+  <script src="/generic.js"></script>
+</body>
+</html>

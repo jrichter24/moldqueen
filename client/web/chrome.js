@@ -370,8 +370,10 @@ window.MK4Chrome = (function () {
       else btns = `<button class="apply" id="wDone">${t.wiz.startDriving}</button>`;
       const gif = { 1: "long_flash", 2: "short_flash", 3: "double_short_flash" }[s];
       const media = gif ? `<div class="media"><img src="/assets/${gif}.gif" alt=""></div>` : "";
+      const wt = config.wizardText ? config.wizardText(t) : null;
+      const wizTitle = (wt && wt.wizTitle) || t.wiz.title;
       $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
-        <h2>${t.wiz.title}</h2>
+        <h2>${wizTitle}</h2>
         <div class="wsteps">${[1, 2, 3, 4].map(n => `<span class="wdot${n === s ? " on" : n < s ? " done" : ""}"></span>`).join("")}</div>
         ${media}<h3 class="wt">${w.t}</h3><p class="wbody">${w.b}</p>
         ${s === 3 && config.zeroBoxHint ? '<p class="gx-zero">' + config.zeroBoxHint(t) + "</p>" : ""}
@@ -394,28 +396,31 @@ window.MK4Chrome = (function () {
     function buildStartup() {
       if (!$("startup")) return;
       const t = tr(), s = startupStep, apiOk = wsStatus === "connected";
+      // device-neutral overrides for generic layouts (config.wizardText); excavator passes none -> its own su.*
+      const wt = config.wizardText ? config.wizardText(t) : null;
+      const su = wt ? Object.assign({}, t.su, wt) : t.su;
       const dots = `<div class="wsteps">
           <span class="wdot ${s === 1 ? "on" : "done"}"></span>
           <span class="wdot ${s === 2 ? "on" : ""}"></span></div>`;
       let body;
       if (s === 1) {
-        body = `<h3 class="wt">${t.su.s1t}</h3><p class="wbody">${t.su.s1b}</p>
+        body = `<h3 class="wt">${su.s1t}</h3><p class="wbody">${su.s1b}</p>
           <div class="eprow" id="suEpRow"></div>
           <div class="actions wactions">
-            <button id="suSkip">${t.su.skip}</button>
-            <button class="apply" id="suNext"${apiOk ? "" : " disabled"}>${t.su.next}</button>
+            <button id="suSkip">${su.skip}</button>
+            <button class="apply" id="suNext"${apiOk ? "" : " disabled"}>${su.next}</button>
           </div>`;
       } else {
-        body = `<h3 class="wt">${t.su.s2t}</h3><p class="wbody">${t.su.s2b}</p>
+        body = `<h3 class="wt">${su.s2t}</h3><p class="wbody">${su.s2b}</p>
           <div class="actions wactions">
-            <button id="suSkip">${t.su.skip}</button>
+            <button id="suSkip">${su.skip}</button>
             <button id="suBack">${t.wiz.back}</button>
             <button id="suAlready">${t.wiz.already}</button>
             <button class="apply" id="suConnect">${config.connectLabel ? config.connectLabel(t) : t.connect}</button>
           </div>`;
       }
       $("startup").innerHTML = `<div class="backdrop"></div><div class="sheet wiz su">
-         <h2>${t.su.title}</h2>${dots}${body}</div>`;
+         <h2>${su.title}</h2>${dots}${body}</div>`;
       $("startup").querySelector(".backdrop").onclick = closeStartup;
       const set = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
       set("suSkip", closeStartup);

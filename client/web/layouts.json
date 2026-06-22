@@ -31,8 +31,20 @@
       "generic": true,
       "category": "generic",
       "active": false,
-      "functions": ["lstick_x", "lstick_y", "rstick_x", "rstick_y", "laxis", "raxis", "dpad_x", "dpad_y", "btn1", "btn2", "btn3", "btn4", "btnA", "btnB", "btnC", "btnD"],
+      "functions": ["lstick_v", "lstick_h", "rstick_v", "rstick_h", "laxis", "raxis", "dpad_v", "dpad_h", "btn_13", "btn_24", "face_v", "face_h"],
       "files": { "html": "generic_12axis.html", "js": "generic.js", "css": "generic.css" }
+    },
+    {
+      "id": "generic_brick",
+      "name": "Brick controller",
+      "description": "Model-agnostic brick-style gamepad — two sticks, two tracks, buttons. Auto-assign to any toy.",
+      "icon": "/assets/generic_icon.png",
+      "kind": "function-mapped",
+      "generic": true,
+      "category": "generic",
+      "active": false,
+      "functions": ["lstick_v", "lstick_h", "rstick_v", "rstick_h", "laxis", "raxis", "dpad_v", "dpad_h", "btn_13", "btn_24", "face_v", "face_h"],
+      "files": { "html": "generic_brick.html", "js": "generic.js", "css": "generic.css" }
     },
     {
       "id": "byo",
