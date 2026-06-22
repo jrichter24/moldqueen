@@ -35,7 +35,7 @@ const SPECS = {
       // face diamond: A(top)+ / D(bottom)- vertical ; B(right)+ / C(left)- horizontal
       { type: "btnpair", motors: ["face_v"], motor: "face_v", plus: [82.30, 16.57, 7.44, 14.88], minus: [82.30, 45.55, 7.44, 14.88] },
       { type: "btnpair", motors: ["face_h"], motor: "face_h", plus: [88.90, 31.91, 7.44, 14.88], minus: [75.08, 31.91, 7.44, 14.88] },
-      { type: "stop", rect: [44.53, 69.90, 9.86, 19.73], cap: [49.98, 68.8] },   // cap = [painted-dot centerX%, caption bottomY%]
+      { type: "stop", rect: [44.53, 69.90, 9.86, 19.73], cap: [49.98, 64.5] },   // cap = [painted-dot centerX%, caption bottomY%] — bottomY gives a clear gap above the button (dot top ≈70.7%)
     ],
   },
 };
