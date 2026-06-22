@@ -27,6 +27,7 @@ window.MK4Chrome = (function () {
     const features = config.features || {};
     const LAYOUT_ID = config.layoutId;
     const LAYOUT_TITLE_DEFAULT = (config.title && config.title.default) || LAYOUT_ID;
+    const LAYOUT_TITLE_COLOR_DEFAULT = (config.title && config.title.color) || "#eaf2ff";   // per-layout default (light); brick passes a dark grey
     const MAP_URL = config.mapUrl || ("/channel_map." + LAYOUT_ID + ".json");
     const MAP_KEY = "mk4_active_map_" + LAYOUT_ID;   // D1: per-layout key
 
@@ -236,6 +237,8 @@ window.MK4Chrome = (function () {
     function titleVisible() { return localStorage.getItem("mk4_title_show_" + LAYOUT_ID) !== "0"; }
     function setTitleVisible(on) { localStorage.setItem("mk4_title_show_" + LAYOUT_ID, on ? "1" : "0"); renderTitle(); }
     function titleName() { const v = (localStorage.getItem("mk4_title_" + LAYOUT_ID) || "").trim(); return v || LAYOUT_TITLE_DEFAULT; }
+    function titleColor() { return localStorage.getItem("mk4_title_color_" + LAYOUT_ID) || LAYOUT_TITLE_COLOR_DEFAULT; }
+    function setTitleColor(c) { localStorage.setItem("mk4_title_color_" + LAYOUT_ID, c); renderTitle(); }
     function setTitle(v) {
       v = (v || "").trim();
       if (v && v !== LAYOUT_TITLE_DEFAULT) localStorage.setItem("mk4_title_" + LAYOUT_ID, v);
@@ -248,6 +251,7 @@ window.MK4Chrome = (function () {
       let b = $("ib_title");
       if (!titleVisible()) { if (b) b.remove(); return; }   // toggle OFF -> show no title at all
       if (!b) { b = document.createElement("div"); b.id = "ib_title"; b.className = "lbl info"; if (config.title.style) b.style.cssText = config.title.style; ov.appendChild(b); }
+      b.style.color = titleColor();
       b.innerHTML = '<span class="ttl">' + esc(titleName()) + '</span>';
     }
 
@@ -626,6 +630,7 @@ window.MK4Chrome = (function () {
           <label class="eplabel" for="titleInput">${t.titleLabel}</label>
           <input type="text" id="titleInput" maxlength="40" spellcheck="false" placeholder="${esc(LAYOUT_TITLE_DEFAULT)}">
           <label class="titleshow"><input type="checkbox" id="titleShow"> ${t.titleShow}</label>
+          <label class="titlecol">${t.titleColor} <input type="color" id="titleColor"></label>
         </div>
         <div class="lblcards">${cards}</div>
         <div class="actions">
@@ -638,6 +643,8 @@ window.MK4Chrome = (function () {
       if (ti) { ti.value = localStorage.getItem("mk4_title_" + LAYOUT_ID) || ""; ti.oninput = () => setTitle(ti.value); }
       const ts = $("titleShow");
       if (ts) { ts.checked = titleVisible(); ts.onchange = () => setTitleVisible(ts.checked); }
+      const tc = $("titleColor");
+      if (tc) { tc.value = titleColor(); tc.oninput = () => setTitleColor(tc.value); }
       $("settings").querySelectorAll(".lblcard").forEach(card => {
         const a = editMap.functions[card.dataset.fn];
         if (!a.labels || typeof a.labels !== "object") a.labels = {};
