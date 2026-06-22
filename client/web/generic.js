@@ -68,22 +68,22 @@ function makeOneAxis(c) {
   return z;
 }
 function makeTwoAxis(c) {
-  const fnh = c.h, fnv = c.v, travel = 38;
+  const fnh = c.h, fnv = c.v, travel = 34, NY = 57;   // NY = neutral Y%: knob rests low so it sits centered in the painted stick housing
   const z = el("gx-zone gx-two" + (A.isUnmapped(fnh) && A.isUnmapped(fnv) ? " unassigned" : ""), pct(c.rect));
   if (c.id) z.dataset.cid = c.id;
-  const knob = el("gx-knob"); z.appendChild(knob);
+  const knob = el("gx-knob"); knob.style.top = NY + "%"; z.appendChild(knob);
   let pid = null;
   const setXY = (cx, cy) => {
     const r = z.getBoundingClientRect();
     let fx = clamp((cx - (r.left + r.width / 2)) / (r.width / 2), -1, 1);     // right = +
     let fy = clamp(-((cy - (r.top + r.height / 2)) / (r.height / 2)), -1, 1);  // up = +
     if (Math.abs(fx) < 0.12) fx = 0; if (Math.abs(fy) < 0.12) fy = 0;
-    knob.style.left = (50 + fx * travel) + "%"; knob.style.top = (50 - fy * travel) + "%";
+    knob.style.left = (50 + fx * travel) + "%"; knob.style.top = (NY - fy * travel) + "%";
     const vh = A.scaleVal(fnh, fx), vv = A.scaleVal(fnv, fy);
     z.classList.toggle("active", vh !== 0 || vv !== 0);
     A.driveFn(fnh, vh); A.driveFn(fnv, vv);
   };
-  const reset = () => { pid = null; knob.style.left = "50%"; knob.style.top = "50%"; z.classList.remove("active"); A.driveFn(fnh, 0); A.driveFn(fnv, 0); };
+  const reset = () => { pid = null; knob.style.left = "50%"; knob.style.top = NY + "%"; z.classList.remove("active"); A.driveFn(fnh, 0); A.driveFn(fnv, 0); };
   z.addEventListener("pointerdown", e => { if (A.lifecycle() !== "READY") return; A.clearStopLatch(); pid = e.pointerId; try { z.setPointerCapture(pid); } catch {} e.preventDefault(); setXY(e.clientX, e.clientY); });
   z.addEventListener("pointermove", e => { if (e.pointerId === pid) setXY(e.clientX, e.clientY); });
   const up = e => { if (pid === null || (e && e.pointerId !== pid)) return; try { z.releasePointerCapture(pid); } catch {} reset(); };
@@ -115,10 +115,15 @@ function makeButtonPair(c) {   // top/right press = +cap, bottom/left press = -c
   return frag;
 }
 function makeStop(c) {
-  const b = el("gx-stop", pct(c.rect), `<span>${A.dict().stop}</span>`); b.id = "estopBtn";
+  // caption ABOVE the red button (centered text label), button itself has no inner text
+  const frag = document.createDocumentFragment();
+  const bx = c.rect[0] + c.rect[2] / 2, capW = 26, capH = 6;
+  const cap = el("gx-stopcap", pct([bx - capW / 2, c.rect[1] - capH - 0.5, capW, capH]), `<span>${A.dict().stop}</span>`);
+  const b = el("gx-stop", pct(c.rect)); b.id = "estopBtn";
   b.addEventListener("pointerdown", e => { e.preventDefault(); b.classList.add("hit"); A.stopAll(); try { b.setPointerCapture(e.pointerId); } catch {} });
   const up = () => b.classList.remove("hit"); b.addEventListener("pointerup", up); b.addEventListener("pointercancel", up);
-  return b;
+  frag.appendChild(cap); frag.appendChild(b);
+  return frag;
 }
 function buildSurface(api) {
   A = api;

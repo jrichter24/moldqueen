@@ -39,15 +39,19 @@
             gap: clamp(1rem, 3vh, 2rem); width: 100%; max-width: 1040px; }
     /* top-right actions */
     .actions { position: fixed; top: .8rem; right: .9rem; z-index: 3; display: flex; gap: .5rem; }
-    .actions a, .actions button { display: inline-flex; align-items: center; gap: .35rem; font: inherit; font-size: .82rem;
+    /* icon-only buttons: square, centered glyph/svg, no text */
+    .actions a, .actions button, .actions #langSlot { display: inline-flex; align-items: center; justify-content: center;
+      width: 2.1rem; height: 2.1rem; padding: 0; font: inherit; font-size: 1.05rem; line-height: 1;
       color: #cfe0f5; background: rgba(15,20,28,.7); border: 1px solid #2b3647; border-radius: .5rem;
-      padding: .35rem .6rem; cursor: pointer; text-decoration: none; backdrop-filter: blur(3px); }
-    .actions a:hover, .actions button:hover { border-color: var(--glow); }
-    .actions svg { width: 1.05em; height: 1.05em; }
-    .actions select.langsel { font: inherit; font-size: .82rem; color: #cfe0f5; background: rgba(15,20,28,.7);
-      border: 1px solid #2b3647; border-radius: .5rem; padding: .35rem .5rem; cursor: pointer; backdrop-filter: blur(3px); }
-    .actions select.langsel:hover { border-color: var(--glow); }
-    .actions select.langsel option { background: #11161e; color: #e8eef6; }
+      cursor: pointer; text-decoration: none; backdrop-filter: blur(3px); }
+    .actions a:hover, .actions button:hover, .actions #langSlot:hover { border-color: var(--glow); }
+    .actions svg { width: 1.15em; height: 1.15em; }
+    /* language: a globe icon with the native <select> overlaid transparently (same dropdown) */
+    #langSlot { position: relative; }
+    #langSlot .globe { pointer-events: none; }
+    #langSlot select.langsel { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0;
+      border: 0; background: transparent; color: transparent; opacity: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
+    #langSlot select.langsel option { background: #11161e; color: #e8eef6; }
     header { display: flex; flex-direction: column; align-items: center; gap: .4rem; text-align: center; }
     .brand { display: flex; align-items: center; gap: clamp(.5rem, 1.6vw, 1rem); }
     .brand img { width: clamp(48px, 11vw, 96px); height: auto; filter: drop-shadow(0 3px 12px rgba(0,0,0,.7)); }
@@ -146,13 +150,14 @@
   <script src="/i18n.js"></script>   <!-- shared UI translations (MK4I18N); single source across all pages -->
 </head>
 <body>
+  <!-- icon-only top menu, in order: GitHub · Language · About · Fullscreen -->
   <div class="actions">
-    <span id="langSlot"></span>   <!-- language picker (MK4I18N) injected here: pick once, applies everywhere -->
-    <a href="https://github.com/jrichter24/moldqueen" target="_blank" rel="noopener" title="moldqueen on GitHub">
-      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-      GitHub</a>
-    <button id="fsBtn" title="Toggle fullscreen">⛶ Fullscreen</button>
-    <button id="aboutBtn">About</button>
+    <a id="ghLink" href="https://github.com/jrichter24/moldqueen" target="_blank" rel="noopener" title="moldqueen on GitHub" aria-label="GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
+    <span id="langSlot" title="Language"></span>   <!-- language picker (MK4I18N): globe icon + the same dropdown -->
+    <button id="aboutBtn" title="About" aria-label="About">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 3.1a1.15 1.15 0 110 2.3 1.15 1.15 0 010-2.3zM6.6 6.7h2.2V12h.9v1H6.4v-1h.9V7.7h-.7v-1z"/></svg></button>
+    <button id="fsBtn" title="Fullscreen" aria-label="Fullscreen">⛶</button>
   </div>
 
   <div class="wrap">
@@ -285,7 +290,9 @@
       if (d) {
         document.documentElement.lang = MK4I18N.lang();
         setTxt("chooseLayout", d.chooseLayout);
-        setTxt("fsBtn", d.actFullscreen); setTxt("aboutBtn", d.actAbout);
+        // icon-only top menu: localize the tooltips, not the (absent) text
+        var setTitle = function (id, v) { var e = document.getElementById(id); if (e && v != null) e.title = v; };
+        setTitle("fsBtn", d.actFullscreen); setTitle("aboutBtn", d.actAbout); setTitle("langSlot", d.langTitle); setTitle("ghLink", "GitHub");
         setTxt("footerText", d.footerText); setTxt("aboutLink", d.footerAbout);
         setTxt("aboutTitle", d.about.title); setHtml("aboutIntro", d.about.intro);
         setTxt("aboutDiscH", d.about.discH); setTxt("aboutCredH", d.about.credH);
@@ -301,7 +308,11 @@
 
     // Inject the language picker (persists mk4_lang, applies everywhere); re-translate on change.
     var langSlot = document.getElementById("langSlot");
-    if (window.MK4I18N && langSlot) langSlot.appendChild(MK4I18N.picker(applyI18n));
+    if (window.MK4I18N && langSlot) {
+      // globe icon + the native dropdown overlaid on top (transparent) so the icon opens the same picker
+      langSlot.insertAdjacentHTML("afterbegin", '<svg class="globe" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm5.9 4.7h-2.3a9.6 9.6 0 00-1-2.6 6.5 6.5 0 013.3 2.6zM8 1.5c.6.6 1.2 1.7 1.5 3.2H6.5C6.8 3.2 7.4 2.1 8 1.5zM1.6 9.5A6.5 6.5 0 011.5 8c0-.5 0-1 .1-1.5h2.6a16 16 0 000 3H1.6zm.5 1.8h2.3c.2 1 .6 1.9 1 2.6a6.5 6.5 0 01-3.3-2.6zM4.4 4.7H2.1a6.5 6.5 0 013.3-2.6c-.4.7-.8 1.6-1 2.6zM8 14.5c-.6-.6-1.2-1.7-1.5-3.2h3c-.3 1.5-.9 2.6-1.5 3.2zm-1.7-4.7a14 14 0 010-3h3.4a14 14 0 010 3H6.3zm4.3 4c.4-.7.8-1.6 1-2.6h2.3a6.5 6.5 0 01-3.3 2.6zm1.2-4.3a16 16 0 000-3h2.6c.1.5.1 1 .1 1.5s0 1-.1 1.5h-2.6z"/></svg>');
+      langSlot.appendChild(MK4I18N.picker(applyI18n));
+    }
 
     // Load the manifest (injected, or fetched when served raw), then translate the whole page.
     if (window.__LAYOUTS__) { renderCards(window.__LAYOUTS__); applyI18n(); }

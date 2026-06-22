@@ -12,8 +12,8 @@
     en: {
       // ---- dashboard chrome ----
       connect: "Connect Excavator", ready: "Ready", reset: "Reset", stop: "STOP", speed: "Speed",
-      full: "⛶", settings: "⚙", layouts: "Choose layout", close: "Close", lang: "DE", deviceSwap: "Swap hubs 0↔1",
-      resetConn: "Reset connection", grpConnection: "Connection", grpNavigation: "Navigation", grpSettings: "Settings", collapseMenu: "Collapse menu", expandMenu: "Show menu",
+      full: "⛶", settings: "⚙", layouts: "Startpage", close: "Close", lang: "DE", deviceSwap: "Swap hubs 0↔1",
+      resetConn: "Release connection", grpConnection: "Connection", grpNavigation: "Navigation", grpSettings: "Settings", collapseMenu: "Collapse menu", expandMenu: "Show menu",
       saveClose: "Save and Close", discard: "Discard", promote: "Save as default (locally)",
       resetMap: "Reset to default", labelsBtn: "Labels…", back: "Back", revtrim: "Rev ×",
       serverInfo: "ℹ Server info", infoConnectFirst: "Connect first", infoFetching: "Fetching…", infoTier: "tier",
@@ -77,7 +77,7 @@
       // ---- shared: status light, language, server-info, endpoint editor (clientconfig.js) ----
       statusNoServer: "No server (WebSocket disconnected)",
       statusReadyT: "READY (server + excavator connected)", statusConnectedT: "Server connected — ",
-      langTitle: "Language", infoYes: "yes", infoNo: "no", titleLabel: "Layout name",
+      langTitle: "Language", infoYes: "yes", infoNo: "no", titleLabel: "Layout name", titleHint: "Blank = hide the title; leave untouched for the default name.",
       epLabel: "API endpoint", epConnect: "Connect", epUseHost: "Use page host",
       epHint: "Empty = this page’s host (default). For a remote Pi set e.g. <code>ws://192.168.178.98:8765</code>. Saved in this browser.",
       statusW: { connected: "connected", failed: "failed", retrying: "retrying" },
@@ -115,8 +115,8 @@
 
     de: {
       connect: "Bagger verbinden", ready: "Bereit", reset: "Reset", stop: "STOPP", speed: "Tempo",
-      full: "⛶", settings: "⚙", layouts: "Layout wählen", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
-      resetConn: "Verbindung zurücksetzen", grpConnection: "Verbindung", grpNavigation: "Navigation", grpSettings: "Einstellungen", collapseMenu: "Menü einklappen", expandMenu: "Menü zeigen",
+      full: "⛶", settings: "⚙", layouts: "Startseite", close: "Schließen", lang: "EN", deviceSwap: "Hubs 0↔1 tauschen",
+      resetConn: "Verbindung trennen", grpConnection: "Verbindung", grpNavigation: "Navigation", grpSettings: "Einstellungen", collapseMenu: "Menü einklappen", expandMenu: "Menü zeigen",
       saveClose: "Speichern & schließen", discard: "Verwerfen", promote: "Als Standard speichern (lokal)",
       resetMap: "Auf Standard zurück", labelsBtn: "Labels…", back: "Zurück", revtrim: "Rev ×",
       serverInfo: "ℹ Server-Info", infoConnectFirst: "Erst verbinden", infoFetching: "Lädt…", infoTier: "Stufe",
@@ -179,7 +179,7 @@
       // ---- shared: status light, language, server-info, endpoint editor ----
       statusNoServer: "Kein Server (WebSocket getrennt)",
       statusReadyT: "BEREIT (Server + Bagger verbunden)", statusConnectedT: "Server verbunden — ",
-      langTitle: "Sprache", infoYes: "ja", infoNo: "nein", titleLabel: "Layout-Name",
+      langTitle: "Sprache", infoYes: "ja", infoNo: "nein", titleLabel: "Layout-Name", titleHint: "Leer = Titel ausblenden; unberührt lassen für den Standardnamen.",
       epLabel: "API-Endpunkt", epConnect: "Verbinden", epUseHost: "Seiten-Host verwenden",
       epHint: "Leer = Host dieser Seite (Standard). Für einen entfernten Pi z. B. <code>ws://192.168.178.98:8765</code>. In diesem Browser gespeichert.",
       statusW: { connected: "verbunden", failed: "fehlgeschlagen", retrying: "neuer Versuch…" },
@@ -216,8 +216,8 @@
 
     zh: {
       connect: "连接挖掘机", ready: "就绪", reset: "重置", stop: "停止", speed: "速度",
-      layouts: "选择布局", close: "关闭", lang: "EN", deviceSwap: "交换集线器 0↔1",
-      resetConn: "重置连接", grpConnection: "连接", grpNavigation: "导航", grpSettings: "设置", collapseMenu: "收起菜单", expandMenu: "显示菜单",
+      layouts: "主页", close: "关闭", lang: "EN", deviceSwap: "交换集线器 0↔1",
+      resetConn: "释放连接", grpConnection: "连接", grpNavigation: "导航", grpSettings: "设置", collapseMenu: "收起菜单", expandMenu: "显示菜单",
       saveClose: "保存并关闭", discard: "放弃", promote: "保存为默认(本地)",
       resetMap: "恢复默认", labelsBtn: "标签…", back: "返回", revtrim: "Rev ×",
       serverInfo: "ℹ 服务器信息", infoConnectFirst: "请先连接", infoFetching: "获取中…", infoTier: "级别",
@@ -246,7 +246,7 @@
                intro: "通过逆向工程的 BLE 协议，用树莓派经由简洁的 WebSocket API 控制 <b>Mould King 13112</b> 遥控挖掘机。" },
       byo: { title: "自带面板" },
       statusNoServer: "无服务器(WebSocket 已断开)", statusReadyT: "就绪(服务器 + 挖掘机已连接)", statusConnectedT: "服务器已连接 — ",
-      langTitle: "语言", infoYes: "是", infoNo: "否", titleLabel: "布局名称",
+      langTitle: "语言", infoYes: "是", infoNo: "否", titleLabel: "布局名称", titleHint: "留空 = 隐藏标题；不填则用默认名称。",
       epLabel: "API 端点", epConnect: "连接", epUseHost: "使用页面主机",
       epHint: "留空 = 本页主机(默认)。远程 Pi 例如 <code>ws://192.168.178.98:8765</code>。保存在此浏览器。",
       statusW: { connected: "已连接", failed: "失败", retrying: "重试中…" },
@@ -261,8 +261,8 @@
 
     ko: {
       connect: "굴착기 연결", ready: "준비", reset: "재설정", stop: "정지", speed: "속도",
-      layouts: "레이아웃 선택", close: "닫기", lang: "EN", deviceSwap: "허브 0↔1 교환",
-      resetConn: "연결 재설정", grpConnection: "연결", grpNavigation: "탐색", grpSettings: "설정", collapseMenu: "메뉴 접기", expandMenu: "메뉴 표시",
+      layouts: "시작 페이지", close: "닫기", lang: "EN", deviceSwap: "허브 0↔1 교환",
+      resetConn: "연결 해제", grpConnection: "연결", grpNavigation: "탐색", grpSettings: "설정", collapseMenu: "메뉴 접기", expandMenu: "메뉴 표시",
       saveClose: "저장 후 닫기", discard: "취소", promote: "기본값으로 저장(로컬)",
       resetMap: "기본값으로 재설정", labelsBtn: "라벨…", back: "뒤로", revtrim: "Rev ×",
       serverInfo: "ℹ 서버 정보", infoConnectFirst: "먼저 연결하세요", infoFetching: "가져오는 중…", infoTier: "단계",
@@ -291,7 +291,7 @@
                intro: "리버스 엔지니어링한 BLE 프로토콜로, 라즈베리 파이에서 깔끔한 WebSocket API를 통해 <b>Mould King 13112</b> RC 굴착기를 제어합니다." },
       byo: { title: "나만의 대시보드" },
       statusNoServer: "서버 없음 (WebSocket 끊김)", statusReadyT: "준비 (서버 + 굴착기 연결됨)", statusConnectedT: "서버 연결됨 — ",
-      langTitle: "언어", infoYes: "예", infoNo: "아니오", titleLabel: "레이아웃 이름",
+      langTitle: "언어", infoYes: "예", infoNo: "아니오", titleLabel: "레이아웃 이름", titleHint: "비우면 제목 숨김; 그대로 두면 기본 이름.",
       epLabel: "API 엔드포인트", epConnect: "연결", epUseHost: "페이지 호스트 사용",
       epHint: "비어 있음 = 이 페이지의 호스트(기본). 원격 Pi는 예: <code>ws://192.168.178.98:8765</code>. 이 브라우저에 저장됨.",
       statusW: { connected: "연결됨", failed: "실패", retrying: "재시도 중…" },
@@ -306,8 +306,8 @@
 
     es: {
       connect: "Conectar excavadora", ready: "Listo", reset: "Reiniciar", stop: "PARAR", speed: "Velocidad",
-      layouts: "Elegir diseño", close: "Cerrar", lang: "EN", deviceSwap: "Intercambiar hubs 0↔1",
-      resetConn: "Reiniciar conexión", grpConnection: "Conexión", grpNavigation: "Navegación", grpSettings: "Ajustes", collapseMenu: "Contraer menú", expandMenu: "Mostrar menú",
+      layouts: "Inicio", close: "Cerrar", lang: "EN", deviceSwap: "Intercambiar hubs 0↔1",
+      resetConn: "Liberar conexión", grpConnection: "Conexión", grpNavigation: "Navegación", grpSettings: "Ajustes", collapseMenu: "Contraer menú", expandMenu: "Mostrar menú",
       saveClose: "Guardar y cerrar", discard: "Descartar", promote: "Guardar como predeterminado (local)",
       resetMap: "Restablecer predeterminado", labelsBtn: "Etiquetas…", back: "Atrás", revtrim: "Rev ×",
       serverInfo: "ℹ Info del servidor", infoConnectFirst: "Conecta primero", infoFetching: "Obteniendo…", infoTier: "nivel",
@@ -336,7 +336,7 @@
                intro: "Controla una excavadora RC <b>Mould King 13112</b> desde una Raspberry Pi mediante un protocolo BLE de ingeniería inversa, a través de una API WebSocket limpia." },
       byo: { title: "Trae tu propio panel" },
       statusNoServer: "Sin servidor (WebSocket desconectado)", statusReadyT: "LISTO (servidor + excavadora conectados)", statusConnectedT: "Servidor conectado — ",
-      langTitle: "Idioma", infoYes: "sí", infoNo: "no", titleLabel: "Nombre del diseño",
+      langTitle: "Idioma", infoYes: "sí", infoNo: "no", titleLabel: "Nombre del diseño", titleHint: "Vacío = ocultar el título; sin tocar para el nombre por defecto.",
       epLabel: "Endpoint de API", epConnect: "Conectar", epUseHost: "Usar host de la página",
       epHint: "Vacío = host de esta página (predet.). Para un Pi remoto p. ej. <code>ws://192.168.178.98:8765</code>. Guardado en este navegador.",
       statusW: { connected: "conectado", failed: "fallido", retrying: "reintentando…" },
@@ -351,8 +351,8 @@
 
     fr: {
       connect: "Connecter l'excavatrice", ready: "Prêt", reset: "Réinitialiser", stop: "ARRÊT", speed: "Vitesse",
-      layouts: "Choisir la disposition", close: "Fermer", lang: "EN", deviceSwap: "Permuter hubs 0↔1",
-      resetConn: "Réinitialiser la connexion", grpConnection: "Connexion", grpNavigation: "Navigation", grpSettings: "Réglages", collapseMenu: "Replier le menu", expandMenu: "Afficher le menu",
+      layouts: "Accueil", close: "Fermer", lang: "EN", deviceSwap: "Permuter hubs 0↔1",
+      resetConn: "Libérer la connexion", grpConnection: "Connexion", grpNavigation: "Navigation", grpSettings: "Réglages", collapseMenu: "Replier le menu", expandMenu: "Afficher le menu",
       saveClose: "Enregistrer et fermer", discard: "Annuler", promote: "Définir par défaut (local)",
       resetMap: "Réinitialiser par défaut", labelsBtn: "Libellés…", back: "Retour", revtrim: "Rev ×",
       serverInfo: "ℹ Infos serveur", infoConnectFirst: "Connectez d'abord", infoFetching: "Chargement…", infoTier: "niveau",
@@ -381,7 +381,7 @@
                intro: "Pilotez une excavatrice RC <b>Mould King 13112</b> depuis un Raspberry Pi via un protocole BLE rétro-conçu, à travers une API WebSocket simple." },
       byo: { title: "Ajoutez votre tableau de bord" },
       statusNoServer: "Aucun serveur (WebSocket déconnecté)", statusReadyT: "PRÊT (serveur + excavatrice connectés)", statusConnectedT: "Serveur connecté — ",
-      langTitle: "Langue", infoYes: "oui", infoNo: "non", titleLabel: "Nom de la disposition",
+      langTitle: "Langue", infoYes: "oui", infoNo: "non", titleLabel: "Nom de la disposition", titleHint: "Vide = masquer le titre ; ne pas toucher pour le nom par défaut.",
       epLabel: "Point de terminaison API", epConnect: "Connecter", epUseHost: "Utiliser l'hôte de la page",
       epHint: "Vide = hôte de cette page (défaut). Pour un Pi distant p. ex. <code>ws://192.168.178.98:8765</code>. Enregistré dans ce navigateur.",
       statusW: { connected: "connecté", failed: "échec", retrying: "nouvel essai…" },

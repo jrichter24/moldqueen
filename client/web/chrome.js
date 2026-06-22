@@ -230,22 +230,27 @@ window.MK4Chrome = (function () {
     function renderHint() { const h = $("hint"); if (h) h.classList.add("hidden"); }
 
     // ---- editable custom title (per-layout; rendered into the surface overlay) ----
-    function getTitle() { const v = (localStorage.getItem("mk4_title_" + LAYOUT_ID) || "").trim(); return v || LAYOUT_TITLE_DEFAULT; }
+    // Three states: key ABSENT = unset -> default layout name; key "" = explicitly EMPTIED -> nothing
+    // shown; key set -> that text. (So clearing the field hides the title; never touching it keeps the default.)
+    function displayTitle() { const r = localStorage.getItem("mk4_title_" + LAYOUT_ID); return r === null ? LAYOUT_TITLE_DEFAULT : r; }
     function setTitle(v) {
       v = (v || "").trim();
-      if (v && v !== LAYOUT_TITLE_DEFAULT) localStorage.setItem("mk4_title_" + LAYOUT_ID, v);
-      else localStorage.removeItem("mk4_title_" + LAYOUT_ID);
+      if (v === LAYOUT_TITLE_DEFAULT) localStorage.removeItem("mk4_title_" + LAYOUT_ID);   // typing the default = back to unset
+      else localStorage.setItem("mk4_title_" + LAYOUT_ID, v);                              // store value, OR "" -> hidden
       renderTitle();
     }
     function renderTitle() {
       if (!config.title) return;
       const ov = $("overlay"); if (!ov) return;
+      const txt = displayTitle();
       let b = $("ib_title");
+      if (!txt) { if (b) b.remove(); return; }   // explicitly emptied -> show no title at all
       if (!b) { b = document.createElement("div"); b.id = "ib_title"; b.className = "lbl info"; if (config.title.style) b.style.cssText = config.title.style; ov.appendChild(b); }
-      b.innerHTML = '<span class="ttl">' + esc(getTitle()) + '</span>';
+      b.innerHTML = '<span class="ttl">' + esc(txt) + '</span>';
     }
 
-    // ---- top toolbar (grouped: Connection · Navigation · Settings) + collapse chevron ----
+    // ---- top toolbar (grouped: Navigation · Connection · Settings) + collapse chevron ----
+    const HOME_ICON = '<svg class="micon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.4 1 7.3v.9h1.6V14H6.5V9.6h3V14h3.9V8.2H15v-.9L8 1.4z"/></svg>';
     function tbtn(label, cls, on) { const b = document.createElement("button"); b.innerHTML = label; if (cls) b.className = cls; b.onclick = on; return b; }
     function renderTopbar() {
       const tb = $("menu"); tb.innerHTML = ""; const t = tr();
@@ -255,19 +260,19 @@ window.MK4Chrome = (function () {
       top.appendChild(cb); tb.appendChild(top);
       // (the editable layout title is on the control surface — #ib_title — so collapsing never hides it)
 
-      // GROUP 1 — Connection: connect/resume + reset
-      const g1 = el("navgroup"); g1.appendChild(el("grouplabel", "", t.grpConnection));
+      // GROUP 1 — Navigation: Startpage (home) — FIRST entry (leftmost horizontal / topmost vertical)
+      const g1 = el("navgroup"); g1.appendChild(el("grouplabel", "", t.grpNavigation));
       const b1 = el("groupbtns"); g1.appendChild(b1);
-      b1.appendChild(lifecycle === "CONNECTING"
-        ? tbtn(t.resume, "primary", openWizard)
-        : tbtn((config.connectLabel ? config.connectLabel(t) : t.connect), "primary connectExc", openWizard));
-      b1.appendChild(tbtn(t.resetConn, "", doReset));
+      b1.appendChild(tbtn(HOME_ICON + '<span class="btxt">' + t.layouts + "</span>", "withicon", () => { location.href = "/?choose=1"; }));
       tb.appendChild(g1); tb.appendChild(el("navsep"));
 
-      // GROUP 2 — Navigation: back to the chooser
-      const g2 = el("navgroup"); g2.appendChild(el("grouplabel", "", t.grpNavigation));
+      // GROUP 2 — Connection: connect/resume + release
+      const g2 = el("navgroup"); g2.appendChild(el("grouplabel", "", t.grpConnection));
       const b2 = el("groupbtns"); g2.appendChild(b2);
-      b2.appendChild(tbtn(t.layouts, "", () => { location.href = "/?choose=1"; }));
+      b2.appendChild(lifecycle === "CONNECTING"
+        ? tbtn(t.resume, "primary", openWizard)
+        : tbtn((config.connectLabel ? config.connectLabel(t) : t.connect), "primary connectExc", openWizard));
+      b2.appendChild(tbtn(t.resetConn, "", doReset));
       tb.appendChild(g2); tb.appendChild(el("navsep"));
 
       // GROUP 3 — Settings: language · settings · fullscreen (gated) · gamepad chip (gated)
@@ -518,18 +523,12 @@ window.MK4Chrome = (function () {
       ({ connection: wireConnection, channels: wireChannels, labels: wireLabels, gamepad: wireGamepad, info: wireInfo }[settingsTab])();
     }
 
-    // ---- Connection tab: endpoint editor + custom title ----
+    // ---- Connection tab: endpoint editor (custom title moved to the Labels tab) ----
     function connectionPanel(t) {
       return `<h2>${t.tabConnection}</h2>
-        <div class="eprow" style="margin-bottom:.9rem">
-          <label class="eplabel" for="titleInput">${t.titleLabel}</label>
-          <input type="text" id="titleInput" maxlength="40" spellcheck="false" placeholder="${esc(LAYOUT_TITLE_DEFAULT)}">
-        </div>
         <p class="sub">${t.connSub}</p><div class="eprow" id="epRow"></div>`;
     }
     function wireConnection() {
-      const ti = $("titleInput");
-      if (ti) { ti.value = localStorage.getItem("mk4_title_" + LAYOUT_ID) || ""; ti.oninput = () => setTitle(ti.value); }
       MK4.buildEndpointRow($("epRow"), reconnectWS);
       MK4.setStatus(wsStatus);
     }
@@ -611,6 +610,11 @@ window.MK4Chrome = (function () {
           <div class="lblgrid">${fields}</div></div>`;
       }).join("");
       return `<h2>${t.labelsTitle}</h2><p class="sub">${t.labelsSub}</p>
+        <div class="eprow" style="margin-bottom:1rem">
+          <label class="eplabel" for="titleInput">${t.titleLabel}</label>
+          <input type="text" id="titleInput" maxlength="40" spellcheck="false" placeholder="${esc(LAYOUT_TITLE_DEFAULT)}">
+          <span class="muted">${t.titleHint}</span>
+        </div>
         <div class="lblcards">${cards}</div>
         <div class="actions">
           <button class="apply" id="lblSaveBtn">${t.saveClose}</button>
@@ -618,6 +622,8 @@ window.MK4Chrome = (function () {
         </div>`;
     }
     function wireLabels() {
+      const ti = $("titleInput");
+      if (ti) { ti.value = localStorage.getItem("mk4_title_" + LAYOUT_ID) || ""; ti.oninput = () => setTitle(ti.value); }
       $("settings").querySelectorAll(".lblcard").forEach(card => {
         const a = editMap.functions[card.dataset.fn];
         if (!a.labels || typeof a.labels !== "object") a.labels = {};

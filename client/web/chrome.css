@@ -35,6 +35,8 @@
 #menu .grouplabel { font-size: .62rem; letter-spacing: .09em; text-transform: uppercase;
   color: #7e8ca6; font-weight: 700; white-space: nowrap; }
 #menu .groupbtns { display: flex; gap: .4em; }
+#menu .withicon { display: inline-flex; align-items: center; gap: .45em; }   /* Startpage (home) etc. */
+#menu .micon { width: 1.05em; height: 1.05em; flex: 0 0 auto; }
 #menu .navsep { flex: 0 0 auto; background: #242c3a; }
 /* default = TOP BAR (wide): a flex ROW — groups side by side, vertical separators, collapse far right */
 #menu .groupbtns { flex-direction: row; align-items: center; }
