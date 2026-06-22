@@ -35,7 +35,7 @@ const SPECS = {
       // face diamond: A(top)+ / D(bottom)- vertical ; B(right)+ / C(left)- horizontal
       { type: "btnpair", motors: ["face_v"], motor: "face_v", plus: [82.30, 16.57, 7.44, 14.88], minus: [82.30, 45.55, 7.44, 14.88] },
       { type: "btnpair", motors: ["face_h"], motor: "face_h", plus: [88.90, 31.91, 7.44, 14.88], minus: [75.08, 31.91, 7.44, 14.88] },
-      { type: "stop", rect: [44.53, 69.90, 9.86, 19.73] },
+      { type: "stop", rect: [44.53, 69.90, 9.86, 19.73], cap: [49.98, 68.8] },   // cap = [painted-dot centerX%, caption bottomY%]
     ],
   },
 };
@@ -115,10 +115,12 @@ function makeButtonPair(c) {   // top/right press = +cap, bottom/left press = -c
   return frag;
 }
 function makeStop(c) {
-  // caption ABOVE the red button (centered text label), button itself has no inner text
+  // "STOP" caption centered above the PAINTED red dot (cap=[centerX%, bottomY%]); CSS transform does the
+  // exact centering (translate -50%,-100%), so it's dead-center on the dot regardless of text width.
   const frag = document.createDocumentFragment();
-  const bx = c.rect[0] + c.rect[2] / 2, capW = 26, capH = 6;
-  const cap = el("gx-stopcap", pct([bx - capW / 2, c.rect[1] - capH - 0.5, capW, capH]), `<span>${A.dict().stop}</span>`);
+  const cx = c.cap ? c.cap[0] : (c.rect[0] + c.rect[2] / 2);
+  const by = c.cap ? c.cap[1] : (c.rect[1] - 1.5);
+  const cap = el("gx-stopcap", `left:${cx}%;top:${by}%;`, `<span>${A.dict().stop}</span>`);
   const b = el("gx-stop", pct(c.rect)); b.id = "estopBtn";
   b.addEventListener("pointerdown", e => { e.preventDefault(); b.classList.add("hit"); A.stopAll(); try { b.setPointerCapture(e.pointerId); } catch {} });
   const up = () => b.classList.remove("hit"); b.addEventListener("pointerup", up); b.addEventListener("pointercancel", up);

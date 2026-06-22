@@ -37,6 +37,12 @@
 #menu .groupbtns { display: flex; gap: .4em; }
 #menu .withicon { display: inline-flex; align-items: center; gap: .45em; }   /* Startpage (home) etc. */
 #menu .micon { width: 1.05em; height: 1.05em; flex: 0 0 auto; }
+/* language picker: a translate-glyph icon button with the native <select> overlaid transparently (same dropdown) */
+#menu .langicon { position: relative; display: inline-flex; align-items: center; justify-content: center;
+  color: #e8eef6; background: rgba(40,46,58,.9); border: 1px solid #444c5e; border-radius: .4em; padding: .3em .5em; cursor: pointer; flex: 0 0 auto; }
+#menu .langicon .micon { width: 1.2em; height: 1.2em; }
+#menu .langicon select.langsel { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0;
+  border: 0; background: transparent; color: transparent; opacity: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
 #menu .navsep { flex: 0 0 auto; background: #242c3a; }
 /* default = TOP BAR (wide): a flex ROW — groups side by side, vertical separators, collapse far right */
 #menu .groupbtns { flex-direction: row; align-items: center; }
@@ -48,7 +54,7 @@
   #menu .navsep { width: auto; height: 1px; align-self: auto; margin: .2em 0; }
   #menu .navtop { order: 0; margin-left: 0; border-left: 0; padding-left: 0;
     border-bottom: 1px solid #242c3a; padding-bottom: .4em; margin-bottom: .1em; }
-  #menu .navgroup, #menu .groupbtns select.langsel { width: 100%; }
+  #menu .navgroup, #menu .groupbtns .langicon { width: 100%; }
 }
 /* loud cold-start button: "Connect …" reads as THE next step (vs the muted .primary) */
 #menu .connectExc { background: #1f5fa8; border-color: #4f93e0; font-weight: 700;

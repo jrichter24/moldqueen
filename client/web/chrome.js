@@ -230,27 +230,31 @@ window.MK4Chrome = (function () {
     function renderHint() { const h = $("hint"); if (h) h.classList.add("hidden"); }
 
     // ---- editable custom title (per-layout; rendered into the surface overlay) ----
-    // Three states: key ABSENT = unset -> default layout name; key "" = explicitly EMPTIED -> nothing
-    // shown; key set -> that text. (So clearing the field hides the title; never touching it keeps the default.)
-    function displayTitle() { const r = localStorage.getItem("mk4_title_" + LAYOUT_ID); return r === null ? LAYOUT_TITLE_DEFAULT : r; }
+    // Independent NAME + VISIBILITY: the NAME (mk4_title_<id>) is the custom text, or absent -> the default
+    // layout name; VISIBILITY (mk4_title_show_<id>, default ON) is a "Show title" toggle. OFF hides the title
+    // regardless of the name; ON shows the custom text if set, else the default. The field sets the name only.
+    function titleVisible() { return localStorage.getItem("mk4_title_show_" + LAYOUT_ID) !== "0"; }
+    function setTitleVisible(on) { localStorage.setItem("mk4_title_show_" + LAYOUT_ID, on ? "1" : "0"); renderTitle(); }
+    function titleName() { const v = (localStorage.getItem("mk4_title_" + LAYOUT_ID) || "").trim(); return v || LAYOUT_TITLE_DEFAULT; }
     function setTitle(v) {
       v = (v || "").trim();
-      if (v === LAYOUT_TITLE_DEFAULT) localStorage.removeItem("mk4_title_" + LAYOUT_ID);   // typing the default = back to unset
-      else localStorage.setItem("mk4_title_" + LAYOUT_ID, v);                              // store value, OR "" -> hidden
+      if (v && v !== LAYOUT_TITLE_DEFAULT) localStorage.setItem("mk4_title_" + LAYOUT_ID, v);
+      else localStorage.removeItem("mk4_title_" + LAYOUT_ID);   // empty / default -> no custom name (falls back to default)
       renderTitle();
     }
     function renderTitle() {
       if (!config.title) return;
       const ov = $("overlay"); if (!ov) return;
-      const txt = displayTitle();
       let b = $("ib_title");
-      if (!txt) { if (b) b.remove(); return; }   // explicitly emptied -> show no title at all
+      if (!titleVisible()) { if (b) b.remove(); return; }   // toggle OFF -> show no title at all
       if (!b) { b = document.createElement("div"); b.id = "ib_title"; b.className = "lbl info"; if (config.title.style) b.style.cssText = config.title.style; ov.appendChild(b); }
-      b.innerHTML = '<span class="ttl">' + esc(txt) + '</span>';
+      b.innerHTML = '<span class="ttl">' + esc(titleName()) + '</span>';
     }
 
     // ---- top toolbar (grouped: Navigation · Connection · Settings) + collapse chevron ----
     const HOME_ICON = '<svg class="micon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.4 1 7.3v.9h1.6V14H6.5V9.6h3V14h3.9V8.2H15v-.9L8 1.4z"/></svg>';
+    // translate glyph (characters + arrow) — reads as "translate language", not "internet/globe"
+    const LANG_ICON = '<svg class="micon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>';
     function tbtn(label, cls, on) { const b = document.createElement("button"); b.innerHTML = label; if (cls) b.className = cls; b.onclick = on; return b; }
     function renderTopbar() {
       const tb = $("menu"); tb.innerHTML = ""; const t = tr();
@@ -308,12 +312,15 @@ window.MK4Chrome = (function () {
       if (!document.fullscreenElement) (document.documentElement.requestFullscreen || (() => {})).call(document.documentElement);
       else document.exitFullscreen && document.exitFullscreen();
     }
-    function langSelect() {
+    function langSelect() {   // translate-glyph icon button with the native <select> overlaid (same dropdown)
+      const wrap = document.createElement("span"); wrap.className = "langicon"; wrap.title = tr().langTitle;
+      wrap.innerHTML = LANG_ICON;
       const s = document.createElement("select");
-      s.id = "langSel"; s.className = "langsel"; s.title = tr().langTitle;
+      s.id = "langSel"; s.className = "langsel";
       s.innerHTML = LANGS.map(([c, name]) => `<option value="${c}"${c === lang ? " selected" : ""}>${name}</option>`).join("");
       s.onchange = () => setLang(s.value);
-      return s;
+      wrap.appendChild(s);
+      return wrap;
     }
     function setLang(code) {
       lang = MK4I18N.setLang(code);
@@ -613,7 +620,7 @@ window.MK4Chrome = (function () {
         <div class="eprow" style="margin-bottom:1rem">
           <label class="eplabel" for="titleInput">${t.titleLabel}</label>
           <input type="text" id="titleInput" maxlength="40" spellcheck="false" placeholder="${esc(LAYOUT_TITLE_DEFAULT)}">
-          <span class="muted">${t.titleHint}</span>
+          <label class="titleshow"><input type="checkbox" id="titleShow"> ${t.titleShow}</label>
         </div>
         <div class="lblcards">${cards}</div>
         <div class="actions">
@@ -624,6 +631,8 @@ window.MK4Chrome = (function () {
     function wireLabels() {
       const ti = $("titleInput");
       if (ti) { ti.value = localStorage.getItem("mk4_title_" + LAYOUT_ID) || ""; ti.oninput = () => setTitle(ti.value); }
+      const ts = $("titleShow");
+      if (ts) { ts.checked = titleVisible(); ts.onchange = () => setTitleVisible(ts.checked); }
       $("settings").querySelectorAll(".lblcard").forEach(card => {
         const a = editMap.functions[card.dataset.fn];
         if (!a.labels || typeof a.labels !== "object") a.labels = {};

@@ -46,9 +46,9 @@
       cursor: pointer; text-decoration: none; backdrop-filter: blur(3px); }
     .actions a:hover, .actions button:hover, .actions #langSlot:hover { border-color: var(--glow); }
     .actions svg { width: 1.15em; height: 1.15em; }
-    /* language: a globe icon with the native <select> overlaid transparently (same dropdown) */
+    /* language: a translate-glyph icon with the native <select> overlaid transparently (same dropdown) */
     #langSlot { position: relative; }
-    #langSlot .globe { pointer-events: none; }
+    #langSlot .langicon { pointer-events: none; }
     #langSlot select.langsel { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0;
       border: 0; background: transparent; color: transparent; opacity: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
     #langSlot select.langsel option { background: #11161e; color: #e8eef6; }
@@ -309,8 +309,8 @@
     // Inject the language picker (persists mk4_lang, applies everywhere); re-translate on change.
     var langSlot = document.getElementById("langSlot");
     if (window.MK4I18N && langSlot) {
-      // globe icon + the native dropdown overlaid on top (transparent) so the icon opens the same picker
-      langSlot.insertAdjacentHTML("afterbegin", '<svg class="globe" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm5.9 4.7h-2.3a9.6 9.6 0 00-1-2.6 6.5 6.5 0 013.3 2.6zM8 1.5c.6.6 1.2 1.7 1.5 3.2H6.5C6.8 3.2 7.4 2.1 8 1.5zM1.6 9.5A6.5 6.5 0 011.5 8c0-.5 0-1 .1-1.5h2.6a16 16 0 000 3H1.6zm.5 1.8h2.3c.2 1 .6 1.9 1 2.6a6.5 6.5 0 01-3.3-2.6zM4.4 4.7H2.1a6.5 6.5 0 013.3-2.6c-.4.7-.8 1.6-1 2.6zM8 14.5c-.6-.6-1.2-1.7-1.5-3.2h3c-.3 1.5-.9 2.6-1.5 3.2zm-1.7-4.7a14 14 0 010-3h3.4a14 14 0 010 3H6.3zm4.3 4c.4-.7.8-1.6 1-2.6h2.3a6.5 6.5 0 01-3.3 2.6zm1.2-4.3a16 16 0 000-3h2.6c.1.5.1 1 .1 1.5s0 1-.1 1.5h-2.6z"/></svg>');
+      // translate-glyph icon + the native dropdown overlaid on top (transparent) so the icon opens the same picker
+      langSlot.insertAdjacentHTML("afterbegin", '<svg class="langicon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>');
       langSlot.appendChild(MK4I18N.picker(applyI18n));
     }
 

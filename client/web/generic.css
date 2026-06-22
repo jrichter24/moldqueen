@@ -35,6 +35,8 @@
 .gx-stop { position: absolute; background: transparent; border: 0; display: flex; align-items: center; justify-content: center;
   cursor: pointer; border-radius: 50%; touch-action: none; -webkit-tap-highlight-color: transparent; }
 .gx-stop.hit { background: rgba(224,71,61,.22); box-shadow: inset 0 0 0 3px rgba(255,82,82,.7); }
-/* "STOP" caption sits ABOVE the red button (not inside it) */
-.gx-stopcap { position: absolute; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
-.gx-stopcap span { color: #ff5252; font-weight: 800; letter-spacing: .14em; font-size: 1.9cqw; line-height: 1; text-shadow: 0 1px 4px rgba(0,0,0,.75); }
+/* "STOP" caption sits ABOVE the red button (not inside it), dead-centered on the painted dot.
+   The anchor (left,top) is the dot's centerX + the caption's bottom Y; translate centers it exactly. */
+.gx-stopcap { position: absolute; transform: translate(-50%, -100%); white-space: nowrap; pointer-events: none; }
+.gx-stopcap span { display: inline-block; color: #ff5252; font-weight: 800; letter-spacing: .14em; margin-right: -.14em;
+  font-size: 1.9cqw; line-height: 1; text-shadow: 0 1px 4px rgba(0,0,0,.75); }   /* margin-right cancels trailing letter-spacing so it's truly centered */
