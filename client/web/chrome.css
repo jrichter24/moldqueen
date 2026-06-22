@@ -154,3 +154,6 @@ table.padmap .padlive { text-align: center; color: #ffd56b; font-variant-numeric
 .gx-count input { width: 5rem; font: inherit; font-size: 1.5rem; text-align: center; color: #e8eef6;
   background: #1d222b; border: 1px solid #38404e; border-radius: .4rem; padding: .3rem; }
 .gx-preview { margin: .5rem 0 .2rem; font-size: .85rem; color: #c0ccdc; line-height: 1.55; max-height: 32vh; overflow: auto; text-align: left; }
+/* zero-box callout (auto-assign setup step for vehicle/car + the connect-wizard slot step) */
+.gx-zero { color: #e6c06a; background: rgba(60,48,20,.5); border: 1px solid #6a5320; border-radius: .4rem;
+  padding: .4rem .6rem; font-size: .82rem; line-height: 1.4; margin: .3rem 0 .6rem; text-align: left; }

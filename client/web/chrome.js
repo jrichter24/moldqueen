@@ -362,6 +362,7 @@ window.MK4Chrome = (function () {
         <h2>${t.wiz.title}</h2>
         <div class="wsteps">${[1, 2, 3, 4].map(n => `<span class="wdot${n === s ? " on" : n < s ? " done" : ""}"></span>`).join("")}</div>
         ${media}<h3 class="wt">${w.t}</h3><p class="wbody">${w.b}</p>
+        ${s === 3 && config.zeroBoxHint ? '<p class="gx-zero">' + config.zeroBoxHint(t) + "</p>" : ""}
         <div class="actions wactions">${btns}</div></div>`;
       const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
       on("wCancel", wizardCancel); on("wBack", wizardBack); on("wNext", wizardNext);
@@ -413,21 +414,35 @@ window.MK4Chrome = (function () {
       if (s === 1) { MK4.buildEndpointRow($("suEpRow"), reconnectWS); MK4.setStatus(wsStatus); }
     }
 
-    // ---- auto-assign wizard (only if config.autoAssign) ----
-    let assignStep = "source", assignN = 4, pendingStartup = false;
-    function openAssign() { if (!$("assign")) return; assignStep = "source"; buildAssign(); $("assign").classList.remove("hidden"); }
+    // ---- auto-assign wizard (only if config.autoAssign): profile + motor count + inline editor ----
+    const AA = config.autoAssign || {};
+    let assignStep = "source", pendingStartup = false;
+    let assignProfile = (AA.profiles && AA.profiles[0] && AA.profiles[0].id) || "custom";
+    let assignN = AA.defaultN || 2;
+    let assignRows = {};   // { motor: {slot, channel, invert} } — the (editable) in-progress assignment
+    function recomputeRows() { assignRows = AA.compute ? AA.compute(assignProfile, assignN) : {}; }
+    function openAssign() {
+      if (!$("assign")) return;
+      assignStep = "source"; assignProfile = (AA.profiles && AA.profiles[0] && AA.profiles[0].id) || "custom"; assignN = AA.defaultN || 2;
+      recomputeRows(); buildAssign(); $("assign").classList.remove("hidden");
+    }
     function closeAssign() {
       if ($("assign")) $("assign").classList.add("hidden");
       if (pendingStartup) { pendingStartup = false; if (lifecycle !== "READY") openStartup(); }   // first-run: map -> THEN the connect guide
     }
-    function applyAssignment(out) {   // chrome owns the map; config.autoAssign.compute() supplies `out`
+    // out = { motor: {slot, channel, invert} }. Sets slot/channel AND invert; unlisted motors -> unmapped.
+    function applyAssignment(out) {
       const m = activeMap ? JSON.parse(JSON.stringify(activeMap)) : withDefaults(defaultMap || { functions: {} });
-      for (const fn of FN) { const a = m.functions[fn]; if (out[fn]) { a.slot = out[fn][0]; a.channel = out[fn][1]; } else { a.slot = null; a.channel = null; } }
+      for (const fn of FN) {
+        const a = m.functions[fn], o = out[fn];
+        if (o) { a.slot = o.slot; a.channel = o.channel; if (typeof o.invert === "boolean") a.invert = o.invert; }
+        else { a.slot = null; a.channel = null; }
+      }
       activeMap = withDefaults(m); saveActive(); rebuildSurface();
     }
     function buildAssign() {
       if (!$("assign")) return;
-      const t = tr(), aa = config.autoAssign; let body;
+      const t = tr(); let body;
       if (assignStep === "source") {
         body = `<h2>${t.gen.setupTitle}</h2><p class="wbody">${t.gen.setupIntro}</p>
           <div class="actions wactions" style="flex-direction:column;align-items:stretch">
@@ -435,26 +450,39 @@ window.MK4Chrome = (function () {
             <button id="agKnown" disabled title="${t.gen.soon}">${t.gen.loadKnown}</button>
             <button id="agCancel">${t.wiz.cancel}</button></div>`;
       } else {
-        body = `<h2>${t.gen.howMany}</h2><p class="wbody">${t.gen.howManySub}</p>
-          <div class="gx-count"><input type="number" id="agN" min="1" max="12" value="${assignN}"></div>
-          <div class="gx-preview" id="agPreview"></div>
+        const profs = AA.profiles || [];
+        const cur = profs.find(x => x.id === assignProfile) || profs[0];
+        const profSel = `<select id="agProfile">${profs.map(x => `<option value="${x.id}"${x.id === assignProfile ? " selected" : ""}>${x.label ? x.label(t) : x.id}</option>`).join("")}</select>`;
+        const zero = (cur && cur.zeroBox) ? `<p class="gx-zero">⚠ ${t.gen.zeroBox}</p>` : "";
+        const rows = Object.keys(assignRows).map(m => {
+          const a = assignRows[m];
+          const slots = [0, 1, 2].map(n => `<option value="${n}"${a.slot === n ? " selected" : ""}>${n}</option>`).join("");
+          const chans = [0, 1, 2, 3].map(n => `<option value="${n}"${a.channel === n ? " selected" : ""}>${n}</option>`).join("");
+          return `<tr data-m="${m}"><td class="fn">${esc(AA.motorLabel ? AA.motorLabel(m) : m)}</td>
+            <td><select class="ar-slot">${slots}</select></td><td><select class="ar-ch">${chans}</select></td>
+            <td style="text-align:center"><input type="checkbox" class="ar-inv"${a.invert ? " checked" : ""}></td></tr>`;
+        }).join("");
+        body = `<h2>${t.gen.setupTitle}</h2>
+          <div class="srow"><label>${t.gen.profile} ${profSel}</label>
+            <label>${t.gen.motors} <input type="number" id="agN" min="1" max="12" value="${assignN}" style="width:3.2rem"></label></div>
+          ${zero}
+          <table class="map"><thead><tr><th></th><th>${t.slot}</th><th>${t.ch}</th><th>${t.invert}</th></tr></thead><tbody>${rows}</tbody></table>
           <div class="actions wactions"><button id="agBack">${t.wiz.back}</button><button class="apply" id="agAssign">${t.gen.assign}</button></div>`;
       }
-      $("assign").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">${body}</div>`;
+      $("assign").innerHTML = `<div class="backdrop"></div><div class="sheet">${body}</div>`;
       $("assign").querySelector(".backdrop").onclick = closeAssign;   // dismissable: unmapped is safe (no motion)
       const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
-      on("agAuto", () => { assignStep = "count"; buildAssign(); });
+      on("agAuto", () => { assignStep = "setup"; recomputeRows(); buildAssign(); });
       on("agCancel", closeAssign); on("agBack", () => { assignStep = "source"; buildAssign(); });
-      on("agAssign", () => { const n = clamp(parseInt($("agN").value, 10) || 1, 1, 12); applyAssignment(aa.compute(n)); closeAssign(); });
-      const nIn = $("agN"); if (nIn) { nIn.oninput = () => { assignN = clamp(parseInt(nIn.value, 10) || 1, 1, 12); updateAssignPreview(); }; updateAssignPreview(); }
-    }
-    function updateAssignPreview() {
-      const aa = config.autoAssign, out = aa.compute(assignN);
-      const lines = (aa.order || []).map(id => {
-        const c = (aa.controls || []).find(x => x.id === id); if (!c || !c.fns.every(f => out[f])) return null;
-        return esc(c.name) + " → " + c.fns.map(f => "s" + out[f][0] + "c" + out[f][1]).join(", ");
-      }).filter(Boolean);
-      const box = $("agPreview"); if (box) box.innerHTML = lines.length ? lines.map(l => `<div>${l}</div>`).join("") : `<div class="muted">${tr().gen.nonePreview}</div>`;
+      on("agAssign", () => { applyAssignment(assignRows); closeAssign(); });
+      const ps = $("agProfile"); if (ps) ps.onchange = () => { assignProfile = ps.value; recomputeRows(); buildAssign(); };   // changing profile RESETS rows
+      const nIn = $("agN"); if (nIn) nIn.oninput = () => { assignN = clamp(parseInt(nIn.value, 10) || 1, 1, 12); recomputeRows(); buildAssign(); };   // changing N RESETS rows
+      $("assign").querySelectorAll("tr[data-m]").forEach(trEl => {   // inline edits tweak only that motor (no rebuild)
+        const m = trEl.dataset.m;
+        trEl.querySelector(".ar-slot").onchange = e => { assignRows[m].slot = +e.target.value; };
+        trEl.querySelector(".ar-ch").onchange = e => { assignRows[m].channel = +e.target.value; };
+        trEl.querySelector(".ar-inv").onchange = e => { assignRows[m].invert = e.target.checked; };
+      });
     }
 
     // ====== TABBED settings overlay ======

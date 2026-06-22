@@ -1,9 +1,12 @@
-// moldqueen — GENERIC controller control surface (model-agnostic). The chrome + runtime
-// (WS/lifecycle/keepalive/STOP, menu, tabbed settings, connect wizard, status light, title,
-// auto-assign wizard SHELL) live in the shared chrome.js (MK4Chrome). This file is ONLY the
-// per-layout control surface: the bg art + the percent-positioned widgets (one-axis, two-axis,
-// d-pad, buttons, red STOP) that drive the shared api.driveFn, plus the auto-assign ALGORITHM
-// (compute) that the chrome's wizard calls. Selected by window.MK4_LAYOUT_ID.
+// moldqueen — GENERIC controller control surface (model-agnostic, MOTOR-based). The chrome +
+// runtime (WS/lifecycle/keepalive/STOP, menu, tabbed settings, connect wizard, status light,
+// title, auto-assign wizard SHELL) live in chrome.js (MK4Chrome). This file is ONLY the per-
+// layout control surface + the auto-assign profiles/algorithm.
+//
+// CONTROL MODEL: a MOTOR = one channel driven BOTH ways (+/-). Vertically/horizontally-opposite
+// controls share a motor (top/up/right = +, bottom/down/left = -). One two-axis stick = TWO
+// motors (vertical + horizontal); a one-axis = one; the d-pad = two; each top-button COLUMN
+// (1/3, 2/4) = one; the face diamond = two (A/D vertical, B/C horizontal). Red center = STOP.
 "use strict";
 const $ = id => document.getElementById(id);
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -15,38 +18,38 @@ const SPECS = {
     image: "/assets/generic_layouts/generic_12_axis.png",
     aspect: [1774, 887],
     title: { default: "12-axis controller", rect: [34.39, 5.41, 31.57, 7.89] },
-    assignOrder: ["lstick", "rstick", "laxis", "raxis", "dpad", "btn1", "btn2", "btn3", "btn4", "btnA", "btnB", "btnC", "btnD"],
     controls: [
-      { id: "dpad", type: "dpad", name: "D-pad", fns: ["dpad_x", "dpad_y"], parts: {
+      // d-pad: up/down -> dpad_v, left/right -> dpad_h
+      { type: "dpad", motors: ["dpad_h", "dpad_v"], h: "dpad_h", v: "dpad_v", parts: {
           up: [10.60, 17.59, 5.81, 15.33], down: [10.37, 43.63, 6.31, 14.21],
           left: [3.44, 30.89, 8.00, 12.74], right: [16.35, 30.89, 8.06, 12.74] } },
-      { id: "laxis", type: "oneaxis", name: "Left axis", fns: ["laxis"], rect: [5.07, 61.78, 8.46, 26.61] },
-      { id: "raxis", type: "oneaxis", name: "Right axis", fns: ["raxis"], rect: [86.53, 61.78, 8.46, 26.61] },
-      { id: "lstick", type: "twoaxis", name: "Left stick", fns: ["lstick_x", "lstick_y"], rect: [19.73, 53.55, 16.63, 34.39] },
-      { id: "rstick", type: "twoaxis", name: "Right stick", fns: ["rstick_x", "rstick_y"], rect: [63.98, 53.55, 16.63, 34.39] },
-      { id: "btn1", type: "button", name: "Button 1", fns: ["btn1"], rect: [36.92, 15.67, 11.84, 13.87] },
-      { id: "btn2", type: "button", name: "Button 2", fns: ["btn2"], rect: [50.17, 15.67, 11.84, 13.87] },
-      { id: "btn3", type: "button", name: "Button 3", fns: ["btn3"], rect: [36.92, 33.82, 11.84, 13.87] },
-      { id: "btn4", type: "button", name: "Button 4", fns: ["btn4"], rect: [50.17, 33.82, 11.84, 13.87] },
-      { id: "btnA", type: "button", name: "Button A", fns: ["btnA"], rect: [82.30, 16.57, 7.44, 14.88] },
-      { id: "btnB", type: "button", name: "Button B", fns: ["btnB"], rect: [88.90, 31.91, 7.44, 14.88] },
-      { id: "btnC", type: "button", name: "Button C", fns: ["btnC"], rect: [75.08, 31.91, 7.44, 14.88] },
-      { id: "btnD", type: "button", name: "Button D", fns: ["btnD"], rect: [82.30, 45.55, 7.44, 14.88] },
-      { id: "red", type: "stop", name: "STOP", rect: [44.53, 69.90, 9.86, 19.73] },
+      // one-axis edge controls (vertical only)
+      { type: "oneaxis", id: "laxis", motors: ["laxis"], v: "laxis", rect: [5.07, 61.78, 8.46, 26.61] },
+      { type: "oneaxis", id: "raxis", motors: ["raxis"], v: "raxis", rect: [86.53, 61.78, 8.46, 26.61] },
+      // two-axis sticks: vertical + horizontal = two motors
+      { type: "twoaxis", id: "lstick", motors: ["lstick_h", "lstick_v"], h: "lstick_h", v: "lstick_v", rect: [19.73, 53.55, 16.63, 34.39] },
+      { type: "twoaxis", id: "rstick", motors: ["rstick_h", "rstick_v"], h: "rstick_h", v: "rstick_v", rect: [63.98, 53.55, 16.63, 34.39] },
+      // top buttons: COLUMNS share a motor (top = +, bottom = -)
+      { type: "btnpair", motors: ["btn_13"], motor: "btn_13", plus: [36.92, 15.67, 11.84, 13.87], minus: [36.92, 33.82, 11.84, 13.87] },
+      { type: "btnpair", motors: ["btn_24"], motor: "btn_24", plus: [50.17, 15.67, 11.84, 13.87], minus: [50.17, 33.82, 11.84, 13.87] },
+      // face diamond: A(top)+ / D(bottom)- vertical ; B(right)+ / C(left)- horizontal
+      { type: "btnpair", motors: ["face_v"], motor: "face_v", plus: [82.30, 16.57, 7.44, 14.88], minus: [82.30, 45.55, 7.44, 14.88] },
+      { type: "btnpair", motors: ["face_h"], motor: "face_h", plus: [88.90, 31.91, 7.44, 14.88], minus: [75.08, 31.91, 7.44, 14.88] },
+      { type: "stop", rect: [44.53, 69.90, 9.86, 19.73] },
     ],
   },
 };
 const LAYOUT_ID = window.MK4_LAYOUT_ID || "generic_12axis";
 const SPEC = SPECS[LAYOUT_ID];
-const FN = SPEC ? SPEC.controls.filter(c => c.fns).flatMap(c => c.fns) : [];
-const ctrlById = id => SPEC.controls.find(c => c.id === id);
+const FN = SPEC ? [...new Set(SPEC.controls.flatMap(c => c.motors || []))] : [];
 
 let A;   // the chrome api (set in buildSurface)
 
-// ---- control widgets (transparent hit-zones over the painted controls) ----
+// ---- control widgets (transparent hit-zones; drive MOTOR channels with the correct sign) ----
 function makeOneAxis(c) {
-  const fn = c.fns[0], travel = 40;
-  const z = el("gx-zone gx-one" + (A.isUnmapped(fn) ? " unassigned" : ""), pct(c.rect)); z.dataset.cid = c.id;
+  const fn = c.v, travel = 40;
+  const z = el("gx-zone gx-one" + (A.isUnmapped(fn) ? " unassigned" : ""), pct(c.rect));
+  if (c.id) z.dataset.cid = c.id;
   const knob = el("gx-knob"); z.appendChild(knob);
   let pid = null;
   const setY = clientY => {
@@ -65,21 +68,22 @@ function makeOneAxis(c) {
   return z;
 }
 function makeTwoAxis(c) {
-  const fnx = c.fns[0], fny = c.fns[1], travel = 38;
-  const z = el("gx-zone gx-two" + (A.isUnmapped(fnx) && A.isUnmapped(fny) ? " unassigned" : ""), pct(c.rect)); z.dataset.cid = c.id;
+  const fnh = c.h, fnv = c.v, travel = 38;
+  const z = el("gx-zone gx-two" + (A.isUnmapped(fnh) && A.isUnmapped(fnv) ? " unassigned" : ""), pct(c.rect));
+  if (c.id) z.dataset.cid = c.id;
   const knob = el("gx-knob"); z.appendChild(knob);
   let pid = null;
   const setXY = (cx, cy) => {
     const r = z.getBoundingClientRect();
-    let fx = clamp((cx - (r.left + r.width / 2)) / (r.width / 2), -1, 1);
-    let fy = clamp(-((cy - (r.top + r.height / 2)) / (r.height / 2)), -1, 1);
+    let fx = clamp((cx - (r.left + r.width / 2)) / (r.width / 2), -1, 1);     // right = +
+    let fy = clamp(-((cy - (r.top + r.height / 2)) / (r.height / 2)), -1, 1);  // up = +
     if (Math.abs(fx) < 0.12) fx = 0; if (Math.abs(fy) < 0.12) fy = 0;
     knob.style.left = (50 + fx * travel) + "%"; knob.style.top = (50 - fy * travel) + "%";
-    const vx = A.scaleVal(fnx, fx), vy = A.scaleVal(fny, fy);
-    z.classList.toggle("active", vx !== 0 || vy !== 0);
-    A.driveFn(fnx, vx); A.driveFn(fny, vy);
+    const vh = A.scaleVal(fnh, fx), vv = A.scaleVal(fnv, fy);
+    z.classList.toggle("active", vh !== 0 || vv !== 0);
+    A.driveFn(fnh, vh); A.driveFn(fnv, vv);
   };
-  const reset = () => { pid = null; knob.style.left = "50%"; knob.style.top = "50%"; z.classList.remove("active"); A.driveFn(fnx, 0); A.driveFn(fny, 0); };
+  const reset = () => { pid = null; knob.style.left = "50%"; knob.style.top = "50%"; z.classList.remove("active"); A.driveFn(fnh, 0); A.driveFn(fnv, 0); };
   z.addEventListener("pointerdown", e => { if (A.lifecycle() !== "READY") return; A.clearStopLatch(); pid = e.pointerId; try { z.setPointerCapture(pid); } catch {} e.preventDefault(); setXY(e.clientX, e.clientY); });
   z.addEventListener("pointermove", e => { if (e.pointerId === pid) setXY(e.clientX, e.clientY); });
   const up = e => { if (pid === null || (e && e.pointerId !== pid)) return; try { z.releasePointerCapture(pid); } catch {} reset(); };
@@ -87,30 +91,28 @@ function makeTwoAxis(c) {
   A.addControl(reset);
   return z;
 }
-function makeDpad(c) {
-  const fnx = c.fns[0], fny = c.fns[1], frag = document.createDocumentFragment();
-  const mk = (part, fn, dir) => {
-    const b = document.createElement("button"); b.className = "gx-dpadbtn" + (A.isUnmapped(fn) ? " unassigned" : ""); b.style.cssText = pct(part); b.dataset.cid = c.id;
-    let on = false;
-    const press = e => { e.preventDefault(); if (A.lifecycle() !== "READY" || on) return; A.clearStopLatch(); on = true; b.classList.add("active"); A.driveFn(fn, A.scaleVal(fn, dir)); };
-    const rel = () => { if (!on) return; on = false; b.classList.remove("active"); A.driveFn(fn, 0); };
-    b.addEventListener("pointerdown", press); b.addEventListener("pointerup", rel); b.addEventListener("pointercancel", rel); b.addEventListener("pointerleave", rel); b.addEventListener("lostpointercapture", rel);
-    A.addControl(() => { on = false; b.classList.remove("active"); });
-    return b;
-  };
-  frag.appendChild(mk(c.parts.up, fny, 1)); frag.appendChild(mk(c.parts.down, fny, -1));
-  frag.appendChild(mk(c.parts.left, fnx, -1)); frag.appendChild(mk(c.parts.right, fnx, 1));
-  return frag;
-}
-function makeButton(c) {
-  const fn = c.fns[0];
-  const b = document.createElement("button"); b.className = "gx-btn" + (A.isUnmapped(fn) ? " unassigned" : ""); b.style.cssText = pct(c.rect); b.dataset.fn = fn; b.title = A.funcLabel(fn);
+// one button drives `fn` to `dir`*cap on press, 0 on release (used by d-pad arms + button pairs)
+function makeDirBtn(fn, dir, rect) {
+  const b = document.createElement("button"); b.className = "gx-dpadbtn" + (A.isUnmapped(fn) ? " unassigned" : ""); b.style.cssText = pct(rect);
+  b.dataset.fn = fn; b.dataset.dir = dir;
   let on = false;
-  const press = e => { e.preventDefault(); if (A.lifecycle() !== "READY" || on) return; A.clearStopLatch(); on = true; b.classList.add("active"); A.driveFn(fn, A.scaleVal(fn, 1)); };
+  const press = e => { e.preventDefault(); if (A.lifecycle() !== "READY" || on) return; A.clearStopLatch(); on = true; b.classList.add("active"); A.driveFn(fn, A.scaleVal(fn, dir)); };
   const rel = () => { if (!on) return; on = false; b.classList.remove("active"); A.driveFn(fn, 0); };
   b.addEventListener("pointerdown", press); b.addEventListener("pointerup", rel); b.addEventListener("pointercancel", rel); b.addEventListener("pointerleave", rel); b.addEventListener("lostpointercapture", rel);
   A.addControl(() => { on = false; b.classList.remove("active"); });
   return b;
+}
+function makeDpad(c) {
+  const frag = document.createDocumentFragment();
+  frag.appendChild(makeDirBtn(c.v, 1, c.parts.up));   frag.appendChild(makeDirBtn(c.v, -1, c.parts.down));
+  frag.appendChild(makeDirBtn(c.h, -1, c.parts.left)); frag.appendChild(makeDirBtn(c.h, 1, c.parts.right));
+  return frag;
+}
+function makeButtonPair(c) {   // top/right press = +cap, bottom/left press = -cap, on ONE motor
+  const frag = document.createDocumentFragment();
+  frag.appendChild(makeDirBtn(c.motor, 1, c.plus));
+  frag.appendChild(makeDirBtn(c.motor, -1, c.minus));
+  return frag;
 }
 function makeStop(c) {
   const b = el("gx-stop", pct(c.rect), `<span>${A.dict().stop}</span>`); b.id = "estopBtn";
@@ -118,8 +120,6 @@ function makeStop(c) {
   const up = () => b.classList.remove("hit"); b.addEventListener("pointerup", up); b.addEventListener("pointercancel", up);
   return b;
 }
-
-// ---- the surface build (chrome calls this on boot / map change / language change) ----
 function buildSurface(api) {
   A = api;
   const stage = $("stage"), ov = $("overlay");
@@ -129,31 +129,36 @@ function buildSurface(api) {
   ov.innerHTML = "";
   for (const c of SPEC.controls) {
     const n = c.type === "oneaxis" ? makeOneAxis(c) : c.type === "twoaxis" ? makeTwoAxis(c)
-            : c.type === "dpad" ? makeDpad(c) : c.type === "button" ? makeButton(c)
+            : c.type === "dpad" ? makeDpad(c) : c.type === "btnpair" ? makeButtonPair(c)
             : c.type === "stop" ? makeStop(c) : null;
     if (n) ov.appendChild(n);
   }
 }
 
-// ---- auto-assign algorithm (chrome's wizard calls compute(N); chrome owns apply/persist) ----
-// Walk the 3 slots x 4 channels grid in priority order; 2-channel controls take TWO neighboring
-// channels in the SAME slot (advance to the next slot if <2 left); greedy fit (skip a control
-// that doesn't fit the remaining budget, let a smaller one use the tail). Unreached fns stay null.
-function computeAssignment(N) {
-  let budget = clamp(N | 0, 0, 12), slot = 0, ch = 0; const out = {};
-  for (const id of SPEC.assignOrder) {
-    if (budget <= 0 || slot > 2) break;
-    const c = ctrlById(id), need = c.fns.length;
-    if (need > budget) continue;
-    if (need === 2) {
-      if (ch > 2) { slot++; ch = 0; } if (slot > 2) break;
-      out[c.fns[0]] = [slot, ch]; out[c.fns[1]] = [slot, ch + 1];
-      ch += 2; if (ch > 3) { slot++; ch = 0; }
-    } else { out[c.fns[0]] = [slot, ch]; ch++; if (ch > 3) { slot++; ch = 0; } }
-    budget -= need;
+// ---- profiles: ordered MOTOR priority (which motors activate as N grows) ----
+const PROFILES = {
+  vehicle: ["lstick_v", "rstick_v", "lstick_h", "rstick_h", "laxis", "raxis", "dpad_v", "dpad_h", "btn_13", "btn_24", "face_v", "face_h"],
+  car:     ["lstick_v", "rstick_h", "rstick_v", "lstick_h", "laxis", "raxis", "dpad_v", "dpad_h", "btn_13", "btn_24", "face_v", "face_h"],
+  custom:  ["lstick_v", "rstick_v", "lstick_h", "rstick_h", "laxis", "raxis", "dpad_v", "dpad_h", "btn_13", "btn_24", "face_v", "face_h"],
+};
+const CHANNEL_ORDER = [0, 2, 1, 3];   // a hub's two main motor ports (ch0/ch2) first, then ch1/ch3; fill one slot before the next
+// compute(profile, N) -> { motor: {slot, channel, invert} }. Each motor = ONE channel
+// (N motors -> N channels). Unlisted motors stay unmapped. Walk slots in CHANNEL_ORDER.
+function computeAssignment(profileId, N) {
+  const pr = PROFILES[profileId] || PROFILES.custom;
+  const out = {}; let slot = 0, k = 0;
+  for (let i = 0; i < Math.min(clamp(N | 0, 0, 12), pr.length); i++) {
+    if (slot > 2) break;
+    out[pr[i]] = { slot, channel: CHANNEL_ORDER[k], invert: false };
+    k++; if (k === 4) { slot++; k = 0; }
   }
   return out;
 }
+const MOTOR_LABELS = {
+  lstick_v: "Left stick ↕", lstick_h: "Left stick ↔", rstick_v: "Right stick ↕", rstick_h: "Right stick ↔",
+  laxis: "Left axis ↕", raxis: "Right axis ↕", dpad_v: "D-pad ↕", dpad_h: "D-pad ↔",
+  btn_13: "Buttons 1/3", btn_24: "Buttons 2/4", face_v: "Face A/D", face_h: "Face B/C",
+};
 
 if (!SPEC) { document.body.innerHTML = "<p style='color:#e8eef6;padding:1rem'>Unknown generic layout: " + LAYOUT_ID + "</p>"; }
 else MK4Chrome.create({
@@ -162,6 +167,16 @@ else MK4Chrome.create({
   connectLabel: t => t.raw.connect,                     // generic "Connect device" (never excavator)
   title: { default: SPEC.title.default, style: pct(SPEC.title.rect) },
   features: { deviceSwap: false, gamepad: false, labelsTab: true },
-  autoAssign: { compute: computeAssignment, order: SPEC.assignOrder, controls: SPEC.controls },
+  autoAssign: {
+    defaultN: 2,
+    profiles: [
+      { id: "vehicle", label: t => t.gen.profVehicle, zeroBox: true },
+      { id: "car", label: t => t.gen.profCar, zeroBox: true },
+      { id: "custom", label: t => t.gen.profCustom, zeroBox: false },
+    ],
+    compute: computeAssignment,
+    motorLabel: m => MOTOR_LABELS[m] || m,
+  },
+  zeroBoxHint: t => t.gen.zeroBoxConnect,               // one-liner in the connect-wizard slot step
   buildSurface,
 });
