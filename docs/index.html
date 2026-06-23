@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>moldqueen — API-first control for BLE building-block RC toys</title>
+  <meta name="description" content="moldqueen drives Bluetooth-LE building-block RC toys over one documented WebSocket API. A smart web client, a thin-transport radio core you can swap — Raspberry Pi, Android, or your desktop. Starting with Mould King." />
+  <meta name="theme-color" content="#0a0d12" />
+  <link rel="icon" href="assets/moldqueen_icon.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="moldqueen — API-first control for BLE building-block RC toys" />
+  <meta property="og:description" content="One documented WebSocket API. A smart client. A swappable radio core — Pi, Android, desktop. Starting with Mould King." />
+  <meta property="og:image" content="https://jrichter24.github.io/moldqueen/assets/moldqueen_banner_v2.png" />
+  <meta property="og:url" content="https://jrichter24.github.io/moldqueen/" />
+  <meta name="twitter:card" content="summary_large_image" />
+</head>
+<body>
+  <a class="skip" href="#features">Skip to content</a>
+
+  <header class="nav" id="nav">
+    <div class="wrap">
+      <a class="brand" href="#home" aria-label="moldqueen home">
+        <img src="assets/moldqueen_icon.png" alt="" />
+        <span>moldqueen</span>
+      </a>
+      <button class="navtoggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <ul class="navlinks" id="navlinks">
+        <li><a href="#features">Design</a></li>
+        <li><a href="#layouts">Layouts</a></li>
+        <li><a href="#app">Get the app</a></li>
+        <li><a href="#dev">Developers</a></li>
+        <li><a href="#roadmap">Roadmap</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a class="cta" href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. HERO ------------------------------------------------------------ -->
+    <section class="hero" id="home">
+      <div class="hero-media">
+        <img src="assets/moldqueen_banner_v2.png" alt="moldqueen — controlling a Mould King building-block RC machine" />
+      </div>
+      <div class="wrap hero-copy">
+        <p class="eyebrow">Open source · API-first</p>
+        <h1>Control building-block RC toys through one clean API.</h1>
+        <p class="tagline">moldqueen drives Bluetooth-LE building-block machines over a documented WebSocket contract — starting with Mould King.</p>
+        <p class="lead">One smart web client. A thin-transport radio core you can swap — a Raspberry Pi today, an Android phone in your pocket, an ESP32 tomorrow. The toy never knows the difference.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="#app">Get the app <span class="arr">→</span></a>
+          <a class="btn" href="https://github.com/jrichter24/moldqueen" rel="noopener">View on GitHub</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. FEATURES / DESIGN ----------------------------------------------- -->
+    <section class="section" id="features">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">Why it's different</p>
+          <h2>Thin transport, smart client.</h2>
+          <p class="lead">Most RC apps bake the toy into the app. moldqueen splits them: one documented contract in the middle, and either side can change independently.</p>
+        </div>
+        <div class="features">
+          <div class="feature">
+            <div class="num">01</div>
+            <div>
+              <h3>API-first by design</h3>
+              <p>A single, documented WebSocket contract. The radio core just carries low-level channel writes; the client owns every decision — mapping each function to a channel, inversion, travel limits, and an affirmative keepalive that stops the machine if the page goes quiet. Anything that speaks the contract — a browser, a script, an agent — can drive.</p>
+            </div>
+          </div>
+          <div class="feature">
+            <div class="num">02</div>
+            <div>
+              <h3>Gamepad support</h3>
+              <p>Drive with a PS5 DualSense — or any browser-supported controller — on the excavator and the generic layouts. Bindings are editable, with sensible defaults, and ride the exact same drive-and-safety path as touch, down to the hardware STOP.</p>
+            </div>
+          </div>
+          <div class="feature">
+            <div class="num">03</div>
+            <div>
+              <h3>Run anywhere</h3>
+              <p>Because the radio is just one end of the contract, you can put it where you like: a Raspberry Pi over raw Bluetooth, a standalone Android app with no Pi at all, or the client served from your desktop or Docker against a remote core. Same UI, same API, every time.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. LAYOUTS --------------------------------------------------------- -->
+    <section class="section" id="layouts">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">Layouts</p>
+          <h2>One client, many machines.</h2>
+          <p class="lead">Each toy gets a layout — a control surface over the same API. <em>Model</em> layouts are tuned to a specific machine; <em>generic</em> layouts drive any twelve-motor toy and map themselves to your hardware with a guided auto-assign. This list is pulled live from the project manifest.</p>
+        </div>
+        <div class="layout-grid" id="layout-grid">
+          <noscript><div class="layout-fail">Enable JavaScript to load the live layout list, or browse them in the <a href="https://github.com/jrichter24/moldqueen/tree/main/client/web" rel="noopener">repository</a>.</div></noscript>
+        </div>
+        <p class="layout-note">Badges mirror the app: <strong>Generic</strong> vs <strong>Model</strong>, and the supported protocol. <strong>MK4</strong> is driving today; a greyed <strong>MK6</strong> is on the <a href="#roadmap">roadmap</a>.</p>
+      </div>
+    </section>
+
+    <!-- 4. GET THE APP ----------------------------------------------------- -->
+    <section class="section" id="app">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">Get the app</p>
+          <h2>Pick your radio.</h2>
+          <p class="lead">Two ways to start driving. Both serve the same web UI; they differ only in where the Bluetooth radio lives.</p>
+        </div>
+        <div class="cols">
+          <div class="block">
+            <h3>Android — standalone app</h3>
+            <p>A self-contained app: it owns the phone's Bluetooth radio, serves the UI on-device, and needs no Pi and no network. Today it's a developer build you install over USB:</p>
+            <pre class="cmd"><span class="c"># with the repo cloned and a device connected</span>
+cd android-core
+./gradlew installDebug</pre>
+            <p>A signed, store-ready release is on the <a href="#roadmap">roadmap</a>. Latest builds and notes live on <a href="https://github.com/jrichter24/moldqueen/releases" rel="noopener">GitHub Releases</a>.</p>
+          </div>
+          <div class="block">
+            <h3>Raspberry Pi — control core</h3>
+            <p>Run the full radio core on a Pi with a Bluetooth-LE USB dongle, then open the UI from any browser on your network:</p>
+            <pre class="cmd">git clone https://github.com/jrichter24/moldqueen
+cd moldqueen
+scripts/start.sh
+<span class="c"># then open http://&lt;pi&gt;:8080/</span></pre>
+            <p>Full setup, from unboxing to driving, is in the <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/QUICKSTART.md" rel="noopener">Quickstart</a>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. DEVELOPERS ------------------------------------------------------ -->
+    <section class="section" id="dev">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">For developers</p>
+          <h2>Open, documented, swappable.</h2>
+          <p class="lead">The contract is the product. The radio core is a thin transport that owns the radio and a safety lifecycle; the smart client owns the channel map and resolves every function to a low-level write. Swap one without touching the other.</p>
+        </div>
+
+        <div class="rows">
+          <div class="row"><div class="k">Raspberry Pi core</div><div class="v">Python + raw Bluetooth HCI — the reference radio core. <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/README.md" rel="noopener">linux-core</a></div></div>
+          <div class="row"><div class="k">Android core</div><div class="v">Kotlin, native BLE advertiser + the same API on-device. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ANDROID.md" rel="noopener">ANDROID.md</a></div></div>
+          <div class="row"><div class="k">Desktop dev client</div><div class="v">Serve the UI locally against a remote core, no build. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/DEV_CLIENT.md" rel="noopener">DEV_CLIENT.md</a></div></div>
+          <div class="row"><div class="k">Docker</div><div class="v">Ship the client as a container pointed at your Pi. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md" rel="noopener">REMOTE_CLIENT.md</a></div></div>
+        </div>
+
+        <div class="callout">
+          <strong>The protocol.</strong> Control is manufacturer-specific Bluetooth-LE advertisements — a twelve-channel nibble telegram (MK4) that drives every connected hub at once. The codec is verified byte-exact against the official app. Full reference in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/PROJECT.md" rel="noopener">PROJECT.md</a> and the machine-readable <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/mk4web/asyncapi.yaml" rel="noopener">AsyncAPI</a>.
+        </div>
+
+        <p>Want to add your own toy? A layout is just client files — a manifest entry, a thin page, and a channel map; the shared chrome (menu, settings, connect wizard, gamepad, STOP) comes for free. See <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ADDING_A_LAYOUT.md" rel="noopener">Adding a layout</a> and the rest of the <a href="https://github.com/jrichter24/moldqueen/tree/main/dev-docs" rel="noopener">developer docs</a>. Issues and pull requests are welcome on <a href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a>.</p>
+      </div>
+    </section>
+
+    <!-- 6. ROADMAP --------------------------------------------------------- -->
+    <section class="section" id="roadmap">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">Roadmap</p>
+          <h2>Where it's going.</h2>
+          <p class="lead">Direction, not promises. The through-line is the API-first design: each item is a new radio core behind the same contract, or a new client that speaks it.</p>
+        </div>
+        <ul class="roadmap">
+          <li><b>MK6 protocol.</b> <span>A second telegram codec for Mould King's per-byte MK6 hubs — this is what the greyed MK6 badges on the generic layouts are reserved for.</span></li>
+          <li><b>ESP32 core.</b> <span>A small, cheap, always-on third radio core running the advertiser and the same API — no Pi or phone required.</span></li>
+          <li><b>Camera (FPV).</b> <span>A first-person video feed from the machine — drive by what the toy sees, and a stream an autonomous driver could consume.</span></li>
+          <li><b>Time-of-flight sensor.</b> <span>Distance and obstacle awareness as telemetry alongside the control API.</span></li>
+          <li><b>AI brain.</b> <span>An agent that speaks the same WebSocket contract to drive autonomously. The thin-transport split is exactly what makes this a new client, not a rewrite.</span></li>
+        </ul>
+        <p class="layout-note">Full detail in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ROADMAP.md" rel="noopener">ROADMAP.md</a>.</p>
+      </div>
+    </section>
+
+    <!-- 7. ABOUT ----------------------------------------------------------- -->
+    <section class="section" id="about">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">About</p>
+          <h2>An independent hobby project.</h2>
+        </div>
+        <div class="prose">
+          <p>moldqueen is a private, independent, open-source project for controlling Bluetooth-LE building-block RC toys. Mould King is the first supported brand; the design deliberately leaves room for others.</p>
+
+          <h3>Disclaimer</h3>
+          <p>A private, independent, unofficial hobby project — <strong>not</strong> affiliated with, authorized by, endorsed by, or sponsored by <strong>Mould King</strong> / Shenzhen Yuxing. “Mould King” and related marks are trademarks of their owners, used here only descriptively for interoperability. The protocol was reverse-engineered for interoperability with hardware the author owns, for educational and personal use.</p>
+
+          <h3>Credits</h3>
+          <p>The <code>MouldKingCrypt</code> cipher is ported byte-for-byte from <a href="https://github.com/J0EK3R/mkconnect-python" rel="noopener">J0EK3R/mkconnect-python</a> (MIT, © 2024 J0EK3R), which also provided the MK4/MK6 protocol groundwork; <a href="https://github.com/imurvai/brickcontroller2" rel="noopener">BrickController2</a> was an additional protocol reference. Full attribution is in <a href="https://github.com/jrichter24/moldqueen/blob/main/THIRD-PARTY-NOTICES.md" rel="noopener">THIRD-PARTY-NOTICES.md</a>.</p>
+
+          <h3>How it was built</h3>
+          <p>moldqueen was built with help from AI coding assistants — early work used Claude (Fable), later work used Claude Opus 4.8. All design decisions and the code review were done by the human developer.</p>
+
+          <h3>Author</h3>
+          <p>Built by Dr. Jens Richter. Background in physics and electrical engineering; by day, tour optimization with genetic and AI algorithms at <a href="https://www.dna-evolutions.com/" rel="noopener">DNA Evolutions</a>. Find me on <a href="https://www.linkedin.com/in/li-jens-richter" rel="noopener">LinkedIn</a>. <span class="muted">Built for my son Jonas, who loves excavators and helicopters.</span></p>
+
+          <h3>License</h3>
+          <p>Released under the <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener">MIT License</a>.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <div class="frow">
+        <a class="brand" href="#home" aria-label="moldqueen"><img src="assets/moldqueen_icon.png" alt="" style="width:24px;height:24px" /><span>moldqueen</span></a>
+        <nav aria-label="Footer">
+          <a href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="inspiration.html">Sets &amp; inspiration</a>
+          <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener">License (MIT)</a>
+        </nav>
+      </div>
+      <p class="fine">An independent, unofficial hobby project. Not affiliated with Mould King / Shenzhen Yuxing; trademarks are used descriptively for interoperability. © <span id="year">2026</span> Jens Richter.</p>
+    </div>
+  </footer>
+
+  <script src="site.js"></script>
+</body>
+</html>
