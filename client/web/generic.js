@@ -32,9 +32,9 @@ const SPECS = {
       // top buttons: COLUMNS share a motor (top = +, bottom = -)
       { type: "btnpair", motors: ["btn_13"], motor: "btn_13", plus: [36.92, 15.67, 11.84, 13.87], minus: [36.92, 33.82, 11.84, 13.87] },
       { type: "btnpair", motors: ["btn_24"], motor: "btn_24", plus: [50.17, 15.67, 11.84, 13.87], minus: [50.17, 33.82, 11.84, 13.87] },
-      // face diamond: A(top)+ / D(bottom)- vertical ; B(right)+ / C(left)- horizontal
-      { type: "btnpair", motors: ["face_v"], motor: "face_v", plus: [82.30, 16.57, 7.44, 14.88], minus: [82.30, 45.55, 7.44, 14.88] },
-      { type: "btnpair", motors: ["face_h"], motor: "face_h", plus: [88.90, 31.91, 7.44, 14.88], minus: [75.08, 31.91, 7.44, 14.88] },
+      // face diamond (centers from generic_12_axis_with_hints.png): A(top)+ / D(bottom)- vertical ; B(right)+ / C(left)- horizontal
+      { type: "btnpair", motors: ["face_v"], motor: "face_v", plus: [82.78, 15.95, 7.44, 14.88], minus: [83.09, 42.56, 7.44, 14.88] },
+      { type: "btnpair", motors: ["face_h"], motor: "face_h", plus: [89.60, 29.59, 7.44, 14.88], minus: [75.79, 29.48, 7.44, 14.88] },
       { type: "stop", rect: [44.53, 69.90, 9.86, 19.73], cap: [49.98, 64.5] },   // cap = [painted-dot centerX%, caption bottomY%] — bottomY gives a clear gap above the button (dot top ≈70.7%)
     ],
   },
@@ -44,25 +44,25 @@ const SPECS = {
     image: "/assets/generic_layouts/ps_like_gampepad.png",
     aspect: [1717, 916],
     title: { default: "Brick controller", rect: [29.1, 7, 40.8, 9], color: "#33373d" },   // dark grey — readable on the light brick body
+    // All hotspot centers measured from the yellow targets in ps_like_gampepad_with_hints.png.
     controls: [
       // d-pad (top-left cluster): up/down -> dpad_v, left/right -> dpad_h
       { type: "dpad", motors: ["dpad_h", "dpad_v"], h: "dpad_h", v: "dpad_v", parts: {
-          up: [10.7, 16.4, 6.1, 13.1], down: [10.5, 42.0, 6.4, 12.6],
-          left: [3.4, 28.9, 7.6, 11.5], right: [17.2, 28.9, 7.6, 11.5] } },
+          up: [10.66, 16.45, 7.5, 13.5], down: [10.61, 36.81, 7.5, 13.5],
+          left: [5.13, 26.33, 7.5, 13.5], right: [16.46, 27.20, 7.5, 13.5] } },
       // one-axis lower outer joysticks (vertical only)
-      { type: "oneaxis", id: "laxis", motors: ["laxis"], v: "laxis", rect: [2.0, 74.5, 9.9, 18.6] },
-      { type: "oneaxis", id: "raxis", motors: ["raxis"], v: "raxis", rect: [87.9, 74.5, 9.9, 18.6] },
-      // two-axis main sticks: vertical + horizontal = two motors. ny=35: the painted cap sits high in
-      // the joystick footprint (cap center ≈60.6%, box center 65.3%), so rest the knob on the cap.
-      { type: "twoaxis", id: "lstick", motors: ["lstick_h", "lstick_v"], h: "lstick_h", v: "lstick_v", rect: [22.8, 49.7, 16.0, 31.1], ny: 35 },
-      { type: "twoaxis", id: "rstick", motors: ["rstick_h", "rstick_v"], h: "rstick_h", v: "rstick_v", rect: [61.2, 49.7, 16.0, 31.1], ny: 35 },
-      // top-row buttons 1-4 (rects measured from the art): pair 1/3 and 2/4 share a motor (1,2 = +, 3,4 = -)
-      { type: "btnpair", motors: ["btn_13"], motor: "btn_13", plus: [34.0, 30.0, 7, 9], minus: [49.4, 30.0, 7, 9] },
-      { type: "btnpair", motors: ["btn_24"], motor: "btn_24", plus: [41.5, 30.0, 7, 9], minus: [56.8, 30.0, 7, 9] },
-      // face diamond (rects measured from the art): A(top)+ / D(bottom)- vertical ; B(right)+ / C(left)- horizontal
-      { type: "btnpair", motors: ["face_v"], motor: "face_v", plus: [82.5, 11.45, 7, 13.1], minus: [82.5, 35.95, 7, 13.1] },
-      { type: "btnpair", motors: ["face_h"], motor: "face_h", plus: [89.6, 23.65, 7, 13.1], minus: [75.8, 23.65, 7, 13.1] },
-      { type: "stop", rect: [45.7, 72.8, 8.7, 16.4], cap: [49.99, 68] },   // painted dot centerX 49.99%, dot top ≈74.45%
+      { type: "oneaxis", id: "laxis", motors: ["laxis"], v: "laxis", rect: [1.31, 72.20, 11, 21] },
+      { type: "oneaxis", id: "raxis", motors: ["raxis"], v: "raxis", rect: [87.77, 72.31, 11, 21] },
+      // two-axis main sticks: zone centered on the hint (joystick cap) -> knob rests at center (ny=50)
+      { type: "twoaxis", id: "lstick", motors: ["lstick_h", "lstick_v"], h: "lstick_h", v: "lstick_v", rect: [24.0, 47.7, 15, 28], ny: 50 },
+      { type: "twoaxis", id: "rstick", motors: ["rstick_h", "rstick_v"], h: "rstick_h", v: "rstick_v", rect: [61.0, 47.85, 15, 28], ny: 50 },
+      // top-row buttons 1-4: pair 1/3 and 2/4 share a motor (1,2 = +, 3,4 = -)
+      { type: "btnpair", motors: ["btn_13"], motor: "btn_13", plus: [35.51, 29.21, 6.5, 8.5], minus: [50.54, 29.37, 6.5, 8.5] },
+      { type: "btnpair", motors: ["btn_24"], motor: "btn_24", plus: [43.02, 29.37, 6.5, 8.5], minus: [58.05, 28.99, 6.5, 8.5] },
+      // face diamond: A(top)+ / D(bottom)- vertical ; B(right)+ / C(left)- horizontal
+      { type: "btnpair", motors: ["face_v"], motor: "face_v", plus: [82.38, 12.39, 7, 13], minus: [82.38, 42.24, 7, 13] },
+      { type: "btnpair", motors: ["face_h"], motor: "face_h", plus: [90.36, 27.18, 7, 13], minus: [74.34, 26.96, 7, 13] },
+      { type: "stop", rect: [45.56, 73.68, 8.7, 16.4], cap: [49.91, 68] },   // red center; cap = [dot centerX%, caption bottomY%]
     ],
   },
 };
