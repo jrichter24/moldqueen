@@ -1,632 +1,136 @@
 <h1><img src="client/assets/moldqueen_icon.png" alt="" height="34" align="top"> moldqueen</h1>
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Linux%2FBlueZ-C51A4A?logo=raspberrypi&logoColor=white)
+![Android](https://img.shields.io/badge/Android-standalone%20APK-3DDC84?logo=android&logoColor=white)
+![Gamepad](https://img.shields.io/badge/gamepad-DualSense%20%2F%20any-5865F2)
 ![Python 3.13](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
-![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-3B-C51A4A?logo=raspberrypi&logoColor=white)
-[![status: two-hub control working](https://img.shields.io/badge/status-two--hub%20control%20working-brightgreen)](#highlights)
+[![status: two-hub control working](https://img.shields.io/badge/status-two--hub%20control%20working-brightgreen)](#what-it-does)
 
-**Drive a [Mould King 13112](https://www.mouldking.com/) RC excavator from a Raspberry Pi — over a reverse-engineered BLE protocol, through a clean WebSocket API.**
-
-<p align="center">
-  <img src="client/assets/moldqueen_banner.png" alt="moldqueen — Mould King 13112 RC excavator control" width="760">
-</p>
-
-`moldqueen` turns a Lego-compatible building-block excavator (two stock
-battery/Bluetooth hubs, ~6 motorised functions) into a programmable machine. The
-hubs aren't connected to over GATT — they're commanded by **broadcasting crafted
-BLE advertising "telegrams."** We captured and decoded the official app's
-protocol, rebuilt its crypto, and wrapped it in a small two-process control
-service with a web GUI and a documented API — the foundation for later adding a
-camera, a TOF sensor, and a local AI brain that drives the machine through the
-same API.
-
-**Multi-purpose — not just the excavator.** The protocol and control core are
-*toy-agnostic*: they drive the **Mould King BLE hubs**, not one specific model. So
-anyone with a Mould King set built on these hubs can use moldqueen — the **13112
-excavator** is simply the first, hardware-proven **reference layout**, and the
-**pluggable-layout system** lets you add a layout for **your own toy** (its own
-functions and dashboard) without touching the control core. Honest scope: the
-excavator is what's been verified on real hardware; a different toy will need its own
-layout — which the system now supports. Start here:
-[`dev-docs/ADDING_A_LAYOUT.md`](dev-docs/ADDING_A_LAYOUT.md).
-
-> **Status:** ✅ **core goal achieved** — *two hubs driven simultaneously from a
-> single telegram on a single radio.* Working webservice + a **landscape dashboard**
-> GUI (`/excavator`, chosen from the `/` layout chooser) with drag-joysticks, a
-> connection wizard, and an in-GUI **channel-assignment** tool over a configurable
-> channel map; plus a **RAW** debug layout and a **pluggable-layout** system
-> (manifest + server-derived routes + per-layout function maps + a copyable template).
-> 🔜 Next: finish the channel map, an AI/console client, then camera + sensors.
-
-## Disclaimer
-
-> [!WARNING]
-> **Independent, unofficial project — no warranty, use at your own risk.**
->
-> - **Not affiliated.** This is an independent, unofficial hobby project. It is
->   **not** affiliated with, authorized by, endorsed by, or sponsored by **Mould
->   King**, **Shenzhen Yuxing**, or any related entity. "Mould King" and "MK+tech"
->   are trademarks of their respective owners, used here **only descriptively** for
->   interoperability.
-> - **Interoperability / reverse-engineering.** The BLE protocol was
->   reverse-engineered for **interoperability with hardware the author owns**, and
->   is provided for **educational and personal use** only.
-> - **No warranty.** This software is provided **"as is", without warranty of any
->   kind.** The author is **not liable** for any damage to hardware, hubs, models,
->   property, or anything else arising from its use — **you assume all risk.** This
->   complements, and does not replace, the MIT license's no-warranty clause.
-
-🚀 **In a hurry? [`dev-docs/QUICKSTART.md`](dev-docs/QUICKSTART.md)** — fastest path from boxes to driving.
-
-📖 **Canonical, exhaustive reference: [`dev-docs/PROJECT.md`](dev-docs/PROJECT.md).** This
-README is the tour; PROJECT.md is the source of truth.
-
----
-
-## Table of contents
-
-- [Disclaimer](#disclaimer)
-- [What you get](#what-you-get)
-- [Highlights](#highlights)
-- [Screenshots](#screenshots)
-- [Game controller](#game-controller)
-- [How it works](#how-it-works)
-- [The protocol (MK4 12-channel nibble)](#the-protocol-mk4-12-channel-nibble)
-- [Architecture](#architecture)
-- [API server (required) + client UI (optional)](#two-pieces-api-server-required--client-ui-optional)
-- [Hardware](#hardware)
-- [Quick start](#quick-start)
-- [Set it up with an AI assistant](#set-it-up-with-an-ai-assistant)
-- [The WebSocket API](#the-websocket-api)
-- [Channel map](#channel-map)
-- [How the protocol was reverse-engineered](#how-the-protocol-was-reverse-engineered)
-- [Safety model](#safety-model)
-- [Troubleshooting](#troubleshooting)
-- [Repository layout](#repository-layout)
-- [Roadmap & open problems](#roadmap--open-problems)
-- [Development](#development)
-- [Credits & license](#credits--license)
-
----
-
-## What you get
-
-- **Simultaneous multi-hub control** — one MK4 BLE telegram moves several hubs at
-  once, with no per-device pairing.
-- **A clean WebSocket API first** — the control core is an API; build your own client
-  (console, app, AI agent) against a documented **AsyncAPI 3.0** spec.
-- **Multi-language web client** — a polished dashboard with a **6-language picker**
-  (EN/DE/ZH/KO/ES/FR) so people can drive in their own language; run it on the Pi or
-  anywhere as a container.
-- **Game controller support** — drive with a **PS5/DualSense** gamepad. It connects to
-  the **client device** (your phone/laptop), not the Pi — just another input sending the
-  same API commands, so the API-first design stays intact.
-- **RAW debug mode** — a low-level bench for crafting and reading BLE telegrams
-  directly: how the protocol was reverse-engineered, now a built-in tool.
-- **Future-proof radio** — talks to the adapter over **raw HCI sockets** (no reliance
-  on deprecated `hcitool`), behind a swappable backend.
-- **Portable core** — the API and control logic are plain Python, **architected to
-  run on other Linux SBCs** (anywhere with BlueZ + a BLE adapter); proven today on the
-  Raspberry Pi.
-- **Pluggable layouts** — the excavator is the reference layout; add one for *your*
-  Mould King toy via the manifest, no core changes
-  ([`dev-docs/ADDING_A_LAYOUT.md`](dev-docs/ADDING_A_LAYOUT.md)).
-- **Multi-device by design** — the protocol addresses **up to 3 hub slots**, so a
-  single telegram can drive several toys/hubs together.
-- **Safe by default** — motors snap to **neutral** on disconnect, zero clients, STOP,
-  or leaving the READY state; a dry-run mode logs every telegram and transmits nothing.
-- **AI-assisted setup** — hand the repo to an AI agent and let it walk the install; the
-  docs (QUICKSTART · PROJECT · CLAUDE.md) are written to be agent-friendly.
-
----
-
-## Highlights
-
-- **Reverse-engineered the real control protocol.** The hubs use the **MK4
-  12-channel nibble** protocol (not the MK6.0 "per-device" model we — and the
-  public reference — first assumed). One telegram carries **12 nibbles = 3 slots ×
-  4 channels** and drives **all hubs at once**.
-- **Recovered + verified the cipher.** `mouldking_crypt.py` (`encode`/`decode`)
-  reproduces the official app's on-air bytes **exactly** (13/13 self-tests) — which
-  is what let us decode captured adverts and discover the protocol.
-- **Two-hub simultaneous control, one radio.** A single advert with two channel
-  blocks set moves both boxes at the same time. No per-device addressing, no second
-  dongle required.
-- **A real service, not a script.** A `broadcaster` (owns the radio, holds state,
-  auto-neutral safety) + a `WebSocket API` (the product) + an **AsyncAPI 3.0 spec**.
-- **A landscape dashboard GUI** (the landing page). Controls bind to **functions**
-  via a **configurable channel map** (persisted default + live overrides); drag-
-  joysticks for tracks/arms, a **connection wizard** for cold-start, and a built-in
-  **channel-assignment** tool (drive a control → see which motor moves → assign it,
-  with per-function max speed + reverse trim + invert + EN/DE labels). Responsive:
-  top-bar on desktop, left-sidebar on mobile.
-- **Multi-purpose platform.** The control core is **toy-agnostic** — it drives the
-  hubs, not a model. The 13112 excavator is the worked **reference layout**; the
-  **pluggable-layout** system (manifest + per-layout function maps + a copyable
-  template) lets anyone add a layout for a *different* Mould King toy —
-  [`dev-docs/ADDING_A_LAYOUT.md`](dev-docs/ADDING_A_LAYOUT.md).
-- **Safety first.** Disconnect / no-clients / API-death → motors go **neutral**.
-  A dry-run mode logs every telegram and transmits nothing.
-
----
-
-## Screenshots
-
-The excavator dashboard — full visual tour (start page · dashboard · wizard ·
-channel settings) in **[`dev-docs/SCREENSHOTS.md`](dev-docs/SCREENSHOTS.md)**.
+**Drive a [Mould King](https://www.mouldking.com/) building-block RC toy — over a reverse-engineered BLE protocol, through one clean WebSocket API.**
 
 <p align="center">
-  <a href="dev-docs/SCREENSHOTS.md"><img src="assets/excavator_layout.PNG" alt="moldqueen excavator dashboard" width="760"></a>
+  <img src="client/assets/moldqueen_banner_v2.png" alt="moldqueen — Mould King RC control" width="760">
 </p>
 
----
+## The idea: API-first — thin transport, smart client
 
-## Game controller
+moldqueen is built around **one documented WebSocket contract** and an unusual split:
 
-Drive the excavator with a **PS5 DualSense** (or any browser-supported) gamepad. Pair it
-to the **device running the web client** — over USB or Bluetooth — and the dashboard reads
-it through the browser **Gamepad API**, driving the *same* functions as the on-screen
-joysticks (the client resolves both to raw `set`).
+- **The radio core is a _thin transport_.** It takes a raw `set {slot, channel, value}`,
+  turns it into a Mould King BLE "telegram," crypts it, and broadcasts it. It knows
+  **nothing** about functions, channel maps, inversion, caps, or your specific toy.
+- **A single web client is the _smart_ half.** It resolves *function → (slot, channel,
+  value)*, owns the per-layout channel map, and runs the keepalive + STOP safety latch.
 
-<p align="center">
-  <img src="client/assets/ps5_controller.png" alt="PS5 DualSense controller driving moldqueen" width="520">
-</p>
+Because all the smarts live above the contract, **the radio core is swappable**: a
+**Raspberry Pi** (raw HCI/BlueZ) and a **standalone Android app** (native BLE) expose the
+*identical* WebSocket API and serve the *same* client — so the UI is written once and the
+hardware is pluggable. (The hubs are driven by *broadcasting* crafted BLE adverts, not over
+GATT.) The **Mould King 13112 excavator** is the hardware-proven reference; the
+layout system + auto-assign let you drive **any** Mould King toy on these hubs.
 
-**The controller talks to the client, not the Pi.** Nothing on the Pi or the radio side
-changes — the gamepad is just another client input on top of the WebSocket API. It's a
-clean demonstration of the API-first design: *any* input that can reach the client can
-drive the machine.
+## Quickstart
 
-A built-in **calibration UI** shows live stick/button values and lets you map inputs →
-functions (handling per-browser/OS gamepad differences), and gamepad control respects the
-**same channel map, per-direction speed caps, and safety** as everything else — motors
-snap to **neutral** on stick release or if the controller disconnects.
+**Raspberry Pi (primary path)** — Pi with a USB BLE dongle, Python 3.13, a solid 5 V/3 A PSU:
 
----
-
-## How it works
-
-The excavator's two hubs are **broadcast receivers**: they listen for BLE
-advertising packets whose manufacturer data (company id **`0xFFF0`**) is a crafted,
-obfuscated **telegram**. To control them you:
-
-1. Stop/mask `bluetoothd` and take a Bluetooth adapter raw.
-2. Broadcast a **connect** telegram so the hubs enter listen mode.
-3. Continuously broadcast a **motion** telegram whose 12 nibbles encode every
-   channel's speed/direction. Re-broadcast a neutral telegram to hold/stop.
-
-That's it — connectionless, one-to-many. One adapter can drive every hub.
-
-```
- phone app  ──(BLE adverts, 0xFFF0)──►  ┌─────────┐   we replaced the phone with:
-                                        │  hubs   │
- Raspberry Pi ──(BLE adverts, 0xFFF0)──►└─────────┘   moldqueen on a USB dongle
+```bash
+git clone https://github.com/jrichter24/moldqueen && cd moldqueen
+scripts/start.sh        # frees the adapter from bluetoothd, brings the dongle up by MAC, runs both processes
+# → open http://<pi>:8080/  →  Connect  →  button one hub to slot 1  →  Ready  →  drive
 ```
 
-## The protocol (MK4 12-channel nibble)
+Full prep (disable onboard BT, mask `bluetoothd`, caps) and a dry-run mode:
+**[`dev-docs/QUICKSTART.md`](dev-docs/QUICKSTART.md)**.
 
-Telegrams are **raw bytes → `MouldKingCrypt` → 24-byte manufacturer data** (company
-`0xFFF0`). The raw bytes are what carry meaning:
+**Android (standalone — no Pi)** — own native radio + bundled client in one APK:
 
-| Telegram | Raw bytes | Meaning |
-|----------|-----------|---------|
-| **Connect** | `ad ae 18 80 80 80 f3 52` | put hubs in listen mode |
-| **Motion**  | `7d ae 18 ⟨6 channel bytes⟩ 82` | drive channels |
-| **Neutral** | `7d ae 18 88 88 88 88 88 88 82` | all stop |
-
-The **6 channel bytes hold 12 nibbles = 3 slots × 4 channels** (even channel = high
-nibble, odd = low; byte offset `3 + ch//2`):
-
-```
-            byte3   byte4   byte5   byte6   byte7   byte8
-nibbles:   [c0 c1] [c2 c3] [c4 c5] [c6 c7] [c8 c9] [c10 c11]
-slots:     └── slot 0 ──┘ └── slot 1 ──┘ └──── slot 2 ────┘
+```bash
+cd android-core && ./gradlew installDebug    # build + install to a connected device
+# → open the MoldQueen app  →  Connect  →  Ready  →  drive
 ```
 
-- **`0x8` = neutral/stop**; `>0x8` = one direction, `<0x8` = the other.
-- **One telegram drives all hubs at once** — a hub is addressed by *which nibble
-  block* moves. A hub's slot is chosen by its **physical button** (1/2/3 flashes =
-  slot 0/1/2) and resets to slot 0 on power-cycle.
-- **value ↔ nibble** (used by the API): `nibble = 0x8 + value`, value `-7..+7` →
-  nibble `0x1..0xF` (`0`→`0x8`, `+7`→`0xF`, `-7`→`0x1`).
+Build/device detail: **[`dev-docs/ANDROID.md`](dev-docs/ANDROID.md)** *(coming soon)*.
 
-The **`MouldKingCrypt`** obfuscation (recovered from the app and verified): fixed
-preamble `C1..C5`, per-byte bit-reversal, CRC-16/CCITT (poly `0x1021`), and two
-7-bit LFSR whitening passes (seeds 63 / 37). See
-[`linux-core/reference/mouldking_crypt.py`](linux-core/reference/mouldking_crypt.py).
+> **Just exploring?** Run the client alone against a Pi —
+> **[`dev-docs/DEV_CLIENT.md`](dev-docs/DEV_CLIENT.md)** (dev server) or
+> **[`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md)** (Docker).
 
-> **Why this matters:** the widely-referenced
-> [`J0EK3R/mkconnect-python`](https://github.com/J0EK3R/mkconnect-python) MK6.0
-> model (`0x61`/`0x62` "device 0/1", button "promotion") **does not apply to these
-> hubs** — chasing it cost real time. Our hubs are MK4 nibble. Full post-mortem in
-> [`dev-docs/PROJECT.md`](dev-docs/PROJECT.md) §3.
+## What it does
+
+- **Layouts** — pick one from the start-page chooser:
+  - **Excavator** (model-specific): landscape HMI dashboard, drag-joysticks + hold buttons.
+  - **12-axis** and **Brick / PS-like** (model-agnostic): generic gamepads with **12 motors**
+    you map to any toy.
+  - **RAW** (debug): a protocol bench over the raw `set`/`stop` path (slot/channel/value,
+    telegram + on-air bytes console).
+- **Chooser / start page** — cards with a **Generic / Model** badge and **MK4 / MK6**
+  protocol badges (MK6 greyed = coming soon), a **jump-to-layout** dropdown, and the RAW
+  bench behind a debug icon.
+- **One shared chrome (MK4Chrome)** — every layout gets the same menu, settings, connect
+  wizard, status light, language picker, keyboard STOP, and gamepad path.
+- **Profile-driven auto-assign** — map a generic controller's 12 motors to channels by
+  toy *profile* (vehicle / car / custom) with an inline editor and a zero-box guide.
+- **Gamepad** — drive with a DualSense (or any) controller on the excavator **and** the
+  generic layouts (web/desktop; Android System WebView lacks the Gamepad API → graceful
+  fallback to touch). *(detail: [`dev-docs/GAMEPAD.md`](dev-docs/GAMEPAD.md) — coming soon)*
+- **6 languages** (EN/DE complete; ZH/KO/ES/FR seeded, EN fallback), editable per-layout
+  title + colour.
+- **Safety** — affirmative keepalive (the client re-affirms intent ~10/s; the server
+  auto-neutralizes any un-refreshed channel) + STOP = kill-and-reconnect-at-neutral.
+  [More ↓](#architecture) · 📸 [Screenshots](dev-docs/SCREENSHOTS.md).
 
 ## Architecture
 
-Two processes over a local Unix socket — deliberately split so the **WebSocket API
-is the product** and the web page is merely its first client (a console or AI brain
-uses the *same* API):
+Thin transport (server) + smart client (UI), with a swappable radio core behind one
+WebSocket contract:
 
 ```
-┌────────────────────────────────────────────────────────────────────┐
-│  linux-core/mk4web/                                                     │
-│                                                                      │
-│   web page / AI brain / CLI                                          │
-│        │  WebSocket  (JSON, :8765)                                   │
-│        ▼                                                             │
-│   ┌──────────┐   Unix socket    ┌──────────────┐    BLE adverts     │
-│   │   api    │ ───────────────► │  broadcaster │ ──(raw HCI socket)─► hubs
-│   │  :8080   │   12-nibble      │  owns radio  │     company 0xFFF0  │
-│   │  :8765   │   state + setup  │  + state +   │                     │
-│   └──────────┘                  │  lifecycle   │                     │
-│   serves page +                 └──────────────┘                     │
-│   the WS API                    IDLE→CONNECTING→READY, auto-neutral  │
-└────────────────────────────────────────────────────────────────────┘
+client/        # the INDEPENDENT smart web client (chooser · layouts · MK4Chrome · channel maps)
+   │  ws://…:8765  (the contract: setup · set · stop · state · info)
+   ├── linux-core/   # Pi radio core — raw HCI/BlueZ; serves the client (Python)
+   └── android-core/ # standalone Android radio core — native BLE; serves the client (Kotlin)
 ```
 
-- **`broadcaster.py`** — owns the radio and the authoritative 12-nibble state; runs
-  a lifecycle **IDLE → CONNECTING → READY**; keepalive-broadcasts (~5/s) one MK4
-  telegram reflecting state. Reverts to neutral/IDLE if the API goes away. The radio
-  sits behind a backend abstraction: **`rawhci`** (raw `AF_BLUETOOTH`/`BTPROTO_HCI`
-  socket, no hcitool dependency) is the default; `hcitool` is a legacy fallback
-  (`MK4_RADIO_BACKEND`). Resolve the dongle **by MAC** — the `hciN` index varies.
-- **`api.py`** — the WebSocket server (the product), also serves the static page;
-  owns/drives the lifecycle, maps `value→nibble`, enforces motion-only-in-READY,
-  and pushes state to clients. Disconnect/no-clients → NEUTRAL.
-
-## Hardware
-
-| Part | Detail |
-|------|--------|
-| Control box | Raspberry Pi 3B (aarch64, 1 GB RAM) |
-| **Radio (use this)** | **Realtek RTL8761B USB dongle** `00:A6:44:02:21:25` (resolve by MAC; the `hciN` index varies across replugs/reboots) |
-| Spare radio | hci2 = TP-Link USB dongle `6C:4C:BC:87:D0:83` (one radio is enough) |
-| Avoid | Onboard Broadcom UART BT (hci0) — corrupts frames *at the connect transition*; plan to disable via `dtoverlay=disable-bt` |
-| Power | **Solid 5 V / 3 A** — under-voltage caused real failures; a weak PSU is the #1 gremlin |
-
-`bluetoothd` must be **stopped + masked** (it's dbus/socket-activated and will
-re-grab the adapter); raw HCI needs root or `cap_net_raw,cap_net_admin`.
-
-## Two pieces: API server (required) + client UI (optional)
-
-moldqueen is two cleanly separable features:
-
-- **API server — REQUIRED.** The broadcaster (owns the radio) + the **WebSocket API**
-  (the product). The WebSocket is *always* opened; this is what actually controls the
-  excavator. Runs on the Pi.
-- **Client web UI — OPTIONAL.** The chooser/excavator/RAW pages are a convenience for
-  *driving* the API. They're not required to control the machine.
-
-Three ways to use it:
-
-1. **API serves the page too (easiest).** `scripts/start.sh` → open `http://<pi>:8080/`.
-2. **Run the client separately.** Serve the UI elsewhere (Docker on a desktop) and
-   point it at the Pi's WS via the in-app endpoint setting — see
-   [Running the client separately](#running-the-client-separately-docker) and
-   [`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md).
-3. **Bring your own client.** Skip the page entirely and talk to the WebSocket from
-   your own code/console/AI — contract in [`asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml).
-
-**Server flags** (the API): `--ws-only` (or `--no-client`, env `MK4_SERVE_CLIENT=0`)
-runs the **WebSocket only — no HTTP server** (headless / bring-your-own-client);
-`--http-port N` serves the page on `N` (default `8080`; CLI wins over `MK4_HTTP_PORT`).
-The WebSocket port is its own setting (`MK4_WS_PORT`, default `8765`).
-
-```bash
-python -m mk4web.api                  # WS :8765 + client page :8080   (default)
-python -m mk4web.api --http-port 9000 # WS :8765 + client page :9000
-python -m mk4web.api --ws-only        # WS :8765 only  (no web server)
-scripts/start.sh --ws-only            # launcher, websocket-only
-```
-
-## Quick start
-
-**One-time setup** (Python venv + the one dependency):
-
-```bash
-cd linux-core
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt        # websockets (+ pytest)
-```
-
-**Easiest — the launcher.** [`scripts/start.sh`](scripts/start.sh) preflight-checks
-the radio (bluetoothd; the dongle *by MAC*, so a reindex doesn't matter; the venv)
-and starts the broadcaster + API in the right order. It makes **no persistent system
-changes** — it may mask bluetoothd and bring the dongle up *for the session*, both
-reversible:
-
-```bash
-scripts/start.sh            # preflight + launch (live)  →  http://<pi-ip>:8080/
-scripts/start.sh --dry-run  # logs telegrams, transmits NOTHING
-scripts/start.sh --check    # audit only — report state, change nothing  (= scripts/check.sh)
-```
-
-### Manual alternative
-
-```bash
-# what the launcher does: free the adapter from bluetoothd, bring the dongle up
-sudo systemctl mask --now bluetooth
-sudo hciconfig hci1 up
-cd linux-core && source .venv/bin/activate
-```
-
-**Dry-run first** (logs the telegrams, transmits *nothing*):
-
-```bash
-python -m mk4web.broadcaster --dry-run   # terminal 1
-python -m mk4web.api                       # terminal 2  →  http://<pi-ip>:8080/
-```
-
-**Live** (drives the dongle):
-
-```bash
-sudo python -m mk4web.broadcaster          # starts IDLE — no transmit until "Connect"
-python -m mk4web.api
-```
-
-**Cold-start flow** — open the dashboard at `http://<pi-ip>:8080/` and press
-**Connect** to launch the wizard:
-
-1. Power on both hubs (each shows one long flash) → **Next**.
-2. *Connecting…* → hubs fast-flash.
-3. Press **one** hub's button to **two** fast flashes (→ slot 1); leave the other
-   on one flash (→ slot 0). *(Different slots are required for independent control.)*
-4. **Ready** → controls unlock. Drag a joystick to drive (release snaps to stop);
-   **STOP** (or Space/Esc) = all neutral.
-
-All ports/HCI are env-overridable (`MK4_HCI`, `MK4_HTTP_PORT`, `MK4_WS_PORT`, … —
-see [`linux-core/mk4web/config.py`](linux-core/mk4web/config.py)).
-
-### Layouts: chooser, dashboard, RAW
-
-**`/`** serves a **layout chooser** — pick **Excavator** (`/excavator`) or **RAW**
-(`/raw`); it remembers your choice (a "Layouts" button / `/?choose` returns to it).
-An **About** overlay carries the disclaimer, credits, licensing, AI note, and author.
-
-**`/excavator`** is the **landscape excavator dashboard**, laid out over an HMI
-background (see [`dev-docs/mould_king_13112_hmi_layout_spec.md`](dev-docs/mould_king_13112_hmi_layout_spec.md)).
-**`/raw`** is a **RAW debug** layout — a protocol-level test bench over the low-level
-`set`/`stop` path: choose 1-3 slots, set each channel directly, build + send the
-telegram, and a console logs the exact bytes (raw + on-air AD).
-
-- **Controls bind to functions** (left/right track, arm lift, front arm, rotation,
-  bucket) via a **configurable channel map**, not raw channels. Tracks + arm
-  functions are **proportional drag joysticks** (drag = speed, release snaps to
-  neutral); rotation and bucket are press-and-hold buttons.
-- **Connection wizard** — a centered modal walks the cold-start (power on → connect
-  → assign slots → ready), with media slots and EN/DE text.
-- **Settings** (centered overlay) = the **channel-assignment tool**: drag/Test a
-  control, see which motor moves, set its slot/channel + max speed + reverse-trim +
-  invert; a separate **Labels** page (EN/DE); **Save** (this session) or **Promote**
-  (persist as the new default in this browser). Plus a session-only **device-0/1 hub
-  swap**.
-- **Responsive shell** — viewport-fit (no page scroll); the menu is a **top bar on
-  desktop, a left sidebar on mobile** (portrait *and* landscape); **EN/DE** toggle,
-  fullscreen, and **STOP** are always reachable.
-
-The channel map is **client-side**: a shipped default (`client/web/channel_map.<id>.json`)
-plus the **active** map + your overrides, persisted in the browser. The **smart client**
-resolves `function → (slot, channel, value)` (invert / caps / reverse-trim / device-swap)
-and sends only low-level `set {slot, channel, value}` — the server is **thin transport**.
-*(The **RAW** layout (`/raw`) is the slot/channel test bench over raw `set`/`stop`.)*
-
-### Running as a service (optional)
-
-The launcher is the **no-system-changes default** — run it whenever you want the
-service. If you'd prefer it to **auto-start on boot**, that's an optional
-convenience you can add yourself with a small **systemd** unit (mask `bluetooth`,
-`hciconfig <hci> up`, then launch the broadcaster + API). The project intentionally
-ships **no** systemd units, so cloning it makes no persistent change to your system.
-
-### Running the client separately (Docker)
-
-The web UI can run **anywhere** and talk to the Pi's WS API over the LAN — the
-broadcaster + radio stay on the Pi. A **client-only** image
-([`Dockerfile.client`](Dockerfile.client)) serves just the static UI (chooser +
-dashboard + RAW) behind nginx:
-
-```bash
-docker build -f Dockerfile.client -t moldqueen-client .   # from the repo root
-docker run --rm -p 8080:80 moldqueen-client               # → http://localhost:8080/
-```
-
-Then open the **API endpoint** setting (Dashboard **⚙ Settings**, or the RAW **API
-connection** panel), enter `ws://<pi-ip>:8765`, and press **Connect** — it's saved
-in the browser and the WebSocket reconnects. The endpoint defaults to the page's
-own host (so the Pi-served UI needs no setup). The Pi's API is **permissive CORS /
-any-WS-origin by design** (LAN hobby tool). Full guide:
-**[`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md)**.
-
-## Set it up with an AI assistant
-
-Comfortable with AI tools? You can hand the install and setup to an agent. Point an
-AI assistant (e.g. Claude Code) at the repo —
-**[`github.com/jrichter24/moldqueen`](https://github.com/jrichter24/moldqueen)** — or
-just paste this README, and ask it to walk you through getting moldqueen running on
-your Pi. The project is written to be **agent-friendly**: [`dev-docs/QUICKSTART.md`](dev-docs/QUICKSTART.md)
-is the fast path, [`dev-docs/PROJECT.md`](dev-docs/PROJECT.md) is the exhaustive reference,
-and the per-folder [`CLAUDE.md`](CLAUDE.md) files hand an agent the must-knows and
-operational gotchas. You still supply the hardware (a Pi, a USB BLE dongle, your
-hubs) — the AI handles the software and configuration steps.
-
-## The WebSocket API
-
-The product. Connect to `ws://<pi>:8765`; messages are JSON. Full machine-readable
-contract: **[`linux-core/mk4web/asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml)** (AsyncAPI
-3.0), also served at `GET /asyncapi.yaml`.
-
-**Client → server**
-
-```jsonc
-{ "cmd": "setup", "action": "connect" }              // IDLE → CONNECTING
-{ "cmd": "setup", "action": "ready"   }              // CONNECTING → READY
-{ "cmd": "setup", "action": "reset"   }              // → IDLE (all neutral)
-{ "cmd": "set", "slot": 1, "channel": 0, "value": 5 } // the ONLY motion primitive — raw slot/channel/value (READY only)
-{ "cmd": "stop" }                                     // all neutral (any state)
-{ "cmd": "state" }                                    // re-send current state
-{ "cmd": "info"  }                                    // server-info (tiered disclosure)
-```
-
-**Server → client (pushed)**
-
-```jsonc
-{ "type": "lifecycle", "state": "READY" }            // on connect + every transition
-{ "type": "state", "slots": [[0,0,0,0],[6,0,0,0],[0,0,0,0]], "raw": "…", "ad": "…" }  // 3 slots × 4 signed values + on-air bytes
-{ "type": "info", … }                                // server-info (to the requester)
-```
-
-The server is **thin transport**: `set` carries a raw `(slot, channel, value)` —
-`value` `-7..+7`, `slot` `0..2`, `channel` `0..3` — which it turns into a nibble,
-crypts, and broadcasts. It knows **nothing** about functions, channel maps, invert,
-caps, or labels: the **smart client** resolves `function → (slot, channel, value)`
-(invert / caps / reverse-trim / device-swap), owns the per-layout channel map, and runs
-the affirmative keepalive + STOP latch. Full contract:
-[`asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml).
-
-## Channel map
-
-The **function → (slot, channel)** map is **data**, not hardcoded, **per layout**, and
-lives **on the client**: each function-mapped layout declares its function set (in the
-layout manifest) + a shipped default at
-[`client/web/channel_map.<id>.json`](client/web/channel_map.excavator.json), editable
-live in the GUI. The excavator's six functions, each `{slot, channel, invert, max, reverse_scale, label_en,
-label_de}`. The **client** resolves drive-by-function against the **active** map (the
-default + your overrides, persisted in the browser; **Promote** saves a map as the new
-default) and sends raw `set` — the server never sees the map. Current default —
-`bucket`, `left_track`, `arm_lift`, `front_arm` are transmit-confirmed; `rotation`
-and `right_track` are placeholders to sweep:
-
-| Function | Slot | Ch | Global nibble | Status |
-|----------|------|----|--------------:|--------|
-| **bucket** (shovel) | 0 | 0 | ch0 | ✅ confirmed |
-| **arm_lift** | 0 | 3 | ch3 | ✅ confirmed (hardware test) |
-| rotation | 0 | 2 | ch2 | placeholder |
-| **front_arm** | 0 | 1 | ch1 | ✅ confirmed (hardware test) |
-| **left_track** | 1 | 0 | ch4 | ✅ confirmed (inverted) |
-| right_track | 1 | 2 | ch6 | placeholder |
-
-**Two-hub simultaneous, confirmed:** one telegram with `ch0` *and* `ch4` set moved
-both boxes at once. Assign/confirm the rest in **Settings → Test** (drive a control,
-watch which motor moves, set its slot/channel). `reverse_scale` (default 1.0) trims
-reverse speed to match forward; `max` caps a function's top speed.
-
-## How the protocol was reverse-engineered
-
-A compact case study (details in [`dev-docs/PROJECT.md`](dev-docs/PROJECT.md) and
-[`linux-core/reference/MKtech_reverse_engineering_report.md`](linux-core/reference/MKtech_reverse_engineering_report.md)):
-
-1. **Sniffed** the hubs with `btmon` + `hcitool lescan` — they don't advertise;
-   they're pure receivers. Dead end for passive discovery.
-2. **Followed the public reference** ([mkconnect-python](https://github.com/J0EK3R/mkconnect-python))
-   and got *single-hub* motion working with the MK6.0 model — but two-hub
-   addressing never worked.
-3. **Decompiled** the official `MK+tech` Android app (`jadx`), recovered the
-   `MouldKingCrypt` cipher from the Java BLE plugin, and re-implemented it in Python
-   (`encode`/`decode`, verified byte-exact).
-4. **Captured** the app driving the real hubs and **decoded** the adverts with our
-   `decode()` — revealing the true **MK4 12-channel nibble** protocol (one telegram,
-   slot-addressed by nibble block). The MK6.0 detour was the wrong model all along.
-5. **Re-transmitted** the decoded telegrams from our own dongle → both hubs moved,
-   simultaneously, from one advert.
-
-## Safety model
-
-- **Dry-run** (`--broadcaster --dry-run`) transmits nothing; it logs every telegram.
-- **Motion is gated** to the `READY` lifecycle state; setup/connect alone never moves a motor.
-- **Auto-neutral** on: client disconnect, zero clients, `stop`, or lifecycle leaving READY.
-- **Auto-IDLE** (advertising off) if the API process dies (broadcaster sees the socket drop).
-- Big **STOP** button in the GUI; per-channel **release-to-stop** on the joystick holds.
-
-## Troubleshooting
-
-First, run the health audit — it reports the radio/service state and **changes nothing**:
-
-```bash
-scripts/check.sh          # = scripts/start.sh --check
-```
-
-| Symptom | Likely cause | Fix |
-|---------|--------------|-----|
-| **Page loads, motors don't move** | the **broadcaster isn't running** (only the API is) — the API log shows `IPC: broadcaster not reachable` | start the broadcaster; easiest is `scripts/start.sh` (launches both, in order). |
-| **Nothing moves after a reboot** | the broadcaster didn't auto-start, the dongle came back **DOWN**, and/or you haven't re-run **Connect→Ready** | run `scripts/start.sh`, then do the cold-start in the GUI (Connect → press one hub to two flashes → Ready). |
-| **Worked before, now flaky / under-voltage** | **weak PSU** (Pi 3 + two dongles is power-hungry; `vcgencmd get_throttled` ≠ `0x0`) | use a solid **5 V / 3 A** supply. |
-| **Only one hub moves, or both move together** | the two hubs are on the **same slot** | cold-start and press **one** hub's button to **two** fast flashes (slot 1), leaving the other on one flash (slot 0). |
-| **bluetoothd keeps coming back** | it's **socket/dbus-activated** — a plain `stop` gets reactivated as soon as any BT tool touches the adapter | **mask** it: `sudo systemctl mask --now bluetooth` (the launcher does this). Reverse with `sudo systemctl unmask bluetooth`. |
-| **Dongle not found / wrong `hciN`** | USB re-enumeration changed the index, or the dongle isn't plugged in | check `lsusb` / `hciconfig -a`. The launcher binds **by MAC** (`MK4_DONGLE_MAC`) so the index doesn't matter — if it still can't find it, the dongle is absent. |
-
-Safety nets always apply: closing the page (client disconnect) or the **STOP** button
-forces neutral, and if the API process dies the broadcaster drops to **IDLE**.
-
-## Repository layout
-
-```
-moldqueen/
-├── dev-docs/PROJECT.md            # canonical project reference (read this)
-│   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
-├── assets/                    # doc screenshots only (excavator_layout*.PNG, landing_select_layout.PNG)
-├── scripts/                   # start.sh / check.sh — preflight + launch (no system changes)
-├── client/                    # INDEPENDENT smart web client — consumed by the cores + Docker; depends only on the WS API
-│   ├── web/                   #   chooser.html, shell.css, chrome.*, clientconfig.js, layouts.json,
-│   │                          #   channel_map.<id>.json (the client owns the maps), dashboard.*, generic.*, raw.*, template.*
-│   ├── assets/                #   served UI art (icons, LED gifs, dashboard background, banners)
-│   └── serve.py               #   standalone dev server (route derivation + the 4-placeholder injection)
-├── linux-core/                # Python — the Linux/BlueZ radio core + thin-transport service (tested target: the Pi)
-│   ├── mk4web/                # broadcaster · api · telegram · mouldking_crypt · config
-│   │   └── asyncapi.yaml      #   WS API contract (served at /asyncapi.yaml)
-│   └── reference/             # verified protocol snapshots, the codec, the APK report
-├── android-core/              # Kotlin — standalone Android app (radio + local WS API + serves the client)
-├── java-core/                 # empty Java scaffold — future API client OR retire
-├── web-gui/                   # original Node scaffold — superseded by mk4web's dashboard
-└── CLAUDE.md                  # terse agent/dev notes (per folder too)
-```
-
-The control service is `linux-core/mk4web/` (Pi) and the `android-core/` app; the UI is
-the **independent `client/`** they consume. `java-core/` and `web-gui/` are bootstrap
-scaffolds the project outgrew.
-
-## Roadmap & open problems
-
-- **RAW page + configurable API endpoint** — a dedicated raw slot/channel page to
-  replace the retired simple page.
-- **Finish the channel map** — sweep/confirm the placeholder channels via Settings → Test.
-- **Reverse-speed calibration** — set each track's `reverse_scale` so reverse matches forward.
-- **Slot auto-detection — unsolved.** Slots are set by physical button and reset on
-  power-cycle; today the **wizard** guides it manually.
-- **Box identity UX — unsolved.** Which physical box is on which slot is operator
-  knowledge; the map labels by function (EN/DE).
-- **Console / AI client** of the WebSocket API (the API is ready; the client isn't).
-- **Hardware:** disable onboard BT; keep the 5 V/3 A PSU.
-- **Future phases:** camera, TOF sensor, local AI brain — all driving via the WS API.
-
-## Development
-
-- **Add your own layout / toy:** [`dev-docs/ADDING_A_LAYOUT.md`](dev-docs/ADDING_A_LAYOUT.md)
-  (the clean path = a generic slot/channel layout, no server change).
-- **Run on another board / in a container:** [`dev-docs/PORTING.md`](dev-docs/PORTING.md)
-  (the radio core is hardware-bound — honest caveats inside).
-- **Minimal dependencies** (1 GB Pi): the service needs only `websockets`.
-- **Tests:** `cd linux-core && source .venv/bin/activate && pytest`.
-- **Conventions:** small, clear conventional commits (`feat:`/`fix:`/`docs:`/`chore:`);
-  secrets never committed.
-- Agent/working notes live in the `CLAUDE.md` files (root + per folder).
-
-## Credits & license
-
-- **Author:** Built by Jens Richter. Background in physics and electrical engineering;
-  by day I work on tour optimization with genetic and AI algorithms at
-  [DNA Evolutions](https://www.dna-evolutions.com/). Find me on
-  [LinkedIn](https://www.linkedin.com/in/li-jens-richter). *Built for my son Jonas, who
-  loves excavators and helicopters.*
-- Protocol groundwork: [`J0EK3R/mkconnect-python`](https://github.com/J0EK3R/mkconnect-python)
-  (the MK4/MK6 reference and `MouldKingCrypt`). Our `mouldking_crypt.py` is a
-  **port/derivative** of their `MouldKingCrypt`, **used under the MIT License**
-  (© 2024 J0EK3R) — see [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) — and
-  verified byte-exact against the MK+tech app. Our hubs are the MK4 nibble variant.
-  Additional protocol reference: [BrickController2](https://github.com/imurvai/brickcontroller2).
-- **Built with AI assistance** — see the *About* overlay on the start page.
-- **Independent & unofficial** — not affiliated with Mould King / Shenzhen Yuxing;
-  trademarks used descriptively. Provided **as-is, no warranty, use at your own
-  risk** — see the full [Disclaimer](#disclaimer).
-
-**License:** [MIT](LICENSE) © 2026 Jens Richter. Bundled third-party code retains its
-own license — see [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
+The client resolves *function → channel* and sends only low-level `set`; the core makes a
+nibble, crypts it (`MouldKingCrypt`), and broadcasts the BLE telegram. One telegram drives
+all hubs at once (12 nibbles = 3 slots × 4 channels). Deep dive — protocol, crypto, the
+dual-radio finding, the WS contract: **[`dev-docs/PROJECT.md`](dev-docs/PROJECT.md)** (the
+source of truth) and the machine-readable **[`asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml)**.
+
+| Run it… | How | Detail |
+|---|---|---|
+| On the Pi (served) | `scripts/start.sh` → `http://<pi>:8080/` | [QUICKSTART](dev-docs/QUICKSTART.md) |
+| Android (standalone) | `./gradlew installDebug` | [ANDROID](dev-docs/ANDROID.md) *(soon)* |
+| Client on the desktop | `client/serve.py` → point at a Pi | [DEV_CLIENT](dev-docs/DEV_CLIENT.md) |
+| Client in Docker | `Dockerfile.client` → point at a Pi | [REMOTE_CLIENT](dev-docs/REMOTE_CLIENT.md) |
+| On another board | — (the radio core is hardware-bound) | [PORTING](dev-docs/PORTING.md) |
+| Add your own toy/layout | a generic slot/channel layout, no core fork | [ADDING_A_LAYOUT](dev-docs/ADDING_A_LAYOUT.md) |
+
+## Roadmap
+
+- **MK6 protocol support** — the greyed *MK6* card badges; second Mould King BLE variant.
+- **ESP32 radio core** — a third thin-transport core behind the same contract.
+- **Camera, ToF sensor** — telemetry over/alongside the API.
+- **AI brain / console client** — an agent driving the toy through the same WebSocket API.
+
+Detail + status: **[`dev-docs/ROADMAP.md`](dev-docs/ROADMAP.md)** *(coming soon)*.
+
+## Credits, license & disclaimer
+
+- **Author:** Dr. Jens Richter — physics & electrical engineering; by day, tour optimization
+  with genetic/AI algorithms at [DNA Evolutions](https://www.dna-evolutions.com/)
+  ([LinkedIn](https://www.linkedin.com/in/li-jens-richter)). *Built for my son Jonas, who
+  loves excavators.* Built with AI assistance.
+- **Protocol groundwork:** [`J0EK3R/mkconnect-python`](https://github.com/J0EK3R/mkconnect-python)
+  — our `mouldking_crypt.py` is a **port/derivative of `MouldKingCrypt`, used under the MIT
+  License** (© 2024 J0EK3R), verified byte-exact against the MK+tech app; see
+  [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md). Additional reference:
+  [BrickController2](https://github.com/imurvai/brickcontroller2).
+- **Independent & unofficial** — **not** affiliated with, authorized by, or endorsed by
+  Mould King / Shenzhen Yuxing; trademarks used descriptively. The BLE protocol was
+  reverse-engineered for interoperability with hardware the author owns, for educational /
+  personal use. Provided **"as is", without warranty — you assume all risk.**
+
+**License:** [MIT](LICENSE) © 2026 Jens Richter. Bundled third-party code keeps its own
+license — see [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
