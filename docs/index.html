@@ -102,32 +102,22 @@
       </div>
     </section>
 
-    <!-- 3. STARTPAGE / CHOOSER ============================================ -->
-    <section class="section" id="start">
-      <div class="wrap">
-        <div class="section-head">
-          <p class="eyebrow">The app</p>
-          <h2>Choose your machine.</h2>
-          <p class="lead">Open moldqueen and you land on the chooser — every layout as a card, with the same live Generic / Model and protocol badges you see below. Pick one and drive.</p>
-        </div>
-        <div class="showcase">
-          <img src="assets/start_page_preview.png" alt="The moldqueen startpage — a chooser of layout cards" loading="lazy" />
-        </div>
-      </div>
-    </section>
-
-    <!-- 4. LAYOUTS (generic showcase + big live tiles) ==================== -->
+    <!-- 3. LAYOUTS (chooser + generic showcase + big live tiles, one section) === -->
     <section class="section" id="layouts">
       <div class="wrap">
         <div class="section-head">
           <p class="eyebrow">Layouts</p>
           <h2>One client, many machines.</h2>
-          <p class="lead">Each toy gets a layout — a control surface over the same API. <em>Model</em> layouts are tuned to a specific machine; <em>generic</em> layouts drive any twelve-motor toy.</p>
+          <p class="lead">Open moldqueen and you land on the chooser — every layout as a card. Pick one and drive. <em>Model</em> layouts are tuned to a specific machine; <em>generic</em> layouts drive any twelve-motor toy.</p>
+        </div>
+
+        <div class="showcase">
+          <img src="assets/start_page_preview.png" alt="The moldqueen startpage — a chooser of layout cards" loading="lazy" />
         </div>
 
         <div class="row rev">
           <div class="media">
-            <img class="shot" src="assets/generic_layout_preview.png" alt="The two generic layouts — a brick-style gamepad and a 12-axis grid" loading="lazy" />
+            <img class="shot full" src="assets/generic_layout_preview.png" alt="The two generic layouts — a brick-style gamepad and a 12-axis grid" loading="lazy" />
           </div>
           <div class="copy">
             <div class="num">Generic layouts</div>
@@ -139,7 +129,7 @@
         <div class="tiles" id="tiles">
           <noscript><div class="tiles-fail">Enable JavaScript to load the live layouts, or browse them in the <a href="https://github.com/jrichter24/moldqueen/tree/main/client/web" rel="noopener">repository</a>.</div></noscript>
         </div>
-        <p class="tiles-note">Cards are pulled live from the project manifest. Badges mirror the app: <strong>Generic</strong> vs <strong>Model</strong>, and the supported protocol — <strong>MK4</strong> today, a greyed <strong>MK6</strong> on the <a href="#roadmap">roadmap</a>. Hover for details.</p>
+        <p class="tiles-note">Cards are pulled live from the project manifest. Badges mirror the app: <strong>Generic</strong> vs <strong>Model</strong>, and the supported protocol — <strong>MK4</strong> today, a greyed <strong>MK6</strong> on the <a href="#roadmap">roadmap</a>. Hover a card to expand it.</p>
       </div>
     </section>
 
@@ -153,10 +143,11 @@
         </div>
 
         <div class="row">
-          <div class="media android-stack">
+          <div class="media android-media">
+            <!-- A: the phone render, standalone -->
             <img class="shot" src="assets/android_bricks_on_phone_preview.png" alt="A phone in landscape running moldqueen, driving a brick-built controller" loading="lazy" />
-            <!-- overlay effect: the app's menu opens on hover (closed → open) -->
-            <div class="menu-ov">
+            <!-- B: the open/closed-menu effect — the menu opens on hover -->
+            <div class="menu-pair">
               <span class="ov-tag">Menu — hover to open</span>
               <img class="m-closed" src="assets/android_closed_menu_preview.png" alt="The app with the menu closed" loading="lazy" />
               <img class="m-open" src="assets/android_open_menu_preview.png" alt="The app with the menu open" loading="lazy" />
