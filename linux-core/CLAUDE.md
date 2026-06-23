@@ -6,8 +6,8 @@ Pi-specific beyond that. The **only** code in the project that touches the radio
 (the Android app has its own native radio in `android-core/`). It builds and broadcasts
 **MK4 BLE "telegrams"** that drive the excavator's hubs.
 
-📖 Canonical reference: [`../docs/PROJECT.md`](../docs/PROJECT.md). **Session handover:**
-read [`../docs/HANDOVER.md`](../docs/HANDOVER.md) at the start of a session and update +
+📖 Canonical reference: [`../dev-docs/PROJECT.md`](../dev-docs/PROJECT.md). **Session handover:**
+read [`../dev-docs/HANDOVER.md`](../dev-docs/HANDOVER.md) at the start of a session and update +
 commit it before wrapping up (see the root `CLAUDE.md`). We run frequent short sessions.
 
 ## Purpose
@@ -177,4 +177,4 @@ linux-core/
   `mouldking_crypt` codec + raw-HCI broadcast stay **here and nowhere else**.
 - The old "java-core emits payload bytes, linux-core re-broadcasts" boundary is
   **superseded** — telegrams are built in Python. See
-  [`../docs/PROJECT.md`](../docs/PROJECT.md) §6.
+  [`../dev-docs/PROJECT.md`](../dev-docs/PROJECT.md) §6.

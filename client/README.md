@@ -39,5 +39,5 @@ client/
   serve.py    # standalone dev server (the §contract above) — pure stdlib, no core import
   README.md
 ```
-Add a layout: see [docs/ADDING_A_LAYOUT.md](../docs/ADDING_A_LAYOUT.md). Other serving
-hosts: [docs/REMOTE_CLIENT.md](../docs/REMOTE_CLIENT.md), [docs/DEV_CLIENT.md](../docs/DEV_CLIENT.md).
+Add a layout: see [dev-docs/ADDING_A_LAYOUT.md](../dev-docs/ADDING_A_LAYOUT.md). Other serving
+hosts: [dev-docs/REMOTE_CLIENT.md](../dev-docs/REMOTE_CLIENT.md), [dev-docs/DEV_CLIENT.md](../dev-docs/DEV_CLIENT.md).

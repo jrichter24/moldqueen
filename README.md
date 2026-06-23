@@ -28,7 +28,7 @@ excavator** is simply the first, hardware-proven **reference layout**, and the
 functions and dashboard) without touching the control core. Honest scope: the
 excavator is what's been verified on real hardware; a different toy will need its own
 layout — which the system now supports. Start here:
-[`docs/ADDING_A_LAYOUT.md`](docs/ADDING_A_LAYOUT.md).
+[`dev-docs/ADDING_A_LAYOUT.md`](dev-docs/ADDING_A_LAYOUT.md).
 
 > **Status:** ✅ **core goal achieved** — *two hubs driven simultaneously from a
 > single telegram on a single radio.* Working webservice + a **landscape dashboard**
@@ -56,9 +56,9 @@ layout — which the system now supports. Start here:
 >   property, or anything else arising from its use — **you assume all risk.** This
 >   complements, and does not replace, the MIT license's no-warranty clause.
 
-🚀 **In a hurry? [`docs/QUICKSTART.md`](docs/QUICKSTART.md)** — fastest path from boxes to driving.
+🚀 **In a hurry? [`dev-docs/QUICKSTART.md`](dev-docs/QUICKSTART.md)** — fastest path from boxes to driving.
 
-📖 **Canonical, exhaustive reference: [`docs/PROJECT.md`](docs/PROJECT.md).** This
+📖 **Canonical, exhaustive reference: [`dev-docs/PROJECT.md`](dev-docs/PROJECT.md).** This
 README is the tour; PROJECT.md is the source of truth.
 
 ---
@@ -110,7 +110,7 @@ README is the tour; PROJECT.md is the source of truth.
   Raspberry Pi.
 - **Pluggable layouts** — the excavator is the reference layout; add one for *your*
   Mould King toy via the manifest, no core changes
-  ([`docs/ADDING_A_LAYOUT.md`](docs/ADDING_A_LAYOUT.md)).
+  ([`dev-docs/ADDING_A_LAYOUT.md`](dev-docs/ADDING_A_LAYOUT.md)).
 - **Multi-device by design** — the protocol addresses **up to 3 hub slots**, so a
   single telegram can drive several toys/hubs together.
 - **Safe by default** — motors snap to **neutral** on disconnect, zero clients, STOP,
@@ -144,7 +144,7 @@ README is the tour; PROJECT.md is the source of truth.
   hubs, not a model. The 13112 excavator is the worked **reference layout**; the
   **pluggable-layout** system (manifest + per-layout function maps + a copyable
   template) lets anyone add a layout for a *different* Mould King toy —
-  [`docs/ADDING_A_LAYOUT.md`](docs/ADDING_A_LAYOUT.md).
+  [`dev-docs/ADDING_A_LAYOUT.md`](dev-docs/ADDING_A_LAYOUT.md).
 - **Safety first.** Disconnect / no-clients / API-death → motors go **neutral**.
   A dry-run mode logs every telegram and transmits nothing.
 
@@ -153,10 +153,10 @@ README is the tour; PROJECT.md is the source of truth.
 ## Screenshots
 
 The excavator dashboard — full visual tour (start page · dashboard · wizard ·
-channel settings) in **[`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md)**.
+channel settings) in **[`dev-docs/SCREENSHOTS.md`](dev-docs/SCREENSHOTS.md)**.
 
 <p align="center">
-  <a href="docs/SCREENSHOTS.md"><img src="assets/excavator_layout.PNG" alt="moldqueen excavator dashboard" width="760"></a>
+  <a href="dev-docs/SCREENSHOTS.md"><img src="assets/excavator_layout.PNG" alt="moldqueen excavator dashboard" width="760"></a>
 </p>
 
 ---
@@ -239,7 +239,7 @@ preamble `C1..C5`, per-byte bit-reversal, CRC-16/CCITT (poly `0x1021`), and two
 > [`J0EK3R/mkconnect-python`](https://github.com/J0EK3R/mkconnect-python) MK6.0
 > model (`0x61`/`0x62` "device 0/1", button "promotion") **does not apply to these
 > hubs** — chasing it cost real time. Our hubs are MK4 nibble. Full post-mortem in
-> [`docs/PROJECT.md`](docs/PROJECT.md) §3.
+> [`dev-docs/PROJECT.md`](dev-docs/PROJECT.md) §3.
 
 ## Architecture
 
@@ -303,7 +303,7 @@ Three ways to use it:
 2. **Run the client separately.** Serve the UI elsewhere (Docker on a desktop) and
    point it at the Pi's WS via the in-app endpoint setting — see
    [Running the client separately](#running-the-client-separately-docker) and
-   [`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md).
+   [`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md).
 3. **Bring your own client.** Skip the page entirely and talk to the WebSocket from
    your own code/console/AI — contract in [`asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml).
 
@@ -384,7 +384,7 @@ see [`linux-core/mk4web/config.py`](linux-core/mk4web/config.py)).
 An **About** overlay carries the disclaimer, credits, licensing, AI note, and author.
 
 **`/excavator`** is the **landscape excavator dashboard**, laid out over an HMI
-background (see [`docs/mould_king_13112_hmi_layout_spec.md`](docs/mould_king_13112_hmi_layout_spec.md)).
+background (see [`dev-docs/mould_king_13112_hmi_layout_spec.md`](dev-docs/mould_king_13112_hmi_layout_spec.md)).
 **`/raw`** is a **RAW debug** layout — a protocol-level test bench over the low-level
 `set`/`stop` path: choose 1-3 slots, set each channel directly, build + send the
 telegram, and a console logs the exact bytes (raw + on-air AD).
@@ -434,7 +434,7 @@ connection** panel), enter `ws://<pi-ip>:8765`, and press **Connect** — it's s
 in the browser and the WebSocket reconnects. The endpoint defaults to the page's
 own host (so the Pi-served UI needs no setup). The Pi's API is **permissive CORS /
 any-WS-origin by design** (LAN hobby tool). Full guide:
-**[`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md)**.
+**[`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md)**.
 
 ## Set it up with an AI assistant
 
@@ -442,8 +442,8 @@ Comfortable with AI tools? You can hand the install and setup to an agent. Point
 AI assistant (e.g. Claude Code) at the repo —
 **[`github.com/jrichter24/moldqueen`](https://github.com/jrichter24/moldqueen)** — or
 just paste this README, and ask it to walk you through getting moldqueen running on
-your Pi. The project is written to be **agent-friendly**: [`docs/QUICKSTART.md`](docs/QUICKSTART.md)
-is the fast path, [`docs/PROJECT.md`](docs/PROJECT.md) is the exhaustive reference,
+your Pi. The project is written to be **agent-friendly**: [`dev-docs/QUICKSTART.md`](dev-docs/QUICKSTART.md)
+is the fast path, [`dev-docs/PROJECT.md`](dev-docs/PROJECT.md) is the exhaustive reference,
 and the per-folder [`CLAUDE.md`](CLAUDE.md) files hand an agent the must-knows and
 operational gotchas. You still supply the hardware (a Pi, a USB BLE dongle, your
 hubs) — the AI handles the software and configuration steps.
@@ -512,7 +512,7 @@ reverse speed to match forward; `max` caps a function's top speed.
 
 ## How the protocol was reverse-engineered
 
-A compact case study (details in [`docs/PROJECT.md`](docs/PROJECT.md) and
+A compact case study (details in [`dev-docs/PROJECT.md`](dev-docs/PROJECT.md) and
 [`linux-core/reference/MKtech_reverse_engineering_report.md`](linux-core/reference/MKtech_reverse_engineering_report.md)):
 
 1. **Sniffed** the hubs with `btmon` + `hcitool lescan` — they don't advertise;
@@ -561,7 +561,7 @@ forces neutral, and if the API process dies the broadcaster drops to **IDLE**.
 
 ```
 moldqueen/
-├── docs/PROJECT.md            # canonical project reference (read this)
+├── dev-docs/PROJECT.md            # canonical project reference (read this)
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── config/channel_map.<layout>.json  # per-layout default channel map (e.g. channel_map.excavator.json)
 ├── assets/                    # doc screenshots only (excavator_layout*.PNG, landing_select_layout.PNG)
@@ -600,9 +600,9 @@ scaffolds the project outgrew.
 
 ## Development
 
-- **Add your own layout / toy:** [`docs/ADDING_A_LAYOUT.md`](docs/ADDING_A_LAYOUT.md)
+- **Add your own layout / toy:** [`dev-docs/ADDING_A_LAYOUT.md`](dev-docs/ADDING_A_LAYOUT.md)
   (the clean path = a generic slot/channel layout, no server change).
-- **Run on another board / in a container:** [`docs/PORTING.md`](docs/PORTING.md)
+- **Run on another board / in a container:** [`dev-docs/PORTING.md`](dev-docs/PORTING.md)
   (the radio core is hardware-bound — honest caveats inside).
 - **Minimal dependencies** (1 GB Pi): the service needs only `websockets`.
 - **Tests:** `cd linux-core && source .venv/bin/activate && pytest`.

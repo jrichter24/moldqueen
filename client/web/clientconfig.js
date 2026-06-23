@@ -3,7 +3,7 @@
 // host (so serving the UI from the Pi "just works"); set + persist an override in
 // localStorage so the client can be served from ANYWHERE (e.g. a Docker container
 // on your desktop) and pointed at a remote Pi's API (ws://<pi>:8765).
-// See docs/REMOTE_CLIENT.md.
+// See dev-docs/REMOTE_CLIENT.md.
 window.MK4 = window.MK4 || {};
 (function (M) {
   M.LS_ENDPOINT = "mk4_ws_endpoint";

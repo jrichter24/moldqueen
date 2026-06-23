@@ -3,7 +3,7 @@
 Snapshot of the **proven** Mould King 13112 control method, copied from the scratch
 work area (`~/scratch/mk-refs/`) so the win is backed up in git. The working
 implementation built from these is **[`../mk4web/`](../mk4web/)** (the control
-webservice). **Canonical project doc: [`../../docs/PROJECT.md`](../../docs/PROJECT.md).**
+webservice). **Canonical project doc: [`../../dev-docs/PROJECT.md`](../../dev-docs/PROJECT.md).**
 
 | File | What it is |
 |------|------------|

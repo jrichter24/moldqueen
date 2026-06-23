@@ -3,18 +3,18 @@
 Control a **Mould King 13112 RC excavator** from a Raspberry Pi (then add a camera,
 TOF sensor, and a local AI brain that drives it via the same API).
 
-📖 **Full canonical reference: [`docs/PROJECT.md`](docs/PROJECT.md).** This file is
+📖 **Full canonical reference: [`dev-docs/PROJECT.md`](dev-docs/PROJECT.md).** This file is
 the terse must-knows for next session; PROJECT.md wins on any disagreement.
 
 ## Session handover (do this every session)
 
 We run **frequent fresh sessions** (the 1 GB Pi RAM thrashes in long ones), so context
-must survive a restart via **[`docs/HANDOVER.md`](docs/HANDOVER.md)** — a short living
+must survive a restart via **[`dev-docs/HANDOVER.md`](dev-docs/HANDOVER.md)** — a short living
 "where we are right now" doc.
 
-- **At session START:** read `docs/HANDOVER.md` (current state + next task) alongside
+- **At session START:** read `dev-docs/HANDOVER.md` (current state + next task) alongside
   this file + `PROJECT.md`.
-- **Before WRAPPING UP:** **update `docs/HANDOVER.md`** (move finished work to *Current
+- **Before WRAPPING UP:** **update `dev-docs/HANDOVER.md`** (move finished work to *Current
   state*, set the new *next task*, note new decisions/quirks) and **commit it** — that
   makes ending a session lossless. Prefer ending early over a long thrashy session.
 
@@ -70,13 +70,13 @@ category,active,functions?,files}`). The **server derives each route as `/<id>`*
 (not a manifest field); `active:false` hides a layout (no route/card) — that's how
 the inactive **template** (`template.{html,js,css}` + `channel_map.template.json`)
 ships. Shared shell/menu/modal CSS = **`shell.css`** (each layout links it + its own
-css); see [`docs/ADDING_A_LAYOUT.md`](docs/ADDING_A_LAYOUT.md). **Routes:** `/` =
+css); see [`dev-docs/ADDING_A_LAYOUT.md`](dev-docs/ADDING_A_LAYOUT.md). **Routes:** `/` =
 **chooser** → `/excavator` or `/raw`. **Dashboard:** drag-joysticks + hold buttons; a
 **connection wizard** (**Connect → button one hub to slot 1 → Ready**); **Settings**
 to assign function→slot/channel (+ max, reverse-trim, invert, EN/DE labels,
 device-swap, **configurable WS endpoint**, **ℹ server-info readout**, Save/Promote).
 The client can be served separately (Docker, point at the Pi via the endpoint
-setting — see [`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md)). Detail in
+setting — see [`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md)). Detail in
 [`linux-core/CLAUDE.md`](linux-core/CLAUDE.md).
 
 ## Components (one repo)
@@ -107,7 +107,7 @@ setting — see [`docs/REMOTE_CLIENT.md`](docs/REMOTE_CLIENT.md)). Detail in
   **Resolve by MAC `00:A6:44:02:21:25`** (or just use `scripts/start.sh`, which finds
   it by MAC + brings it up); **never assume a fixed `hciN`**.
 
-## Open problems (see `docs/PROJECT.md` §8)
+## Open problems (see `dev-docs/PROJECT.md` §8)
 
 Finish the channel map · slot auto-detection (unsolved) · box-identity UX
 (unsolved) · console/AI client of the WS API (TODO) · disable onboard BT ·

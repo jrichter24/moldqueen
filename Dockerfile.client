@@ -4,7 +4,7 @@
 # mk4web/api.py — so adding a layout needs NO per-route config (the old nginx mirror is
 # retired). Contains NO broadcaster and NO radio access — it's only the UI.
 # Point it at a remote Pi's WS API via the in-app "API endpoint" setting (ws://<pi>:8765).
-# See docs/REMOTE_CLIENT.md.
+# See dev-docs/REMOTE_CLIENT.md.
 #
 #   docker build -f Dockerfile.client -t moldqueen-client .   # context = repo root
 #   docker run --rm -p 8080:8080 moldqueen-client             # open http://localhost:8080/

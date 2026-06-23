@@ -4,7 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * MK4 12-channel nibble protocol (docs/PROJECT.md §3) — the format the app
+ * MK4 12-channel nibble protocol (dev-docs/PROJECT.md §3) — the format the app
  * actually broadcasts. Connect: ad ae 18 80 80 80 f3 52. Motion: 7d ae 18
  * <6 channel bytes> 82, where the 6 bytes hold 12 nibbles (3 slots x 4 ch),
  * global nibble index = slot*4 + channel, even index = high nibble, odd = low,

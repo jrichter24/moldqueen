@@ -1,7 +1,7 @@
 package com.dnaevolutions.moldqueen
 
 /**
- * Builds MK4 12-channel nibble telegrams (docs/PROJECT.md §3) and crypts them
+ * Builds MK4 12-channel nibble telegrams (dev-docs/PROJECT.md §3) and crypts them
  * to 24-byte on-air manufacturer data via [MouldKingCrypt].
  *
  * Connect (raw): ad ae 18 80 80 80 f3 52  — single generic frame.

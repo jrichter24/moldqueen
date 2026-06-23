@@ -130,7 +130,7 @@
   Note: a client holding an OLD localStorage active map keeps its en/de and starts the new
   langs empty until Reset-to-default or editing (by design).
 - **Screenshot gallery (2026-06-18):** committed the four `assets/*.PNG` screenshots and
-  added **`docs/SCREENSHOTS.md`** (captioned visual tour: start page → dashboard → connect
+  added **`dev-docs/SCREENSHOTS.md`** (captioned visual tour: start page → dashboard → connect
   wizard → channel settings; `../assets/` paths). README links it (ToC + a "Screenshots"
   section after Highlights) with one clickable hero image (the dashboard → gallery). Docs-only.
 - **README messaging (2026-06-18):** reframed as a **multi-purpose, toy-agnostic

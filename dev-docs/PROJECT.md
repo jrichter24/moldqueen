@@ -210,7 +210,7 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
 - **Dashboard** (`client/web/dashboard.{html,js,css}`, served at `/excavator`) — the
   main driving GUI, the first client of the API. Laid out over an HMI
   background (`client/assets/moldqueen_dashboard_v2.png`,
-  [`docs/mould_king_13112_hmi_layout_spec.md`](mould_king_13112_hmi_layout_spec.md))
+  [`dev-docs/mould_king_13112_hmi_layout_spec.md`](mould_king_13112_hmi_layout_spec.md))
   with percent coordinates:
   - **Controls bind to FUNCTIONS** (not raw channels) via the active map. Tracks +
     arm-lift + front-arm are **proportional drag joysticks** (drag = speed up to the
@@ -341,7 +341,7 @@ see `mk4web/config.py`).
 
 ```
 moldqueen/
-├── docs/PROJECT.md            # THIS FILE — canonical
+├── dev-docs/PROJECT.md            # THIS FILE — canonical
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── CLAUDE.md                  # terse must-knows (points here)
 ├── config/channel_map.<layout>.json  # per-layout DEFAULT channel map (e.g. channel_map.excavator.json)

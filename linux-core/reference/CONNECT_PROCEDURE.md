@@ -1,6 +1,6 @@
 # Mould King 13112 — BLE control procedure (MK4 nibble protocol)
 
-> Working snapshot. **Canonical reference: [`../../docs/PROJECT.md`](../../docs/PROJECT.md).**
+> Working snapshot. **Canonical reference: [`../../dev-docs/PROJECT.md`](../../dev-docs/PROJECT.md).**
 
 Status: **TWO-HUB SIMULTANEOUS CONTROL CONFIRMED (2026-06-16).** One MK4 telegram
 on one radio drives both hubs at once.
