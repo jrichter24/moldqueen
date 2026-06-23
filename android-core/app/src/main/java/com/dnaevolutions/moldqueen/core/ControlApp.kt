@@ -7,7 +7,7 @@ import com.dnaevolutions.moldqueen.Mk4Telegrams.nibbleToValue
 import com.dnaevolutions.moldqueen.Mk4Telegrams.valueToNibble
 
 /**
- * Dumb transport state — clean-room port of api.py's (now dumb) App. Holds the lifecycle
+ * Thin-transport state — clean-room port of api.py's (now thin-transport) App. Holds the lifecycle
  * and the 12 raw nibbles, nothing more. The server knows NOTHING about functions, channel
  * maps, invert/caps, or labels; the client owns all that and sends only low-level `set`
  * (slot/channel/value). Motion is honored only in READY.

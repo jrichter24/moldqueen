@@ -19,12 +19,12 @@ info:
     **slot** selected by its physical button (resets to slot 0 on power-cycle):
     slot 0 = channels 0–3, slot 1 = 4–7, slot 2 = 8–11.
 
-    ## Dumb transport — the CLIENT owns all semantics
+    ## Thin transport — the smart client owns all semantics
     The server knows NOTHING about functions, channel maps, invert/caps, reverse_scale,
     device-swap, or labels. The **client** resolves a function to (slot, channel, value)
     against its own (client-owned) channel map and sends only the low-level **`set`** —
     the sole motion primitive. The server just does `value → nibble → crypt → broadcast`;
-    the broadcaster stays dumb (it only ever receives 12 nibbles).
+    the broadcaster stays thin transport (it only ever receives 12 nibbles).
 
     ## value → nibble mapping
     `nibble = 0x8 + value`, value in `-7..+7` → nibble `0x1..0xF`:

@@ -35,13 +35,13 @@ must survive a restart via **[`dev-docs/HANDOVER.md`](dev-docs/HANDOVER.md)** �
   failures). `bluetoothd` must be **stopped + masked**; raw HCI needs root/caps.
 - **Codec verified:** `linux-core/reference/mouldking_crypt.py` (`encode`/`decode`)
   reproduces the app's bytes exactly (13/13 tests). Do NOT reinvent the crypt.
-- **Channel map = DATA, PER-LAYOUT** (each function-mapped layout declares its
-  function set in `client/web/layouts.json` + its default in
-  [`config/channel_map.<id>.json`](config/), e.g. `channel_map.excavator.json`;
-  editable live in the GUI). No global `FUNCTIONS` — `channelmap` is parameterized by
-  the layout's set. Drive **by FUNCTION**; the **server** resolves
-  function→(slot,channel,value) (+ invert, device-0/1 swap, `reverse_scale` trim,
-  per-function `max`) — broadcaster stays dumb. Transmit-confirmed: **bucket =
+- **Channel map = DATA, PER-LAYOUT, CLIENT-OWNED** (each function-mapped layout declares
+  its function set in `client/web/layouts.json` + its default in
+  `client/web/channel_map.<id>.json`, e.g. `channel_map.excavator.json`; editable live in
+  the GUI). No global `FUNCTIONS` — the client's resolver is parameterized by the layout's
+  set. Drive **by FUNCTION**; the **smart client** resolves function→(slot,channel,value)
+  (+ invert, device-0/1 swap, `reverse_scale` trim, per-function `max`) and sends raw
+  `set` — the server is **thin transport** (it never sees the map). Transmit-confirmed: **bucket =
   slot0/ch0** (shovel), **left_track = slot1/ch0** (= global ch4), **arm_lift =
   slot0/ch3**, **front_arm = slot0/ch1** (last two from the 2026-06-17 hardware test,
   swapped from the placeholders); rotation/right_track still placeholders.
@@ -51,11 +51,11 @@ must survive a restart via **[`dev-docs/HANDOVER.md`](dev-docs/HANDOVER.md)** �
 
 The control stack is the **`linux-core/mk4web/`** Python webservice: a **broadcaster**
 (owns the radio + 12-nibble state, lifecycle IDLE→CONNECTING→READY, auto-neutral
-safety) + an **API** (the **WebSocket API `:8765` is the product**, always on;
-resolves `drive`-by-function via `channelmap.py`; AsyncAPI at `/asyncapi.yaml`).
-**WS commands:** `setup` (connect/ready/reset), `drive` (by function), `set` (raw
-slot/ch), `stop`, `state`, `map` (get/set/swap/promote); pushes `lifecycle`/`state`/
-`map`/`mapresult`. Serving the client web page is **OPTIONAL**: on by default,
+safety) + an **API** (the **WebSocket API `:8765` is the product**, always on; **thin
+transport** — raw `set` only, no function/map resolution; AsyncAPI at `/asyncapi.yaml`).
+**WS commands:** `setup` (connect/ready/reset), `set` (raw slot/ch/value — the only
+motion primitive), `stop`, `state`, `info`; pushes `lifecycle`/`state`/`info`. The
+**smart client** resolves function→channel + owns the map. Serving the client web page is **OPTIONAL**: on by default,
 `--ws-only` (=`MK4_SERVE_CLIENT=0`) runs WS-only, `--http-port N` overrides the page
 port. Run from `linux-core/` in the venv (or `scripts/start.sh`):
 

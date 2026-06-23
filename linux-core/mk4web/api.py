@@ -1,4 +1,4 @@
-"""API process (B) — DUMB transport WebSocket API + serves the web client.
+"""API process (B) — THIN-TRANSPORT WebSocket API + serves the web client.
 
 The server is pure transport: it knows NOTHING about functions, channel maps, invert,
 caps, or labels. The CLIENT owns all semantics (function -> slot/channel/value, invert,
@@ -18,7 +18,7 @@ Server -> client (pushed):
 Lifecycle is owned here (the GUI drives the transitions) and forwarded to the
 broadcaster, which enacts the radio. `set` -> value_to_nibble -> nibble; the telegram
 build + crypt (telegram.py / mouldking_crypt.py) is the transport. The broadcaster
-stays dumb (12 nibbles only).
+stays thin transport (12 nibbles only).
 
 SAFETY: on a client disconnect (or no clients), command the broadcaster to NEUTRAL.
 
@@ -147,7 +147,7 @@ class IPCClient:
 
 
 class App:
-    """Dumb transport state: a lifecycle + the 12 raw nibbles. The server knows NOTHING
+    """Thin-transport state: a lifecycle + the 12 raw nibbles. The server knows NOTHING
     about functions, channel maps, invert/caps, or labels — the client owns all that and
     sends only low-level `set` (slot/channel/value). Motion is honored only in READY."""
     def __init__(self):

@@ -165,8 +165,8 @@ channel settings) in **[`dev-docs/SCREENSHOTS.md`](dev-docs/SCREENSHOTS.md)**.
 
 Drive the excavator with a **PS5 DualSense** (or any browser-supported) gamepad. Pair it
 to the **device running the web client** — over USB or Bluetooth — and the dashboard reads
-it through the browser **Gamepad API**, sending the *same* drive-by-function commands as
-the on-screen joysticks.
+it through the browser **Gamepad API**, driving the *same* functions as the on-screen
+joysticks (the client resolves both to raw `set`).
 
 <p align="center">
   <img src="client/assets/ps5_controller.png" alt="PS5 DualSense controller driving moldqueen" width="520">
@@ -398,16 +398,17 @@ telegram, and a console logs the exact bytes (raw + on-air AD).
 - **Settings** (centered overlay) = the **channel-assignment tool**: drag/Test a
   control, see which motor moves, set its slot/channel + max speed + reverse-trim +
   invert; a separate **Labels** page (EN/DE); **Save** (this session) or **Promote**
-  (save as the new default in the layout's `config/channel_map.<layout>.json`).
-  Plus a session-only **device-0/1 hub swap**.
+  (persist as the new default in this browser). Plus a session-only **device-0/1 hub
+  swap**.
 - **Responsive shell** — viewport-fit (no page scroll); the menu is a **top bar on
   desktop, a left sidebar on mobile** (portrait *and* landscape); **EN/DE** toggle,
   fullscreen, and **STOP** are always reachable.
 
-The channel map has a persisted **server default** and a **client active** map
-(default + overrides); the **server** resolves `function → (slot, channel, value)`
-so the broadcaster stays dumb. *(The **RAW** layout (`/raw`) is the slot/channel test
-bench over raw `set`/`stop`.)*
+The channel map is **client-side**: a shipped default (`client/web/channel_map.<id>.json`)
+plus the **active** map + your overrides, persisted in the browser. The **smart client**
+resolves `function → (slot, channel, value)` (invert / caps / reverse-trim / device-swap)
+and sends only low-level `set {slot, channel, value}` — the server is **thin transport**.
+*(The **RAW** layout (`/raw`) is the slot/channel test bench over raw `set`/`stop`.)*
 
 ### Running as a service (optional)
 
@@ -460,39 +461,38 @@ contract: **[`linux-core/mk4web/asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml)
 { "cmd": "setup", "action": "connect" }              // IDLE → CONNECTING
 { "cmd": "setup", "action": "ready"   }              // CONNECTING → READY
 { "cmd": "setup", "action": "reset"   }              // → IDLE (all neutral)
-{ "cmd": "drive", "function": "left_track", "value": 6 } // motion BY FUNCTION (READY only)
-{ "cmd": "set", "slot": 1, "channel": 0, "value": 5 } // raw motion by slot/channel (READY only)
+{ "cmd": "set", "slot": 1, "channel": 0, "value": 5 } // the ONLY motion primitive — raw slot/channel/value (READY only)
 { "cmd": "stop" }                                     // all neutral (any state)
-{ "cmd": "map", "action": "get" }                     // get the channel map
-{ "cmd": "map", "action": "set",     "map": { … } }   // set the session ACTIVE map
-{ "cmd": "map", "action": "swap",    "value": true }  // session device-0/1 (slot 0↔1) swap
-{ "cmd": "map", "action": "promote", "map": { … } }   // persist a map as the DEFAULT
 { "cmd": "state" }                                    // re-send current state
+{ "cmd": "info"  }                                    // server-info (tiered disclosure)
 ```
 
 **Server → client (pushed)**
 
 ```jsonc
 { "type": "lifecycle", "state": "READY" }            // on connect + every transition
-{ "type": "state", "slots": [[0,0,0,0],[6,0,0,0],[0,0,0,0]] }  // 3 slots × 4 signed values
-{ "type": "map", "default": { … }, "active": { … }, "device_swap": false }
-{ "type": "mapresult", "action": "set", "ok": true, "errors": [] }
+{ "type": "state", "slots": [[0,0,0,0],[6,0,0,0],[0,0,0,0]], "raw": "…", "ad": "…" }  // 3 slots × 4 signed values + on-air bytes
+{ "type": "info", … }                                // server-info (to the requester)
 ```
 
-`drive` names a **function**; the **server** resolves it to `(slot, channel, value)`
-against the active map (applying invert, device-swap, and a per-function
-`reverse_scale` trim) so the broadcaster stays dumb. `value` is `-7..+7`; `slot`
-`0..2`, `channel` `0..3`. Full contract: [`asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml).
+The server is **thin transport**: `set` carries a raw `(slot, channel, value)` —
+`value` `-7..+7`, `slot` `0..2`, `channel` `0..3` — which it turns into a nibble,
+crypts, and broadcasts. It knows **nothing** about functions, channel maps, invert,
+caps, or labels: the **smart client** resolves `function → (slot, channel, value)`
+(invert / caps / reverse-trim / device-swap), owns the per-layout channel map, and runs
+the affirmative keepalive + STOP latch. Full contract:
+[`asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml).
 
 ## Channel map
 
-The **function → (slot, channel)** map is **data**, not hardcoded, and **per layout**:
-each function-mapped layout declares its function set (in the layout manifest) + a
-persisted default in `config/channel_map.<layout>.json` (the excavator's is
-[`config/channel_map.excavator.json`](config/channel_map.excavator.json)), editable
+The **function → (slot, channel)** map is **data**, not hardcoded, **per layout**, and
+lives **on the client**: each function-mapped layout declares its function set (in the
+layout manifest) + a shipped default at
+[`client/web/channel_map.<id>.json`](client/web/channel_map.excavator.json), editable
 live in the GUI. The excavator's six functions, each `{slot, channel, invert, max, reverse_scale, label_en,
-label_de}`. The server resolves `drive` against the **active** map (default + the
-client's overrides; `promote` saves a map as the new default). Current default —
+label_de}`. The **client** resolves drive-by-function against the **active** map (the
+default + your overrides, persisted in the browser; **Promote** saves a map as the new
+default) and sends raw `set` — the server never sees the map. Current default —
 `bucket`, `left_track`, `arm_lift`, `front_arm` are transmit-confirmed; `rotation`
 and `right_track` are placeholders to sweep:
 
@@ -563,15 +563,15 @@ forces neutral, and if the API process dies the broadcaster drops to **IDLE**.
 moldqueen/
 ├── dev-docs/PROJECT.md            # canonical project reference (read this)
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
-├── config/channel_map.<layout>.json  # per-layout default channel map (e.g. channel_map.excavator.json)
 ├── assets/                    # doc screenshots only (excavator_layout*.PNG, landing_select_layout.PNG)
 ├── scripts/                   # start.sh / check.sh — preflight + launch (no system changes)
-├── client/                    # INDEPENDENT web client — consumed by the cores + Docker; depends only on the WS API
-│   ├── web/                   #   chooser.html, shell.css, clientconfig.js, layouts.json, dashboard.*, raw.*, template.*
+├── client/                    # INDEPENDENT smart web client — consumed by the cores + Docker; depends only on the WS API
+│   ├── web/                   #   chooser.html, shell.css, chrome.*, clientconfig.js, layouts.json,
+│   │                          #   channel_map.<id>.json (the client owns the maps), dashboard.*, generic.*, raw.*, template.*
 │   ├── assets/                #   served UI art (icons, LED gifs, dashboard background, banners)
 │   └── serve.py               #   standalone dev server (route derivation + the 4-placeholder injection)
-├── linux-core/                # Python — the Linux/BlueZ radio core + control service (tested target: the Pi)
-│   ├── mk4web/                # broadcaster · api · telegram · channelmap · mouldking_crypt · config
+├── linux-core/                # Python — the Linux/BlueZ radio core + thin-transport service (tested target: the Pi)
+│   ├── mk4web/                # broadcaster · api · telegram · mouldking_crypt · config
 │   │   └── asyncapi.yaml      #   WS API contract (served at /asyncapi.yaml)
 │   └── reference/             # verified protocol snapshots, the codec, the APK report
 ├── android-core/              # Kotlin — standalone Android app (radio + local WS API + serves the client)

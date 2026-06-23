@@ -39,7 +39,7 @@ interface InfoConfig {
 }
 
 /**
- * The DUMB-transport WebSocket API, clean-room port of linux-core/mk4web/api.py's handler.
+ * The THIN-TRANSPORT WebSocket API, clean-room port of linux-core/mk4web/api.py's handler.
  * Pure (no Android/transport): the Android layer feeds it onConnect/onMessage/onDisconnect
  * and implements [ClientSink]/[Radio]/[InfoConfig].
  *

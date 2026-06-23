@@ -54,7 +54,7 @@ function refreshActive() {
   if (r) send({ cmd: "set", slot: r.slot, channel: r.channel, value: r.value });
 }
 // Client-side resolution: function → (slot, channel, value) with invert + per-direction cap.
-// (The server is dumb transport — it never resolves anything.)
+// (The server is thin transport — it never resolves anything.)
 function resolve(fn, v) {
   var a = activeMap && activeMap.functions && activeMap.functions[fn];
   if (!a) return null;

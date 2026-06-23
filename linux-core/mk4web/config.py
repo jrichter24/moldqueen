@@ -21,7 +21,7 @@ ADV_INTERVAL = int(os.environ.get("MK4_ADV_INTERVAL", "320")) # 0.625ms slots; 3
 REFRESH    = float(os.environ.get("MK4_REFRESH", "0.5"))      # re-issue set-data at least this often (live)
 
 # The web client is an INDEPENDENT top-level peer (client/); the core only POINTS at it
-# to SERVE it. The CLIENT owns the channel map (the server is dumb transport — no
+# to SERVE it. The CLIENT owns the channel map (the server is thin transport — no
 # server-side channel map / CONFIG_DIR any more). WEB_DIR = the client static files
 # (chooser/dashboard/raw + layouts.json + per-layout channel_map.<id>.json); ASSETS_DIR =
 # the client's served UI art (icons/gifs/dashboard background), served at /assets/**.

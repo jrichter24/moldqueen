@@ -112,24 +112,24 @@ reinvented.
 - **`api.py`** — WebSocket server (always on) + **optionally** serves the client web
   page (`--ws-only`/`MK4_SERVE_CLIENT=0` to skip HTTP; `--http-port N`). Permissive
   CORS/WS-origin so the client can be served separately (Docker) and pointed back via
-  its configurable endpoint (`clientconfig.js`). **Owns/drives the lifecycle**, holds
-  the **channel map** (default + session active + device-swap) and
-  **resolves `drive` by function → (slot,channel,value)** via `channelmap.py`
-  (invert + device-swap + `reverse_scale`), forwards to the broadcaster, pushes
-  state. **SAFETY:** client disconnect (or no clients) → NEUTRAL.
-- **`channelmap.py` + per-layout `../config/channel_map.<id>.json`** — the function
-  map as DATA (load/validate/save/resolve), PER LAYOUT: each function-mapped layout
-  declares its function set (manifest `web/layouts.json`) + default map; `channelmap`
-  is parameterized by that set (no global `FUNCTIONS`). Validation rejects duplicate
-  `(slot,channel)`. The client owns the **active** map and pushes it on every connect;
-  `promote` persists it as that layout's default.
+  its configurable endpoint (`clientconfig.js`). **Owns/drives the lifecycle**; it is
+  **thin transport** — takes raw `set {slot,channel,value}`, maps value→nibble, crypts,
+  forwards to the broadcaster, pushes state. It holds **no** channel map and resolves
+  **nothing** (no functions, invert, caps, device-swap, labels). **SAFETY:** client
+  disconnect (or no clients) → NEUTRAL.
+- **Channel map (CLIENT-side)** — per-layout `client/web/channel_map.<id>.json`, the
+  function map as DATA, PER LAYOUT: each function-mapped layout declares its function set
+  (manifest `web/layouts.json`) + default map. The **smart client** loads / validates /
+  resolves it (parameterized by that set, no global `FUNCTIONS`; rejects duplicate
+  `(slot,channel)`), holds the **active** map (default + overrides, persisted in the
+  browser; `promote` saves a new default) and sends raw `set`. The server never sees it.
 
-**WebSocket API:** `{"cmd":"setup","action":connect|ready|reset}` (lifecycle),
-`{"cmd":"drive","function":…,"value":-7..7}` (by function, READY-only),
-`{"cmd":"set","slot":0-2,"channel":0-3,"value":-7..7}` (raw, READY-only),
-`{"cmd":"stop"}`, `{"cmd":"state"}`, `{"cmd":"map","action":get|set|swap|promote}`.
-Server pushes `lifecycle`, `state` (`[[v×4]×3]`), `map` (default+active+device_swap),
-`mapresult`. **Value→nibble:** `nibble = 0x8 + value` (`-7..+7` → `0x1..0xF`). The
+**WebSocket API (thin transport):** `{"cmd":"setup","action":connect|ready|reset}` (lifecycle),
+`{"cmd":"set","slot":0-2,"channel":0-3,"value":-7..7}` (the ONLY motion primitive, READY-only),
+`{"cmd":"stop"}`, `{"cmd":"state"}`, `{"cmd":"info"}`. Server pushes `lifecycle`,
+`state` (`[[v×4]×3]` + `raw`/`ad`), `info`. The **smart client** resolves
+function→(slot,channel,value) and owns the channel map (server holds none).
+**Value→nibble:** `nibble = 0x8 + value` (`-7..+7` → `0x1..0xF`). The
 dashboard uses **drag joysticks** (tracks/arms; release → neutral) + hold buttons
 (rotation/bucket); controls locked until READY; a **connection wizard** drives the
 cold-start. Full contract in `asyncapi.yaml`.
@@ -159,7 +159,7 @@ python -m mk4web.api --ws-only             # WebSocket only (no page); --http-po
 ```
 linux-core/
 ├── mk4web/                # the working control webservice
-│   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
+│   ├── broadcaster.py  api.py  telegram.py  mouldking_crypt.py  config.py
 │   └── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
 │                          # (the web UI is the INDEPENDENT ../client/ peer; api.py serves it via config.WEB_DIR)
 ├── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,

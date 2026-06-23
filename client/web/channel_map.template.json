@@ -1,5 +1,5 @@
 {
-  "_comment": "TEMPLATE default channel map — placeholder. Copy to config/channel_map.<your-id>.json and edit. One function per motor/channel you control; add more entries to the 'functions' object AND to the layout's 'functions' list in web/layouts.json. Each function maps to a (slot, channel) nibble; values are -7..+7 (0x8 + value). Labels are a per-language object {en,de,zh,ko,es,fr}; en is the fallback.",
+  "_comment": "TEMPLATE default channel map — placeholder. Copy to client/web/channel_map.<your-id>.json and edit. One function per motor/channel you control; add more entries to the 'functions' object AND to the layout's 'functions' list in web/layouts.json. Each function maps to a (slot, channel) nibble; values are -7..+7 (0x8 + value). Labels are a per-language object {en,de,zh,ko,es,fr}; en is the fallback.",
   "version": 1,
   "functions": {
     "knob_1": {

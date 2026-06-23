@@ -15,11 +15,11 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 /**
- * The single service: a DUMB-transport WS API + the local client HTTP server, in one
+ * The single service: a THIN-TRANSPORT WS API + the local client HTTP server, in one
  * process. Owns the pure [ApiCore]/[ControlApp] (lifecycle + 12 nibbles only), the
  * [RadioController] driving the proven [BleBroadcaster], and the loopback servers. The
  * client (served from bundled assets) owns the channel map — no map state here. The WebView
- * connects to ws://localhost:8765 and sees the same dumb contract as the Pi.
+ * connects to ws://localhost:8765 and sees the same thin-transport contract as the Pi.
  */
 class Mk4Service(context: Context) {
 

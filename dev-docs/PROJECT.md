@@ -22,8 +22,9 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
   **landscape dashboard GUI** served at `/excavator` (a layout chooser is at `/`): proportional drag-joysticks + hold
   buttons, a **connection wizard** for cold-start, and an in-GUI **channel-assignment**
   settings overlay (assign function → slot/channel, per-function max speed, reverse
-  trim, invert, EN/DE labels). Drive **by function**; the server resolves it against
-  a **configurable channel map** (persisted default + client overrides).
+  trim, invert, EN/DE labels). Drive **by function**: the **smart client** resolves it
+  against a **configurable channel map it owns** (shipped default + client overrides) and
+  sends raw `set` — the server is **thin transport**.
 - ✅ **RAW** debug layout, a layout **chooser**, a **configurable API endpoint**
   (run the client separately / in Docker), and a **two-piece split** (mandatory
   WebSocket API + optional client web page via `--ws-only` / `--http-port`).
@@ -111,13 +112,14 @@ All MK6.0 "device-1 / promotion" guidance is **SUPERSEDED**.
 
 ## 5. Channel map — DATA, now PER-LAYOUT (not hardcoded, not global)
 
-The map of **function → (slot, channel)** is **data**, owned **per layout**. Each
-function-mapped layout declares its **function set** in the manifest (`web/
-layouts.json`) and its persisted default in
-[`config/channel_map.<layout_id>.json`](../config/) — the excavator's is
-[`channel_map.excavator.json`](../config/channel_map.excavator.json). The server has
-**no hardcoded function list** — `channelmap.validate/load` are parameterized by the
-active layout's function set, and `resolve` just looks a function up in the map.
+The map of **function → (slot, channel)** is **data**, owned **per layout**, and lives
+**on the client**. Each function-mapped layout declares its **function set** in the
+manifest (`web/layouts.json`) and ships a default at
+[`client/web/channel_map.<id>.json`](../client/web/channel_map.excavator.json) — the
+excavator's is [`channel_map.excavator.json`](../client/web/channel_map.excavator.json).
+There is **no hardcoded function list** — the client's resolver is parameterized by the
+active layout's function set, and `resolve` just looks a function up in the map. The
+server never sees the map (it is **thin transport** — raw `set` only).
 The excavator's six functions: `left_track`, `right_track`, `arm_lift`, `front_arm`,
 `rotation`, `bucket`. Per function: `{slot 0-2, channel 0-3, invert, max (1-7),
 reverse_scale, label_en, label_de}`. **(slot, channel)** is within-slot; the global
@@ -176,20 +178,20 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   on). Serving the client web page (`:8080`) is **OPTIONAL**: on by default, disabled
   with `--ws-only` / `--no-client` / `MK4_SERVE_CLIENT=0` (no HTTP server opened);
   `--http-port N` (CLI > `MK4_HTTP_PORT`) overrides the page port. Owns/drives the
-  lifecycle; maps `value→nibble`;
-  holds the **channel map** (persisted default + session active + device-swap) and
-  **resolves `drive` by function → (slot, channel, value)** via `channelmap.py`
-  (applying invert + device-swap + reverse_scale) — the broadcaster stays dumb.
+  lifecycle; takes raw `set {slot, channel, value}`, maps `value→nibble`, crypts, and
+  hands it to the broadcaster. It is **thin transport**: it holds **no** channel map and
+  resolves **nothing** (no functions, invert, caps, device-swap, or labels) — the **smart
+  client** owns all of that and sends only raw `set`.
   **Safety:** client disconnect / no clients → NEUTRAL. Reuses `mouldking_crypt.py`.
   Also answers **`{"cmd":"info"}`** with a tiered **server-info** message over the WS
   (works in `--ws-only`): **`MK4_INFO_LEVEL`** / `--info-level` = `safe` (app/version/
   lifecycle), `light` (DEFAULT; + backend/dry_run/hci/ports, no MAC) or `debug`
   (+ MAC/hostname/paths/bluetoothd). Unknown → light.
-- **Channel map** (`mk4web/channelmap.py` + per-layout `config/channel_map.<id>.json`) — load /
-  validate / save / resolve. **No hardcoded toy knowledge.** The client owns the
-  **active** map (default + its overrides) and **pushes it on every connect**;
-  `promote` persists it as the new default. Validation rejects duplicate
-  `(slot, channel)` pairs.
+- **Channel map (client-side)** — per-layout `client/web/channel_map.<id>.json` shipped
+  default + the **active** map (default + the client's overrides), persisted in the
+  browser; `promote` saves it as the new default. The **smart client** loads / validates /
+  resolves it (rejecting duplicate `(slot, channel)` pairs) and sends raw `set`. **No
+  hardcoded toy knowledge anywhere — and the server never sees the map.**
 - **Layouts + manifest + chooser.** Layouts are declared in **`client/web/
   layouts.json`** (single source of truth): per entry `{id, name, description, icon,
   kind: function-mapped|generic|placeholder, category, active, functions?, files}`.
@@ -201,7 +203,7 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   (disclaimer, credits, licensing, AI note, author). `/raw` (`raw.{html,js,css}`) is a
   **RAW debug** layout over the low-level `set`/`stop` path (pick 1-3 slots, set
   channels, build + send, console logs raw + on-air AD). A **TEMPLATE** layout ships
-  `active:false` (`template.{html,js,css}` + `config/channel_map.template.json`, one
+  `active:false` (`template.{html,js,css}` + `client/web/channel_map.template.json`, one
   function) as a copyable function-mapped starter — see
   [`ADDING_A_LAYOUT.md`](ADDING_A_LAYOUT.md). The shared shell/menu/modal/wizard CSS is
   **`shell.css`** (each layout links it + its own css); `clientconfig.js` is the
@@ -328,8 +330,8 @@ see `mk4web/config.py`).
   power-cycle; today the **wizard** guides it manually. No telegram-only way yet.
 - **Box identity — UNSOLVED UX.** Which physical box is on which slot is operator
   knowledge; the map labels by function (EN/DE) but the operator still wires it.
-- **Console / AI client of the WS API** — intended, not built. (The API is ready:
-  `drive` by function + `map` management are documented in `asyncapi.yaml`.)
+- **Console / AI client of the WS API** — intended, not built. (The API is ready: the
+  thin-transport `setup`/`set`/`stop`/`state` contract is documented in `asyncapi.yaml`.)
 - **Hardware:** disable onboard BT (`dtoverlay=disable-bt`, needs reboot); keep the
   5 V/3 A PSU; hci2 (TP-Link) is spare for control.
 - **Retire/repurpose** `java-core/` and `web-gui/` (see §6).
@@ -344,17 +346,16 @@ moldqueen/
 ├── dev-docs/PROJECT.md            # THIS FILE — canonical
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── CLAUDE.md                  # terse must-knows (points here)
-├── config/channel_map.<layout>.json  # per-layout DEFAULT channel map (e.g. channel_map.excavator.json)
 ├── assets/                    # doc screenshots only (excavator_layout*.PNG, landing_select_layout.PNG)
 ├── scripts/                   # start.sh / check.sh (preflight + launch)
-├── client/                    # INDEPENDENT web client (consumed by the cores + Docker; depends only on the WS API)
-│   ├── web/{chooser.html, shell.css, clientconfig.js, layouts.json, dashboard.*, raw.*, template.*}  # / · /excavator · /raw
+├── client/                    # INDEPENDENT smart web client (consumed by the cores + Docker; depends only on the WS API)
+│   ├── web/{chooser.html, shell.css, chrome.*, clientconfig.js, layouts.json, channel_map.<id>.json, dashboard.*, generic.*, raw.*, template.*}  # the client OWNS the channel maps
 │   ├── assets/                # served UI art (icons, LED gifs, dashboard background, banners)
 │   └── serve.py               # standalone dev server (route derivation + 4-placeholder injection)
 ├── linux-core/
 │   ├── CLAUDE.md              # linux-core must-knows
 │   ├── mk4web/                # the control webservice (points at client/ to serve the UI)
-│   │   ├── broadcaster.py  api.py  telegram.py  channelmap.py  mouldking_crypt.py  config.py
+│   │   ├── broadcaster.py  api.py  telegram.py  mouldking_crypt.py  config.py
 │   │   └── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
 │   └── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                              #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
