@@ -193,6 +193,17 @@ const MOTOR_LABELS = {
   laxis: "Left axis ↕", raxis: "Right axis ↕", dpad_v: "D-pad ↕", dpad_h: "D-pad ↔",
   btn_13: "Buttons 1/3", btn_24: "Buttons 2/4", face_v: "Face A/D", face_h: "Face B/C",
 };
+// Gamepad defaults: physical control -> same-named motor (DualSense numbering — axes 0=LSx 1=LSy
+// 2=RSx 3=RSy; buttons 0=× 1=○ 2=□ 3=△ 4=L1 5=R1 6=L2 7=R2; d-pad 12=up 13=down 14=left 15=right).
+// Editable per-motor in the Gamepad tab. laxis/raxis have no natural pad stick -> left unbound.
+const PAD_DEFAULT = {
+  lstick_h: { type: "axis", axis: 0 },               lstick_v: { type: "axis", axis: 1, invert: true },   // up = +
+  rstick_h: { type: "axis", axis: 2 },               rstick_v: { type: "axis", axis: 3, invert: true },
+  dpad_v:   { type: "buttons", neg: 13, pos: 12 },   dpad_h:   { type: "buttons", neg: 14, pos: 15 },
+  face_v:   { type: "buttons", neg: 0,  pos: 3 },     face_h:   { type: "buttons", neg: 2,  pos: 1 },
+  btn_13:   { type: "buttons", neg: 6,  pos: 4 },     btn_24:   { type: "buttons", neg: 7,  pos: 5 },
+  laxis:    { type: "buttons", neg: null, pos: null }, raxis:  { type: "buttons", neg: null, pos: null },
+};
 
 if (!SPEC) { document.body.innerHTML = "<p style='color:#e8eef6;padding:1rem'>Unknown generic layout: " + LAYOUT_ID + "</p>"; }
 else MK4Chrome.create({
@@ -200,7 +211,8 @@ else MK4Chrome.create({
   fnList: FN,
   connectLabel: t => t.raw.connect,                     // generic "Connect device" (never excavator)
   title: { default: SPEC.title.default, style: pct(SPEC.title.rect), color: SPEC.title.color },
-  features: { deviceSwap: false, gamepad: false, labelsTab: true },
+  features: { deviceSwap: false, gamepad: true, labelsTab: true },
+  gamepadDefault: PAD_DEFAULT,                          // physical control -> same-named motor (editable in the Gamepad tab)
   autoAssign: {
     defaultN: 2,
     profiles: [

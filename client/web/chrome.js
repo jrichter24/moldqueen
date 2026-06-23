@@ -9,7 +9,7 @@
 //
 //   MK4Chrome.create({
 //     layoutId, fnList, mapUrl?, connectLabel(t), title:{default, style},
-//     features:{deviceSwap, gamepad, labelsTab}, gamepadDefault?, autoAssign?:{compute,order,controls},
+//     features:{deviceSwap, gamepad, labelsTab, channels=true}, gamepadDefault?, autoAssign?:{compute,order,controls},
 //     buildSurface(api), refresh?(api), onResize?(api), onNeutralize?(),
 //   })
 // api handed to the surface: {driveFn, scaleVal, capFor, stopAll, clearStopLatch, neutralizeAll,
@@ -516,11 +516,12 @@ window.MK4Chrome = (function () {
     function buildSettings() {
       if (!editMap) editMap = mapForEdit();
       const t = tr();
-      const TABS = [["connection", t.tabConnection], ["channels", t.tabChannels]];
+      const TABS = [["connection", t.tabConnection]];
+      if (features.channels !== false) TABS.push(["channels", t.tabChannels]);   // gated: a layout with FN=[] (e.g. RAW) can omit the empty editor
       if (features.labelsTab) TABS.push(["labels", t.tabLabels]);
       if (features.gamepad) TABS.push(["gamepad", t.tabGamepad]);
       TABS.push(["info", t.tabServerInfo]);
-      if (TABS.every(x => x[0] !== settingsTab)) settingsTab = "channels";
+      if (TABS.every(x => x[0] !== settingsTab)) settingsTab = TABS[0][0];   // fall back to the first available tab
       const bar = TABS.map(([id, lbl]) => `<button class="stab${settingsTab === id ? " on" : ""}" data-tab="${id}">${lbl}</button>`).join("");
       const panel = settingsTab === "connection" ? connectionPanel(t)
                   : settingsTab === "labels" ? labelsPanel(t)
