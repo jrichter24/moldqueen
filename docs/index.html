@@ -33,7 +33,7 @@
         <li><a href="#layouts">Layouts</a></li>
         <li><a href="#app">Get the app</a></li>
         <li><a href="#dev">Developers</a></li>
-        <li><a href="#roadmap">Roadmap</a></li>
+        <li><a href="#inspiration">Inspiration</a></li>
         <li><a href="#about">About</a></li>
         <li><a class="cta" href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a></li>
       </ul>
@@ -41,21 +41,20 @@
   </header>
 
   <main>
-    <!-- 1. HERO ============================================================= -->
-    <!-- IMAGE: hero — full-bleed action shot of the app driving the excavator.
-         Currently using the text-free product render (assets/hero.png); swap in a
-         real action photo when available (same 16:9, dark/left-weighted for the copy). -->
+    <!-- 1. HERO — full-bleed banner image, clean bottom-left copy ============ -->
     <section class="hero" id="home">
-      <img class="hero-img" src="assets/hero.png" alt="moldqueen controlling a Mould King building-block RC machine" />
-      <div class="wrap hero-copy">
+      <img class="hero-img" src="assets/hero.png" alt="A Mould King building-block RC excavator, controlled by moldqueen" />
+      <div class="wrap">
+       <div class="hero-copy">
         <p class="eyebrow">Open source · API-first</p>
         <h1>Control building-block RC toys through one clean API.</h1>
-        <p class="tagline">moldqueen drives Bluetooth-LE building-block machines over a documented WebSocket contract — starting with Mould King.</p>
-        <p class="lead">One smart web client. A thin-transport radio core you can swap — a Raspberry Pi today, an Android phone in your pocket, an ESP32 tomorrow. The toy never knows the difference.</p>
+        <p class="tagline">Drive Bluetooth-LE building-block machines over a documented WebSocket contract — starting with Mould King.</p>
+        <p class="lead">One smart web client. A thin-transport radio core you can swap — a Raspberry Pi today, an Android phone in your pocket, an ESP32 tomorrow.</p>
         <div class="actions">
           <a class="btn btn-primary" href="#app">Get the app <span class="arr">→</span></a>
           <a class="btn" href="https://github.com/jrichter24/moldqueen" rel="noopener">View on GitHub</a>
         </div>
+       </div>
       </div>
     </section>
 
@@ -70,8 +69,7 @@
 
         <div class="row">
           <div class="media">
-            <!-- IMAGE: API-first — the smart client UI (using the real dashboard render). -->
-            <img class="shot" src="assets/api_dashboard.png" alt="The moldqueen dashboard — the smart client that owns the channel map" loading="lazy" />
+            <img class="shot" src="assets/excavator_preview.png" alt="The moldqueen excavator dashboard" loading="lazy" />
           </div>
           <div class="copy">
             <div class="num">01 — API-first by design</div>
@@ -82,22 +80,18 @@
 
         <div class="row rev">
           <div class="media">
-            <!-- IMAGE: gamepad — a PS5 controller (using the real controller render).
-                 A real photo of a controller driving the rig would be an upgrade. -->
-            <img class="shot contain" src="assets/gamepad.png" alt="A PS5 DualSense controller — gamepad support" loading="lazy" />
+            <img class="shot contain" src="assets/controller_example.png" alt="PlayStation, Xbox and PlayStation controllers" loading="lazy" />
           </div>
           <div class="copy">
             <div class="num">02 — Gamepad support</div>
-            <h3>Drive it with a DualSense.</h3>
-            <p>Use a PS5 controller — or any browser-supported pad — on the excavator and the generic layouts. Bindings are editable, with sensible defaults, and ride the exact same drive-and-safety path as touch, right down to the hardware STOP.</p>
+            <h3>Drive it with a controller.</h3>
+            <p>Use a PS5 DualSense — or any browser-supported pad — on the excavator and the generic layouts. Bindings are editable, with sensible defaults, and ride the exact same drive-and-safety path as touch, right down to the hardware STOP.</p>
           </div>
         </div>
 
         <div class="row">
           <div class="media">
-            <!-- IMAGE SLOT: run-anywhere — a trio shot: Raspberry Pi + an Android phone +
-                 a laptop, all running moldqueen. (No photo yet.) -->
-            <div class="slot"><span class="slabel"><b>Image slot — “run anywhere”</b>Raspberry Pi · Android phone · laptop, all running moldqueen</span></div>
+            <img class="shot contain" src="assets/many_machienes_example.png" alt="moldqueen running on a laptop, a tablet, a Raspberry Pi and an ESP32 board" loading="lazy" />
           </div>
           <div class="copy">
             <div class="num">03 — Run anywhere</div>
@@ -108,22 +102,48 @@
       </div>
     </section>
 
-    <!-- 3. LAYOUTS (big hover tiles, live) ================================= -->
+    <!-- 3. STARTPAGE / CHOOSER ============================================ -->
+    <section class="section" id="start">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">The app</p>
+          <h2>Choose your machine.</h2>
+          <p class="lead">Open moldqueen and you land on the chooser — every layout as a card, with the same live Generic / Model and protocol badges you see below. Pick one and drive.</p>
+        </div>
+        <div class="showcase">
+          <img src="assets/start_page_preview.png" alt="The moldqueen startpage — a chooser of layout cards" loading="lazy" />
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. LAYOUTS (generic showcase + big live tiles) ==================== -->
     <section class="section" id="layouts">
       <div class="wrap">
         <div class="section-head">
           <p class="eyebrow">Layouts</p>
           <h2>One client, many machines.</h2>
-          <p class="lead">Each toy gets a layout — a control surface over the same API. <em>Model</em> layouts are tuned to a specific machine; <em>generic</em> layouts drive any twelve-motor toy and map themselves to your hardware with a guided auto-assign. Pulled live from the project manifest.</p>
+          <p class="lead">Each toy gets a layout — a control surface over the same API. <em>Model</em> layouts are tuned to a specific machine; <em>generic</em> layouts drive any twelve-motor toy.</p>
         </div>
+
+        <div class="row rev">
+          <div class="media">
+            <img class="shot" src="assets/generic_layout_preview.png" alt="The two generic layouts — a brick-style gamepad and a 12-axis grid" loading="lazy" />
+          </div>
+          <div class="copy">
+            <div class="num">Generic layouts</div>
+            <h3>One controller, any twelve-motor toy.</h3>
+            <p>No model-specific dashboard? The generic layouts — a brick-style gamepad and a 12-axis grid — map themselves to your machine with a guided auto-assign: bind a stick, watch which motor moves, done. Then drive by touch or gamepad.</p>
+          </div>
+        </div>
+
         <div class="tiles" id="tiles">
           <noscript><div class="tiles-fail">Enable JavaScript to load the live layouts, or browse them in the <a href="https://github.com/jrichter24/moldqueen/tree/main/client/web" rel="noopener">repository</a>.</div></noscript>
         </div>
-        <p class="tiles-note">Badges mirror the app: <strong>Generic</strong> vs <strong>Model</strong>, and the supported protocol. <strong>MK4</strong> drives today; a greyed <strong>MK6</strong> is on the <a href="#roadmap">roadmap</a>.</p>
+        <p class="tiles-note">Cards are pulled live from the project manifest. Badges mirror the app: <strong>Generic</strong> vs <strong>Model</strong>, and the supported protocol — <strong>MK4</strong> today, a greyed <strong>MK6</strong> on the <a href="#roadmap">roadmap</a>. Hover for details.</p>
       </div>
     </section>
 
-    <!-- 4. GET THE APP (image-led) ======================================== -->
+    <!-- 5. GET THE APP (image-led; Android menu overlay) ================== -->
     <section class="section" id="app">
       <div class="wrap">
         <div class="section-head">
@@ -133,10 +153,14 @@
         </div>
 
         <div class="row">
-          <div class="media">
-            <!-- IMAGE SLOT: Android — a phone held in landscape running the moldqueen
-                 app, driving a machine. (No photo yet.) -->
-            <div class="slot"><span class="slabel"><b>Image slot — Android app</b>A phone in landscape running moldqueen, no Pi in sight</span></div>
+          <div class="media android-stack">
+            <img class="shot" src="assets/android_bricks_on_phone_preview.png" alt="A phone in landscape running moldqueen, driving a brick-built controller" loading="lazy" />
+            <!-- overlay effect: the app's menu opens on hover (closed → open) -->
+            <div class="menu-ov">
+              <span class="ov-tag">Menu — hover to open</span>
+              <img class="m-closed" src="assets/android_closed_menu_preview.png" alt="The app with the menu closed" loading="lazy" />
+              <img class="m-open" src="assets/android_open_menu_preview.png" alt="The app with the menu open" loading="lazy" />
+            </div>
           </div>
           <div class="copy">
             <div class="num">Android — standalone app</div>
@@ -151,9 +175,7 @@ cd android-core
 
         <div class="row rev">
           <div class="media">
-            <!-- IMAGE SLOT: Raspberry Pi — a Pi with a BLE USB dongle (and PSU), the
-                 reference control core. (No photo yet.) -->
-            <div class="slot"><span class="slabel"><b>Image slot — Raspberry Pi core</b>A Pi with a Bluetooth-LE USB dongle — the reference radio</span></div>
+            <img class="shot" src="assets/raspberry_with_code_example.png" alt="A Raspberry Pi running the moldqueen radio core, with code" loading="lazy" />
           </div>
           <div class="copy">
             <div class="num">Raspberry Pi — control core</div>
@@ -169,7 +191,7 @@ scripts/start.sh
       </div>
     </section>
 
-    <!-- 5. DEVELOPERS ===================================================== -->
+    <!-- 6. DEVELOPERS ===================================================== -->
     <section class="section" id="dev">
       <div class="wrap">
         <div class="section-head">
@@ -190,7 +212,50 @@ scripts/start.sh
       </div>
     </section>
 
-    <!-- 6. ROADMAP ======================================================= -->
+    <!-- 7. INSPIRATION teaser (before Roadmap) =========================== -->
+    <section class="section" id="inspiration">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">Build your collection</p>
+          <h2>Sets &amp; inspiration.</h2>
+          <p class="lead">Mould King machines that pair well with moldqueen — the excavator it was built for, and a few others to grow into.</p>
+        </div>
+
+        <!-- WERBEKENNZEICHNUNG (advertising disclosure) -->
+        <div class="callout warn" role="note">
+          <strong>Werbung.</strong> Dieser Abschnitt enthält Affiliate-/Werbelinks — kaufst du darüber, erhalte ich ggf. eine kleine Provision, <strong>für dich ohne Mehrkosten</strong>.
+          <span class="muted">This section contains affiliate links; I may earn a small commission at no extra cost to you.</span>
+        </div>
+
+        <div class="insp-cards">
+          <div class="insp-card">
+            <h3>Mould King 13112 — RC Excavator</h3>
+            <p>The crawler excavator moldqueen was built for: tracks, slew, boom, arm and bucket over a single MK4 hub.</p>
+            <!-- AFFILIATE LINK: 13112 excavator (AliExpress/Amazon) — replace .ph with a rel="sponsored noopener" link -->
+            <span class="btn ph" aria-disabled="true">Link coming soon</span>
+          </div>
+          <div class="insp-card">
+            <h3>Other Mould King RC machines</h3>
+            <p>Excavators, loaders, cranes and technic vehicles on the same Bluetooth hubs — great candidates for a generic layout.</p>
+            <!-- AFFILIATE LINK: Mould King RC technic range -->
+            <span class="btn ph" aria-disabled="true">Link coming soon</span>
+          </div>
+          <div class="insp-card">
+            <h3>Hubs, motors &amp; spares</h3>
+            <p>Extra MK4 receivers, motors and battery packs — for repairs, or to wire up your own build and drive it generically.</p>
+            <!-- AFFILIATE LINK: hubs / motors / spares -->
+            <span class="btn ph" aria-disabled="true">Link coming soon</span>
+          </div>
+        </div>
+
+        <div class="insp-actions">
+          <a class="btn btn-primary" href="inspiration.html">See all sets &amp; inspiration <span class="arr">→</span></a>
+          <span class="muted">Full advertising disclosure on that page.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. ROADMAP ======================================================= -->
     <section class="section" id="roadmap">
       <div class="wrap">
         <div class="section-head">
@@ -209,7 +274,7 @@ scripts/start.sh
       </div>
     </section>
 
-    <!-- 7. ABOUT ========================================================= -->
+    <!-- 9. ABOUT ========================================================= -->
     <section class="section" id="about">
       <div class="wrap">
         <div class="section-head">
