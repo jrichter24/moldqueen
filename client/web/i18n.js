@@ -57,7 +57,7 @@
              w3: { t: "Step 3 — Assign slots", b: "Press <b>ONE</b> hub's button until it shows <b>two fast flashes</b> (slot&nbsp;1). Leave the other on one flash (slot&nbsp;0)." },
              w4: { t: "Ready ✓", b: "Connected — controls unlocked. You can start driving." } },
       // ---- chooser (landing) ----
-      chooseLayout: "Choose your layout",
+      chooseLayout: "Choose your layout", badgeGeneric: "Generic", badgeReal: "Model", jumpLabel: "Jump to layout",
       ctaOpen: "Open ▸", ctaContribute: "Contribute ▸",
       actAbout: "About", actFullscreen: "⛶ Fullscreen",
       cards: {
@@ -163,7 +163,7 @@
              w2: { t: "Schritt 2 — Verbinden…", b: "Verbindungssignal wird gesendet — beide Hubs sollten jetzt <b>schnell blinken</b>." },
              w3: { t: "Schritt 3 — Slots zuweisen", b: "<b>EINEN</b> Hub auf <b>zwei schnelle Blinks</b> stellen (Slot&nbsp;1). Den anderen auf einem Blink lassen (Slot&nbsp;0)." },
              w4: { t: "Bereit ✓", b: "Verbunden — Steuerung entsperrt. Du kannst losfahren." } },
-      chooseLayout: "Wähle dein Layout",
+      chooseLayout: "Wähle dein Layout", badgeGeneric: "Generisch", badgeReal: "Modell", jumpLabel: "Zu Layout springen",
       ctaOpen: "Öffnen ▸", ctaContribute: "Mitmachen ▸",
       actAbout: "Über", actFullscreen: "⛶ Vollbild",
       cards: {
@@ -247,7 +247,7 @@
             s2b: "服务器可达 ✓ &nbsp;现在打开集线器并通过 BLE 连接你的<b>设备</b>：<b>连接设备</b> → 分配槽位 → <b>就绪</b>。" },
       wiz: { title: "挖掘机设置", next: "下一步", back: "返回", cancel: "取消", already: "设备已连接", readyBtn: "就绪", startDriving: "开始驾驶",
              w1: { t: "第 1 步 — 开机" }, w2: { t: "第 2 步 — 连接中…" }, w3: { t: "第 3 步 — 分配槽位" }, w4: { t: "就绪 ✓" } },
-      chooseLayout: "选择你的布局", ctaOpen: "打开 ▸", ctaContribute: "贡献 ▸", actAbout: "关于", actFullscreen: "⛶ 全屏",
+      chooseLayout: "选择你的布局", badgeGeneric: "通用", badgeReal: "专用", jumpLabel: "跳转到布局", ctaOpen: "打开 ▸", ctaContribute: "贡献 ▸", actAbout: "关于", actFullscreen: "⛶ 全屏",
       cards: {
         excavator: { name: "挖掘机 (13112)", desc: "驾驶挖掘机 — 完整面板。" },
         raw: { name: "RAW（调试）", desc: "底层电报测试台。" },
@@ -296,7 +296,7 @@
             s2b: "서버 연결됨 ✓ &nbsp;이제 허브를 켜고 BLE로 <b>기기</b>를 연결하세요: <b>기기 연결</b> → 슬롯 할당 → <b>준비</b>." },
       wiz: { title: "굴착기 설정", next: "다음", back: "뒤로", cancel: "취소", already: "기기가 이미 연결됨", readyBtn: "준비", startDriving: "운전 시작",
              w1: { t: "1단계 — 전원 켜기" }, w2: { t: "2단계 — 연결 중…" }, w3: { t: "3단계 — 슬롯 할당" }, w4: { t: "준비 ✓" } },
-      chooseLayout: "레이아웃을 선택하세요", ctaOpen: "열기 ▸", ctaContribute: "기여 ▸", actAbout: "정보", actFullscreen: "⛶ 전체화면",
+      chooseLayout: "레이아웃을 선택하세요", badgeGeneric: "범용", badgeReal: "전용", jumpLabel: "레이아웃으로 이동", ctaOpen: "열기 ▸", ctaContribute: "기여 ▸", actAbout: "정보", actFullscreen: "⛶ 전체화면",
       cards: {
         excavator: { name: "굴착기 (13112)", desc: "굴착기 운전 — 전체 대시보드." },
         raw: { name: "RAW (디버그)", desc: "저수준 텔레그램 테스트." },
@@ -345,7 +345,7 @@
             s2b: "Servidor accesible ✓ &nbsp;Ahora enciende los hubs y conecta tu <b>dispositivo</b> por BLE: <b>Conectar dispositivo</b> → asignar slots → <b>Listo</b>." },
       wiz: { title: "Configuración de la excavadora", next: "Siguiente", back: "Atrás", cancel: "Cancelar", already: "Juguete ya conectado", readyBtn: "Listo", startDriving: "Empezar a conducir",
              w1: { t: "Paso 1 — Encender" }, w2: { t: "Paso 2 — Conectando…" }, w3: { t: "Paso 3 — Asignar slots" }, w4: { t: "Listo ✓" } },
-      chooseLayout: "Elige tu diseño", ctaOpen: "Abrir ▸", ctaContribute: "Contribuir ▸", actAbout: "Acerca de", actFullscreen: "⛶ Pantalla completa",
+      chooseLayout: "Elige tu diseño", badgeGeneric: "Genérico", badgeReal: "Modelo", jumpLabel: "Ir al diseño", ctaOpen: "Abrir ▸", ctaContribute: "Contribuir ▸", actAbout: "Acerca de", actFullscreen: "⛶ Pantalla completa",
       cards: {
         excavator: { name: "Excavadora (13112)", desc: "Conduce la excavadora — panel completo." },
         raw: { name: "RAW (Depuración)", desc: "Banco de pruebas de telegramas." },
@@ -394,7 +394,7 @@
             s2b: "Serveur joignable ✓ &nbsp;Allumez les hubs et connectez votre <b>appareil</b> en BLE : <b>Connecter l'appareil</b> → affecter les slots → <b>Prêt</b>." },
       wiz: { title: "Configuration de l'excavatrice", next: "Suivant", back: "Retour", cancel: "Annuler", already: "Jouet déjà connecté", readyBtn: "Prêt", startDriving: "Commencer à conduire",
              w1: { t: "Étape 1 — Allumer" }, w2: { t: "Étape 2 — Connexion…" }, w3: { t: "Étape 3 — Affecter les slots" }, w4: { t: "Prêt ✓" } },
-      chooseLayout: "Choisissez votre disposition", ctaOpen: "Ouvrir ▸", ctaContribute: "Contribuer ▸", actAbout: "À propos", actFullscreen: "⛶ Plein écran",
+      chooseLayout: "Choisissez votre disposition", badgeGeneric: "Générique", badgeReal: "Modèle", jumpLabel: "Aller à la disposition", ctaOpen: "Ouvrir ▸", ctaContribute: "Contribuer ▸", actAbout: "À propos", actFullscreen: "⛶ Plein écran",
       cards: {
         excavator: { name: "Excavatrice (13112)", desc: "Pilotez l'excavatrice — tableau de bord complet." },
         raw: { name: "RAW (Débogage)", desc: "Banc de test bas niveau." },

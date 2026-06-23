@@ -1,5 +1,5 @@
 {
-  "_comment": "Layout manifest — the SINGLE source of truth for layouts. The server DERIVES each layout's route as /<id> (route is NOT a field; the title is display-only) and serves its HTML/JS/CSS; the chooser builds its cards from this. active:false hides the chooser CARD (and omits the layout from /layouts.json) but its route /<id> STAYS reachable by direct URL — so a new layout can be verified before activation; flip active:true to surface the card. See docs/ADDING_A_LAYOUT.md. Add a layout here and it surfaces in BOTH the chooser and the routes (no server-side edit). id must be URL-safe. kind: function-mapped | generic | placeholder. category is a declared grouping label. generic:true marks a MODEL-AGNOSTIC controller: its channel map ships UNMAPPED (slot/channel null) and the layout shows an auto-assign wizard on first use; it still resolves function->channel like any function-mapped layout (orthogonal to kind).",
+  "_comment": "Layout manifest — the SINGLE source of truth for layouts. The server DERIVES each layout's route as /<id> (route is NOT a field; the title is display-only) and serves its HTML/JS/CSS; the chooser builds its cards from this. active:false hides the chooser CARD (and omits the layout from /layouts.json) but its route /<id> STAYS reachable by direct URL — so a new layout can be verified before activation; flip active:true to surface the card. See docs/ADDING_A_LAYOUT.md. Add a layout here and it surfaces in BOTH the chooser and the routes (no server-side edit). id must be URL-safe. kind: function-mapped | generic | placeholder. category is a declared grouping label. generic:true marks a MODEL-AGNOSTIC controller: its channel map ships UNMAPPED (slot/channel null) and the layout shows an auto-assign wizard on first use; it still resolves function->channel like any function-mapped layout (orthogonal to kind). card:false hides the chooser CARD while keeping the route + the /layouts.json entry (so it still shows in the layout dropdown); devIcon:true surfaces the layout as a small icon in the startpage top menu instead of a card (RAW: a debug wrench).",
   "layouts": [
     {
       "id": "excavator",
@@ -20,31 +20,33 @@
       "kind": "generic",
       "category": "debug",
       "active": true,
+      "card": false,
+      "devIcon": true,
       "files": { "html": "raw.html", "js": "raw.js", "css": "raw.css" }
-    },
-    {
-      "id": "generic_12axis",
-      "name": "12-axis controller",
-      "description": "Model-agnostic gamepad — two sticks, two tracks, buttons. Auto-assign to any toy.",
-      "icon": "/assets/generic_icon.png",
-      "kind": "function-mapped",
-      "generic": true,
-      "category": "generic",
-      "active": true,
-      "functions": ["lstick_v", "lstick_h", "rstick_v", "rstick_h", "laxis", "raxis", "dpad_v", "dpad_h", "btn_13", "btn_24", "face_v", "face_h"],
-      "files": { "html": "generic_12axis.html", "js": "generic.js", "css": "generic.css" }
     },
     {
       "id": "generic_brick",
       "name": "Brick controller",
       "description": "Model-agnostic brick-style gamepad — two sticks, two tracks, buttons. Auto-assign to any toy.",
-      "icon": "/assets/generic_icon.png",
+      "icon": "/assets/generic_layouts/ps_like_gampepad_icon.png",
       "kind": "function-mapped",
       "generic": true,
       "category": "generic",
       "active": true,
       "functions": ["lstick_v", "lstick_h", "rstick_v", "rstick_h", "laxis", "raxis", "dpad_v", "dpad_h", "btn_13", "btn_24", "face_v", "face_h"],
       "files": { "html": "generic_brick.html", "js": "generic.js", "css": "generic.css" }
+    },
+    {
+      "id": "generic_12axis",
+      "name": "12-axis controller",
+      "description": "Model-agnostic gamepad — two sticks, two tracks, buttons. Auto-assign to any toy.",
+      "icon": "/assets/generic_layouts/generic_12_axis_icon.png",
+      "kind": "function-mapped",
+      "generic": true,
+      "category": "generic",
+      "active": true,
+      "functions": ["lstick_v", "lstick_h", "rstick_v", "rstick_h", "laxis", "raxis", "dpad_v", "dpad_h", "btn_13", "btn_24", "face_v", "face_h"],
+      "files": { "html": "generic_12axis.html", "js": "generic.js", "css": "generic.css" }
     },
     {
       "id": "byo",

@@ -5,21 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
   <title>moldqueen — RAW debug</title>
   <link rel="icon" href="/assets/moldqueen_icon.png" />
-  <link rel="stylesheet" href="/shell.css" />   <!-- shared responsive shell + #menu + modal/wizard -->
-  <link rel="stylesheet" href="/raw.css" />
-  <script>window.MK4_WS_PORT = "__WS_PORT__"; window.MK4_SHOW_FULLSCREEN = "__SHOW_FULLSCREEN__";</script>  <!-- strings: valid when served raw (nginx) too -->
+  <link rel="stylesheet" href="/shell.css" />       <!-- shared shell + menu + modal/wizard base -->
+  <link rel="stylesheet" href="/chrome.css" />      <!-- shared chrome: menu/chevron/status/settings/wizard -->
+  <link rel="stylesheet" href="/raw.css" />          <!-- RAW bench content (slots + console) -->
+  <script>window.MK4_WS_PORT = "__WS_PORT__"; window.MK4_SHOW_FULLSCREEN = "__SHOW_FULLSCREEN__"; window.MK4_LAYOUT_ID = "raw";</script>
 </head>
 <body>
-  <!-- Same viewport shell as the dashboard: menu strip (top bar / left sidebar) +
-       a content area. RAW is a protocol-level test tool over the raw set/stop path. -->
+  <!-- Standard chrome shell (same as every other layout): menu STRIP + content area. RAW's
+       protocol bench is the CONTENT (built by raw.js buildSurface); the menu/settings/wizard/
+       status come from the shared MK4Chrome. -->
   <div id="app">
-    <nav id="menu"></nav>
-    <div id="rawmain"></div>     <!-- slots + console; built by raw.js -->
+    <button id="navChip" type="button" aria-label="Show menu" title="Show menu">›</button>  <!-- expand chip (chrome) -->
+    <div id="statusLight" class="statuslight red" title="No server"></div>  <!-- live status: red/yellow/green -->
+    <nav id="menu"></nav>                     <!-- toolbar; built by the shared chrome -->
+    <div id="rawmain"></div>                  <!-- RAW bench (slots + console); built by raw.js buildSurface -->
   </div>
-  <div id="wizard" class="modal hidden"></div>   <!-- condensed connection wizard -->
 
-  <script src="/i18n.js"></script>          <!-- shared UI translations (MK4I18N); load FIRST so clientconfig can use it -->
+  <!-- Centered modal overlays (built by chrome.js): -->
+  <div id="startup" class="modal hidden"></div>    <!-- startup guide: reach the API, then connect the toy -->
+  <div id="wizard" class="modal hidden"></div>     <!-- standard connect lifecycle wizard -->
+  <div id="settings" class="modal hidden"></div>   <!-- tabbed settings (Connection · Server info; Channels/Labels/Gamepad gated off) -->
+
+  <script src="/i18n.js"></script>          <!-- shared UI translations (MK4I18N); load FIRST -->
   <script src="/clientconfig.js"></script>
+  <script src="/chrome.js"></script>        <!-- shared chrome + runtime core (MK4Chrome); before the layout -->
   <script src="/raw.js"></script>
 </body>
 </html>

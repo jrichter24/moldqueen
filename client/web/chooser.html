@@ -46,6 +46,7 @@
       cursor: pointer; text-decoration: none; backdrop-filter: blur(3px); }
     .actions a:hover, .actions button:hover, .actions #langSlot:hover { border-color: var(--glow); }
     .actions svg { width: 1.15em; height: 1.15em; }
+    #devIcons { display: contents; }   /* dev-icon <a>s become flex items of .actions (inherit the icon-button style) */
     /* language: a translate-glyph icon with the native <select> overlaid transparently (same dropdown) */
     #langSlot { position: relative; }
     #langSlot .langicon { pointer-events: none; }
@@ -65,13 +66,24 @@
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 230px));
              justify-content: center; gap: clamp(.8rem, 2vw, 1.4rem); width: 100%; max-width: 1000px; }
     .card {
-      width: 100%; min-width: 0;
+      width: 100%; min-width: 0; position: relative;
       display: flex; flex-direction: column; cursor: pointer; color: inherit; font: inherit; text-align: left;
       background: linear-gradient(180deg, rgba(22,28,38,.92), rgba(13,17,24,.96));
       border: 1px solid #2b3647; border-radius: 1rem; overflow: hidden; padding: 0;
       box-shadow: 0 10px 30px rgba(0,0,0,.5);
       transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
     }
+    /* subtle generic-vs-real badge (top-right of each card; driven by the manifest generic:true flag) */
+    .badge { position: absolute; top: .55rem; right: .55rem; z-index: 2; font-size: .6rem; font-weight: 700;
+      letter-spacing: .07em; text-transform: uppercase; padding: .16rem .42rem; border-radius: .5rem; backdrop-filter: blur(2px); }
+    .badge.gen  { color: #a9d4ff; background: rgba(34,74,116,.62); border: 1px solid #2f6f93; }
+    .badge.real { color: #cfe6bd; background: rgba(48,74,38,.6);  border: 1px solid #5a7a3a; }
+    /* "jump to layout" dropdown (direct nav, incl RAW) */
+    .jump { display: inline-flex; align-items: center; gap: .5rem; font-size: .82rem; color: #93a6c2; }
+    .jump select { font: inherit; font-size: .85rem; color: #cfe0f5; background: rgba(15,20,28,.8);
+      border: 1px solid #2b3647; border-radius: .45rem; padding: .3rem .55rem; cursor: pointer; }
+    .jump select:hover { border-color: var(--glow); }
+    .jump select option { background: #11161e; color: #e8eef6; }
     .card:hover, .card:focus-visible {
       transform: translateY(-4px); border-color: var(--glow); outline: none;
       box-shadow: 0 0 0 1px var(--glow), 0 0 26px rgba(74,163,255,.45), 0 14px 36px rgba(0,0,0,.6);
@@ -158,6 +170,7 @@
     <button id="aboutBtn" title="About" aria-label="About">
       <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 3.1a1.15 1.15 0 110 2.3 1.15 1.15 0 010-2.3zM6.6 6.7h2.2V12h.9v1H6.4v-1h.9V7.7h-.7v-1z"/></svg></button>
     <button id="fsBtn" title="Fullscreen" aria-label="Fullscreen">⛶</button>
+    <span id="devIcons"></span>   <!-- debug/dev layouts (devIcon:true, e.g. RAW) -> small icons here, not chooser cards -->
   </div>
 
   <div class="wrap">
@@ -167,6 +180,8 @@
         <h1>MoldQueen</h1>
       </div>
       <span class="sub" id="chooseLayout">Choose your layout</span>
+      <label class="jump"><span id="jumpLabel">Jump to layout</span>
+        <select id="jumpSel"></select></label>   <!-- direct nav to any layout (incl RAW) -->
     </header>
     <div class="cards" id="cards"></div>   <!-- built from the layout manifest (see scripts below) -->
   </div>
@@ -261,17 +276,23 @@
       var cta = ghost ? ((d && d.ctaContribute) || "Contribute ▸") : ((d && d.ctaOpen) || "Open ▸");
       var route = routeOf(L);
       var attrs = 'data-id="' + esc(L.id) + '"' + (route ? ' data-route="' + esc(route) + '"' : '') + (ghost ? ' data-byo="1"' : '');
-      return '<button class="card' + (ghost ? ' ghost' : '') + '" ' + attrs + '>' +
+      // generic (model-agnostic) vs real (model-specific) badge; placeholder cards get none
+      var badge = ghost ? '' : (L.generic
+        ? '<span class="badge gen">' + esc((d && d.badgeGeneric) || "Generic") + '</span>'
+        : '<span class="badge real">' + esc((d && d.badgeReal) || "Model") + '</span>');
+      return '<button class="card' + (ghost ? ' ghost' : '') + '" ' + attrs + '>' + badge +
              '<div class="art">' + art + '</div>' +
              '<div class="body"><h2>' + esc(name) + '</h2><div class="desc">' + esc(desc) + '</div>' +
              '<div class="go">' + esc(cta) + '</div></div></button>';
     }
 
     var lastManifest = null;                     // remembered so we can re-render cards on language change
+    var WRENCH_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>';
     function renderCards(m) {
       if (m) lastManifest = m;
       var layouts = (lastManifest && lastManifest.layouts) || [];
-      document.getElementById("cards").innerHTML = layouts.map(cardHtml).join("");
+      var cards = layouts.filter(function (L) { return L.card !== false; });   // card:false (e.g. RAW) shows as a dev icon, not a card
+      document.getElementById("cards").innerHTML = cards.map(cardHtml).join("");
       document.querySelectorAll(".card[data-route]").forEach(function (c) {   // real layouts: remember + navigate
         c.addEventListener("click", function () {
           localStorage.setItem("mk4_layout", c.dataset.id);
@@ -280,6 +301,26 @@
       });
       var byo = document.querySelector(".card[data-byo]");                    // placeholder: open the invite overlay
       if (byo) byo.addEventListener("click", function () { show("byo", true); });
+      buildJump(layouts);
+    }
+    // direct-nav dropdown: every layout with a route (incl RAW; excludes placeholders)
+    function buildJump(layouts) {
+      var sel = document.getElementById("jumpSel"); if (!sel) return;
+      var d = D();
+      var ph = (d && d.jumpLabel) || "Jump to layout";
+      var routed = layouts.filter(function (L) { return routeOf(L); });
+      sel.innerHTML = '<option value="" selected>' + esc(ph) + ' …</option>' +
+        routed.map(function (L) { var tc = (d && d.cards && d.cards[L.id]) || null; var nm = (tc && tc.name) || L.name; return '<option value="' + esc(routeOf(L)) + '">' + esc(nm) + '</option>'; }).join("");
+      sel.onchange = function () { if (sel.value) location.href = sel.value; };
+    }
+    // debug/dev layouts (devIcon:true, e.g. RAW) -> small wrench icons in the top menu (not cards)
+    function renderDevIcons() {
+      var host = document.getElementById("devIcons"); if (!host) return;
+      var d = D(), layouts = (lastManifest && lastManifest.layouts) || [];
+      host.innerHTML = layouts.filter(function (L) { return L.devIcon; }).map(function (L) {
+        var tc = (d && d.cards && d.cards[L.id]) || null; var nm = (tc && tc.name) || L.name;
+        return '<a class="devicon" href="' + esc(routeOf(L) || ("/" + L.id)) + '" title="' + esc(nm) + '" aria-label="' + esc(nm) + '">' + WRENCH_SVG + '</a>';
+      }).join("");
     }
 
     // Apply translations to the static chrome + re-render the cards. Re-run on language change.
@@ -302,8 +343,10 @@
         setHtml("aboutBuiltNote", d.about.builtNote); setHtml("aboutAuthor", d.about.authorHtml);
         setTxt("aboutSource", d.about.source); setTxt("aboutReport", d.about.reportIssue);
         setTxt("byoTitle", d.byo.title); setHtml("byoP1", d.byo.p1); setHtml("byoP2", d.byo.p2);
+        setTxt("jumpLabel", d.jumpLabel);
       }
-      renderCards();   // card text is language-dependent too
+      renderCards();      // card text + jump options are language-dependent
+      renderDevIcons();   // dev-icon titles too
     }
 
     // Inject the language picker (persists mk4_lang, applies everywhere); re-translate on change.

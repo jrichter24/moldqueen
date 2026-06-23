@@ -10,7 +10,7 @@
 //   MK4Chrome.create({
 //     layoutId, fnList, mapUrl?, connectLabel(t), title:{default, style},
 //     features:{deviceSwap, gamepad, labelsTab, channels=true}, gamepadDefault?, autoAssign?:{compute,order,controls},
-//     buildSurface(api), refresh?(api), onResize?(api), onNeutralize?(),
+//     buildSurface(api), refresh?(api), onResize?(api), onNeutralize?(), onState?(msg),
 //   })
 // api handed to the surface: {driveFn, scaleVal, capFor, stopAll, clearStopLatch, neutralizeAll,
 //     lifecycle(), isUnmapped, funcLabel, getMap(), getGrid(), deviceSwap(), dict(), addControl(reset), clamp}
@@ -137,7 +137,7 @@ window.MK4Chrome = (function () {
       ws.onmessage = ev => {
         let m; try { m = JSON.parse(ev.data); } catch { return; }
         if (m.type === "lifecycle") setLifecycle(m.state);
-        else if (m.type === "state" && m.slots) { grid = m.slots; if (config.refresh) config.refresh(api); }
+        else if (m.type === "state") { if (m.slots) { grid = m.slots; if (config.refresh) config.refresh(api); } if (config.onState) config.onState(m); }
         else if (m.type === "info") onInfo(m);
       };
     }

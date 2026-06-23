@@ -1,0 +1,5 @@
+{
+  "_comment": "RAW debug layout has NO function map — it drives raw slot/channel directly (FN=[]). This empty map exists only so the shared chrome's map fetch resolves (no 404); RAW shows no Channels tab (features.channels:false).",
+  "version": 1,
+  "functions": {}
+}
