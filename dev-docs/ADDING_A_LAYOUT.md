@@ -1,208 +1,122 @@
 # Adding a layout (bring your own dashboard)
 
-This is the guide the chooser's *"Bring your own"* card promises: how to add a new
-toy/layout. **Read the honest assessment first** — there are two very different
-paths, and only one of them is clean today.
+How to add a control surface for **your own** Mould King toy. A layout is just **client
+files** — there is **no server change** (the radio core is thin transport; the client owns
+everything). This is the guide the chooser's *"Bring your own"* card promises. (Back to the
+[README](../README.md) · architecture in [PROJECT.md](PROJECT.md).)
 
-## TL;DR
+## What a layout is (4 pieces, all in `client/`)
 
-- **Generic layout** (slot/channel, like the existing **RAW** view): **clean** —
-  add client files + 2-3 route lines + a chooser card. **No server change.** The
-  generic core (WS API, lifecycle, telegram building, responsive shell) is yours
-  for free. **Start here.**
-- **Function-mapped layout** (named functions + the channel-assignment UI, like the
-  **excavator** dashboard): the **server is now data-driven** — a layout declares its
-  function set (manifest) + default map (`config/channel_map.<id>.json`), no core fork.
-  What's still missing is a reusable **client template** (the dashboard's JS/art is
-  excavator-specific). See *Limitations*.
+1. **A manifest entry** in [`client/web/layouts.json`](../client/web/layouts.json) — the
+   single source of truth. The server **derives the route `/<id>`** and serves the files;
+   the chooser builds the card. No route/serve code anywhere.
+2. **A thin `<id>.html`** — the **chrome shell**: it links `shell.css` + `chrome.css` +
+   `<id>.css`, declares the `#app`/`#menu`/`#statusLight`/modal scaffold, sets
+   `window.MK4_LAYOUT_ID`, and loads `i18n.js → clientconfig.js → chrome.js → <id>.js`.
+   (Copy `generic_brick.html` or `dashboard.html`.)
+3. **A control surface** — either **reuse the generic engine** (`generic.js`, just add a
+   data SPEC — *no JS to write*) **or** your own `<id>.js` that calls
+   `MK4Chrome.create({…, buildSurface})`.
+4. **A channel map** [`client/web/channel_map.<id>.json`](../client/web/) — **client-owned**:
+   `{ "version":1, "functions": { "<fn>": { slot, channel, invert, max_fwd, max_rev, reverse_scale, labels:{en,de,…} } } }`.
 
----
+**You get [MK4Chrome](../client/web/chrome.js) for free:** the grouped menu (Startpage /
+Connection / Settings), the tabbed settings, the connect wizard + startup guide, the status
+light, the language picker, keyboard **STOP**, and the **gamepad** path — identical to every
+other layout. Your code is *only* the control surface.
 
-## What's generic vs hardcoded-to-13112
+**The client resolves everything.** Your surface calls `api.driveFn(fn, value)`; the chrome
+resolves *function → (slot, channel, value)* (invert / caps / device-swap) against your
+channel map, runs the keepalive, and sends the low-level `set` over the WS contract. The
+server never sees a function or a map. ([Why](PROJECT.md) — thin transport, smart client.)
 
-| Concern | Where | Generic? |
-|---|---|---|
-| WebSocket API (`setup`/`set`/`stop`/`state`) | `api.py` | ✅ generic — raw slot/channel |
-| Connect lifecycle IDLE→CONNECTING→READY, auto-neutral safety | `broadcaster.py` + `api.py` | ✅ generic |
-| Telegram building (12 nibbles = 3 slots × 4 ch) | `telegram.py` | ✅ generic to MK4 hubs |
-| Responsive shell + menu + modal/wizard base (`#app`/`#menu`, top-bar/sidebar) | `shell.css` | ✅ shared by all layouts |
-| Configurable WS endpoint | `clientconfig.js` (`window.MK4`) | ✅ shared by all layouts |
-| Chooser landing + remember/skip | `chooser.html` | ✅ generic |
-| **`drive`-by-function + channel map** | `channelmap.py` + per-layout `config/channel_map.<id>.json` + manifest `functions` | ✅ data-driven (per-layout set) |
-| **Function names / labels / art coordinates** | `dashboard.js` (`FN`, `JOYS`, `TITLES`, px `rect`s) | ❌ excavator-specific (needs a template) |
-| **HTTP routes / file serving** | `api.py` generic static handler + manifest | ✅ by filename, no per-layout plumbing |
+### Generic vs model-specific
 
-The **RAW** layout (`raw.{html,js,css}`) is the proof that a generic layout works
-with zero server coupling: it drives raw `{cmd:set, slot, channel, value}` / `stop`,
-reuses the shell + menu + lifecycle + endpoint config, and knows nothing about
-"excavator." **Copy RAW, not the dashboard, as your starting point.**
-
----
-
-## The clean path: a generic (slot/channel) layout
-
-You write 3 client files and add **one manifest entry**. **No Python/route/chooser
-edits** — the server derives the route from the id, serves the files by filename, and
-the chooser builds the card from the manifest.
-
-### 1. Create the client files (`client/web/`)
-
-- `mytoy.html` — copy `raw.html`; it already pulls in the shell:
-  ```html
-  <link rel="icon" href="/assets/moldqueen_icon.png" />
-  <link rel="stylesheet" href="/shell.css" />       <!-- shared shell + #menu + modal/wizard base -->
-  <link rel="stylesheet" href="/mytoy.css" />
-  <script>window.MK4_WS_PORT = "__WS_PORT__";</script>
-  ...
-  <div id="app"><nav id="menu"></nav><div id="main"></div></div>
-  <script src="/clientconfig.js"></script>
-  <script src="/mytoy.js"></script>
-  ```
-- `mytoy.js` — your controls. The core gives you:
-  - `MK4.wsEndpoint()` / `MK4.setStatus()` / `MK4.buildEndpointRow()` — connection.
-  - `new WebSocket(MK4.wsEndpoint())`, then send `{cmd:"setup",action:"connect"|"ready"|"reset"}`
-    to drive the lifecycle, and `{cmd:"set",slot,channel,value}` / `{cmd:"stop"}` to move motors.
-  - The server pushes `{type:"lifecycle"}` and `{type:"state",slots,raw,ad}` — gate
-    your controls on `READY`, snap to neutral on disconnect.
-  - Build your toolbar into `#menu` (reuse `.tgroup`/`.dot`/`#stopBtn` classes) — you
-    get the top-bar/sidebar responsive behavior for free.
-  - Optional: copy RAW's condensed connection **wizard** (`.modal`/`.sheet.wiz`
-    classes in `shell.css`, LED-flash GIFs in `client/assets/*_flash.gif`).
-- `mytoy.css` — only your layout-specific styles (the shared shell lives in `shell.css`).
-
-### 2. Add ONE manifest entry (`client/web/layouts.json`)
-
-```json
-{ "id": "mytoy", "name": "My Toy", "description": "One line.",
-  "icon": "/assets/mytoy_icon.png", "kind": "generic",
-  "files": { "html": "mytoy.html", "js": "mytoy.js", "css": "mytoy.css" } }
-```
-That's the whole registration. The server then, with **no api.py change**:
-- **derives the route** `/mytoy` from the `id` (server-generated — `id` must be
-  URL-safe; the `name`/title is display-only and never affects the route). On the
-  off chance two ids collide, later ones get `-2`, `-3` appended.
-- **serves the files by filename** (`/mytoy.html` injected, `/mytoy.js`, `/mytoy.css`
-  via the generic static handler).
-- **builds the chooser card** from the entry (icon, name, description) and wires it to
-  the derived route (the chooser reads the route the server injects, or falls back to
-  `/<id>` when served raw).
-
-### 3. (Optional) Serve it separately (Docker / standalone)
-
-Nothing to do for routing: the Docker image and the standalone dev server both run
-[`client/serve.py`](../client/serve.py), which **derives** your layout's route from
-`layouts.json` automatically (same as the Pi's api.py) — **no per-layout serve config**.
-Your files under `client/web/` are picked up as-is. Then point it at the Pi via the
-in-app endpoint setting (see [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md)).
-
-That's the whole clean path. You inherit the radio, lifecycle, safety, endpoint
-config, responsive chrome, and routing; you only write the toy's control surface over
-slot/channel.
+- **Generic** (`generic:true`) — a model-agnostic controller (the **12-axis** and **brick**
+  layouts). Its channel map ships **unmapped** (`slot`/`channel` = `null`); the first-run
+  **auto-assign wizard** maps the **12 motors** to channels by toy *profile*. Best when you
+  just want sticks + buttons over any toy.
+- **Model-specific** (the **excavator**) — named functions + a bespoke art dashboard; the
+  channel map ships with real `(slot, channel)` values for that model.
 
 ---
 
-## The function-mapped path (server side now data-driven)
+## Path A — reuse the generic engine (easiest; no JS)
 
-The excavator dashboard drives **by function** (`{cmd:"drive",function:"left_track",…}`)
-and the server resolves the function → (slot, channel) via a **per-layout channel map**:
+For a gamepad-style controller, you write **zero JavaScript** — `generic.js` already
+provides the widgets (sticks, one-axis, d-pad, button pairs, STOP), the 12-motor model, and
+the auto-assign wizard. You add **data**:
 
-- A function-mapped layout declares its **function set** in the manifest
-  (`web/layouts.json`, e.g. excavator's six) and its **default map** in
-  `config/channel_map.<layout_id>.json` (`channel_map.excavator.json`).
-- `channelmap.py` has **no global `FUNCTIONS`** — `validate()`/`load()` are
-  parameterized by the active layout's set; `resolve()` just looks a function up.
-  The server validates/persists/promotes against the active layout's set.
-- **The client is still per-toy:** the excavator's `dashboard.js` hardcodes its `FN`
-  list + pixel-perfect art `rect`s. A new function-mapped toy needs its own (small)
-  client — and there's now a **TEMPLATE** to start from (below).
+1. **Controller art** → `client/assets/generic_layouts/<id>.png` (+ an `<id>_icon.png` for
+   the card).
+2. **A SPEC** in `generic.js` (`SPECS`) — `image`, `aspect`, `title`, and `controls`
+   (each control's % hotspot rect → which of the 12 motors it drives). Copy the
+   `generic_brick` SPEC and move the rects onto your art.
+3. **`<id>.html`** — copy `generic_brick.html`, set `window.MK4_LAYOUT_ID = "<id>"`.
+4. **`channel_map.<id>.json`** — the 12 motor functions (`lstick_v/h`, `rstick_v/h`,
+   `laxis`, `raxis`, `dpad_v/h`, `btn_13`, `btn_24`, `face_v`, `face_h`), all **unmapped**
+   (`"slot": null, "channel": null`), 6-lang labels. Copy `channel_map.generic_brick.json`.
+5. **Manifest entry** — `generic:true`, `kind:"function-mapped"`, `files` pointing at
+   `generic.js` / `generic.css` and your `<id>.html`:
+   ```json
+   { "id": "mytoy", "name": "My Toy", "description": "One line.", "generic": true,
+     "kind": "function-mapped", "category": "generic", "active": false,
+     "icon": "/assets/generic_layouts/mytoy_icon.png",
+     "protocols": ["mk4"],
+     "functions": ["lstick_v","lstick_h","rstick_v","rstick_h","laxis","raxis","dpad_v","dpad_h","btn_13","btn_24","face_v","face_h"],
+     "files": { "html": "mytoy.html", "js": "generic.js", "css": "generic.css" } }
+   ```
 
-So the **server** no longer needs forking for a new function set; you copy the template
-client and edit it.
+On first open, the **auto-assign wizard** maps the motors to channels (pick a profile +
+motor count, tweak inline) — then drive. Examples: `generic_12axis` and `generic_brick`.
 
-**Generic-slot workaround** (no functions at all): define your own function→(slot,
-channel) table in your layout's JS and send raw `{cmd:set}` (like RAW). You skip the
-server-side map persistence/Promote, but stay pluggable.
+## Path B — a custom MK4Chrome layout (bespoke dashboard)
 
----
+For a model-specific dashboard with named functions + custom art (like the excavator):
 
-## Start from the TEMPLATE (copy → rename → modify → activate)
+1. **`<id>.html`** — the chrome shell (copy `dashboard.html`).
+2. **`<id>.js`** — define your function names and a `buildSurface`, then create the chrome:
+   ```js
+   const FN = ["left_track", "right_track", "arm_lift", /* … */];
+   function buildSurface(api) {
+     // render your controls; on input call api.driveFn(<fn>, value)  (value -7..+7)
+     // release → api.driveFn(<fn>, 0); register a reset with api.addControl(fn => …) for STOP/blur
+   }
+   MK4Chrome.create({
+     layoutId: "mytoy", fnList: FN,
+     title: { default: "My Toy", style: /* pct(...) overlay box */ },
+     features: { deviceSwap: false, gamepad: true, labelsTab: true },  // channels:true is default
+     buildSurface,
+   });
+   ```
+   The `api` also gives you `scaleVal`, `lifecycle()`, `clearStopLatch`, `neutralizeAll`,
+   `getMap`/`getGrid`, `funcLabel`, `dict`, `send`, etc. Reference: `dashboard.js`.
+3. **`channel_map.<id>.json`** — each function with real `{slot, channel, invert, …, labels}`
+   (you can ship placeholders and tune them in **Settings → Channels** on hardware).
+4. **Manifest entry** — `kind:"function-mapped"`, your `functions` + `files`.
 
-A minimal **function-mapped** starter ships in the repo, **inactive**, so it doesn't
-show on the chooser or get a route until you turn it on:
+## WIP, then activate
 
-- manifest entry `id:"template"`, `active:false`, `category:"template"`, one function
-  `knob_1`
-- `client/web/template.{html,js,css}` — connect/lifecycle wiring + ONE knob
-  that drives `knob_1` by name + a client channel-map override, all marked with `TODO`
-- `config/channel_map.template.json` — that one function's placeholder default map
+Set **`"active": false`** while building: the **route `/<id>` still works** (open it
+directly to test), but **no chooser card** appears until you flip `active: true`. Adding or
+activating a layout **needs an API restart** (the server reads `layouts.json` at startup —
+the Pi `api.py`, the Android core, and `client/serve.py` all derive routes from it; static
+`.html`/`.js`/`.css` just need a browser refresh).
 
-It's a *working skeleton*: set `active:true` and it would connect + drive one channel.
+## Examples to copy
 
-### 1. Copy + rename to a unique id
-```bash
-cp client/web/template.html client/web/mytoy.html
-cp client/web/template.js   client/web/mytoy.js
-cp client/web/template.css  client/web/mytoy.css
-cp config/channel_map.template.json config/channel_map.mytoy.json
-```
-In `mytoy.html` point the `<link>`/`<script>` at `mytoy.css` / `mytoy.js`. The **route
-auto-derives to `/mytoy`** from the id — you never write a route.
+| Example | Pattern |
+|---|---|
+| `generic_12axis`, `generic_brick` | **Path A** — `generic.js` + a SPEC + unmapped map (`generic:true`) |
+| `excavator` (`dashboard.js`) | **Path B** — custom `buildSurface` on MK4Chrome, mapped channels |
+| `raw` (`raw.js`) | a non-standard surface on MK4Chrome (the protocol bench) |
+| `template.{html,js,css}` | a **minimal, no-MK4Chrome** skeleton — talks the raw WS contract directly (own tiny menu + resolve). Good for learning the contract, but you **don't** get the shared chrome; prefer Path A/B for a real layout. |
 
-### 2. Declare it in the manifest (`web/layouts.json`)
-Copy the `template` entry, then: set `id:"mytoy"` (URL-safe + unique), your `name`,
-`description`, `icon`, `category`, and the `functions` list + `files` (your renamed
-files). Keep `active:false` for now.
+## Notes / limits
 
-### 3. Define your channel map
-Edit `config/channel_map.mytoy.json`: one entry per function in your `functions` list,
-each `{slot 0-2, channel 0-3, invert, max 1-7, reverse_scale, label_en, label_de}`. You
-don't have to know the real channels yet — drive each control and read which motor
-moves (the override UI in the template helps), then set them.
-
-### 4. Modify the controls (`mytoy.js`)
-- Extend `FN = ["knob_1"]` to **one name per motor/channel** you control (mirror it in
-  the manifest `functions` and the channel-map file). **More motors = more functions +
-  more knobs** — this is the modular path; add a knob per function in `buildMain()`.
-- Drive each by name: `send({cmd:"drive", function:<name>, value:-7..7})` (READY-only).
-- Optional, copy from `raw.js`/`dashboard.js`: the connection **wizard**, Save/Promote
-  of the map, joysticks instead of sliders.
-
-### 5. Activate
-Set `active:true` in the manifest and **restart the API** (it reads the manifest at
-startup — see *Operational gotchas* in `CLAUDE.md`). `/mytoy` now serves and a card
-appears on the chooser automatically — **no `api.py` edits**.
-
-### Current limitations (be honest)
-- The **client is hand-written** (no auto-generated controls from the function set yet).
-- One **global** lifecycle/state on the server — fine for one driver.
-- Routes are derived from `layouts.json` on every host (Pi `api.py`, `client/serve.py`,
-  Docker) — no per-layout serve config anywhere.
-
----
-
-## Limitations (rough edges a contributor will hit)
-
-1. ✅ **Channel map is now per-layout** (Stage 3) — each layout declares its function
-   set (manifest) + default map (`config/channel_map.<id>.json`); no global list.
-2. ✅ **Generic static handler** (Stage 2) — a layout's files serve by filename; no
-   per-file `api.py` plumbing. (The client **Docker** nginx still lists routes — a
-   separate config to update for that deploy.)
-3. ✅ **CSS split** (Stage 4) — the shared shell/menu/modal/wizard is `shell.css`;
-   `dashboard.css`/`raw.css`/`template.css` hold only their layout's styles. A new
-   layout links `shell.css` + its own.
-4. ✅ **Layout manifest** (Stage 1) — registration is one `web/layouts.json` entry.
-5. ✅ **Layout template** — `web/template.{html,js,css}` + `channel_map.template.json`,
-   shipped `active:false`; copy it (above).
-6. ⏳ **One global lifecycle/state on the server.** All clients share it; layouts
-   can't have independent sessions (fine for one driver, surprising for two).
-7. ⏳ **No auto-generated controls** — a function-mapped layout's JS/art is still
-   hand-written (the template gives you a one-knob starting point).
-
-## Remaining refactors
-
-- **Auto-generated controls**: a layout client that reads its function set + default
-  map and renders generic knobs, so a new function-mapped toy needs no bespoke JS.
-- **Per-session layout state** so two layouts can be driven independently.
-
-Until those land, **document and encourage the generic slot/channel path** (above) —
-it's clean and needs no core changes.
+- One **global** lifecycle/state on the server — fine for one driver (two layouts can't hold
+  independent sessions yet).
+- The Docker client serves via `client/serve.py` too, so a new layout needs **no** Docker/route
+  config (see [REMOTE_CLIENT.md](REMOTE_CLIENT.md)).
+- Gamepad on a generic layout drives the same motors (see [GAMEPAD.md](GAMEPAD.md)); unmapped
+  motors are inert until auto-assigned.
