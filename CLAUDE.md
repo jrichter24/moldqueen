@@ -93,6 +93,30 @@ setting — see [`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md)). Detai
   future API client (a JVM brain) OR retire. Not on the control path.
 - **[`web-gui/`](web-gui/)** — original Node scaffold, superseded by mk4web's page.
 
+## Agents (Claude Code subagents — `.claude/agents/`)
+
+One specialist per **active** component; each fires on its own domain (auto-delegation
+keys off the agent's `description`). Use the matching agent for non-trivial work in its
+area; for a small one-file edit you already understand, just go direct.
+
+| Work | Agent |
+|---|---|
+| `client/` web UI — dashboard, layouts, chooser, MK4Chrome, auto-assign, gamepad, **channel maps + function→channel resolution**, i18n | **client-dev** |
+| `linux-core/` — Pi radio core: the Python **broadcaster** (raw HCI), the **thin-transport WS server** (`mk4web/api.py`), bluetoothd/caps, the dongle-by-MAC | **linux-core-dev** |
+| `android-core/` — Kotlin standalone app: native BLE `AdvertisingSet`, the on-device WS server, `bundleClient`, the WebView, the Gradle build | **android-core-dev** |
+| `dev-docs/` + `docs/` (the GitHub Pages site) + `README` | **docs-dev** |
+| Review a finished chunk against the plan/standards | **code-reviewer** |
+
+Boundaries: the **client owns the maps + resolution** (thin transport, smart client) —
+radio agents never resolve functions; the **UI is single-sourced** (`client/`) and the
+cores *consume* it — don't fork it per platform. There is **no** agent for the retired
+`java-core/` / `web-gui/` (and `bt-core/` never existed — radio = `linux-core/`); if a
+request smells like those, it's really client-/linux-/android-/docs-dev.
+
+> **`code-reviewer` name collision:** a built-in `code-reviewer` *and*
+> `superpowers:code-reviewer` also exist — if you specifically want the user-level one,
+> name it explicitly.
+
 ## Operational gotchas (running the live service)
 
 - **Restart the API after changing `api.py` / routes / manifest / WS handlers** — the

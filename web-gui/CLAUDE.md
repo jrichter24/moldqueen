@@ -1,5 +1,14 @@
 # web-gui
 
+> ⚠️ **RETIRED — do not use this as guidance.** This scaffold is **superseded** by
+> `mk4web`'s served page and the independent **[`../client/`](../client/)** web UI. The
+> "web-gui drives the UI and asks java-core to build telegrams" model is **dead**: the
+> real UI is `client/` (it's the **smart client** — it resolves function→channel and
+> owns the channel maps), and it talks the **thin-transport** WebSocket contract to the
+> radio core in **[`../linux-core/`](../linux-core/)**. There is no `java-core` control
+> path. The text below describes the **old, abandoned** model; ignore it for current
+> work and see the root [`CLAUDE.md`](../CLAUDE.md) + [`../client/`](../client/).
+
 A **very light** browser control panel to drive the excavator. Deliberately
 minimal: **vanilla JS + a tiny Node server, no framework.**
 

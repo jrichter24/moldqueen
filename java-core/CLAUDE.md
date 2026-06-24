@@ -1,5 +1,14 @@
 # java-core
 
+> ⚠️ **RETIRED — do not use this as guidance.** This scaffold is **superseded**. The
+> "java-core builds the telegrams" plan is dead: **telegrams are built in Python** in
+> [`../linux-core/`](../linux-core/) (the radio core), and the **UI is
+> [`../client/`](../client/)** (not described here). There is no `bt-core/` and no
+> `web-gui/` control path. `java-core/` is an empty scaffold kept only as a possible
+> *future* JVM API client (a client of the WebSocket contract) — or to retire. The
+> text below describes the **old, abandoned** model; ignore it for current work and
+> see the root [`CLAUDE.md`](../CLAUDE.md) + [`dev-docs/PROJECT.md`](../dev-docs/PROJECT.md).
+
 Hardware-**independent** Java library: the brains that build telegrams and
 orchestrate the hubs. **No BLE, no HCI, no Pi-only anything** — pure bytes + logic.
 
