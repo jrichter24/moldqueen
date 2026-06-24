@@ -15,6 +15,12 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   reads it, instead of hardcoding. The startpage-portrait change (see FINISHED) is the
   **first step** toward this, not the full system.
 
+## RECURRING (every release)
+
+- **After each release** (a new `v*` tag) — update the **README** + **website (`docs/`)**
+  Download/Install sections + the version badge to the new version, and verify the
+  release-download links resolve to the latest release. (Mirrored in `CLAUDE.md`.)
+
 ## IN-PROGRESS
 
 - _(none)_
@@ -27,6 +33,11 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## FINISHED (recent, for context)
 
+- **v0.1.0 — first signed release** — the release pipeline is live: deterministic versioning
+  (0.1.0 / 10000), package rename to `io.github.jrichter24.moldqueen`, FOSS-only deps, CI test
+  gate (Python/Android/JS), release signingConfig, and a gated `v*`-tag release workflow that
+  signs + publishes the APK. `moldqueen-v0.1.0.apk` is attached to the GitHub Release. *(F-Droid
+  recipe + Play AAB/closed-testing remain — external.)*
 - **Startpage portrait support** — the chooser works in portrait + landscape; individual
   layouts stay landscape-locked (the Android host sets activity orientation per page).
 - **Even menu button widths** — Coffee / Sponsor / Website now match the standard menu items.

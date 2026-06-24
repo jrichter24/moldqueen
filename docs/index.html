@@ -159,11 +159,16 @@
           <div class="copy">
             <div class="num" data-i18n="ix.and.num">Android · standalone app</div>
             <h3 data-i18n="ix.and.h3">Everything on the phone.</h3>
-            <p data-i18n="ix.and.p">A self-contained app. It uses the phone's own Bluetooth radio, serves the interface on the device, and needs neither a Pi nor a network. For now it's a developer build you install over USB:</p>
+            <p data-i18n="ix.and.p">A self-contained app. It uses the phone's own Bluetooth radio, serves the interface on the device, and needs neither a Pi nor a network.</p>
+            <p>
+              <a class="btn btn-primary" href="https://github.com/jrichter24/moldqueen/releases/latest" rel="noopener"><span data-i18n="ix.and.btnGet">Download the app</span> <span class="arr">→</span></a>
+            </p>
+            <p class="muted" data-i18n="ix.and.dl">Latest signed release: <b>v0.1.0</b>. Download <code>moldqueen-v0.1.0.apk</code>, allow install from unknown sources, then open it. <b>F-Droid: coming soon.</b></p>
+            <p class="muted" data-i18n="ix.and.src">Or build it yourself over USB:</p>
             <pre class="cmd"><span class="c"># repo cloned, device connected</span>
 cd android-core
 ./gradlew installDebug</pre>
-            <p class="muted" data-i18n="ix.and.muted">A signed, store-ready release is on the <a href="#roadmap">roadmap</a>. Builds and notes: <a href="https://github.com/jrichter24/moldqueen/releases" rel="noopener">GitHub Releases</a>.</p>
+            <p class="muted" data-i18n="ix.and.muted">All builds and release notes are on <a href="https://github.com/jrichter24/moldqueen/releases" rel="noopener">GitHub Releases</a>.</p>
           </div>
         </div>
 

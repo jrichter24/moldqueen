@@ -2,6 +2,7 @@
 
 <!-- Restrained, mostly-monochrome badge row: flat-square, dark-slate (labelColor=23272e / color=2f343b),
      white logos. One sparing accent (muted green 2d6a4f) on the status badge only. -->
+[![Latest release](https://img.shields.io/github/v/release/jrichter24/moldqueen?style=flat-square&labelColor=23272e&color=2f343b&logo=github&logoColor=white&label=release)](https://github.com/jrichter24/moldqueen/releases/latest)
 [![Website — live](https://img.shields.io/badge/website-live-2f343b?style=flat-square&labelColor=23272e&logo=githubpages&logoColor=white)](https://jrichter24.github.io/moldqueen/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2f343b?style=flat-square&labelColor=23272e)](LICENSE)
 ![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Linux%2FBlueZ-2f343b?style=flat-square&labelColor=23272e&logo=raspberrypi&logoColor=white)
@@ -28,6 +29,19 @@
   <a href="https://ko-fi.com/A437HBY" target="_blank"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support moldqueen on Ko-fi" height="36"></a>
   <br><sub>Free &amp; open source. If it helps you, <a href="https://github.com/sponsors/jrichter24">💜 sponsor on GitHub</a> or <a href="https://ko-fi.com/A437HBY">☕ buy me a coffee</a>. No ads, no affiliate links.</sub>
 </p>
+
+## Download — install the app
+
+**📲 [Latest signed release](https://github.com/jrichter24/moldqueen/releases/latest)** — the standalone **Android app**, signed by the author.
+
+1. Download **`moldqueen-v0.1.0.apk`** from the [latest release](https://github.com/jrichter24/moldqueen/releases/latest).
+2. On your phone, allow **install from unknown sources** for your browser or file manager (Android prompts the first time).
+3. Open the APK to install, then launch **MoldQueen → Connect → Ready → drive**.
+
+It's one self-contained app — it owns the radio *and* serves the UI on-device, so no Pi or network is needed.
+Prefer to build it yourself? `cd android-core && ./gradlew installDebug` (over USB).
+**F-Droid:** coming soon (recipe submission pending). The **Raspberry Pi** path is in
+[Quickstart](#quickstart) below.
 
 ## The idea: API-first — thin transport, smart client
 

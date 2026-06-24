@@ -140,8 +140,9 @@ camera/sensors/AI (future).
 ## Conventions
 
 Small, clear conventional commits (`feat:`/`fix:`/`docs:`/`chore:`). Minimal
-dependencies (1 GB Pi). Secrets never committed (`.gitignore`). **No git remote
-yet** — deliberate, later decision.
+dependencies (1 GB Pi). Secrets never committed (`.gitignore`). Git remote: **`origin`**
+= [`github.com/jrichter24/moldqueen`](https://github.com/jrichter24/moldqueen) (public);
+push to `main` only when the user asks.
 
 **Keep [`CONTRIBUTING.md`](CONTRIBUTING.md) updated** when the contribution flow, the
 agent roster (`.claude/agents/`), or the AI-assisted-workflow conventions change.
@@ -149,6 +150,11 @@ agent roster (`.claude/agents/`), or the AI-assisted-workflow conventions change
 **Keep [`WORKBOARD.md`](WORKBOARD.md) updated** — the single living backlog so cross-session
 items don't get lost. Move items between FUTURE / IN-PROGRESS / STALE / FINISHED as work
 starts, stalls, or completes.
+
+**After cutting a release** (a new `v*` tag): update the **README** + **website (`docs/`)**
+Download/Install sections + the **version badge** to the new version, and verify the
+release-download links point to the latest release. (Tracked in [`WORKBOARD.md`](WORKBOARD.md)
+under RECURRING.)
 
 ## Toolchains (on this Pi)
 
