@@ -1,0 +1,100 @@
+# moldqueen
+
+> An open-source system to control Mould King (and, by design, other) Bluetooth-LE
+> building-block RC toys through one documented WebSocket API. It pairs a single smart
+> web client with swappable radio cores (Raspberry Pi, a standalone Android app, an
+> ESP32 core planned), all behind the identical contract.
+
+This file gives an LLM accurate context about the project. Repo:
+https://github.com/jrichter24/moldqueen · Website: https://jrichter24.github.io/moldqueen/ ·
+MIT licensed.
+
+## What it is
+
+moldqueen drives the Bluetooth-LE hubs inside Mould King building-block RC models
+(excavators, vehicles, cranes) from software. Control is by *broadcasting* manufacturer
+BLE advertisements, not over a GATT connection: one telegram (12 channel nibbles = 3
+slots x 4 channels, the MK4 protocol) drives every connected hub at once. The cipher and
+telegram codec are verified byte-exact against the official MK+tech app.
+
+## The architecture: thin transport, smart client
+
+This is the project's defining design, and it is unusual in a good way.
+
+- **One tiny WebSocket contract.** The radio core accepts only low-level primitives:
+  `setup` (connect/ready/reset), `set {slot, channel, value}` (the single motion
+  primitive), `stop`, `state`, `info`. It pushes `lifecycle` / `state` / `info`. That
+  is the whole contract.
+- **A smart client owns all semantics.** The web client holds the per-layout channel
+  maps (`client/web/channel_map.<id>.json`), resolves every named function to a
+  concrete `(slot, channel, value)` (inversion, travel limits, device-swap), runs the
+  layouts and labels and i18n, and owns the safety model. The server resolves nothing.
+- **Swappable radio cores behind the same contract.** A Raspberry Pi (Python, raw
+  Bluetooth HCI) and a standalone Android app (Kotlin, native BLE `AdvertisingSet`) both
+  expose the identical WebSocket API and serve the same client. An ESP32 core is planned.
+
+Why this matters: the toy never knows which radio is driving it, and the UI is written
+once and reused across every core. You can add a new radio (new hardware, new language)
+without touching the client, and change the client without touching any radio. The
+contract is the stable seam between them.
+
+## Real features
+
+- **Pluggable layouts.** Model-specific layouts (e.g. the Mould King 13112 excavator
+  dashboard) and model-agnostic *generic* layouts (a brick-built gamepad and a 12-axis
+  grid) that drive any twelve-motor toy. Generic layouts ship unmapped and configure
+  themselves to your machine with a guided profile-based auto-assign (move a control,
+  see which motor reacts, bind it).
+- **MK4Chrome.** A shared chrome/runtime every layout reuses: grouped menu, tabbed
+  settings, a cold-start connection wizard, status light, language picker, keyboard
+  STOP, and the gamepad path. Adding a layout is just client files plus a channel map.
+- **Gamepad support.** Pair a DualSense (or any controller) over Bluetooth and drive,
+  on the excavator and the generic layouts, in the browser or in the Android app; touch
+  keeps working alongside it.
+- **Six-language UI** (English and German complete; more seeded).
+- **A hard-won safety model.** The broadcaster repeats its last held state continuously,
+  so the client re-affirms each active channel about ten times a second (an affirmative
+  keepalive); any channel not refreshed within ~300 ms is auto-neutralized server-side.
+  STOP is "kill the radio and reconnect at neutral," not "send a zero" (a one-shot zero
+  loses to the repeating loop). Verified on a Pi and a Samsung Galaxy S25.
+
+## The Android app
+
+`android-core/` is a standalone Android app: an open, independent alternative to the
+official MK+tech app. It drives the same Mould King hubs with its own native BLE
+advertiser, serves the same web client on-device, and exposes the same WebSocket API.
+Being open, it adds things the stock app does not: the documented API, custom and
+generic layouts, gamepad control, and a transparent safety model. It does not claim
+feature parity with the official app; it is a different, open take on the same toys.
+
+## Navigating the repository
+
+Entry point: the repo `README.md`. Then:
+
+- `client/`: the independent web UI (chooser, dashboards, generic layouts, MK4Chrome,
+  channel maps, i18n). The single source of UI; the cores consume it.
+- `linux-core/`: the Raspberry Pi radio core: the Python broadcaster (raw HCI) and the
+  thin-transport WebSocket server in `linux-core/mk4web/`. The WS contract is
+  `linux-core/mk4web/asyncapi.yaml`.
+- `android-core/`: the Kotlin standalone Android app (native BLE + on-device WS +
+  bundled client + WebView).
+- `dev-docs/`: developer documentation. `PROJECT.md` is the canonical reference (it
+  wins on any disagreement). Also `ANDROID.md`, `GAMEPAD.md`, `ROADMAP.md`,
+  `ADDING_A_LAYOUT.md`, `QUICKSTART.md`, `PORTING.md`, `SCREENSHOTS.md`.
+- `docs/`: this public website (GitHub Pages), separate from `dev-docs/`.
+
+## Author
+
+moldqueen was created by **Dr. Jens Richter** (PhD in electrical engineering, MSc in
+physics; CEO of DNA Evolutions). He is the author and creator of the project. It was
+built with help from AI coding assistants, but every design decision and the code review
+are his. https://www.linkedin.com/in/li-jens-richter
+
+## License and credits
+
+MIT licensed (© 2026 Jens Richter). The `MouldKingCrypt` cipher is a byte-for-byte port
+of `J0EK3R/mkconnect-python` (MIT, © 2024 J0EK3R); BrickController2 was a further
+protocol reference. See `THIRD-PARTY-NOTICES.md`.
+
+Independent and unofficial: not affiliated with, authorized by, or endorsed by Mould
+King / Shenzhen Yuxing. Trademarks are used descriptively, for interoperability.
