@@ -295,15 +295,17 @@ window.MK4Chrome = (function () {
       const g1 = el("navgroup"); g1.appendChild(el("grouplabel", "", t.grpNavigation));
       const b1 = el("groupbtns"); g1.appendChild(b1);
       b1.appendChild(tbtn(HOME_ICON + '<span class="btxt">' + t.layouts + "</span>", "withicon", () => { location.href = "/?choose=1"; }));
-      b1.appendChild(extLink(WEBSITE_URL, GLOBE_ICON, t.website, t.websiteTitle, "kofibtn extlink"));
       tb.appendChild(g1); tb.appendChild(el("navsep"));
 
-      // GROUP 2 — Connection: connect/resume + release
+      // GROUP 2 — Connection: connect/resume + auto-assign shortcut (generic only) + release
       const g2 = el("navgroup"); g2.appendChild(el("grouplabel", "", t.grpConnection));
       const b2 = el("groupbtns"); g2.appendChild(b2);
       b2.appendChild(lifecycle === "CONNECTING"
         ? tbtn(t.resume, "primary", openWizard)
         : tbtn((config.connectLabel ? config.connectLabel(t) : t.connect), "primary connectExc", openWizard));
+      // auto-assign shortcut — only on layouts that HAVE auto-assign (generic; config.autoAssign). Opens the
+      // EXISTING auto-assign UI (same as the Settings → re-run path); UI/navigation only, no drive/safety path.
+      if (config.autoAssign) b2.appendChild(tbtn(t.gen.autoAssignBtn, "", () => { closeAll(); openAssign(); }));
       b2.appendChild(tbtn(t.resetConn, "", doReset));
       tb.appendChild(g2); tb.appendChild(el("navsep"));
 
@@ -316,9 +318,10 @@ window.MK4Chrome = (function () {
       if (features.gamepad && activePad()) b3.appendChild(padChip());
       tb.appendChild(g3); tb.appendChild(el("navsep"));
 
-      // GROUP 4 — Support: GitHub Sponsors + Ko-fi (pure links, new tab; no drive/keepalive/STOP path)
+      // GROUP 4 — Support: Website + GitHub Sponsors + Ko-fi (pure external links, new tab; no drive/keepalive/STOP path)
       const g4 = el("navgroup"); g4.appendChild(el("grouplabel", "", t.grpSupport));
       const b4 = el("groupbtns"); g4.appendChild(b4);
+      b4.appendChild(extLink(WEBSITE_URL, GLOBE_ICON, t.website, t.websiteTitle, "kofibtn extlink"));
       b4.appendChild(extLink(SPONSOR_URL, HEART_ICON, t.sponsor, t.sponsorTitle, "kofibtn sponsorbtn"));
       b4.appendChild(extLink(KOFI_URL, COFFEE_ICON, t.support, t.supportTitle, "kofibtn"));
       tb.appendChild(g4);
