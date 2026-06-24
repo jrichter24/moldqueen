@@ -79,9 +79,10 @@
     "ix.dev.p": "Du willst dein eigenes Modell ergänzen? Ein Layout besteht nur aus Client-Dateien: ein Manifest-Eintrag, eine schlanke Seite und eine Kanalzuordnung. Die gemeinsame Oberfläche (Menü, Einstellungen, Verbindungsassistent, Gamepad, STOP) bekommst du geschenkt. Sieh dir <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ADDING_A_LAYOUT.md\" rel=\"noopener\">Adding a layout</a> und die übrigen <a href=\"https://github.com/jrichter24/moldqueen/tree/main/dev-docs\" rel=\"noopener\">Entwickler-Docs</a> an. Issues und Pull Requests sind auf <a href=\"https://github.com/jrichter24/moldqueen\" rel=\"noopener\">GitHub</a> willkommen.",
     // ---- index: support ----
     "ix.sup.eyebrow": "Unterstützen",
-    "ix.sup.h2": "Spendier mir einen Kaffee.",
-    "ix.sup.lead": "moldqueen ist frei und quelloffen, ein Hobbyprojekt aus der Freizeit. Wenn es dir nützt, hält ein Kaffee es am Laufen. Keine Werbung, keine Affiliate-Links, keine Hintergedanken.",
-    "ix.sup.btn": "Auf Ko-fi unterstützen",
+    "ix.sup.h2": "Unterstütze das Projekt.",
+    "ix.sup.lead": "moldqueen ist frei und quelloffen, ein Hobbyprojekt aus der Freizeit. Wenn es dir nützt, kannst du es auf GitHub sponsern oder mir einen Kaffee spendieren. Keine Werbung, keine Affiliate-Links, keine Hintergedanken.",
+    "ix.sup.btnGh": "Auf GitHub unterstützen",
+    "ix.sup.btn": "Spendier mir einen Kaffee",
     // ---- index: roadmap ----
     "ix.rm.eyebrow": "Roadmap",
     "ix.rm.h2": "Wohin es geht.",
@@ -112,7 +113,8 @@
     "ix.ab.support": "Gefällt dir das Projekt? Du kannst mir <a href=\"https://ko-fi.com/A437HBY\" rel=\"noopener\" target=\"_blank\">auf Ko-fi einen Kaffee spendieren ☕</a>.",
     "ix.foot.privacy": "Datenschutz",
     "ix.foot.license": "Lizenz (MIT)",
-    "ix.foot.support": "☕ Unterstützen",
+    "ix.foot.sponsor": "💜 Sponsern",
+    "ix.foot.support": "☕ Kaffee",
     "ix.foot.fine": "Ein unabhängiges, inoffizielles Hobbyprojekt. Keine Verbindung zu Mould King / Shenzhen Yuxing; Markennamen dienen nur der Beschreibung und der Interoperabilität.",
     // ---- privacy ----
     "pp.eyebrow": "Rechtliches",

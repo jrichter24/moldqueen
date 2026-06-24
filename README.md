@@ -7,6 +7,7 @@
 ![Gamepad](https://img.shields.io/badge/gamepad-DualSense%20%2F%20any-5865F2)
 ![Python 3.13](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
 [![status: two-hub control working](https://img.shields.io/badge/status-two--hub%20control%20working-brightgreen)](#what-it-does)
+[![GitHub Sponsors](https://img.shields.io/badge/GitHub-%F0%9F%92%9C%20sponsor-EA4AAA?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/jrichter24)
 [![Ko-fi: support](https://img.shields.io/badge/Ko--fi-%E2%98%95%20support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/A437HBY)
 
 **Drive a [Mould King](https://www.mouldking.com/) building-block RC toy — over a reverse-engineered BLE protocol, through one clean WebSocket API.**
@@ -20,8 +21,10 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/sponsors/jrichter24" target="_blank"><img src="https://img.shields.io/badge/Sponsor_on_GitHub-%F0%9F%92%9C-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Sponsor moldqueen on GitHub" height="36"></a>
+  &nbsp;
   <a href="https://ko-fi.com/A437HBY" target="_blank"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support moldqueen on Ko-fi" height="36"></a>
-  <br><sub>☕ Free &amp; open source. If it helps you, <a href="https://ko-fi.com/A437HBY">buy me a coffee</a>. No ads, no affiliate links.</sub>
+  <br><sub>Free &amp; open source. If it helps you, <a href="https://github.com/sponsors/jrichter24">💜 sponsor on GitHub</a> or <a href="https://ko-fi.com/A437HBY">☕ buy me a coffee</a>. No ads, no affiliate links.</sub>
 </p>
 
 ## The idea: API-first — thin transport, smart client
