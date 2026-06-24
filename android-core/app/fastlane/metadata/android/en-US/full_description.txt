@@ -1,14 +1,44 @@
-MoldQueen drives Mould King building-block RC toys over Bluetooth.
+Control Mould King building-block RC toys from your phone over Bluetooth: no Raspberry Pi, no network, fully open source.
 
-It is built around one documented WebSocket contract with an unusual split. The radio core is a thin transport: it just turns a raw command into a Mould King Bluetooth Low Energy telegram and broadcasts it, knowing nothing about your toy. A smart web client is the other half: it resolves controls to channels, owns the per-toy channel map, and runs the keepalive plus the STOP safety latch.
+MoldQueen is a standalone Android app for driving Mould King building-block RC toys. It uses the phone's own Bluetooth radio and serves its control interface on the device, so it needs no Raspberry Pi, no network, and no cloud account. It speaks a reverse-engineered Bluetooth Low Energy broadcast protocol, and follows a "thin transport, smart client" design: the radio just broadcasts the toy's control telegrams, while the on-device client resolves every control to a channel and owns the per-toy mapping.
 
-The standalone Android app is self-contained. It uses the phone's own Bluetooth radio and serves the interface on the device, so it needs neither a Raspberry Pi nor a network. (The same app and UI also run on a Raspberry Pi if you prefer that.)
+**Control layouts**
 
-Features:
+Each toy gets a control surface, and any toy can fall back to a generic one:
 
-* A model-specific Excavator (Mould King 13112) dashboard, plus generic, model-agnostic layouts (a brick-style gamepad and a 12-axis controller) that drive any toy on these hubs.
-* Profile-based auto-assign maps a toy's motors to channels in a few taps.
-* Gamepad support: pair a controller over Bluetooth and drive (touch works fully too).
-* Six interface languages.
+* A model-specific Excavator (Mould King 13112) dashboard with left and right tracks, arm, front arm, rotation, and bucket.
+* Generic, model-agnostic layouts (a 12-axis controller and a brick-style gamepad) that drive any Mould King MK4 model on these hubs.
+* Proportional drag joysticks and press-and-hold buttons.
+* Per-channel speed caps, channel inversion, and a RAW channel view for direct control.
 
-The Mould King protocol was reverse-engineered for interoperability with hardware the author owns, for educational and personal use. This is a private, independent, unofficial hobby project. It is not affiliated with, authorized by, endorsed by, or sponsored by Mould King. Open source under the MIT License.
+**Auto-assign**
+
+Map a new toy's motors to channels in a few taps:
+
+* Pick a motor profile (tracked vehicle, car with steering, or custom) and a motor count.
+* The app assigns each motor to a slot and channel; adjust any row by hand.
+
+**Gamepad**
+
+Drive with a physical controller instead of touch:
+
+* Pair a Bluetooth controller (for example a DualSense) and steer with the sticks.
+* Touch and gamepad work interchangeably.
+
+**Safety**
+
+Stopping is built in:
+
+* An emergency STOP control that cuts all motion at once.
+* Auto-neutral keepalive: every active channel must be refreshed continuously, so a channel that stops being refreshed returns to neutral on its own. A dropped connection or a released control coasts back to a stop instead of running away.
+
+**Languages**
+
+* Six interface languages: English, German, Chinese, Korean, Spanish, and French.
+
+**Open and independent**
+
+* Free software under the MIT License; the full source is on GitHub.
+* The Mould King MK4 protocol was reverse-engineered for interoperability with hardware the author owns, for educational and personal use.
+* Builds on J0EK3R's MIT-licensed MouldKingCrypt work, ported byte-for-byte and verified against the stock app's adverts.
+* A private, independent, unofficial hobby project. Not affiliated with, authorized by, endorsed by, or sponsored by Mould King; "Mould King" is used only descriptively for interoperability.
