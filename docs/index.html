@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>moldqueen — API-first control for BLE building-block RC toys</title>
-  <meta name="description" content="moldqueen drives Bluetooth-LE building-block RC toys over one documented WebSocket API. A smart web client, a thin-transport radio core you can swap — Raspberry Pi, Android, or your desktop. Starting with Mould King." />
+  <title>moldqueen: open control for building-block RC toys</title>
+  <meta name="description" content="moldqueen drives Bluetooth-LE building-block RC toys over one documented WebSocket API. One smart web client, and a thin-transport radio core you can swap (Raspberry Pi, Android, or your desktop). Mould King comes first." />
   <meta name="theme-color" content="#0a0d12" />
   <link rel="icon" href="assets/moldqueen_icon.png" />
   <link rel="preload" as="image" href="assets/hero.png" />
   <link rel="stylesheet" href="styles.css" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="moldqueen — API-first control for BLE building-block RC toys" />
-  <meta property="og:description" content="One documented WebSocket API. A smart client. A swappable radio core — Pi, Android, desktop. Starting with Mould King." />
+  <meta property="og:title" content="moldqueen: open control for building-block RC toys" />
+  <meta property="og:description" content="One documented WebSocket API. A smart client, and a radio core you can swap (Pi, Android, desktop). Mould King comes first." />
   <meta property="og:image" content="https://jrichter24.github.io/moldqueen/assets/hero.png" />
   <meta property="og:url" content="https://jrichter24.github.io/moldqueen/" />
   <meta name="twitter:card" content="summary_large_image" />
 </head>
 <body class="scroll-tone">
-  <a class="skip" href="#features">Skip to content</a>
+  <a class="skip" href="#features" data-i18n="ix.skip">Skip to content</a>
 
   <header class="nav" id="nav">
     <div class="wrap">
@@ -29,31 +29,34 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
       </button>
       <ul class="navlinks" id="navlinks">
-        <li><a href="#features">Design</a></li>
-        <li><a href="#layouts">Layouts</a></li>
-        <li><a href="#app">Get the app</a></li>
-        <li><a href="#dev">Developers</a></li>
+        <li><a href="#features" data-i18n="ix.nav.design">Design</a></li>
+        <li><a href="#layouts" data-i18n="ix.nav.layouts">Layouts</a></li>
+        <li><a href="#app" data-i18n="ix.nav.app">Get the app</a></li>
+        <li><a href="#dev" data-i18n="ix.nav.dev">Developers</a></li>
         <!-- INSPIRATION: re-enable when affiliate programs ready (restore with the section + footer links) -->
         <!-- <li><a href="#inspiration">Inspiration</a></li> -->
-        <li><a href="#about">About</a></li>
+        <li><a href="#about" data-i18n="ix.nav.about">About</a></li>
         <li><a class="cta" href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a></li>
+        <li class="lang" role="group" aria-label="Language">
+          <button type="button" class="langbtn" data-lang="en">EN</button><span class="langsep">|</span><button type="button" class="langbtn" data-lang="de">DE</button>
+        </li>
       </ul>
     </div>
   </header>
 
   <main>
-    <!-- 1. HERO — full-bleed banner image, clean bottom-left copy ============ -->
+    <!-- 1. HERO: full-bleed banner image, clean bottom-left copy ============ -->
     <section class="hero" id="home">
       <img class="hero-img" src="assets/hero.png" alt="A Mould King building-block RC excavator, controlled by moldqueen" />
       <div class="wrap">
        <div class="hero-copy">
-        <p class="eyebrow">Open source · API-first</p>
-        <h1>Control building-block RC toys through one clean API.</h1>
-        <p class="tagline">Drive Bluetooth-LE building-block machines over a documented WebSocket contract — starting with Mould King.</p>
-        <p class="lead">One smart web client. A thin-transport radio core you can swap — a Raspberry Pi today, an Android phone in your pocket, an ESP32 tomorrow.</p>
+        <p class="eyebrow" data-i18n="ix.hero.eyebrow">Open source · API-first</p>
+        <h1 data-i18n="ix.hero.h1">Control building-block RC toys through one clean API.</h1>
+        <p class="tagline" data-i18n="ix.hero.tag">It drives Bluetooth-LE machines over a documented WebSocket contract. Mould King comes first.</p>
+        <p class="lead" data-i18n="ix.hero.lead">There's one smart web client, and a radio core you can swap out underneath it: a Raspberry Pi today, the Android app in your pocket, maybe an ESP32 later.</p>
         <div class="actions">
-          <a class="btn btn-primary" href="#app">Get the app <span class="arr">→</span></a>
-          <a class="btn" href="https://github.com/jrichter24/moldqueen" rel="noopener">View on GitHub</a>
+          <a class="btn btn-primary" href="#app"><span data-i18n="ix.hero.btnApp">Get the app</span> <span class="arr">→</span></a>
+          <a class="btn" href="https://github.com/jrichter24/moldqueen" rel="noopener" data-i18n="ix.hero.btnGit">View on GitHub</a>
         </div>
        </div>
       </div>
@@ -63,9 +66,9 @@
     <section class="section" id="features">
       <div class="wrap">
         <div class="section-head">
-          <p class="eyebrow">Why it's different</p>
-          <h2>Thin transport, smart client.</h2>
-          <p class="lead">Most RC apps bake the toy into the app. moldqueen splits them: one documented contract in the middle, and either side can change independently.</p>
+          <p class="eyebrow" data-i18n="ix.feat.eyebrow">Why it's different</p>
+          <h2 data-i18n="ix.feat.h2">Thin transport, smart client.</h2>
+          <p class="lead" data-i18n="ix.feat.lead">Most RC apps bake the toy into the app. moldqueen keeps them apart: one documented contract sits in the middle, and either side can change on its own.</p>
         </div>
 
         <div class="row">
@@ -73,20 +76,20 @@
             <img class="shot" src="assets/excavator_preview.png" alt="The moldqueen excavator dashboard" loading="lazy" />
           </div>
           <div class="copy">
-            <div class="num">01 — API-first by design</div>
-            <h3>The contract is the product.</h3>
-            <p>A single, documented WebSocket contract. The radio core just carries low-level channel writes; the client owns every decision — mapping each function to a channel, inversion, travel limits, and an affirmative keepalive that stops the machine if the page goes quiet. Anything that speaks the contract — a browser, a script, an agent — can drive.</p>
+            <div class="num" data-i18n="ix.f1.num">01 · API-first by design</div>
+            <h3 data-i18n="ix.f1.h3">The contract is the product.</h3>
+            <p data-i18n="ix.f1.p">There's one documented WebSocket contract. The radio core only carries low-level channel writes. Everything else lives in the client: which function maps to which channel, inversion, travel limits, and a keepalive that stops the machine if the page goes quiet. Anything that speaks the contract can drive it, whether that's a browser, a script, or an agent.</p>
           </div>
         </div>
 
         <div class="row rev">
           <div class="media">
-            <img class="shot contain" src="assets/controller_example.png" alt="PlayStation, Xbox and PlayStation controllers" loading="lazy" />
+            <img class="shot contain" src="assets/controller_example.png" alt="PlayStation and Xbox controllers" loading="lazy" />
           </div>
           <div class="copy">
-            <div class="num">02 — Gamepad support</div>
-            <h3>Drive it with a controller.</h3>
-            <p>Use a PS5 DualSense — or any browser-supported pad — on the excavator and the generic layouts. Bindings are editable, with sensible defaults, and ride the exact same drive-and-safety path as touch, right down to the hardware STOP.</p>
+            <div class="num" data-i18n="ix.f2.num">02 · Gamepad support</div>
+            <h3 data-i18n="ix.f2.h3">Drive it with a controller.</h3>
+            <p data-i18n="ix.f2.p">Pair a DualSense (or any controller) over Bluetooth and drive, on the excavator and on the generic layouts. It works in the browser and in the Android app, and touch keeps working too. The bindings are editable, the defaults are sensible, and the gamepad runs through the same safety logic as touch, right down to STOP.</p>
           </div>
         </div>
 
@@ -95,9 +98,9 @@
             <img class="shot contain" src="assets/many_machienes_example.png" alt="moldqueen running on a laptop, a tablet, a Raspberry Pi and an ESP32 board" loading="lazy" />
           </div>
           <div class="copy">
-            <div class="num">03 — Run anywhere</div>
-            <h3>Put the radio where you like.</h3>
-            <p>Because the radio is just one end of the contract, you can host it anywhere: a Raspberry Pi over raw Bluetooth, a standalone Android app with no Pi at all, or the client served from your desktop or Docker against a remote core. Same UI, same API, every time.</p>
+            <div class="num" data-i18n="ix.f3.num">03 · Run anywhere</div>
+            <h3 data-i18n="ix.f3.h3">Put the radio where you like.</h3>
+            <p data-i18n="ix.f3.p">The radio is only one end of the contract, so it can live wherever suits you: a Raspberry Pi over raw Bluetooth, the standalone Android app with no Pi at all, or the client served from your desktop or a Docker container against a remote core. The interface stays the same in every case.</p>
           </div>
         </div>
       </div>
@@ -107,30 +110,30 @@
     <section class="section" id="layouts">
       <div class="wrap">
         <div class="section-head">
-          <p class="eyebrow">Layouts</p>
-          <h2>One client, many machines.</h2>
-          <p class="lead">Open moldqueen and you land on the chooser — every layout as a card. Pick one and drive. <em>Model</em> layouts are tuned to a specific machine; <em>generic</em> layouts drive any twelve-motor toy.</p>
+          <p class="eyebrow" data-i18n="ix.lay.eyebrow">Layouts</p>
+          <h2 data-i18n="ix.lay.h2">One client, many machines.</h2>
+          <p class="lead" data-i18n="ix.lay.lead">Open moldqueen and you land on the chooser, with every layout as a card. Pick one and drive. <em>Model</em> layouts are tuned to a specific machine; <em>generic</em> ones drive any twelve-motor toy.</p>
         </div>
 
         <div class="showcase">
-          <img src="assets/start_page_preview.png" alt="The moldqueen startpage — a chooser of layout cards" loading="lazy" />
+          <img src="assets/start_page_preview.png" alt="The moldqueen startpage, a chooser of layout cards" loading="lazy" />
         </div>
 
         <div class="row rev">
           <div class="media">
-            <img class="shot full" src="assets/generic_layout_preview.png" alt="The two generic layouts — a brick-style gamepad and a 12-axis grid" loading="lazy" />
+            <img class="shot full" src="assets/generic_layout_preview.png" alt="The two generic layouts: a brick-style gamepad and a 12-axis grid" loading="lazy" />
           </div>
           <div class="copy">
-            <div class="num">Generic layouts</div>
-            <h3>One controller, any twelve-motor toy.</h3>
-            <p>No model-specific dashboard? The generic layouts — a brick-style gamepad and a 12-axis grid — map themselves to your machine with a guided auto-assign: bind a stick, watch which motor moves, done. Then drive by touch or gamepad.</p>
+            <div class="num" data-i18n="ix.gen.num">Generic layouts</div>
+            <h3 data-i18n="ix.gen.h3">One controller, any twelve-motor toy.</h3>
+            <p data-i18n="ix.gen.p">No dashboard for your exact model? The generic layouts (a brick-built gamepad and a 12-axis grid) map themselves to your machine with a guided auto-assign. You move a stick, watch which motor reacts, and that's the binding. After that, drive by touch or gamepad.</p>
           </div>
         </div>
 
         <div class="tiles" id="tiles">
           <noscript><div class="tiles-fail">Enable JavaScript to load the live layouts, or browse them in the <a href="https://github.com/jrichter24/moldqueen/tree/main/client/web" rel="noopener">repository</a>.</div></noscript>
         </div>
-        <p class="tiles-note">Cards are pulled live from the project manifest. Badges mirror the app: <strong>Generic</strong> vs <strong>Model</strong>, and the supported protocol — <strong>MK4</strong> today, a greyed <strong>MK6</strong> on the <a href="#roadmap">roadmap</a>. Hover a card to expand it.</p>
+        <p class="tiles-note" data-i18n="ix.tiles.note">Cards are pulled live from the project manifest. The badges match the app: <strong>Generic</strong> or <strong>Model</strong>, plus the supported protocol. <strong>MK4</strong> works today; a greyed-out <strong>MK6</strong> is on the <a href="#roadmap">roadmap</a>. Hover a card to expand it.</p>
       </div>
     </section>
 
@@ -138,30 +141,30 @@
     <section class="section" id="app">
       <div class="wrap">
         <div class="section-head">
-          <p class="eyebrow">Get the app</p>
-          <h2>Pick your radio.</h2>
-          <p class="lead">Two ways to start driving. Both serve the same web UI; they differ only in where the Bluetooth radio lives.</p>
+          <p class="eyebrow" data-i18n="ix.app.eyebrow">Get the app</p>
+          <h2 data-i18n="ix.app.h2">Pick your radio.</h2>
+          <p class="lead" data-i18n="ix.app.lead">There are two ways to start driving. Both serve the same web UI; the only difference is where the Bluetooth radio sits.</p>
         </div>
 
         <div class="row">
           <div class="media android-media">
             <!-- A: the phone render, standalone -->
             <img class="shot" src="assets/android_bricks_on_phone_preview.png" alt="A phone in landscape running moldqueen, driving a brick-built controller" loading="lazy" />
-            <!-- B: the open/closed-menu effect — the menu opens on hover -->
+            <!-- B: the open/closed-menu effect, the menu opens on hover -->
             <div class="menu-pair">
-              <span class="ov-tag">Menu — hover to open</span>
+              <span class="ov-tag" data-i18n="ix.and.tag">Menu: hover to open</span>
               <img class="m-closed" src="assets/android_closed_menu_preview.png" alt="The app with the menu closed" loading="lazy" />
               <img class="m-open" src="assets/android_open_menu_preview.png" alt="The app with the menu open" loading="lazy" />
             </div>
           </div>
           <div class="copy">
-            <div class="num">Android — standalone app</div>
-            <h3>Everything on the phone.</h3>
-            <p>A self-contained app: it owns the phone's Bluetooth radio, serves the UI on-device, and needs no Pi and no network. Today it's a developer build you install over USB:</p>
+            <div class="num" data-i18n="ix.and.num">Android · standalone app</div>
+            <h3 data-i18n="ix.and.h3">Everything on the phone.</h3>
+            <p data-i18n="ix.and.p">A self-contained app. It uses the phone's own Bluetooth radio, serves the interface on the device, and needs neither a Pi nor a network. For now it's a developer build you install over USB:</p>
             <pre class="cmd"><span class="c"># repo cloned, device connected</span>
 cd android-core
 ./gradlew installDebug</pre>
-            <p class="muted">A signed, store-ready release is on the <a href="#roadmap">roadmap</a>. Builds &amp; notes: <a href="https://github.com/jrichter24/moldqueen/releases" rel="noopener">GitHub Releases</a>.</p>
+            <p class="muted" data-i18n="ix.and.muted">A signed, store-ready release is on the <a href="#roadmap">roadmap</a>. Builds and notes: <a href="https://github.com/jrichter24/moldqueen/releases" rel="noopener">GitHub Releases</a>.</p>
           </div>
         </div>
 
@@ -170,14 +173,14 @@ cd android-core
             <img class="shot" src="assets/raspberry_with_code_example.png" alt="A Raspberry Pi running the moldqueen radio core, with code" loading="lazy" />
           </div>
           <div class="copy">
-            <div class="num">Raspberry Pi — control core</div>
-            <h3>The reference radio.</h3>
-            <p>Run the full radio core on a Pi with a Bluetooth-LE USB dongle, then open the UI from any browser on your network:</p>
+            <div class="num" data-i18n="ix.pi.num">Raspberry Pi · control core</div>
+            <h3 data-i18n="ix.pi.h3">The reference radio.</h3>
+            <p data-i18n="ix.pi.p">Run the full radio core on a Pi with a Bluetooth-LE USB dongle, then open the UI from any browser on your network:</p>
             <pre class="cmd">git clone https://github.com/jrichter24/moldqueen
 cd moldqueen
 scripts/start.sh
 <span class="c"># then open http://&lt;pi&gt;:8080/</span></pre>
-            <p class="muted">Full setup, from unboxing to driving, is in the <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/QUICKSTART.md" rel="noopener">Quickstart</a>.</p>
+            <p class="muted" data-i18n="ix.pi.muted">The full setup, from unboxing to the first drive, is in the <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/QUICKSTART.md" rel="noopener">Quickstart</a>.</p>
           </div>
         </div>
       </div>
@@ -187,26 +190,26 @@ scripts/start.sh
     <section class="section" id="dev">
       <div class="wrap">
         <div class="section-head">
-          <p class="eyebrow">For developers</p>
-          <h2>Open, documented, swappable.</h2>
-          <p class="lead">The contract is the product. The radio core is a thin transport that owns the radio and a safety lifecycle; the smart client owns the channel map and resolves every function to a low-level write. Swap one without touching the other.</p>
+          <p class="eyebrow" data-i18n="ix.dev.eyebrow">For developers</p>
+          <h2 data-i18n="ix.dev.h2">Built to come apart.</h2>
+          <p class="lead" data-i18n="ix.dev.lead">What matters is the contract. The radio core is a thin transport: it owns the radio and the safety lifecycle, nothing more. The smart client owns the channel map and turns every function into a low-level write. You can replace one side without touching the other.</p>
         </div>
         <div class="rows">
-          <div class="dline"><div class="k">Raspberry Pi core</div><div class="v">Python + raw Bluetooth HCI — the reference radio core. <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/README.md" rel="noopener">linux-core</a></div></div>
-          <div class="dline"><div class="k">Android core</div><div class="v">Kotlin, native BLE advertiser + the same API on-device. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ANDROID.md" rel="noopener">ANDROID.md</a></div></div>
-          <div class="dline"><div class="k">Desktop dev client</div><div class="v">Serve the UI locally against a remote core, no build. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/DEV_CLIENT.md" rel="noopener">DEV_CLIENT.md</a></div></div>
-          <div class="dline"><div class="k">Docker</div><div class="v">Ship the client as a container pointed at your Pi. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md" rel="noopener">REMOTE_CLIENT.md</a></div></div>
+          <div class="dline"><div class="k" data-i18n="ix.dev.k1">Raspberry Pi core</div><div class="v" data-i18n="ix.dev.v1">Python and raw Bluetooth HCI, the reference radio core. <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/README.md" rel="noopener">linux-core</a></div></div>
+          <div class="dline"><div class="k" data-i18n="ix.dev.k2">Android core</div><div class="v" data-i18n="ix.dev.v2">Kotlin, a native BLE advertiser, the same API on the device. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ANDROID.md" rel="noopener">ANDROID.md</a></div></div>
+          <div class="dline"><div class="k" data-i18n="ix.dev.k3">Desktop dev client</div><div class="v" data-i18n="ix.dev.v3">Serve the UI locally against a remote core, no build. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/DEV_CLIENT.md" rel="noopener">DEV_CLIENT.md</a></div></div>
+          <div class="dline"><div class="k" data-i18n="ix.dev.k4">Docker</div><div class="v" data-i18n="ix.dev.v4">Ship the client as a container that points at your Pi. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md" rel="noopener">REMOTE_CLIENT.md</a></div></div>
         </div>
-        <div class="callout">
-          <strong>The protocol.</strong> Control is manufacturer-specific Bluetooth-LE advertisements — a twelve-channel nibble telegram (MK4) that drives every connected hub at once. The codec is verified byte-exact against the official app. Full reference in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/PROJECT.md" rel="noopener">PROJECT.md</a> and the machine-readable <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/mk4web/asyncapi.yaml" rel="noopener">AsyncAPI</a>.
+        <div class="callout" data-i18n="ix.dev.callout">
+          <strong>The protocol.</strong> Control rides on manufacturer-specific Bluetooth-LE advertisements: a twelve-channel nibble telegram (MK4) that drives every connected hub at once. The codec is verified byte-exact against the official app. Full reference in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/PROJECT.md" rel="noopener">PROJECT.md</a> and the machine-readable <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/mk4web/asyncapi.yaml" rel="noopener">AsyncAPI</a>.
         </div>
-        <p>Want to add your own toy? A layout is just client files — a manifest entry, a thin page, and a channel map; the shared chrome (menu, settings, connect wizard, gamepad, STOP) comes for free. See <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ADDING_A_LAYOUT.md" rel="noopener">Adding a layout</a> and the rest of the <a href="https://github.com/jrichter24/moldqueen/tree/main/dev-docs" rel="noopener">developer docs</a>. Issues and pull requests welcome on <a href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a>.</p>
+        <p data-i18n="ix.dev.p">Want to add your own toy? A layout is just client files: a manifest entry, a thin page, and a channel map. The shared chrome (menu, settings, connect wizard, gamepad, STOP) comes for free. See <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ADDING_A_LAYOUT.md" rel="noopener">Adding a layout</a> and the rest of the <a href="https://github.com/jrichter24/moldqueen/tree/main/dev-docs" rel="noopener">developer docs</a>. Issues and pull requests are welcome on <a href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a>.</p>
       </div>
     </section>
 
     <!-- ============================================================================
          INSPIRATION: re-enable when affiliate programs ready.
-         DEACTIVATED FOR LAUNCH — wrapped in an inert <template> so it does not render,
+         DEACTIVATED FOR LAUNCH, wrapped in an inert <template> so it does not render,
          takes no space, and exposes no link. To re-enable: delete this comment, the
          <template id="inspiration-disabled"> tag below and its matching </template>,
          then restore the "Inspiration" nav <li> and the footer "Sets & inspiration"
@@ -219,31 +222,31 @@ scripts/start.sh
         <div class="section-head">
           <p class="eyebrow">Build your collection</p>
           <h2>Sets &amp; inspiration.</h2>
-          <p class="lead">Mould King machines that pair well with moldqueen — the excavator it was built for, and a few others to grow into.</p>
+          <p class="lead">Mould King machines that pair well with moldqueen, the excavator it was built for and a few others to grow into.</p>
         </div>
 
         <!-- WERBEKENNZEICHNUNG (advertising disclosure) -->
         <div class="callout warn" role="note">
-          <strong>Werbung.</strong> Dieser Abschnitt enthält Affiliate-/Werbelinks — kaufst du darüber, erhalte ich ggf. eine kleine Provision, <strong>für dich ohne Mehrkosten</strong>.
+          <strong>Werbung.</strong> Dieser Abschnitt enthält Affiliate-/Werbelinks. Kaufst du darüber, erhalte ich ggf. eine kleine Provision, <strong>für dich ohne Mehrkosten</strong>.
           <span class="muted">This section contains affiliate links; I may earn a small commission at no extra cost to you.</span>
         </div>
 
         <div class="insp-cards">
           <div class="insp-card">
-            <h3>Mould King 13112 — RC Excavator</h3>
+            <h3>Mould King 13112, RC excavator</h3>
             <p>The crawler excavator moldqueen was built for: tracks, slew, boom, arm and bucket over a single MK4 hub.</p>
-            <!-- AFFILIATE LINK: 13112 excavator (AliExpress/Amazon) — replace .ph with a rel="sponsored noopener" link -->
+            <!-- AFFILIATE LINK: 13112 excavator (AliExpress/Amazon), replace .ph with a rel="sponsored noopener" link -->
             <span class="btn ph" aria-disabled="true">Link coming soon</span>
           </div>
           <div class="insp-card">
             <h3>Other Mould King RC machines</h3>
-            <p>Excavators, loaders, cranes and technic vehicles on the same Bluetooth hubs — great candidates for a generic layout.</p>
+            <p>Excavators, loaders, cranes and technic vehicles on the same Bluetooth hubs. Good candidates for a generic layout.</p>
             <!-- AFFILIATE LINK: Mould King RC technic range -->
             <span class="btn ph" aria-disabled="true">Link coming soon</span>
           </div>
           <div class="insp-card">
             <h3>Hubs, motors &amp; spares</h3>
-            <p>Extra MK4 receivers, motors and battery packs — for repairs, or to wire up your own build and drive it generically.</p>
+            <p>Extra MK4 receivers, motors and battery packs, for repairs or to wire up your own build and drive it generically.</p>
             <!-- AFFILIATE LINK: hubs / motors / spares -->
             <span class="btn ph" aria-disabled="true">Link coming soon</span>
           </div>
@@ -262,18 +265,18 @@ scripts/start.sh
     <section class="section" id="roadmap">
       <div class="wrap">
         <div class="section-head">
-          <p class="eyebrow">Roadmap</p>
-          <h2>Where it's going.</h2>
-          <p class="lead">Direction, not promises. The through-line is the API-first design: each item is a new radio core behind the same contract, or a new client that speaks it.</p>
+          <p class="eyebrow" data-i18n="ix.rm.eyebrow">Roadmap</p>
+          <h2 data-i18n="ix.rm.h2">Where it's going.</h2>
+          <p class="lead" data-i18n="ix.rm.lead">A direction, not a set of promises. The common thread is the API-first design: each item is either a new radio core behind the same contract, or a new client that speaks it.</p>
         </div>
         <ul class="roadmap">
-          <li><b>MK6 protocol.</b> <span>A second telegram codec for Mould King's per-byte MK6 hubs — what the greyed MK6 badges on the generic layouts are reserved for.</span></li>
-          <li><b>ESP32 core.</b> <span>A small, cheap, always-on third radio core running the advertiser and the same API — no Pi or phone required.</span></li>
-          <li><b>Camera (FPV).</b> <span>A first-person video feed from the machine — drive by what the toy sees, and a stream an autonomous driver could consume.</span></li>
-          <li><b>Time-of-flight sensor.</b> <span>Distance and obstacle awareness as telemetry alongside the control API.</span></li>
-          <li><b>AI brain.</b> <span>An agent that speaks the same WebSocket contract to drive autonomously. The thin-transport split is exactly what makes this a new client, not a rewrite.</span></li>
+          <li data-i18n="ix.rm.mk6"><b>MK6 protocol.</b> <span>A second telegram codec for Mould King's per-byte MK6 hubs. It's what the greyed-out MK6 badges on the generic layouts are reserved for.</span></li>
+          <li data-i18n="ix.rm.esp"><b>ESP32 core.</b> <span>A small, cheap third radio core that stays on by itself and runs the advertiser plus the same API. No Pi or phone needed.</span></li>
+          <li data-i18n="ix.rm.cam"><b>Camera (FPV).</b> <span>A first-person video feed from the machine, so you drive by what it sees. The same stream could feed an autonomous driver later.</span></li>
+          <li data-i18n="ix.rm.tof"><b>Time-of-flight sensor.</b> <span>Distance and obstacle awareness as telemetry, alongside the control API.</span></li>
+          <li data-i18n="ix.rm.ai"><b>AI brain.</b> <span>An agent that drives on its own by speaking the same WebSocket contract. Because of the thin-transport split, that's a new client rather than a rewrite.</span></li>
         </ul>
-        <p class="tiles-note">Full detail in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ROADMAP.md" rel="noopener">ROADMAP.md</a>.</p>
+        <p class="tiles-note" data-i18n="ix.rm.note">Full detail in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ROADMAP.md" rel="noopener">ROADMAP.md</a>.</p>
       </div>
     </section>
 
@@ -281,26 +284,30 @@ scripts/start.sh
     <section class="section" id="about">
       <div class="wrap">
         <div class="section-head">
-          <p class="eyebrow">About</p>
-          <h2>An independent hobby project.</h2>
+          <p class="eyebrow" data-i18n="ix.ab.eyebrow">About</p>
+          <h2 data-i18n="ix.ab.h2">An independent hobby project.</h2>
         </div>
         <div class="prose">
-          <p>moldqueen is a private, independent, open-source project for controlling Bluetooth-LE building-block RC toys. Mould King is the first supported brand; the design deliberately leaves room for others.</p>
+          <p data-i18n="ix.ab.p1">moldqueen is a private, open-source hobby project for controlling Bluetooth-LE building-block RC toys. Mould King is the first brand it supports, and the design leaves room for more.</p>
 
-          <h3>Disclaimer</h3>
-          <p>A private, independent, unofficial hobby project — <strong>not</strong> affiliated with, authorized by, endorsed by, or sponsored by <strong>Mould King</strong> / Shenzhen Yuxing. “Mould King” and related marks are trademarks of their owners, used here only descriptively for interoperability. The protocol was reverse-engineered for interoperability with hardware the author owns, for educational and personal use.</p>
+          <h3 data-i18n="ix.ab.discH">Disclaimer</h3>
+          <p data-i18n="ix.ab.disc">A private, unofficial hobby project. It is <strong>not</strong> affiliated with, authorized by, endorsed by, or sponsored by <strong>Mould King</strong> / Shenzhen Yuxing. “Mould King” and related marks belong to their owners and are used here only descriptively, for interoperability. The protocol was reverse-engineered for interoperability with hardware the author owns, for educational and personal use.</p>
 
-          <h3>Credits</h3>
-          <p>The <code>MouldKingCrypt</code> cipher is ported byte-for-byte from <a href="https://github.com/J0EK3R/mkconnect-python" rel="noopener">J0EK3R/mkconnect-python</a> (MIT, © 2024 J0EK3R), which also provided the MK4/MK6 protocol groundwork; <a href="https://github.com/imurvai/brickcontroller2" rel="noopener">BrickController2</a> was an additional protocol reference. Full attribution in <a href="https://github.com/jrichter24/moldqueen/blob/main/THIRD-PARTY-NOTICES.md" rel="noopener">THIRD-PARTY-NOTICES.md</a>.</p>
+          <h3 data-i18n="ix.ab.credH">Credits</h3>
+          <p data-i18n="ix.ab.cred">The <code>MouldKingCrypt</code> cipher is ported byte-for-byte from <a href="https://github.com/J0EK3R/mkconnect-python" rel="noopener">J0EK3R/mkconnect-python</a> (MIT, © 2024 J0EK3R), which also provided the groundwork for the MK4/MK6 protocol. <a href="https://github.com/imurvai/brickcontroller2" rel="noopener">BrickController2</a> was a further protocol reference. Full attribution in <a href="https://github.com/jrichter24/moldqueen/blob/main/THIRD-PARTY-NOTICES.md" rel="noopener">THIRD-PARTY-NOTICES.md</a>.</p>
 
-          <h3>How it was built</h3>
-          <p>moldqueen was built with help from AI coding assistants — early work used Claude (Fable), later work used Claude Opus 4.8. All design decisions and the code review were done by the human developer.</p>
+          <h3 data-i18n="ix.ab.builtH">How it was built</h3>
+          <p data-i18n="ix.ab.built">moldqueen was built with help from AI coding assistants. The early work used Claude (Fable), the later work Claude Opus 4.8. Every design decision and the code review were done by the human developer.</p>
 
-          <h3>Author</h3>
-          <p>Built by Dr. Jens Richter. Background in physics and electrical engineering; by day, tour optimization with genetic and AI algorithms at <a href="https://www.dna-evolutions.com/" rel="noopener">DNA Evolutions</a>. Find me on <a href="https://www.linkedin.com/in/li-jens-richter" rel="noopener">LinkedIn</a>. <span class="muted">Built for my son Jonas, who loves excavators and helicopters.</span></p>
+          <h3 data-i18n="ix.ab.authH">Author</h3>
+          <p data-i18n="ix.ab.auth">Built by Dr. Jens Richter. Background in physics and electrical engineering; by day, tour optimization with genetic and AI algorithms at <a href="https://www.dna-evolutions.com/" rel="noopener">DNA Evolutions</a>. Find me on <a href="https://www.linkedin.com/in/li-jens-richter" rel="noopener">LinkedIn</a>. <span class="muted">Built for my son Jonas, who loves excavators and helicopters.</span></p>
 
-          <h3>License</h3>
-          <p>Released under the <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener">MIT License</a>.</p>
+          <h3 data-i18n="ix.ab.attrH">Credit &amp; attribution</h3>
+          <p data-i18n="ix.ab.attrP">Building on moldqueen, or forking it? A credit back is appreciated. It's MIT-licensed, so this is a request, not a requirement. A line like this in your README or about screen is plenty:</p>
+          <p><code data-i18n="ix.ab.attrSnip">Built with moldqueen (https://github.com/jrichter24/moldqueen)</code></p>
+
+          <h3 data-i18n="ix.ab.licH">License</h3>
+          <p data-i18n="ix.ab.lic">Released under the <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener">MIT License</a>.</p>
         </div>
       </div>
     </section>
@@ -312,13 +319,13 @@ scripts/start.sh
         <a class="brand" href="#home" aria-label="moldqueen"><img src="assets/moldqueen_icon.png" alt="" style="width:24px;height:24px" /><span>moldqueen</span></a>
         <nav aria-label="Footer">
           <a href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a>
-          <a href="privacy.html">Privacy</a>
+          <a href="privacy.html" data-i18n="ix.foot.privacy">Privacy</a>
           <!-- INSPIRATION: re-enable footer link when affiliate programs ready -->
           <!-- <a href="inspiration.html">Sets &amp; inspiration</a> -->
-          <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener">License (MIT)</a>
+          <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener" data-i18n="ix.foot.license">License (MIT)</a>
         </nav>
       </div>
-      <p class="fine">An independent, unofficial hobby project. Not affiliated with Mould King / Shenzhen Yuxing; trademarks are used descriptively for interoperability. © <span id="year">2026</span> Jens Richter.</p>
+      <p class="fine"><span data-i18n="ix.foot.fine">An independent, unofficial hobby project. Not affiliated with Mould King / Shenzhen Yuxing; trademarks are used descriptively, for interoperability.</span> © <span id="year">2026</span> Jens Richter.</p>
     </div>
   </footer>
 

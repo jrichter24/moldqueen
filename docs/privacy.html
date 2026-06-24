@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Privacy Policy — moldqueen</title>
+  <title>Privacy Policy · moldqueen</title>
   <meta name="description" content="Privacy policy for the moldqueen app: a local Bluetooth controller with no accounts, no analytics, no tracking, and no data sent to any server." />
   <meta name="theme-color" content="#0a0d12" />
   <link rel="icon" href="assets/moldqueen_icon.png" />
@@ -20,10 +20,13 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
       </button>
       <ul class="navlinks" id="navlinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="index.html#app">Get the app</a></li>
-        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html" data-i18n="nav.home">Home</a></li>
+        <li><a href="index.html#app" data-i18n="ix.nav.app">Get the app</a></li>
+        <li><a href="index.html#about" data-i18n="ix.nav.about">About</a></li>
         <li><a class="cta" href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a></li>
+        <li class="lang" role="group" aria-label="Language">
+          <button type="button" class="langbtn" data-lang="en">EN</button><span class="langsep">|</span><button type="button" class="langbtn" data-lang="de">DE</button>
+        </li>
       </ul>
     </div>
   </header>
@@ -31,52 +34,52 @@
   <main>
     <div class="pagehead">
       <div class="wrap">
-        <p class="eyebrow">Legal</p>
-        <h1>Privacy Policy</h1>
-        <p class="lead">For the moldqueen app and this website. Last updated 23 June 2026.</p>
+        <p class="eyebrow" data-i18n="pp.eyebrow">Legal</p>
+        <h1 data-i18n="pp.h1">Privacy Policy</h1>
+        <p class="lead" data-i18n="pp.lead">For the moldqueen app and this website. Last updated 23 June 2026.</p>
       </div>
     </div>
 
     <section class="section" style="border-top:0;padding-top:clamp(2rem,5vh,3rem)">
       <div class="wrap prose">
-        <div class="callout">
+        <div class="callout" data-i18n="pp.inshort">
           <strong>In short:</strong> moldqueen is a <strong>local Bluetooth controller</strong>. It has <strong>no user accounts</strong>, collects <strong>no personal data</strong>, contains <strong>no analytics or advertising SDKs</strong>, and sends <strong>nothing</strong> to any server the developer operates. It talks only to your toy over Bluetooth, and to its own control interface on your device or local network.
         </div>
 
-        <h2>Who this covers</h2>
-        <p>moldqueen is a private, independent, open-source project by Dr. Jens Richter (“the developer”). This policy covers the <strong>moldqueen app</strong> (the Android app and the Raspberry Pi software) and this <strong>website</strong>.</p>
+        <h2 data-i18n="pp.whoH">Who this covers</h2>
+        <p data-i18n="pp.whoP">moldqueen is a private, independent, open-source project by Dr. Jens Richter (“the developer”). This policy covers the <strong>moldqueen app</strong> (the Android app and the Raspberry Pi software) and this <strong>website</strong>.</p>
 
-        <h2>Data the app collects</h2>
-        <p>None that leaves your device. The app does not create accounts, does not ask for personal information, and does not contain analytics, advertising, crash-reporting, or tracking libraries. It does not collect device identifiers, contacts, location, or usage profiles.</p>
+        <h2 data-i18n="pp.dataH">Data the app collects</h2>
+        <p data-i18n="pp.dataP">None that leaves your device. The app does not create accounts, does not ask for personal information, and contains no analytics, advertising, crash-reporting, or tracking libraries. It does not collect device identifiers, contacts, location, or usage profiles.</p>
 
-        <h2>Information stored on your device</h2>
-        <p>To remember your setup, the app saves preferences <strong>locally on your own device</strong> (in app storage / the browser’s local storage). This includes things like:</p>
+        <h2 data-i18n="pp.storeH">Information stored on your device</h2>
+        <p data-i18n="pp.storeP">To remember your setup, the app saves preferences <strong>locally on your own device</strong> (in app storage or the browser’s local storage). This includes things like:</p>
         <ul>
-          <li>channel maps and per-function settings for each toy layout;</li>
-          <li>your chosen control endpoint, interface language, and gamepad bindings.</li>
+          <li data-i18n="pp.storeLi1">channel maps and per-function settings for each toy layout;</li>
+          <li data-i18n="pp.storeLi2">your chosen control endpoint, interface language, and gamepad bindings.</li>
         </ul>
-        <p>This data stays on the device and is never transmitted to the developer. You can erase it at any time by clearing the app’s data (Android) or your browser’s site data.</p>
+        <p data-i18n="pp.storeP2">This data stays on the device and is never sent to the developer. You can erase it at any time by clearing the app’s data (Android) or your browser’s site data.</p>
 
-        <h2>Permissions</h2>
-        <h3>Bluetooth</h3>
-        <p>Used <strong>solely</strong> to broadcast control signals to your building-block toy. The app advertises commands over Bluetooth Low Energy; it does not scan for, identify, or connect to other people’s devices, and it does not use Bluetooth to derive your location.</p>
-        <h3>Network / Internet (Android)</h3>
-        <p>Used only so the app can serve its <strong>own</strong> user interface to the on-device view over local loopback (<code>127.0.0.1</code>), and to accept control connections from a browser you point at it on your <strong>local network</strong>. The app does not send your data to external servers.</p>
+        <h2 data-i18n="pp.permH">Permissions</h2>
+        <h3 data-i18n="pp.btH">Bluetooth</h3>
+        <p data-i18n="pp.btP">Used <strong>only</strong> to broadcast control signals to your building-block toy. The app advertises commands over Bluetooth Low Energy; it does not scan for, identify, or connect to other people’s devices, and it does not use Bluetooth to work out your location.</p>
+        <h3 data-i18n="pp.netH">Network / Internet (Android)</h3>
+        <p data-i18n="pp.netP">Used only so the app can serve its <strong>own</strong> user interface to the on-device view over local loopback (<code>127.0.0.1</code>), and to accept control connections from a browser you point at it on your <strong>local network</strong>. The app does not send your data to external servers.</p>
 
-        <h2>This website</h2>
-        <p>This site is static and is typically hosted on GitHub Pages; visiting it involves GitHub as the host, whose own privacy practices apply to server logs. The site sets no tracking cookies and includes no analytics. The “Layouts” section fetches one public, non-personal file (the project’s layout manifest) from GitHub to display the current layouts. <!-- INSPIRATION: re-enable this affiliate-disclosure sentence (it links to inspiration.html) when affiliate programs are ready. --> <strong>The app itself contains no affiliate links and makes no such requests.</strong></p>
+        <h2 data-i18n="pp.siteH">This website</h2>
+        <p data-i18n="pp.siteP">This site is static and is typically hosted on GitHub Pages; visiting it involves GitHub as the host, whose own privacy practices apply to server logs. The site sets no tracking cookies and includes no analytics. The “Layouts” section fetches one public, non-personal file (the project’s layout manifest) from GitHub to show the current layouts. <!-- INSPIRATION: re-enable this affiliate-disclosure sentence (it links to inspiration.html) when affiliate programs are ready. --> <strong>The app itself contains no affiliate links and makes no such requests.</strong></p>
 
-        <h2>Children</h2>
-        <p>The app is not directed at children and collects no personal data from anyone, regardless of age.</p>
+        <h2 data-i18n="pp.childH">Children</h2>
+        <p data-i18n="pp.childP">The app is not directed at children and collects no personal data from anyone, regardless of age.</p>
 
-        <h2>Third-party services</h2>
-        <p>The app embeds no third-party analytics, advertising, or social SDKs. It is open source — you can verify everything in this policy by reading the code.</p>
+        <h2 data-i18n="pp.thirdH">Third-party services</h2>
+        <p data-i18n="pp.thirdP">The app embeds no third-party analytics, advertising, or social SDKs. It is open source, so you can verify everything in this policy by reading the code.</p>
 
-        <h2>Changes</h2>
-        <p>This policy may be updated as the app evolves (for example, if a future optional feature such as a camera stream is added — it would be described here, and would remain local unless explicitly stated). Material changes will be reflected by the “last updated” date above.</p>
+        <h2 data-i18n="pp.changeH">Changes</h2>
+        <p data-i18n="pp.changeP">This policy may be updated as the app evolves. For example, if a future optional feature such as a camera stream is added, it would be described here and would stay local unless stated otherwise. Material changes will be reflected by the “last updated” date above.</p>
 
-        <h2>Contact</h2>
-        <p>Questions about privacy? Open an issue on <a href="https://github.com/jrichter24/moldqueen/issues" rel="noopener">GitHub</a>, or email <a href="mailto:jens.richter@dna-evolutions.com">jens.richter@dna-evolutions.com</a>.</p>
+        <h2 data-i18n="pp.contactH">Contact</h2>
+        <p data-i18n="pp.contactP">Questions about privacy? Open an issue on <a href="https://github.com/jrichter24/moldqueen/issues" rel="noopener">GitHub</a>, or email <a href="mailto:jens.richter@dna-evolutions.com">jens.richter@dna-evolutions.com</a>.</p>
       </div>
     </section>
   </main>
@@ -87,13 +90,13 @@
         <a class="brand" href="index.html" aria-label="moldqueen"><img src="assets/moldqueen_icon.png" alt="" style="width:24px;height:24px" /><span>moldqueen</span></a>
         <nav aria-label="Footer">
           <a href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a>
-          <a href="privacy.html">Privacy</a>
+          <a href="privacy.html" data-i18n="ix.foot.privacy">Privacy</a>
           <!-- INSPIRATION: re-enable footer link when affiliate programs ready -->
           <!-- <a href="inspiration.html">Sets &amp; inspiration</a> -->
-          <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener">License (MIT)</a>
+          <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener" data-i18n="ix.foot.license">License (MIT)</a>
         </nav>
       </div>
-      <p class="fine">An independent, unofficial hobby project. Not affiliated with Mould King / Shenzhen Yuxing. © <span id="year">2026</span> Jens Richter.</p>
+      <p class="fine"><span data-i18n="pp.foot.fine">An independent, unofficial hobby project. Not affiliated with Mould King / Shenzhen Yuxing.</span> © <span id="year">2026</span> Jens Richter.</p>
     </div>
   </footer>
 
