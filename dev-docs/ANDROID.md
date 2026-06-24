@@ -47,7 +47,7 @@ maintain; the phone serves the same `client/` the Pi does.
 Toolchain: **Kotlin 1.9.24 · Gradle 8.9 · JDK 17 · AGP 8.7.3 · minSdk 31 / compileSdk +
 targetSdk 35** (the current Google Play floor, Android 15). The SDK needs `platform-35` +
 `build-tools;35.0.0` installed (via Android Studio's SDK Manager or `cmdline-tools`); the
-Gradle wrapper fetches Gradle itself. Package `com.dnaevolutions.moldqueen`
+Gradle wrapper fetches Gradle itself. Package `io.github.jrichter24.moldqueen`
 (app name **MoldQueen**).
 
 **Versioning (committed + deterministic — F-Droid/Play ready).** The release version is
@@ -70,7 +70,7 @@ so each is identifiable on-device; the in-app server-info shows the running `ver
 cd android-core
 ./gradlew installDebug        # build + install to a connected device (adb)
 #   or: ./gradlew assembleDebug   → app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n com.dnaevolutions.moldqueen/.MainActivity
+adb shell am start -n io.github.jrichter24.moldqueen/.MainActivity
 ```
 
 Then in the app: **Connect → Ready → drive** (the connect wizard guides the hub buttoning,

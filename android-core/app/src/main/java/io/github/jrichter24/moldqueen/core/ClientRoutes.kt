@@ -1,4 +1,4 @@
-package com.dnaevolutions.moldqueen.core
+package io.github.jrichter24.moldqueen.core
 
 import org.json.JSONArray
 import org.json.JSONObject

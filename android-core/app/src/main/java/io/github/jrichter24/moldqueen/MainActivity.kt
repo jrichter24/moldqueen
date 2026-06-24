@@ -1,4 +1,4 @@
-package com.dnaevolutions.moldqueen
+package io.github.jrichter24.moldqueen
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -18,7 +18,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.dnaevolutions.moldqueen.service.Mk4Service
+import io.github.jrichter24.moldqueen.service.Mk4Service
 
 /**
  * Layer 3 host + native app tuning. Starts the local service and shows the bundled

@@ -1,7 +1,7 @@
-package com.dnaevolutions.moldqueen.service
+package io.github.jrichter24.moldqueen.service
 
 import android.content.res.AssetManager
-import com.dnaevolutions.moldqueen.core.ClientRoutes
+import io.github.jrichter24.moldqueen.core.ClientRoutes
 import fi.iki.elonen.NanoHTTPD
 import fi.iki.elonen.NanoHTTPD.IHTTPSession
 import fi.iki.elonen.NanoHTTPD.Response

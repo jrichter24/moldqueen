@@ -1,9 +1,9 @@
-package com.dnaevolutions.moldqueen.service
+package io.github.jrichter24.moldqueen.service
 
-import com.dnaevolutions.moldqueen.BleSink
-import com.dnaevolutions.moldqueen.Mk4Telegrams
-import com.dnaevolutions.moldqueen.MouldKingCrypt
-import com.dnaevolutions.moldqueen.core.Radio
+import io.github.jrichter24.moldqueen.BleSink
+import io.github.jrichter24.moldqueen.Mk4Telegrams
+import io.github.jrichter24.moldqueen.MouldKingCrypt
+import io.github.jrichter24.moldqueen.core.Radio
 
 /**
  * Bridges the pure [Radio] interface (api.py's broadcaster role) to the proven

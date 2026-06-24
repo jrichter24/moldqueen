@@ -1,4 +1,4 @@
-package com.dnaevolutions.moldqueen
+package io.github.jrichter24.moldqueen
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

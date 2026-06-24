@@ -1,4 +1,4 @@
-package com.dnaevolutions.moldqueen
+package io.github.jrichter24.moldqueen
 
 /**
  * MouldKing BLE telegram codec (company 0xFFF0).

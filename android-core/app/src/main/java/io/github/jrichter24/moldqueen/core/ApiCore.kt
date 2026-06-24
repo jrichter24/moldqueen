@@ -1,9 +1,9 @@
-package com.dnaevolutions.moldqueen.core
+package io.github.jrichter24.moldqueen.core
 
-import com.dnaevolutions.moldqueen.Mk4Telegrams
-import com.dnaevolutions.moldqueen.core.ControlApp.Companion.CONNECTING
-import com.dnaevolutions.moldqueen.core.ControlApp.Companion.IDLE
-import com.dnaevolutions.moldqueen.core.ControlApp.Companion.READY
+import io.github.jrichter24.moldqueen.Mk4Telegrams
+import io.github.jrichter24.moldqueen.core.ControlApp.Companion.CONNECTING
+import io.github.jrichter24.moldqueen.core.ControlApp.Companion.IDLE
+import io.github.jrichter24.moldqueen.core.ControlApp.Companion.READY
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Collections

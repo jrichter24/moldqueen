@@ -1,12 +1,12 @@
-package com.dnaevolutions.moldqueen.service
+package io.github.jrichter24.moldqueen.service
 
 import android.content.Context
 import android.util.Log
-import com.dnaevolutions.moldqueen.BleBroadcaster
-import com.dnaevolutions.moldqueen.core.ApiCore
-import com.dnaevolutions.moldqueen.core.ClientRoutes
-import com.dnaevolutions.moldqueen.core.ControlApp
-import com.dnaevolutions.moldqueen.core.InfoConfig
+import io.github.jrichter24.moldqueen.BleBroadcaster
+import io.github.jrichter24.moldqueen.core.ApiCore
+import io.github.jrichter24.moldqueen.core.ClientRoutes
+import io.github.jrichter24.moldqueen.core.ControlApp
+import io.github.jrichter24.moldqueen.core.InfoConfig
 import fi.iki.elonen.NanoHTTPD
 import org.json.JSONObject
 import java.net.InetSocketAddress
@@ -73,7 +73,7 @@ class Mk4Service(context: Context) {
         override val level = "light"
         // version — the APK's committed versionName (release "0.1.0"; debug "0.1.0-debug+<sha>").
         // Shows in the client's Server-info tab so the running build is verifiable on-device.
-        override val version = com.dnaevolutions.moldqueen.BuildConfig.VERSION_NAME
+        override val version = io.github.jrichter24.moldqueen.BuildConfig.VERSION_NAME
         override val radioBackend = "android-ble"
         override val dryRun = false
         override val hci = "android-ble"

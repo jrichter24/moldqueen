@@ -1,10 +1,10 @@
-package com.dnaevolutions.moldqueen.core
+package io.github.jrichter24.moldqueen.core
 
-import com.dnaevolutions.moldqueen.Mk4Telegrams.N_CHANNELS
-import com.dnaevolutions.moldqueen.Mk4Telegrams.NEUTRAL
-import com.dnaevolutions.moldqueen.Mk4Telegrams.channelIndex
-import com.dnaevolutions.moldqueen.Mk4Telegrams.nibbleToValue
-import com.dnaevolutions.moldqueen.Mk4Telegrams.valueToNibble
+import io.github.jrichter24.moldqueen.Mk4Telegrams.N_CHANNELS
+import io.github.jrichter24.moldqueen.Mk4Telegrams.NEUTRAL
+import io.github.jrichter24.moldqueen.Mk4Telegrams.channelIndex
+import io.github.jrichter24.moldqueen.Mk4Telegrams.nibbleToValue
+import io.github.jrichter24.moldqueen.Mk4Telegrams.valueToNibble
 
 /**
  * Thin-transport state — clean-room port of api.py's (now thin-transport) App. Holds the lifecycle

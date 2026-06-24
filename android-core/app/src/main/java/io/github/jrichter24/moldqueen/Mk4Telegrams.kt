@@ -1,4 +1,4 @@
-package com.dnaevolutions.moldqueen
+package io.github.jrichter24.moldqueen
 
 /**
  * Builds MK4 12-channel nibble telegrams (dev-docs/PROJECT.md §3) and crypts them

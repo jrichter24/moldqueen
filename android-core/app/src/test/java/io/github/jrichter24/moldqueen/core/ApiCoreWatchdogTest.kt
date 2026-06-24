@@ -1,6 +1,6 @@
-package com.dnaevolutions.moldqueen.core
+package io.github.jrichter24.moldqueen.core
 
-import com.dnaevolutions.moldqueen.Mk4Telegrams
+import io.github.jrichter24.moldqueen.Mk4Telegrams
 import org.json.JSONObject
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals

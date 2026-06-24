@@ -1,8 +1,8 @@
-package com.dnaevolutions.moldqueen.service
+package io.github.jrichter24.moldqueen.service
 
 import android.util.Log
-import com.dnaevolutions.moldqueen.core.ApiCore
-import com.dnaevolutions.moldqueen.core.ClientSink
+import io.github.jrichter24.moldqueen.core.ApiCore
+import io.github.jrichter24.moldqueen.core.ClientSink
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer

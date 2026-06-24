@@ -30,12 +30,12 @@ def gitShortSha = {
 }()
 
 android {
-    namespace 'com.dnaevolutions.moldqueen'
+    namespace 'io.github.jrichter24.moldqueen'
     compileSdk 35
     buildToolsVersion '35.0.0'
 
     defaultConfig {
-        applicationId 'com.dnaevolutions.moldqueen'
+        applicationId 'io.github.jrichter24.moldqueen'
         minSdk 31
         targetSdk 35
         versionCode releaseVersionCode          // 10000 (0.1.0) — committed, deterministic

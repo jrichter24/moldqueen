@@ -1,12 +1,12 @@
-package com.dnaevolutions.moldqueen.service
+package io.github.jrichter24.moldqueen.service
 
-import com.dnaevolutions.moldqueen.BleSink
-import com.dnaevolutions.moldqueen.Mk4Telegrams
-import com.dnaevolutions.moldqueen.MouldKingCrypt
-import com.dnaevolutions.moldqueen.core.ApiCore
-import com.dnaevolutions.moldqueen.core.ClientSink
-import com.dnaevolutions.moldqueen.core.ControlApp
-import com.dnaevolutions.moldqueen.core.InfoConfig
+import io.github.jrichter24.moldqueen.BleSink
+import io.github.jrichter24.moldqueen.Mk4Telegrams
+import io.github.jrichter24.moldqueen.MouldKingCrypt
+import io.github.jrichter24.moldqueen.core.ApiCore
+import io.github.jrichter24.moldqueen.core.ClientSink
+import io.github.jrichter24.moldqueen.core.ControlApp
+import io.github.jrichter24.moldqueen.core.InfoConfig
 import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals

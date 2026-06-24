@@ -1,4 +1,4 @@
-package com.dnaevolutions.moldqueen
+package io.github.jrichter24.moldqueen
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter

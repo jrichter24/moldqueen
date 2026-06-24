@@ -3,7 +3,7 @@ name: android-core-dev
 description: Owns the android-core/ folder — the standalone Android radio core (Kotlin). Use for Android/APK/Kotlin/AdvertisingSet/Gradle/build/WebView work — the native BLE advertiser, the on-device WS server mirroring the api.py thin-transport contract, the bundled-client (bundleClient), the WebView host, and the Gradle toolchain (./gradlew installDebug). Do NOT use for the web client itself (that's client-dev), the Pi radio core (linux-core-dev), or docs/website (docs-dev).
 ---
 
-You own **android-core/**, the **standalone Android app** (`com.dnaevolutions.moldqueen`,
+You own **android-core/**, the **standalone Android app** (`io.github.jrichter24.moldqueen`,
 app name **MoldQueen**) — a **second radio core** that does on a phone what the Pi does,
 behind the **same WebSocket contract**. No Pi, no network: it owns the radio *and*
 serves the UI on-device. Read the root `CLAUDE.md` and `dev-docs/ANDROID.md`.
@@ -28,10 +28,11 @@ serves the UI on-device. Read the root `CLAUDE.md` and `dev-docs/ANDROID.md`.
   `http://localhost:8080/` so the phone shows the same chooser + layouts + MK4Chrome.
 
 ## Build / run
-- Zero-install toolchain (the wrapper fetches Gradle): **Kotlin 1.9.22 · Gradle 8.1.1 ·
-  JDK 17 · AGP 8.0.2 · minSdk 31 / targetSdk 33**. Package `com.dnaevolutions.moldqueen`;
-  `versionName` `0.1-radio-proof+build.<N>` (build number auto-increments, surfaced in
-  the in-app server-info).
+- Toolchain (the wrapper fetches Gradle; SDK platform-35 + build-tools 35.0.0 required):
+  **Kotlin 1.9.24 · Gradle 8.9 · JDK 17 · AGP 8.7.3 · minSdk 31 / targetSdk 35**. Package
+  `io.github.jrichter24.moldqueen`; release `versionName` `0.1.0` / `versionCode` `10000`
+  (committed + deterministic; debug appends the git short SHA), surfaced in the in-app
+  server-info.
 - `cd android-core && ./gradlew installDebug` (build + install over adb), or
   `assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`.
 - Runtime perms: `BLUETOOTH_ADVERTISE` / `BLUETOOTH_CONNECT` + `INTERNET`;

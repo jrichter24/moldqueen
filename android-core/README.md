@@ -1,6 +1,6 @@
 # android-core — the standalone Android radio core
 
-A standalone Android app (`com.dnaevolutions.moldqueen`, **MoldQueen**) that is a **second
+A standalone Android app (`io.github.jrichter24.moldqueen`, **MoldQueen**) that is a **second
 radio core**: it owns a **native BLE advertiser**, serves the **same thin-transport
 WebSocket API** (`ws://127.0.0.1:8765`) and the **bundled web client** (`http://127.0.0.1:8080`,
 single-sourced from [`../client/`](../client/) at build), and shows it in a full-screen
