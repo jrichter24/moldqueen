@@ -57,15 +57,6 @@ scripts/start.sh        # frees the adapter from bluetoothd, brings the dongle u
 Full prep (disable onboard BT, mask `bluetoothd`, caps) and a dry-run mode:
 **[`dev-docs/QUICKSTART.md`](dev-docs/QUICKSTART.md)**.
 
-<!-- Real-hardware flash GIFs (the actual hub LED during connect). Placeholder for richer
-     real-device GIFs later (driving footage); for now these convey real hardware. -->
-<p align="center">
-  <img src="client/assets/long_flash.gif" alt="A Mould King hub showing one long flash (powered on)" width="180">
-  &nbsp;&nbsp;
-  <img src="client/assets/short_flash.gif" alt="A Mould King hub fast-flashing (connecting)" width="180">
-  <br><sub>The real hub LED: <b>one long flash</b> = powered on, <b>fast flashing</b> = connecting. The connect wizard walks you through it.</sub>
-</p>
-
 <p align="center">
   <img src="docs/assets/raspberry_with_code_example.png" alt="The Raspberry Pi running the moldqueen radio core" width="600">
 </p>
@@ -119,6 +110,25 @@ Build/device detail: **[`dev-docs/ANDROID.md`](dev-docs/ANDROID.md)**.
 - **Safety** — affirmative keepalive (the client re-affirms intent ~10/s; the server
   auto-neutralizes any un-refreshed channel) + STOP = kill-and-reconnect-at-neutral.
   [More ↓](#architecture) · 📸 [Screenshots](dev-docs/SCREENSHOTS.md).
+
+## Connection wizard
+
+Cold-starting these hubs is fiddly, so the **shared client chrome (MK4Chrome)** has a
+guided **connection wizard**: it walks you from *power on* to *Ready*, and it shows the
+hub's real **LED-flash patterns** so you can confirm you're talking to the right hub and
+assigning the right slot (one long flash = powered on; fast flashing = connecting; button
+a hub to one/two/three fast flashes to put it on slot 0/1/2). It's a **client feature, so
+you get it on every layout and against every radio core** (Raspberry Pi or the standalone
+Android app), not something Pi- or Android-specific.
+
+<!-- The actual hub LED flash patterns the wizard teaches. Placeholder for richer
+     real-device GIFs later (driving footage); for now these convey real hardware. -->
+<p align="center">
+  <img src="client/assets/long_flash.gif" alt="A Mould King hub showing one long flash (powered on)" width="180">
+  &nbsp;&nbsp;
+  <img src="client/assets/short_flash.gif" alt="A Mould King hub fast-flashing (connecting)" width="180">
+  <br><sub>The wizard's real hub-LED flash patterns: <b>one long flash</b> = powered on, <b>fast flashing</b> = connecting.</sub>
+</p>
 
 ## Architecture
 
