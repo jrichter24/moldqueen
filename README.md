@@ -91,6 +91,11 @@ Build/device detail: **[`dev-docs/ANDROID.md`](dev-docs/ANDROID.md)**.
 - **Gamepad** — pair a DualSense (or any) controller over Bluetooth and drive, on the
   excavator **and** the generic layouts — in the browser or the Android app; touch always
   works too. *(detail: [`dev-docs/GAMEPAD.md`](dev-docs/GAMEPAD.md))*
+
+<p align="center">
+  <img src="docs/assets/controller_example.png" alt="PlayStation and Xbox controllers — gamepad support" width="600">
+</p>
+
 - **6 languages** (EN/DE complete; ZH/KO/ES/FR seeded, EN fallback), editable per-layout
   title + colour.
 - **Safety** — affirmative keepalive (the client re-affirms intent ~10/s; the server
