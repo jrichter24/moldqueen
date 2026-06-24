@@ -1,0 +1,1 @@
+Adds F-Droid metadata + store descriptions; first F-Droid release. Drive Mould King building-block RC toys over Bluetooth - standalone Android app, no Pi or network. Excavator + generic layouts, auto-assign, gamepad, six languages.

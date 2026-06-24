@@ -1,0 +1,1 @@
+First public release. Drive Mould King building-block RC toys over Bluetooth - a standalone Android app that owns the phone's radio and serves the UI on-device, so no Pi or network is needed. Excavator and generic model-agnostic layouts, profile auto-assign, gamepad support, and six UI languages.

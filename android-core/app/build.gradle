@@ -3,21 +3,15 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
-// ── Release version: COMMITTED + DETERMINISTIC (F-Droid / Play reproducible) ─────────
-// Bump these THREE numbers per release; versionCode is DERIVED (don't hand-edit it). The
-// release build reads NO gitignored counter, so a fresh from-source checkout produces an
-// identical versionCode + versionName — required for F-Droid's from-source builds and for
-// Play's monotonic versionCode.
+// ── Release version: COMMITTED, DETERMINISTIC, and LITERAL ───────────────────────────
+// F-Droid's autoupdate reads versionCode/versionName from this file by REGEX (it does NOT
+// run Gradle), so they MUST be plain literals in the android{} block below — never computed
+// from variables. Bump BOTH per release using the formula; the release path reads NO
+// gitignored counter, so a fresh from-source checkout reproduces them exactly.
 //
 //   versionCode = major*1_000_000 + minor*10_000 + patch*100
-//   0.1.0 → 10000    0.1.1 → 10100    0.2.0 → 20000    1.0.0 → 1000000
-//   (the two trailing digits stay 00 for a normal release; they leave room to re-tag the
-//    same patch — e.g. 0.1.0 hotfix → 10001 — without colliding with the next patch.)
-def verMajor = 0
-def verMinor = 1
-def verPatch = 0
-def releaseVersionName = "${verMajor}.${verMinor}.${verPatch}"                       // "0.1.0"
-def releaseVersionCode = verMajor * 1000000 + verMinor * 10000 + verPatch * 100      // 10000
+//   0.1.0 = 10000   0.1.1 = 10100   0.2.0 = 20000   1.0.0 = 1000000
+//   (trailing two digits stay 00 for a normal release; room for a same-patch re-tag, e.g. 10001.)
 
 // Debug-only identifier: short git SHA (deterministic per commit, no gitignored file, no
 // config-time writes). "local" when built outside a git checkout (e.g. a source tarball).
@@ -69,8 +63,8 @@ android {
         applicationId 'io.github.jrichter24.moldqueen'
         minSdk 31
         targetSdk 35
-        versionCode releaseVersionCode          // 10000 (0.1.0) — committed, deterministic
-        versionName releaseVersionName          // "0.1.0"
+        versionCode 10100                        // 0.1.1 — LITERAL (F-Droid autoupdate regex-reads it)
+        versionName "0.1.1"
     }
 
     buildFeatures {

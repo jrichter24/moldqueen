@@ -1,0 +1,14 @@
+MoldQueen drives Mould King building-block RC toys over Bluetooth.
+
+It is built around one documented WebSocket contract with an unusual split. The radio core is a thin transport: it just turns a raw command into a Mould King Bluetooth Low Energy telegram and broadcasts it, knowing nothing about your toy. A smart web client is the other half: it resolves controls to channels, owns the per-toy channel map, and runs the keepalive plus the STOP safety latch.
+
+The standalone Android app is self-contained. It uses the phone's own Bluetooth radio and serves the interface on the device, so it needs neither a Raspberry Pi nor a network. (The same app and UI also run on a Raspberry Pi if you prefer that.)
+
+Features:
+
+* A model-specific Excavator (Mould King 13112) dashboard, plus generic, model-agnostic layouts (a brick-style gamepad and a 12-axis controller) that drive any toy on these hubs.
+* Profile-based auto-assign maps a toy's motors to channels in a few taps.
+* Gamepad support: pair a controller over Bluetooth and drive (touch works fully too).
+* Six interface languages.
+
+The Mould King protocol was reverse-engineered for interoperability with hardware the author owns, for educational and personal use. This is a private, independent, unofficial hobby project. It is not affiliated with, authorized by, endorsed by, or sponsored by Mould King. Open source under the MIT License.
