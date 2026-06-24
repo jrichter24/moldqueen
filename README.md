@@ -1,14 +1,16 @@
 <h1><img src="client/assets/moldqueen_icon.png" alt="" height="34" align="top"> moldqueen</h1>
 
-[![Website — live](https://img.shields.io/badge/website-live-2ea44f?logo=githubpages&logoColor=white)](https://jrichter24.github.io/moldqueen/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Linux%2FBlueZ-C51A4A?logo=raspberrypi&logoColor=white)
-![Android](https://img.shields.io/badge/Android-standalone%20APK-3DDC84?logo=android&logoColor=white)
-![Gamepad](https://img.shields.io/badge/gamepad-DualSense%20%2F%20any-5865F2)
-![Python 3.13](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
-[![status: two-hub control working](https://img.shields.io/badge/status-two--hub%20control%20working-brightgreen)](#what-it-does)
-[![GitHub Sponsors](https://img.shields.io/badge/GitHub-%F0%9F%92%9C%20sponsor-EA4AAA?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/jrichter24)
-[![Ko-fi: support](https://img.shields.io/badge/Ko--fi-%E2%98%95%20support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/A437HBY)
+<!-- Restrained, mostly-monochrome badge row: flat-square, dark-slate (labelColor=23272e / color=2f343b),
+     white logos. One sparing accent (muted green 2d6a4f) on the status badge only. -->
+[![Website — live](https://img.shields.io/badge/website-live-2f343b?style=flat-square&labelColor=23272e&logo=githubpages&logoColor=white)](https://jrichter24.github.io/moldqueen/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-2f343b?style=flat-square&labelColor=23272e)](LICENSE)
+![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Linux%2FBlueZ-2f343b?style=flat-square&labelColor=23272e&logo=raspberrypi&logoColor=white)
+![Android](https://img.shields.io/badge/Android-standalone%20APK-2f343b?style=flat-square&labelColor=23272e&logo=android&logoColor=white)
+![Gamepad](https://img.shields.io/badge/gamepad-DualSense%20%2F%20any-2f343b?style=flat-square&labelColor=23272e)
+![Python 3.13](https://img.shields.io/badge/python-3.13-2f343b?style=flat-square&labelColor=23272e&logo=python&logoColor=white)
+[![status: two-hub control working](https://img.shields.io/badge/status-two--hub%20control%20working-2d6a4f?style=flat-square&labelColor=23272e)](#what-it-does)
+[![GitHub Sponsors](https://img.shields.io/badge/GitHub-%F0%9F%92%9C%20sponsor-2f343b?style=flat-square&labelColor=23272e&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/jrichter24)
+[![Ko-fi: support](https://img.shields.io/badge/Ko--fi-%E2%98%95%20support-2f343b?style=flat-square&labelColor=23272e&logo=ko-fi&logoColor=white)](https://ko-fi.com/A437HBY)
 
 **Drive a [Mould King](https://www.mouldking.com/) building-block RC toy — over a reverse-engineered BLE protocol, through one clean WebSocket API.**
 
