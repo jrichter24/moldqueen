@@ -29,6 +29,37 @@ def gitShortSha = {
     } catch (ignored) { 'local' }
 }()
 
+// ── Release signing: env vars (CI) → gitignored keystore.properties (local) → UNSIGNED ──
+// NEVER hardcodes a keystore or password — credentials are read at build time, never committed.
+//   1. ENV (CI / GitHub Secrets): MOLDQUEEN_KEYSTORE_FILE (path to the decoded .p12),
+//      MOLDQUEEN_KEYSTORE_PASSWORD, MOLDQUEEN_KEY_ALIAS (default "moldqueen"), MOLDQUEEN_KEY_PASSWORD.
+//   2. LOCAL: a gitignored android-core/keystore.properties (storeFile/storePassword/keyAlias/keyPassword).
+//   3. NEITHER → the release is left UNSIGNED and STILL BUILDS (CI test gate, contributors with no
+//      keystore, F-Droid from-source which signs with its own key). It must never hard-fail.
+def releaseSigning = null
+if (System.getenv('MOLDQUEEN_KEYSTORE_FILE')) {
+    releaseSigning = [
+        storeFile    : System.getenv('MOLDQUEEN_KEYSTORE_FILE'),
+        storePassword: System.getenv('MOLDQUEEN_KEYSTORE_PASSWORD'),
+        keyAlias     : System.getenv('MOLDQUEEN_KEY_ALIAS') ?: 'moldqueen',
+        keyPassword  : System.getenv('MOLDQUEEN_KEY_PASSWORD'),
+    ]
+} else {
+    def ksProps = rootProject.file('keystore.properties')
+    if (ksProps.exists()) {
+        def p = new Properties()
+        ksProps.withInputStream { p.load(it) }
+        if (p.getProperty('storeFile')) {
+            releaseSigning = [
+                storeFile    : p.getProperty('storeFile'),
+                storePassword: p.getProperty('storePassword'),
+                keyAlias     : p.getProperty('keyAlias') ?: 'moldqueen',
+                keyPassword  : p.getProperty('keyPassword'),
+            ]
+        }
+    }
+}
+
 android {
     namespace 'io.github.jrichter24.moldqueen'
     compileSdk 35
@@ -46,6 +77,20 @@ android {
         buildConfig true
     }
 
+    // Created ONLY when credentials are present (see releaseSigning above). When absent, no
+    // release signing config exists and the release build is left unsigned (and still succeeds).
+    signingConfigs {
+        if (releaseSigning != null) {
+            release {
+                storeFile     file(releaseSigning.storeFile)
+                storePassword releaseSigning.storePassword
+                keyAlias      releaseSigning.keyAlias
+                keyPassword   releaseSigning.keyPassword
+                storeType     'PKCS12'
+            }
+        }
+    }
+
     buildTypes {
         debug {
             // Debug stays uniquely identifiable on-device (server-info reports VERSION_NAME,
@@ -54,6 +99,10 @@ android {
         }
         release {
             minifyEnabled false
+            // Sign only when credentials were provided; otherwise leave UNSIGNED (CI / F-Droid).
+            if (releaseSigning != null) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 

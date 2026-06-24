@@ -84,6 +84,27 @@ Notes:
 - **Gamepad:** pair a controller over Bluetooth and drive — touch works fully too.
   See [GAMEPAD.md](GAMEPAD.md).
 
+## Release signing
+
+Debug builds are auto-signed with the standard debug key (unchanged). **Release** signing
+reads credentials at build time — **nothing secret is ever committed** — in this order:
+
+1. **Env vars (CI / GitHub Secrets):** `MOLDQUEEN_KEYSTORE_FILE` (path to the decoded
+   `.p12`), `MOLDQUEEN_KEYSTORE_PASSWORD`, `MOLDQUEEN_KEY_ALIAS` (default `moldqueen`),
+   `MOLDQUEEN_KEY_PASSWORD`.
+2. **Local:** a gitignored `android-core/keystore.properties`
+   (`storeFile`/`storePassword`/`keyAlias`/`keyPassword`) — copy
+   [`keystore.properties.example`](../android-core/keystore.properties.example) and fill it in.
+3. **Neither present → the release builds UNSIGNED and still succeeds.** This is the default
+   and it's required: the CI test gate's `assembleRelease`, contributors without a keystore,
+   and **F-Droid's from-source build (which signs with its own key)** all depend on it.
+   Signing is applied *only* when credentials exist; the build never hard-fails for lack of them.
+
+The keystore is a **PKCS12 (`.p12`)**, alias **`moldqueen`**, kept **outside the repo**
+(`.gitignore` blocks `*.p12` / `*.jks` / `*.keystore` / `keystore.properties`). With one of the
+above present, `./gradlew assembleRelease` (APK) or `bundleRelease` (AAB for Play) emits a
+signed build; the signed-release CI workflow itself is a separate step.
+
 ## Maturity & next steps
 
 The radio/API/serving path is **working and feature-complete** (safety verified on S25);

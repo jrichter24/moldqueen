@@ -39,6 +39,8 @@ npm-debug.log*
 *.key
 *.p12
 *.keystore
+*.jks
+keystore.properties
 secrets/
 *.secret
 # SSH / signing keys
