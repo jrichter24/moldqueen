@@ -173,10 +173,14 @@
   <script src="/i18n.js"></script>   <!-- shared UI translations (MK4I18N); single source across all pages -->
 </head>
 <body>
-  <!-- icon-only top menu, in order: GitHub · Language · About · Fullscreen -->
+  <!-- icon-only top menu, in order: GitHub · Website · Support · Language · About · Fullscreen -->
   <div class="actions">
     <a id="ghLink" href="https://github.com/jrichter24/moldqueen" target="_blank" rel="noopener" title="moldqueen on GitHub" aria-label="GitHub">
       <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
+    <a id="webLink" href="https://jrichter24.github.io/moldqueen/" target="_blank" rel="noopener" title="Website" aria-label="Website">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18"/></svg></a>
+    <button id="supportBtn" title="Support" aria-label="Support">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.3C.6 9 1.3 5.5 4.3 4.4 6.4 3.6 8.6 4.3 10 6c.4.5.7 1 1 1.5.3-.5.6-1 1-1.5 1.4-1.7 3.6-2.4 5.7-1.6 3 1.1 3.7 4.6 2.3 7.3C19.5 16.4 12 21 12 21z"/></svg></button>
     <span id="langSlot" title="Language"></span>   <!-- language picker (MK4I18N): globe icon + the same dropdown -->
     <button id="aboutBtn" title="About" aria-label="About">
       <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 3.1a1.15 1.15 0 110 2.3 1.15 1.15 0 010-2.3zM6.6 6.7h2.2V12h.9v1H6.4v-1h.9V7.7h-.7v-1z"/></svg></button>
@@ -266,6 +270,22 @@
         👉 <a href="https://github.com/jrichter24/moldqueen" target="_blank" rel="noopener">github.com/jrichter24/moldqueen</a>
         · <a href="https://github.com/jrichter24/moldqueen/issues/new" target="_blank" rel="noopener">start an issue</a></p>
       <p class="muted">A contributor guide for custom layouts will follow.</p>
+    </div>
+  </div>
+
+  <!-- SUPPORT overlay (same UX as About) — Ko-fi + Sponsors + a short why-support note -->
+  <div class="overlay" id="supportOverlay">
+    <div class="back" data-close></div>
+    <div class="sheet">
+      <button class="x" data-close aria-label="Close">×</button>
+      <h2><img src="/assets/moldqueen_icon.png" alt="" /> <span id="supOvTitle">Support MoldQueen</span></h2>
+      <p id="supOvBody">MoldQueen is a free, open-source hobby project. If you'd like to chip in, a coffee or a
+         sponsorship helps cover new Mould King sets to reverse-engineer and keeps the project growing.
+         It's entirely optional — everything stays free and MIT-licensed either way.</p>
+      <div class="support-row" style="margin-top:1rem">
+        <a class="sup-btn" id="supOvSponsor" href="https://github.com/sponsors/jrichter24" target="_blank" rel="noopener">💜 <span id="supOvSponsorTxt">Sponsor on GitHub</span></a>
+        <a class="sup-btn" id="supOvKofi" href="https://ko-fi.com/A437HBY" target="_blank" rel="noopener">☕ <span id="supOvKofiTxt">Buy me a coffee</span></a>
+      </div>
     </div>
   </div>
 
@@ -370,6 +390,10 @@
         setTxt("jumpLabel", d.jumpLabel);
         setTxt("supKofiTxt", d.support); setTxt("supSponsorTxt", d.sponsor);   // support row labels
         setTitle("supKofi", d.supportTitle); setTitle("supSponsor", d.sponsorTitle);
+        // top-row icons + support overlay
+        setTitle("webLink", d.website); setTitle("supportBtn", d.grpSupport);
+        if (d.supOv) { setTxt("supOvTitle", d.supOv.title); setHtml("supOvBody", d.supOv.body);
+          setTxt("supOvSponsorTxt", d.supOv.sponsor); setTxt("supOvKofiTxt", d.supOv.kofi); }
       }
       renderCards();      // card text + jump options are language-dependent
       renderDevIcons();   // dev-icon titles too
@@ -397,6 +421,7 @@
     } else { fsBtn.remove(); }
     document.getElementById("aboutBtn").onclick = function () { show("about", true); };
     document.getElementById("aboutLink").onclick = function (e) { e.preventDefault(); show("about", true); };
+    document.getElementById("supportBtn").onclick = function () { show("supportOverlay", true); };
     document.querySelectorAll("[data-close]").forEach(function (el) {
       el.addEventListener("click", function () { el.closest(".overlay").classList.remove("show"); });
     });

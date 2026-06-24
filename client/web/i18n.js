@@ -83,6 +83,9 @@
       byo: { title: "Bring your own dashboard",
              p1: "Layouts are pluggable — the Excavator and RAW views are just the first two. Got a different Mould King (or other) toy, or a better control layout in mind?",
              p2: "<b>We'd love your contribution.</b> Open an issue or a pull request on GitHub to propose or add a new layout — the more toys, the better." },
+      supOv: { title: "Support MoldQueen",
+               body: "MoldQueen is a free, open-source hobby project. If you'd like to chip in, a coffee or a sponsorship helps cover new Mould King sets to reverse-engineer and keeps the project growing. It's entirely optional — everything stays free and MIT-licensed either way.",
+               sponsor: "Sponsor on GitHub", kofi: "Buy me a coffee" },
       // ---- shared: status light, language, server-info, endpoint editor (clientconfig.js) ----
       statusNoServer: "No server (WebSocket disconnected)",
       statusReadyT: "READY (server + excavator connected)", statusConnectedT: "Server connected — ",
@@ -194,6 +197,9 @@
       byo: { title: "Eigenes Dashboard",
              p1: "Layouts sind modular — Bagger und RAW sind nur die ersten beiden. Ein anderes Mould-King-Modell (oder anderes Spielzeug) oder ein besseres Layout im Kopf?",
              p2: "<b>Wir freuen uns über deinen Beitrag.</b> Eröffne ein Issue oder einen Pull Request auf GitHub, um ein neues Layout vorzuschlagen — je mehr Modelle, desto besser." },
+      supOv: { title: "MoldQueen unterstützen",
+               body: "MoldQueen ist ein freies Open-Source-Hobbyprojekt. Wer mag, kann mit einem Kaffee oder einer Spende dazu beitragen — das hilft, neue Mould-King-Sets fürs Reverse Engineering zu finanzieren und das Projekt am Laufen zu halten. Alles bleibt freiwillig und MIT-lizenziert.",
+               sponsor: "Auf GitHub sponsern", kofi: "Spendier mir einen Kaffee" },
       // ---- shared: status light, language, server-info, endpoint editor ----
       statusNoServer: "Kein Server (WebSocket getrennt)",
       statusReadyT: "BEREIT (Server + Bagger verbunden)", statusConnectedT: "Server verbunden — ",
