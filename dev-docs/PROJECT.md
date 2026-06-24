@@ -348,7 +348,7 @@ moldqueen/
 ├── dev-docs/PROJECT.md            # THIS FILE — canonical
 │   └── mould_king_13112_hmi_layout_spec.md   # dashboard layout coordinates
 ├── CLAUDE.md                  # terse must-knows (points here)
-├── assets/                    # doc screenshots only (excavator_layout*.PNG, landing_select_layout.PNG)
+├── assets/                    # a legacy doc screenshot (excavator_layout_settings_channels.PNG); current site/doc images live in docs/assets/
 ├── scripts/                   # start.sh / check.sh (preflight + launch)
 ├── client/                    # INDEPENDENT smart web client (consumed by the cores + Docker; depends only on the WS API)
 │   ├── web/{chooser.html, shell.css, chrome.*, clientconfig.js, layouts.json, channel_map.<id>.json, dashboard.*, generic.*, raw.*, template.*}  # the client OWNS the channel maps
