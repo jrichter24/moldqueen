@@ -2,6 +2,8 @@ package com.dnaevolutions.moldqueen
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.os.Message
@@ -47,6 +49,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)   // edge-to-edge
+        // Chooser loads first, so default to user orientation; onPageStarted refines per page
+        // (chooser = portrait+landscape, layouts = landscape-locked).
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
 
         service = Mk4Service(this)
         service.start()
@@ -68,6 +73,10 @@ class MainActivity : AppCompatActivity() {
                 // Keep the Back callback's enabled state in sync with the WebView history.
                 override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
                     backCallback.isEnabled = view.canGoBack()
+                }
+                // Per-page orientation: the chooser (root) allows portrait+landscape; layouts lock landscape.
+                override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
+                    applyOrientation(url)
                 }
             }
             webChromeClient = object : WebChromeClient() {
@@ -112,6 +121,20 @@ class MainActivity : AppCompatActivity() {
         ))
 
         web.loadUrl("http://localhost:${Mk4Service.HTTP_PORT}/")
+    }
+
+    /**
+     * Per-page orientation: the startpage/chooser (root path "/") allows portrait + landscape;
+     * every individual layout (/excavator, /raw, /generic_*, …) stays landscape-locked. This is
+     * the first step toward a per-layout allowed-orientations property (see WORKBOARD.md).
+     */
+    private fun applyOrientation(url: String?) {
+        val path = url?.let { Uri.parse(it).path }
+        val isChooser = path.isNullOrEmpty() || path == "/"
+        requestedOrientation = if (isChooser)
+            ActivityInfo.SCREEN_ORIENTATION_USER          // startpage: follow the device (portrait + landscape)
+        else
+            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE     // layouts: landscape-locked
     }
 
     /** True only for the locally-served client (http/https on loopback). */

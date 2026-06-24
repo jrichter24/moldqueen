@@ -47,8 +47,8 @@
    force dark text on a light background so options aren't white-on-white */
 #menu .langicon select.langsel option { color: #11161e; background: #fff; }
 /* Ko-fi support link — a subtle menu chip with a warm coffee glyph (pure link, no control) */
-#menu .kofibtn { display: inline-flex; align-items: center; gap: .45em; text-decoration: none; font: inherit;
-  color: #e8eef6; background: rgba(40,46,58,.9); border: 1px solid #444c5e; border-radius: .4em; padding: .3em .6em; flex: 0 0 auto; }
+#menu .kofibtn { display: inline-flex; align-items: center; justify-content: center; gap: .45em; text-decoration: none; font: inherit;
+  color: #e8eef6; background: rgba(40,46,58,.9); border: 1px solid #444c5e; border-radius: .4em; padding: .35em .6em; flex: 0 0 auto; }
 #menu .kofibtn:hover { background: rgba(54,62,78,.95); border-color: #ffb347; color: #fff; }
 #menu .kofibtn .micon { color: #ffcf6a; }                                  /* coffee = warm gold */
 #menu .kofibtn.sponsorbtn .micon { color: #ea4aaa; }                       /* sponsor = GitHub heart pink */
@@ -66,7 +66,8 @@
   #menu .navsep { width: auto; height: 1px; align-self: auto; margin: .2em 0; }
   #menu .navtop { order: 0; margin-left: 0; border-left: 0; padding-left: 0;
     border-bottom: 1px solid #242c3a; padding-bottom: .4em; margin-bottom: .1em; }
-  #menu .navgroup, #menu .groupbtns .langicon { width: 100%; }
+  /* full-width rows in the sidebar — links (Coffee/Sponsor/Website) match the <button> items */
+  #menu .navgroup, #menu .groupbtns .langicon, #menu .groupbtns .kofibtn { width: 100%; }
 }
 /* loud cold-start button: "Connect …" reads as THE next step (vs the muted .primary) */
 #menu .connectExc { background: #1f5fa8; border-color: #4f93e0; font-weight: 700;

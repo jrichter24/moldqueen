@@ -146,6 +146,10 @@ yet** — deliberate, later decision.
 **Keep [`CONTRIBUTING.md`](CONTRIBUTING.md) updated** when the contribution flow, the
 agent roster (`.claude/agents/`), or the AI-assisted-workflow conventions change.
 
+**Keep [`WORKBOARD.md`](WORKBOARD.md) updated** — the single living backlog so cross-session
+items don't get lost. Move items between FUTURE / IN-PROGRESS / STALE / FINISHED as work
+starts, stalls, or completes.
+
 ## Toolchains (on this Pi)
 
 JDK 21, Node 20 LTS, Python 3.13 + venv, BlueZ 5.82 (`bluetoothctl`, `hciconfig`,

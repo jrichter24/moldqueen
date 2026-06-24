@@ -19,10 +19,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+        <!-- No fixed screenOrientation: MainActivity sets it per page (chooser = portrait+landscape,
+             layouts = landscape). configChanges keeps the WebView alive across rotation (no reload). -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

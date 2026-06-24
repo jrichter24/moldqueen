@@ -38,7 +38,8 @@ These keep the project coherent; please work with them rather than around them.
 
 The canonical reference for how everything fits together is
 [`dev-docs/PROJECT.md`](dev-docs/PROJECT.md) (it wins on any disagreement). Component
-must-knows live in each folder's `CLAUDE.md`.
+must-knows live in each folder's `CLAUDE.md`. The running backlog (what's planned, in
+progress, stalled, or recently done) is [`WORKBOARD.md`](WORKBOARD.md) — keep it current.
 
 ## On purpose: the AI-assisted workflow is in version control
 
