@@ -50,7 +50,11 @@
 #menu .kofibtn { display: inline-flex; align-items: center; gap: .45em; text-decoration: none; font: inherit;
   color: #e8eef6; background: rgba(40,46,58,.9); border: 1px solid #444c5e; border-radius: .4em; padding: .3em .6em; flex: 0 0 auto; }
 #menu .kofibtn:hover { background: rgba(54,62,78,.95); border-color: #ffb347; color: #fff; }
-#menu .kofibtn .micon { color: #ffcf6a; }
+#menu .kofibtn .micon { color: #ffcf6a; }                                  /* coffee = warm gold */
+#menu .kofibtn.sponsorbtn .micon { color: #ea4aaa; }                       /* sponsor = GitHub heart pink */
+#menu .kofibtn.sponsorbtn:hover { border-color: #ea4aaa; }
+#menu .kofibtn.extlink .micon { color: #8fb7e6; }                          /* website = blue globe */
+#menu .kofibtn.extlink:hover { border-color: #8fb7e6; }
 #menu .navsep { flex: 0 0 auto; background: #242c3a; }
 /* default = TOP BAR (wide): a flex ROW — groups side by side, vertical separators, collapse far right */
 #menu .groupbtns { flex-direction: row; align-items: center; }
@@ -173,3 +177,18 @@ table.padmap .padlive { text-align: center; color: #ffd56b; font-variant-numeric
 /* zero-box callout (auto-assign setup step for vehicle/car + the connect-wizard slot step) */
 .gx-zero { color: #e6c06a; background: rgba(60,48,20,.5); border: 1px solid #6a5320; border-radius: .4rem;
   padding: .4rem .6rem; font-size: .82rem; line-height: 1.4; margin: .3rem 0 .6rem; text-align: left; }
+
+/* ---- motor-count stepper (auto-assign): replaces the free-text number field ---- */
+.stepper { display: inline-flex; align-items: center; gap: .25rem; vertical-align: middle; }
+.stepper .stepbtn { width: 1.9rem; height: 1.9rem; font: inherit; font-size: 1.15rem; line-height: 1; cursor: pointer;
+  color: #e8eef6; background: #1d222b; border: 1px solid #38404e; border-radius: .4rem; display: inline-flex; align-items: center; justify-content: center; }
+.stepper .stepbtn:hover:not([disabled]) { border-color: #4f93e0; }
+.stepper .stepbtn[disabled] { opacity: .4; cursor: not-allowed; }
+.stepper .stepval { min-width: 1.8rem; text-align: center; font-size: 1.1rem; font-weight: 700; }
+
+/* ---- shared toast (feedback only, e.g. "Connection released"); no control surface ---- */
+#mqToast { position: fixed; left: 50%; bottom: 1.6rem; transform: translate(-50%, 1rem); z-index: 60;
+  max-width: 86vw; padding: .55rem 1rem; border-radius: .55rem; font-size: .9rem; font-weight: 600;
+  color: #eaf2ff; background: rgba(20,26,36,.96); border: 1px solid #3a4456;
+  box-shadow: 0 10px 30px rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
+#mqToast.show { opacity: 1; transform: translate(-50%, 0); }

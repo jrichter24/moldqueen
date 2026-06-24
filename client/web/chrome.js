@@ -195,7 +195,15 @@ window.MK4Chrome = (function () {
       if (features.gamepad) { padSuppressed = true; if (padEnabled) setPadEnabled(false); }
     }
     function clearStopLatch() { stopLatched = false; }
-    function doReset() { send({ cmd: "setup", action: "reset" }); }
+    function doReset() { send({ cmd: "setup", action: "reset" }); toast(tr().released); }   // toast = feedback only; does not touch the release/safety behavior
+    // lightweight shared toast (feedback only, no control/safety surface)
+    let toastTimer = null;
+    function toast(msg) {
+      let node = document.getElementById("mqToast");
+      if (!node) { node = document.createElement("div"); node.id = "mqToast"; node.setAttribute("role", "status"); node.setAttribute("aria-live", "polite"); document.body.appendChild(node); }
+      node.textContent = msg; node.classList.add("show");
+      clearTimeout(toastTimer); toastTimer = setTimeout(function () { node.classList.remove("show"); }, 2200);
+    }
 
     // ---- status light ----
     function updateStatusLight() {
@@ -261,14 +269,18 @@ window.MK4Chrome = (function () {
     const LANG_ICON = '<svg class="micon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>';
     // coffee-cup glyph for the Ko-fi support link
     const COFFEE_ICON = '<svg class="micon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 3h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2v1a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V3zm14 5h2V5h-2v3zM2 19h18v2H2v-2z"/></svg>';
+    const HEART_ICON = '<svg class="micon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.3C.6 9 1.3 5.5 4.3 4.4 6.4 3.6 8.6 4.3 10 6c.4.5.7 1 1 1.5.3-.5.6-1 1-1.5 1.4-1.7 3.6-2.4 5.7-1.6 3 1.1 3.7 4.6 2.3 7.3C19.5 16.4 12 21 12 21z"/></svg>';
+    const GLOBE_ICON = '<svg class="micon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18"/></svg>';
     const KOFI_URL = "https://ko-fi.com/A437HBY";
+    const SPONSOR_URL = "https://github.com/sponsors/jrichter24";
+    const WEBSITE_URL = "https://jrichter24.github.io/moldqueen/";
     function tbtn(label, cls, on) { const b = document.createElement("button"); b.innerHTML = label; if (cls) b.className = cls; b.onclick = on; return b; }
-    // Ko-fi support link: a pure anchor (new tab). NOT a control — it never touches the drive/keepalive/STOP path.
-    function kofiLink() {
+    // Pure external link (new tab) for support / website. NEVER a control — no drive/keepalive/STOP path.
+    function extLink(href, icon, label, title, cls) {
       const a = document.createElement("a");
-      a.className = "kofibtn"; a.href = KOFI_URL; a.target = "_blank"; a.rel = "noopener";
-      a.title = tr().supportTitle; a.setAttribute("aria-label", tr().supportTitle);
-      a.innerHTML = COFFEE_ICON + '<span class="btxt">' + tr().support + "</span>";
+      a.className = cls; a.href = href; a.target = "_blank"; a.rel = "noopener";
+      if (title) { a.title = title; a.setAttribute("aria-label", title); }
+      a.innerHTML = icon + '<span class="btxt">' + label + "</span>";
       return a;
     }
     function renderTopbar() {
@@ -283,6 +295,7 @@ window.MK4Chrome = (function () {
       const g1 = el("navgroup"); g1.appendChild(el("grouplabel", "", t.grpNavigation));
       const b1 = el("groupbtns"); g1.appendChild(b1);
       b1.appendChild(tbtn(HOME_ICON + '<span class="btxt">' + t.layouts + "</span>", "withicon", () => { location.href = "/?choose=1"; }));
+      b1.appendChild(extLink(WEBSITE_URL, GLOBE_ICON, t.website, t.websiteTitle, "kofibtn extlink"));
       tb.appendChild(g1); tb.appendChild(el("navsep"));
 
       // GROUP 2 — Connection: connect/resume + release
@@ -301,8 +314,14 @@ window.MK4Chrome = (function () {
       b3.appendChild(tbtn(t.settings, "", openSettings));
       if (MK4.showFullscreen()) b3.appendChild(tbtn(t.full, "", toggleFullscreen));
       if (features.gamepad && activePad()) b3.appendChild(padChip());
-      b3.appendChild(kofiLink());   // support link — pure <a>, opens Ko-fi in a new tab (no drive/safety path)
-      tb.appendChild(g3);
+      tb.appendChild(g3); tb.appendChild(el("navsep"));
+
+      // GROUP 4 — Support: GitHub Sponsors + Ko-fi (pure links, new tab; no drive/keepalive/STOP path)
+      const g4 = el("navgroup"); g4.appendChild(el("grouplabel", "", t.grpSupport));
+      const b4 = el("groupbtns"); g4.appendChild(b4);
+      b4.appendChild(extLink(SPONSOR_URL, HEART_ICON, t.sponsor, t.sponsorTitle, "kofibtn sponsorbtn"));
+      b4.appendChild(extLink(KOFI_URL, COFFEE_ICON, t.support, t.supportTitle, "kofibtn"));
+      tb.appendChild(g4);
 
       updateStatusLight();
     }
@@ -497,7 +516,12 @@ window.MK4Chrome = (function () {
         }).join("");
         body = `<h2>${t.gen.setupTitle}</h2>
           <div class="srow"><label>${t.gen.profile} ${profSel}</label>
-            <label>${t.gen.motors} <input type="number" id="agN" min="1" max="12" value="${assignN}" style="width:3.2rem"></label></div>
+            <label>${t.gen.motors}
+              <span class="stepper" role="group" aria-label="${t.gen.motors}">
+                <button type="button" class="stepbtn" id="agNdn" aria-label="−"${assignN <= 1 ? " disabled" : ""}>−</button>
+                <span class="stepval" id="agNval">${assignN}</span>
+                <button type="button" class="stepbtn" id="agNup" aria-label="+"${assignN >= 12 ? " disabled" : ""}>+</button>
+              </span></label></div>
           ${zero}
           <table class="map"><thead><tr><th></th><th>${t.slot}</th><th>${t.ch}</th><th>${t.invert}</th></tr></thead><tbody>${rows}</tbody></table>
           <div class="actions wactions"><button id="agBack">${t.wiz.back}</button><button class="apply" id="agAssign">${t.gen.assign}</button></div>`;
@@ -509,7 +533,8 @@ window.MK4Chrome = (function () {
       on("agCancel", closeAssign); on("agBack", () => { assignStep = "source"; buildAssign(); });
       on("agAssign", () => { applyAssignment(assignRows); closeAssign(); });
       const ps = $("agProfile"); if (ps) ps.onchange = () => { assignProfile = ps.value; recomputeRows(); buildAssign(); };   // changing profile RESETS rows
-      const nIn = $("agN"); if (nIn) nIn.oninput = () => { assignN = clamp(parseInt(nIn.value, 10) || 1, 1, 12); recomputeRows(); buildAssign(); };   // changing N RESETS rows
+      const setN = (v) => { assignN = clamp(v, 1, 12); recomputeRows(); buildAssign(); };   // stepper: clamp 1..12, no free-text (changing N RESETS rows)
+      on("agNdn", () => setN(assignN - 1)); on("agNup", () => setN(assignN + 1));
       $("assign").querySelectorAll("tr[data-m]").forEach(trEl => {   // inline edits tweak only that motor (no rebuild)
         const m = trEl.dataset.m;
         trEl.querySelector(".ar-slot").onchange = e => { assignRows[m].slot = +e.target.value; };

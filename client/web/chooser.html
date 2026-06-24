@@ -65,6 +65,12 @@
        per row, row stays centered → ~3-4 across in landscape, 1-2 in portrait. */
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 230px));
              justify-content: center; gap: clamp(.8rem, 2vw, 1.4rem); width: 100%; max-width: 1000px; }
+    /* support row (below the cards): Sponsor + Coffee, pure links */
+    .support-row { display: flex; gap: .7rem; flex-wrap: wrap; justify-content: center; }
+    .support-row .sup-btn { display: inline-flex; align-items: center; gap: .4rem; font: inherit; font-size: .9rem; font-weight: 600;
+      color: #cfe0f5; background: rgba(15,20,28,.7); border: 1px solid #2b3647; border-radius: .55rem; padding: .5rem .95rem;
+      text-decoration: none; backdrop-filter: blur(3px); }
+    .support-row .sup-btn:hover { border-color: var(--glow); color: #fff; }
     .card {
       width: 100%; min-width: 0; position: relative;
       display: flex; flex-direction: column; cursor: pointer; color: inherit; font: inherit; text-align: left;
@@ -189,6 +195,11 @@
         <select id="jumpSel"></select></label>   <!-- direct nav to any layout (incl RAW) -->
     </header>
     <div class="cards" id="cards"></div>   <!-- built from the layout manifest (see scripts below) -->
+    <!-- support row (pure links, new tab) — matches the website's support treatment -->
+    <div class="support-row" id="supportRow">
+      <a class="sup-btn" id="supSponsor" href="https://github.com/sponsors/jrichter24" target="_blank" rel="noopener">💜 <span id="supSponsorTxt">Sponsor</span></a>
+      <a class="sup-btn" id="supKofi" href="https://ko-fi.com/A437HBY" target="_blank" rel="noopener">☕ <span id="supKofiTxt">Coffee</span></a>
+    </div>
   </div>
 
   <footer>
@@ -357,6 +368,8 @@
         setTxt("aboutSource", d.about.source); setTxt("aboutReport", d.about.reportIssue);
         setTxt("byoTitle", d.byo.title); setHtml("byoP1", d.byo.p1); setHtml("byoP2", d.byo.p2);
         setTxt("jumpLabel", d.jumpLabel);
+        setTxt("supKofiTxt", d.support); setTxt("supSponsorTxt", d.sponsor);   // support row labels
+        setTitle("supKofi", d.supportTitle); setTitle("supSponsor", d.sponsorTitle);
       }
       renderCards();      // card text + jump options are language-dependent
       renderDevIcons();   // dev-icon titles too
