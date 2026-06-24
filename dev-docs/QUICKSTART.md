@@ -65,7 +65,7 @@ Pi and serve the UI separately, then point it at the Pi:
 scripts/start.sh --ws-only            # (or: python -m mk4web.api --ws-only)
 # on your desktop — the client-only Docker image:
 docker build -f Dockerfile.client -t moldqueen-client .
-docker run --rm -p 8080:80 moldqueen-client
+docker run --rm -p 8080:8080 moldqueen-client
 ```
 
 Open `http://localhost:8080/`, then in **Settings → API endpoint** (or the RAW **API
@@ -73,9 +73,10 @@ connection** panel) set `ws://<pi-ip>:8765` → **Connect**. See
 [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md). `--http-port N` changes the served page port.
 
 **Bring your own client.** Skip the web UI entirely and talk to the WebSocket
-(`ws://<pi>:8765`) from your own code — the full contract is in
-[`../linux-core/mk4web/asyncapi.yaml`](../linux-core/mk4web/asyncapi.yaml) (drive by function,
-manage the channel map, raw set/stop).
+(`ws://<pi>:8765`) from your own code. The full contract is in
+[`../linux-core/mk4web/asyncapi.yaml`](../linux-core/mk4web/asyncapi.yaml): the thin-transport
+primitives `setup` / `set` / `stop` / `state` / `info`. The server is thin transport, so your
+client resolves function→channel and owns the channel map (it sends only raw `set`).
 
 **Troubleshooting.** `scripts/check.sh` audits the radio/service state without
 changing anything. Common gotchas: `bluetoothd` re-grabbing the adapter (it's masked

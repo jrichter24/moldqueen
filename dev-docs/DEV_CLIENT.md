@@ -1,6 +1,6 @@
 # Run the client standalone for development (no Docker)
 
-Hack on the web UI (**chooser**, **excavator dashboard**, **RAW**) on your desktop with
+Hack on the web UI (**chooser**, **excavator dashboard**, the **generic** layouts, **RAW**) on your desktop with
 the client's own dev server, pointed at a running Pi's WebSocket API. No Docker, no build.
 The **radio + API stay on the Pi**; you only serve the UI.
 

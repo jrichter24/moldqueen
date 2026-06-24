@@ -9,12 +9,13 @@ client (pure static files), which we already containerize cleanly
 ## Where the core runs today
 
 Raspberry Pi (aarch64) → a **USB BLE dongle** (Realtek RTL8761B, addressed by MAC
-`00:A6:44:02:21:25` → an `hciN` index) → BlueZ. The broadcaster shells out to
-**`hcitool`** to set advertising params/data and toggle advertising:
+`00:A6:44:02:21:25` → an `hciN` index) → BlueZ. By default the broadcaster issues the
+HCI advertising commands over a **raw `AF_BLUETOOTH` socket** (the `rawhci` backend, no
+`hcitool`); a legacy `hcitool` backend is optional (see *Radio backends* below):
 
 ```python
-# broadcaster.py
-subprocess.run(f"hcitool -i {hci} cmd 0x08 0x0006/0x0008/0x000a ...")   # raw HCI
+# broadcaster.py (rawhci backend) — HCI 0x08 0x0006/0x0008/0x000a over a raw socket
+#   legacy: MK4_RADIO_BACKEND=hcitool shells out to `hcitool -i <hci> cmd 0x08 ...`
 ```
 
 The onboard Pi BT (hci0) is **unreliable** (corrupts frames at the connect
@@ -50,7 +51,7 @@ Realistically: **any Linux with BlueZ + a compatible USB BLE adapter.**
    *by MAC*, masks bluetoothd, checks the venv) and works on any such box.
 4. Set `MK4_DONGLE_MAC` / `MK4_HCI` for your adapter; run `scripts/start.sh`.
 
-**x86 vs ARM:** no difference for the code — it's pure Python + `hcitool` subprocess,
+**x86 vs ARM:** no difference for the code — it's pure Python over a raw HCI socket,
 no compiled extensions. The variable is the **adapter + BlueZ**, not the CPU.
 
 **What's hard / may not work:** an adapter whose firmware rejects custom adv-data HCI

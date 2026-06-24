@@ -198,20 +198,25 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   The **server DERIVES each route as `/<id>`** (not a manifest field; title is
   display-only) and serves the files by filename; `active:false` hides a layout
   entirely (no route, no card). `/` serves a **layout chooser** (`chooser.html`) whose
-  cards are built from the (active) manifest — Excavator → `/excavator`, RAW → `/raw`,
-  a "bring your own" placeholder — remembering the last pick; an **About** overlay
+  cards are built from the (active) manifest — Excavator → `/excavator`, the **generic**
+  controllers (12-axis → `/generic_12axis`, brick → `/generic_brick`), RAW → `/raw`, and a
+  "bring your own" placeholder — remembering the last pick; an **About** overlay
   (disclaimer, credits, licensing, AI note, author). `/raw` (`raw.{html,js,css}`) is a
   **RAW debug** layout over the low-level `set`/`stop` path (pick 1-3 slots, set
   channels, build + send, console logs raw + on-air AD). A **TEMPLATE** layout ships
   `active:false` (`template.{html,js,css}` + `client/web/channel_map.template.json`, one
   function) as a copyable function-mapped starter — see
-  [`ADDING_A_LAYOUT.md`](ADDING_A_LAYOUT.md). The shared shell/menu/modal/wizard CSS is
-  **`shell.css`** (each layout links it + its own css); `clientconfig.js` is the
+  [`ADDING_A_LAYOUT.md`](ADDING_A_LAYOUT.md). Every layout gets the shared chrome/runtime
+  **MK4Chrome** (`chrome.js` + `chrome.css`: menu, tabbed settings, connect wizard, status
+  light, language picker, keyboard STOP, gamepad path) over the shared shell CSS
+  **`shell.css`** (each layout links `shell.css` + `chrome.css` + its own css). The
+  model-agnostic **generic** layouts (12-axis, brick) share one engine (`generic.js`) and
+  map themselves to any twelve-motor toy via a guided **auto-assign**. `clientconfig.js` is the
   configurable WS endpoint (persisted in localStorage — serve a client anywhere and
   point it at the Pi; see "Two-piece split" below + [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md)).
 - **Dashboard** (`client/web/dashboard.{html,js,css}`, served at `/excavator`) — the
   main driving GUI, the first client of the API. Laid out over an HMI
-  background (`client/assets/moldqueen_dashboard_v2.png`,
+  background (`client/assets/moldqueen_dashboard_v3.png`,
   [`dev-docs/mould_king_13112_hmi_layout_spec.md`](mould_king_13112_hmi_layout_spec.md))
   with percent coordinates:
   - **Controls bind to FUNCTIONS** (not raw channels) via the active map. Tracks +
@@ -230,9 +235,10 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
     contain-fits the remaining space (STOP + fullscreen always reachable). **EN/DE**
     toggle. *(The old dummy simple page is retired; the **RAW** layout (`/raw`) is the slot/channel test bench.)*
 - **AsyncAPI spec** (`mk4web/asyncapi.yaml`, served at `GET /asyncapi.yaml`)
-  documents the WS protocol (setup / set / **drive** / stop / state / **map** + the
-  pushed lifecycle / state / map / mapresult, incl. `max`/`reverse_scale`/device-swap);
-  verified to match `api.py`.
+  documents the **thin-transport** WS contract — client→server `setup` / `set` / `stop` /
+  `state` / `info`, and the pushed `lifecycle` / `state` / `info`. The server resolves
+  nothing: the client maps function→(slot,channel,value) and sends raw `set`. Verified to
+  match `api.py`.
 - **Two-piece split (server vs client).** The **WebSocket API is mandatory** (owns
   the radio, always on). Serving the client web page is **OPTIONAL**: on by default;
   `--ws-only` / `--no-client` / `MK4_SERVE_CLIENT=0` runs the WebSocket only (no HTTP
@@ -360,8 +366,8 @@ moldqueen/
 
 Other docs: [`QUICKSTART.md`](QUICKSTART.md) (boxes → driving),
 [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md) (run the client separately),
-[`ADDING_A_LAYOUT.md`](ADDING_A_LAYOUT.md) (contribute a layout/toy — generic path
-is clean, function-mapped is core-coupled), [`PORTING.md`](PORTING.md) (other
+[`ADDING_A_LAYOUT.md`](ADDING_A_LAYOUT.md) (contribute a layout/toy — a layout is just
+client files; the client owns the map, no core fork), [`PORTING.md`](PORTING.md) (other
 boards / containers — the radio core is hardware-bound).
 
 Scratch working copies live outside the repo in `~/scratch/mk-refs/` (the

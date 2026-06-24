@@ -1,7 +1,7 @@
 # Running the client separately (remote / Docker)
 
-The moldqueen UI (the **chooser**, the **excavator dashboard**, and the **RAW**
-debug view) is a static web client that talks to the Pi's **WebSocket API**
+The moldqueen UI (the **chooser**, the **excavator dashboard**, the **generic** layouts,
+and the **RAW** debug view) is a static web client that talks to the Pi's **WebSocket API**
 (`ws://<pi>:8765`). You can serve that UI from anywhere — your laptop, a Docker
 container, any static host — and point it at the Pi over the LAN. The
 **broadcaster stays on the Pi** (it owns the radio); only the API faces clients.
