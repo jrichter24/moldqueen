@@ -7,6 +7,7 @@
 ![Gamepad](https://img.shields.io/badge/gamepad-DualSense%20%2F%20any-5865F2)
 ![Python 3.13](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)
 [![status: two-hub control working](https://img.shields.io/badge/status-two--hub%20control%20working-brightgreen)](#what-it-does)
+[![Ko-fi: support](https://img.shields.io/badge/Ko--fi-%E2%98%95%20support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/A437HBY)
 
 **Drive a [Mould King](https://www.mouldking.com/) building-block RC toy — over a reverse-engineered BLE protocol, through one clean WebSocket API.**
 
@@ -16,6 +17,11 @@
 
 <p align="center">
   <b>🌐 <a href="https://jrichter24.github.io/moldqueen/">jrichter24.github.io/moldqueen</a></b> — explore the project website
+</p>
+
+<p align="center">
+  <a href="https://ko-fi.com/A437HBY" target="_blank"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support moldqueen on Ko-fi" height="36"></a>
+  <br><sub>☕ Free &amp; open source. If it helps you, <a href="https://ko-fi.com/A437HBY">buy me a coffee</a>. No ads, no affiliate links.</sub>
 </p>
 
 ## The idea: API-first — thin transport, smart client
@@ -47,6 +53,15 @@ scripts/start.sh        # frees the adapter from bluetoothd, brings the dongle u
 
 Full prep (disable onboard BT, mask `bluetoothd`, caps) and a dry-run mode:
 **[`dev-docs/QUICKSTART.md`](dev-docs/QUICKSTART.md)**.
+
+<!-- Real-hardware flash GIFs (the actual hub LED during connect). Placeholder for richer
+     real-device GIFs later (driving footage); for now these convey real hardware. -->
+<p align="center">
+  <img src="client/assets/long_flash.gif" alt="A Mould King hub showing one long flash (powered on)" width="180">
+  &nbsp;&nbsp;
+  <img src="client/assets/short_flash.gif" alt="A Mould King hub fast-flashing (connecting)" width="180">
+  <br><sub>The real hub LED: <b>one long flash</b> = powered on, <b>fast flashing</b> = connecting. The connect wizard walks you through it.</sub>
+</p>
 
 <p align="center">
   <img src="docs/assets/raspberry_with_code_example.png" alt="The Raspberry Pi running the moldqueen radio core" width="600">
@@ -142,6 +157,15 @@ source of truth) and the machine-readable **[`asyncapi.yaml`](linux-core/mk4web/
 
 Detail + status: **[`dev-docs/ROADMAP.md`](dev-docs/ROADMAP.md)**.
 
+## Contributing
+
+Issues, PRs, and especially new toy layouts are welcome. See
+**[`CONTRIBUTING.md`](CONTRIBUTING.md)** for how to contribute and the conventions to
+respect (thin transport / smart client, one client / no forks, the safety model). It
+also explains why this repo **keeps its AI-assisted-workflow files (`CLAUDE.md` + the
+`.claude/agents/`) in version control on purpose** — for transparency about how the
+project is built, and as a working example you can copy for your own setup.
+
 ## Credit & attribution
 
 Building on, forking, or reusing moldqueen? A credit back is genuinely appreciated — it's
@@ -159,7 +183,8 @@ Built with [MoldQueen](https://github.com/jrichter24/moldqueen) — https://jric
 - **Author:** Dr. Jens Richter — physics & electrical engineering; by day, tour optimization
   with genetic/AI algorithms at [DNA Evolutions](https://www.dna-evolutions.com/)
   ([LinkedIn](https://www.linkedin.com/in/li-jens-richter)). *Built for my son Jonas, who
-  loves excavators.* Built with AI assistance.
+  loves excavators.* AI coding assistants helped with implementation. Architecture, product
+  decisions, testing, and final code review remained under human control.
 - **Protocol groundwork:** [`J0EK3R/mkconnect-python`](https://github.com/J0EK3R/mkconnect-python)
   — our `mouldking_crypt.py` is a **port/derivative of `MouldKingCrypt`, used under the MIT
   License** (© 2024 J0EK3R), verified byte-exact against the MK+tech app; see

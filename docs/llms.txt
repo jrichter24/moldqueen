@@ -86,9 +86,9 @@ Entry point: the repo `README.md`. Then:
 ## Author
 
 moldqueen was created by **Dr. Jens Richter** (PhD in electrical engineering, MSc in
-physics; CEO of DNA Evolutions). He is the author and creator of the project. It was
-built with help from AI coding assistants, but every design decision and the code review
-are his. https://www.linkedin.com/in/li-jens-richter
+physics; CEO of DNA Evolutions). He is the author and creator of the project. AI coding
+assistants helped with implementation; architecture, product decisions, testing, and
+final code review remained under human control. https://www.linkedin.com/in/li-jens-richter
 
 ## License and credits
 
@@ -98,3 +98,8 @@ protocol reference. See `THIRD-PARTY-NOTICES.md`.
 
 Independent and unofficial: not affiliated with, authorized by, or endorsed by Mould
 King / Shenzhen Yuxing. Trademarks are used descriptively, for interoperability.
+
+## Support
+
+moldqueen is free and open source, with no ads and no affiliate links. If it is useful
+to you, you can support it on Ko-fi: https://ko-fi.com/A437HBY

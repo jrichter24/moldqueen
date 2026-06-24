@@ -22,6 +22,7 @@
     "ix.nav.app": "Zur App",
     "ix.nav.dev": "Entwickler",
     "ix.nav.about": "Über",
+    "ix.nav.support": "Unterstützen",
     "ix.hero.eyebrow": "Open Source · API-first",
     "ix.hero.h1": "Klemmbaustein-Modelle über eine einzige, saubere Schnittstelle steuern.",
     "ix.hero.tag": "moldqueen steuert Bluetooth-LE-Modelle über eine dokumentierte WebSocket-Schnittstelle. Den Anfang macht Mould King.",
@@ -76,6 +77,11 @@
     "ix.dev.v4": "Den Client als Container ausliefern, der auf deinen Pi zeigt. <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md\" rel=\"noopener\">REMOTE_CLIENT.md</a>",
     "ix.dev.callout": "<strong>Das Protokoll.</strong> Gesteuert wird über herstellereigene Bluetooth-LE-Advertisements: ein Telegramm aus zwölf Nibble-Kanälen (MK4), das alle verbundenen Hubs gleichzeitig ansteuert. Der Codec ist Byte für Byte gegen die offizielle App geprüft. Vollständige Referenz in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/PROJECT.md\" rel=\"noopener\">PROJECT.md</a> und im maschinenlesbaren <a href=\"https://github.com/jrichter24/moldqueen/blob/main/linux-core/mk4web/asyncapi.yaml\" rel=\"noopener\">AsyncAPI</a>.",
     "ix.dev.p": "Du willst dein eigenes Modell ergänzen? Ein Layout besteht nur aus Client-Dateien: ein Manifest-Eintrag, eine schlanke Seite und eine Kanalzuordnung. Die gemeinsame Oberfläche (Menü, Einstellungen, Verbindungsassistent, Gamepad, STOP) bekommst du geschenkt. Sieh dir <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ADDING_A_LAYOUT.md\" rel=\"noopener\">Adding a layout</a> und die übrigen <a href=\"https://github.com/jrichter24/moldqueen/tree/main/dev-docs\" rel=\"noopener\">Entwickler-Docs</a> an. Issues und Pull Requests sind auf <a href=\"https://github.com/jrichter24/moldqueen\" rel=\"noopener\">GitHub</a> willkommen.",
+    // ---- index: support ----
+    "ix.sup.eyebrow": "Unterstützen",
+    "ix.sup.h2": "Spendier mir einen Kaffee.",
+    "ix.sup.lead": "moldqueen ist frei und quelloffen, ein Hobbyprojekt aus der Freizeit. Wenn es dir nützt, hält ein Kaffee es am Laufen. Keine Werbung, keine Affiliate-Links, keine Hintergedanken.",
+    "ix.sup.btn": "Auf Ko-fi unterstützen",
     // ---- index: roadmap ----
     "ix.rm.eyebrow": "Roadmap",
     "ix.rm.h2": "Wohin es geht.",
@@ -95,7 +101,7 @@
     "ix.ab.credH": "Danksagungen",
     "ix.ab.cred": "Die <code>MouldKingCrypt</code>-Verschlüsselung ist Byte für Byte aus <a href=\"https://github.com/J0EK3R/mkconnect-python\" rel=\"noopener\">J0EK3R/mkconnect-python</a> portiert (MIT, © 2024 J0EK3R); von dort stammt auch die Grundlage für das MK4/MK6-Protokoll. <a href=\"https://github.com/imurvai/brickcontroller2\" rel=\"noopener\">BrickController2</a> diente als weitere Protokoll-Referenz. Vollständige Nennung in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/THIRD-PARTY-NOTICES.md\" rel=\"noopener\">THIRD-PARTY-NOTICES.md</a>.",
     "ix.ab.builtH": "Wie es entstanden ist",
-    "ix.ab.built": "moldqueen ist mit Hilfe von KI-Assistenten entstanden. Die frühe Arbeit lief mit Claude (Fable), die spätere mit Claude Opus 4.8. Die Entwurfsentscheidungen und das Code-Review stammen alle vom Entwickler selbst.",
+    "ix.ab.built": "moldqueen ist mit KI-Unterstützung entstanden: die frühe Arbeit mit Claude (Fable), die spätere mit Claude Opus 4.8. KI-Coding-Assistenten halfen bei der Umsetzung. Architektur, Produktentscheidungen, Tests und das finale Code-Review blieben in menschlicher Hand.",
     "ix.ab.authH": "Autor",
     "ix.ab.auth": "Entwickelt von Dr. Jens Richter. Hintergrund in Physik und Elektrotechnik; hauptberuflich Tourenoptimierung mit genetischen und KI-Algorithmen bei <a href=\"https://www.dna-evolutions.com/\" rel=\"noopener\">DNA Evolutions</a>. Auf <a href=\"https://www.linkedin.com/in/li-jens-richter\" rel=\"noopener\">LinkedIn</a> erreichst du mich. <span class=\"muted\">Entstanden für meinen Sohn Jonas, der Bagger und Hubschrauber liebt.</span>",
     "ix.ab.attrH": "Nennung &amp; Weitergabe",
@@ -103,8 +109,10 @@
     "ix.ab.attrSnip": "Erstellt mit moldqueen (https://github.com/jrichter24/moldqueen)",
     "ix.ab.licH": "Lizenz",
     "ix.ab.lic": "Veröffentlicht unter der <a href=\"https://github.com/jrichter24/moldqueen/blob/main/LICENSE\" rel=\"noopener\">MIT-Lizenz</a>.",
+    "ix.ab.support": "Gefällt dir das Projekt? Du kannst mir <a href=\"https://ko-fi.com/A437HBY\" rel=\"noopener\" target=\"_blank\">auf Ko-fi einen Kaffee spendieren ☕</a>.",
     "ix.foot.privacy": "Datenschutz",
     "ix.foot.license": "Lizenz (MIT)",
+    "ix.foot.support": "☕ Unterstützen",
     "ix.foot.fine": "Ein unabhängiges, inoffizielles Hobbyprojekt. Keine Verbindung zu Mould King / Shenzhen Yuxing; Markennamen dienen nur der Beschreibung und der Interoperabilität.",
     // ---- privacy ----
     "pp.eyebrow": "Rechtliches",
@@ -136,33 +144,11 @@
     "pp.contactH": "Kontakt",
     "pp.contactP": "Fragen zum Datenschutz? Öffne ein Issue auf <a href=\"https://github.com/jrichter24/moldqueen/issues\" rel=\"noopener\">GitHub</a> oder schreib an <a href=\"mailto:jens.richter@dna-evolutions.com\">jens.richter@dna-evolutions.com</a>.",
     "pp.foot.fine": "Ein unabhängiges, inoffizielles Hobbyprojekt. Keine Verbindung zu Mould King / Shenzhen Yuxing.",
-    // ---- inspiration ----
-    "insp.eyebrow": "Empfehlungen",
-    "insp.h1": "Sets &amp; Inspiration",
-    "insp.lead": "Mould-King-Modelle aus Klemmbausteinen, die gut zu moldqueen passen: der Bagger, für den es entstanden ist, und ein paar andere zum Hineinwachsen.",
-    "insp.disc": "<strong>Werbung.</strong> Diese Seite enthält Affiliate-Links. Wenn du über einen davon kaufst, erhalte ich unter Umständen eine kleine Provision, <strong>für dich ohne Mehrkosten</strong>. moldqueen steht in keiner Verbindung zu Mould King; die Produkte stammen von Dritten.",
-    "insp.intro": "Die Links unten sind noch Platzhalter. moldqueen steuert heute Mould Kings <strong>MK4</strong>-Bluetooth-Hubs (siehe die <a href=\"index.html#layouts\">Layouts</a>); prüfe vor dem Kauf die Hub- und App-Generation eines Sets, wenn es sofort laufen soll.",
-    "insp.c1h": "Mould King 13112, RC-Bagger",
-    "insp.c1p": "Der Kettenbagger, für den moldqueen entstanden ist: Ketten, Drehkranz, Ausleger, Arm und Schaufel über einen einzigen MK4-Hub. Die Referenzmaschine für das <strong>Bagger</strong>-Layout.",
-    "insp.c2h": "Weitere RC-Modelle von Mould King",
-    "insp.c2p": "Bagger, Lader, Kräne und Technic-Fahrzeuge auf denselben Bluetooth-Hubs. Gute Kandidaten für ein <strong>generisches</strong> Layout: Sticks belegen, Motoren automatisch zuordnen, losfahren.",
-    "insp.c3h": "Hubs, Motoren &amp; Ersatzteile",
-    "insp.c3p": "Zusätzliche MK4-Bluetooth-Empfänger, L/XL-Motoren, Servos und Akkupacks, für Reparaturen oder um einen eigenen Aufbau zu verkabeln und generisch zu steuern.",
-    "insp.c4h": "Für den Raspberry-Pi-Aufbau",
-    "insp.c4p": "Du nutzt den Pi-Kern? Dann lohnt sich ein zuverlässiger Bluetooth-LE-USB-Stick und ein solides 5-V/3-A-Netzteil; Unterspannung war eine echte Ursache für Funkprobleme.",
-    "insp.b.ali": "AliExpress · Link folgt",
-    "insp.b.amz": "Amazon · Link folgt",
-    "insp.b.dongle": "BLE-Stick · Link folgt",
-    "insp.b.psu": "5-V/3-A-Netzteil · Link folgt",
-    "insp.note": "Preise, Verfügbarkeit und die Produkte selbst legen die verlinkten Shops fest und können sich jederzeit ändern. moldqueen übernimmt keine Gewähr für Produkte; siehe den <a href=\"index.html#about\">Haftungsausschluss</a>.",
-    "insp.foot.sets": "Sets &amp; Inspiration",
-    "insp.foot.fine": "<strong>Werbung / enthält Affiliate-Links.</strong> Ein unabhängiges, inoffizielles Hobbyprojekt. Keine Verbindung zu Mould King / Shenzhen Yuxing."
   };
 
   var META_TITLE = {
     index: { en: "moldqueen: open control for building-block RC toys", de: "moldqueen: offene Steuerung für ferngesteuerte Klemmbaustein-Modelle" },
-    privacy: { en: "Privacy Policy · moldqueen", de: "Datenschutz · moldqueen" },
-    inspiration: { en: "Sets & inspiration · moldqueen", de: "Sets & Inspiration · moldqueen" }
+    privacy: { en: "Privacy Policy · moldqueen", de: "Datenschutz · moldqueen" }
   };
   var TILE = {
     genericController: { en: "Generic controller", de: "Generischer Controller" },

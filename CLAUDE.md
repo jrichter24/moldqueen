@@ -143,6 +143,9 @@ Small, clear conventional commits (`feat:`/`fix:`/`docs:`/`chore:`). Minimal
 dependencies (1 GB Pi). Secrets never committed (`.gitignore`). **No git remote
 yet** — deliberate, later decision.
 
+**Keep [`CONTRIBUTING.md`](CONTRIBUTING.md) updated** when the contribution flow, the
+agent roster (`.claude/agents/`), or the AI-assisted-workflow conventions change.
+
 ## Toolchains (on this Pi)
 
 JDK 21, Node 20 LTS, Python 3.13 + venv, BlueZ 5.82 (`bluetoothctl`, `hciconfig`,

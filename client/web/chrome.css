@@ -46,6 +46,11 @@
 /* the closed control is icon-only (transparent), but the OPEN list must be legible:
    force dark text on a light background so options aren't white-on-white */
 #menu .langicon select.langsel option { color: #11161e; background: #fff; }
+/* Ko-fi support link — a subtle menu chip with a warm coffee glyph (pure link, no control) */
+#menu .kofibtn { display: inline-flex; align-items: center; gap: .45em; text-decoration: none; font: inherit;
+  color: #e8eef6; background: rgba(40,46,58,.9); border: 1px solid #444c5e; border-radius: .4em; padding: .3em .6em; flex: 0 0 auto; }
+#menu .kofibtn:hover { background: rgba(54,62,78,.95); border-color: #ffb347; color: #fff; }
+#menu .kofibtn .micon { color: #ffcf6a; }
 #menu .navsep { flex: 0 0 auto; background: #242c3a; }
 /* default = TOP BAR (wide): a flex ROW — groups side by side, vertical separators, collapse far right */
 #menu .groupbtns { flex-direction: row; align-items: center; }

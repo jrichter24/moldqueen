@@ -259,7 +259,18 @@ window.MK4Chrome = (function () {
     const HOME_ICON = '<svg class="micon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.4 1 7.3v.9h1.6V14H6.5V9.6h3V14h3.9V8.2H15v-.9L8 1.4z"/></svg>';
     // translate glyph (characters + arrow) — reads as "translate language", not "internet/globe"
     const LANG_ICON = '<svg class="micon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>';
+    // coffee-cup glyph for the Ko-fi support link
+    const COFFEE_ICON = '<svg class="micon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 3h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2v1a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V3zm14 5h2V5h-2v3zM2 19h18v2H2v-2z"/></svg>';
+    const KOFI_URL = "https://ko-fi.com/A437HBY";
     function tbtn(label, cls, on) { const b = document.createElement("button"); b.innerHTML = label; if (cls) b.className = cls; b.onclick = on; return b; }
+    // Ko-fi support link: a pure anchor (new tab). NOT a control — it never touches the drive/keepalive/STOP path.
+    function kofiLink() {
+      const a = document.createElement("a");
+      a.className = "kofibtn"; a.href = KOFI_URL; a.target = "_blank"; a.rel = "noopener";
+      a.title = tr().supportTitle; a.setAttribute("aria-label", tr().supportTitle);
+      a.innerHTML = COFFEE_ICON + '<span class="btxt">' + tr().support + "</span>";
+      return a;
+    }
     function renderTopbar() {
       const tb = $("menu"); tb.innerHTML = ""; const t = tr();
       // collapse control — chevron points the way the menu folds (see collapseGlyph)
@@ -290,6 +301,7 @@ window.MK4Chrome = (function () {
       b3.appendChild(tbtn(t.settings, "", openSettings));
       if (MK4.showFullscreen()) b3.appendChild(tbtn(t.full, "", toggleFullscreen));
       if (features.gamepad && activePad()) b3.appendChild(padChip());
+      b3.appendChild(kofiLink());   // support link — pure <a>, opens Ko-fi in a new tab (no drive/safety path)
       tb.appendChild(g3);
 
       updateStatusLight();
