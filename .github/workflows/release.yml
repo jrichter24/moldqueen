@@ -1,0 +1,100 @@
+name: Release
+
+# Gated release: on a v* tag, build + SIGN the APK with the keystore from GitHub Secrets,
+# then create a GitHub Release with the signed APK attached. This file contains NO secret
+# VALUES — only `secrets.*` references. It runs in the protected `release` environment, so
+# it's gated behind the configured required-reviewer approval + v*-tag restriction.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build, sign + publish release APK
+    runs-on: ubuntu-latest
+    environment: release            # protected env: approval gate + tag restriction
+    permissions:
+      contents: write               # needed to create the Release + upload the APK asset
+    defaults:
+      run:
+        working-directory: android-core
+    steps:
+      - uses: actions/checkout@v4   # full monorepo: bundleClient copies ../client + ../linux-core
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android SDK (platform-35 + build-tools 35.0.0)
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-35 build-tools;35.0.0'
+      - name: Set up Gradle (caches deps + the wrapper distribution)
+        uses: gradle/actions/setup-gradle@v4
+      - name: Make gradlew executable (repo committed it 100644)
+        run: chmod +x gradlew
+
+      # Decode the PKCS12 keystore from the base64 secret into the ephemeral runner temp.
+      # The value flows via env (masked); it is piped to a file and never printed.
+      - name: Decode release keystore (base64 secret -> $RUNNER_TEMP, never logged)
+        env:
+          MOLDQUEEN_KEYSTORE_BASE64: ${{ secrets.MOLDQUEEN_KEYSTORE_BASE64 }}
+        run: |
+          echo "$MOLDQUEEN_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/moldqueen-release.p12"
+          # Expose the keystore PATH (not secret) to later steps; the build.gradle signingConfig reads it.
+          echo "MOLDQUEEN_KEYSTORE_FILE=$RUNNER_TEMP/moldqueen-release.p12" >> "$GITHUB_ENV"
+
+      # Build the SIGNED release APK. The signingConfig in app/build.gradle activates because
+      # MOLDQUEEN_KEYSTORE_FILE (above) + these env vars are present -> output app-release.apk.
+      - name: Build + sign release APK
+        env:
+          MOLDQUEEN_KEYSTORE_PASSWORD: ${{ secrets.MOLDQUEEN_KEYSTORE_PASSWORD }}
+          MOLDQUEEN_KEY_ALIAS: ${{ secrets.MOLDQUEEN_KEY_ALIAS }}
+          MOLDQUEEN_KEY_PASSWORD: ${{ secrets.MOLDQUEEN_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Verify the APK is signed + version matches the tag
+        run: |
+          set -e
+          BT="$ANDROID_HOME/build-tools/35.0.0"
+          APK="app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$APK" ]; then
+            echo "::error::Signed $APK not found — the build produced an unsigned APK (signing env vars not applied?)."
+            ls -l app/build/outputs/apk/release/ || true
+            exit 1
+          fi
+          # apksigner exits non-zero if the APK is not validly signed -> fails the job.
+          "$BT/apksigner" verify --verbose "$APK"
+          # Version sanity: the APK's versionName must match the tag (minus the leading 'v' and any
+          # prerelease suffix). Catches "tagged vX.Y.Z but forgot to bump verMajor/Minor/Patch".
+          EXPECTED="${GITHUB_REF_NAME#v}"; EXPECTED="${EXPECTED%%-*}"
+          APKVER="$("$BT/aapt" dump badging "$APK" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p")"
+          APKCODE="$("$BT/aapt" dump badging "$APK" | sed -n "s/.*versionCode='\([^']*\)'.*/\1/p")"
+          echo "tag=$GITHUB_REF_NAME -> expected versionName=$EXPECTED ; APK versionName=$APKVER versionCode=$APKCODE"
+          if [ "$APKVER" != "$EXPECTED" ]; then
+            echo "::error::APK versionName ($APKVER) != tag ($EXPECTED). Bump verMajor/verMinor/verPatch in app/build.gradle to match the tag before tagging."
+            exit 1
+          fi
+
+      - name: Rename signed APK -> moldqueen-<tag>.apk
+        run: cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/moldqueen-${GITHUB_REF_NAME}.apk"
+
+      - name: Create GitHub Release + attach signed APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: moldqueen ${{ github.ref_name }}
+          body: |
+            Signed release APK for **moldqueen ${{ github.ref_name }}** (`io.github.jrichter24.moldqueen`).
+
+            Verify the signature: `apksigner verify moldqueen-${{ github.ref_name }}.apk`.
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: ${{ runner.temp }}/moldqueen-${{ github.ref_name }}.apk
+          fail_on_unmatched_files: true
+
+      - name: Clean up decoded keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/moldqueen-release.p12"
