@@ -39,9 +39,8 @@ serves the UI on-device. Read the root `CLAUDE.md` and `dev-docs/ANDROID.md`.
   Verified on a Samsung Galaxy S25.
 
 ## Known facts to keep straight
-- **Android-WebView gamepad gap:** Android System WebView has **no Gamepad API**, so a
-  controller doesn't work in the in-app WebView — touch works fully and it degrades
-  gracefully. Gamepad is a web/desktop feature (use a browser pointed at the device).
+- **Gamepad:** pair a controller over Bluetooth and drive — on the Android app too
+  (touch always works alongside it). See [GAMEPAD.md](../../dev-docs/GAMEPAD.md).
 - **Release / Play-Store signing is future** — today it's a local `installDebug`.
 - **You don't own the UI.** The web client (chooser/dashboard/layouts/MK4Chrome,
   function→channel resolution, channel maps) is **client-dev's** — you bundle and host
