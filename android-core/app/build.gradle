@@ -96,7 +96,9 @@ dependencies {
     // Embedded HTTP server to serve the client (mirrors the Pi's ThreadingHTTPServer).
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
     testImplementation 'junit:junit:4.13.2'
-    // Real org.json for JVM unit tests (Android provides it at runtime; the SDK stub
-    // throws "not mocked"). Keeps the pure core's int-vs-float fidelity in tests.
-    testImplementation 'org.json:json:20231013'
+    // org.json for JVM unit tests — the Apache-2.0 Android (AOSP) implementation, i.e. the
+    // SAME org.json the app uses at runtime via the framework (android.jar's test stub throws
+    // "not mocked"). Replaces Crockford org.json:json, whose "Good, not Evil" license is
+    // non-free (Debian/FSF) and trips F-Droid's scanner. Test-scope only — never shipped.
+    testImplementation 'com.vaadin.external.google:android-json:0.0.20131108.vaadin1'
 }
