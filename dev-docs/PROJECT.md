@@ -242,14 +242,11 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   point it at the Pi via the in-app endpoint, or (c) bring your own WebSocket client.
   Details: [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md), CORS/WS-origin permissive for LAN.
 
-**`java-core/`** (Java/Gradle scaffold) is **empty** beyond a placeholder + passing
-test. The original idea (java-core builds telegrams, linux-core re-broadcasts) was
-**superseded** — telegram building lives in Python (`mouldking_crypt.py`). **Decision
-needed:** either repurpose java-core as a future **API client** (a JVM "brain") or
-**retire it**. It is NOT on the control path.
-
-`web-gui/` (the original minimal Node scaffold) is also superseded by `mk4web`'s
-own served page; retire or repurpose later.
+The retired **`java-core/`** (Java/Gradle scaffold) and **`web-gui/`** (minimal Node
+scaffold) were **removed**. Telegram building lives in Python (`mouldking_crypt.py`),
+not Java; the UI is the independent `client/`, served by `mk4web` — so neither scaffold
+was on the control path. (A future JVM "API client" / "brain," if ever wanted, would be
+a fresh client of the WebSocket contract, not a revival of `java-core`.)
 
 ### 6a. Safety / STOP architecture (verified on Pi + S25, 2026-06-20)
 
@@ -334,7 +331,6 @@ see `mk4web/config.py`).
   thin-transport `setup`/`set`/`stop`/`state` contract is documented in `asyncapi.yaml`.)
 - **Hardware:** disable onboard BT (`dtoverlay=disable-bt`, needs reboot); keep the
   5 V/3 A PSU; hci2 (TP-Link) is spare for control.
-- **Retire/repurpose** `java-core/` and `web-gui/` (see §6).
 - **Future phases:** camera, TOF sensor, local AI brain (driving via the WS API).
 
 ---
@@ -359,9 +355,7 @@ moldqueen/
 │   │   └── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
 │   └── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                              #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
-├── android-core/              # Kotlin — standalone Android app (radio + local WS API + serves client/)
-├── java-core/                 # empty Java scaffold — future API client OR retire
-└── web-gui/                   # original Node scaffold — superseded by mk4web's dashboard
+└── android-core/              # Kotlin — standalone Android app (radio + local WS API + serves client/)
 ```
 
 Other docs: [`QUICKSTART.md`](QUICKSTART.md) (boxes → driving),

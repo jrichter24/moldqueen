@@ -19,7 +19,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
-# ── Node / web-gui ──────────────────────────────────────────────
+# ── Node ────────────────────────────────────────────────────────
 node_modules/
 **/node_modules/
 dist/

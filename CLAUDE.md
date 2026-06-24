@@ -88,10 +88,10 @@ setting — see [`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md)). Detai
   service (tested target: the Pi). The only code that touches the radios **on Linux**.
 - **[`android-core/`](android-core/)** — Kotlin; standalone Android app (its own native
   radio + a local WS API that serves `client/`).
-- **[`java-core/`](java-core/)** — empty Java scaffold. The old "java-core builds
-  telegrams" plan is **SUPERSEDED** (telegrams are built in Python). **Decision:**
-  future API client (a JVM brain) OR retire. Not on the control path.
-- **[`web-gui/`](web-gui/)** — original Node scaffold, superseded by mk4web's page.
+
+> The retired `java-core/` (telegrams are built in Python now) and `web-gui/`
+> (superseded by mk4web's page / `client/`) scaffolds were **removed**. `bt-core/`
+> never existed — the radio core is `linux-core/`.
 
 ## Agents (Claude Code subagents — `.claude/agents/`)
 
@@ -109,9 +109,9 @@ area; for a small one-file edit you already understand, just go direct.
 
 Boundaries: the **client owns the maps + resolution** (thin transport, smart client) —
 radio agents never resolve functions; the **UI is single-sourced** (`client/`) and the
-cores *consume* it — don't fork it per platform. There is **no** agent for the retired
-`java-core/` / `web-gui/` (and `bt-core/` never existed — radio = `linux-core/`); if a
-request smells like those, it's really client-/linux-/android-/docs-dev.
+cores *consume* it — don't fork it per platform. There is **no** agent for the removed
+`java-core/` / `web-gui/` scaffolds (and `bt-core/` never existed — radio = `linux-core/`);
+if a request smells like those, it's really client-/linux-/android-/docs-dev.
 
 > **`code-reviewer` name collision:** a built-in `code-reviewer` *and*
 > `superpowers:code-reviewer` also exist — if you specifically want the user-level one,
