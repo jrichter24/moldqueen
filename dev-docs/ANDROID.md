@@ -5,6 +5,10 @@ behind the **same WebSocket contract**. No Pi, no laptop, no network — it owns
 *and* serves the UI, all on-device. (Back to the [README](../README.md) ·
 architecture in [PROJECT.md](PROJECT.md).)
 
+<p align="center">
+  <img src="../docs/assets/android_bricks_on_phone_preview.png" alt="MoldQueen running standalone on an Android phone" width="680">
+</p>
+
 ## What it is
 
 One Android service (`Mk4Service`) wiring three things together:
@@ -28,6 +32,11 @@ One Android service (`Mk4Service`) wiring three things together:
 A full-immersive, landscape-locked **WebView** (`MainActivity`) loads
 `http://localhost:8080/` — so on the phone you get the *same* chooser + layouts + MK4Chrome
 as on the Pi, talking to the *same* contract.
+
+<p align="center">
+  <img src="../docs/assets/android_closed_menu_preview.png" alt="The excavator dashboard on Android, menu closed" width="380">
+  <img src="../docs/assets/android_open_menu_preview.png" alt="The same dashboard with the menu open" width="380">
+</p>
 
 **The client is single-sourced.** A Gradle `bundleClient` task copies `client/web` +
 `client/assets` into the app's assets at build time — there is no second copy of the UI to
@@ -56,9 +65,8 @@ Notes:
   `network_security_config.xml` permits cleartext only to `localhost` (for the loopback
   HTTP/WS); everything else stays HTTPS-only.
 - Verified on a **Samsung Galaxy S25**; landscape-locked on any device.
-- **Gamepad gap:** Android **System WebView has no Gamepad API**, so controller input
-  doesn't work in the in-app WebView — touch works fully, and it degrades gracefully
-  ("no controller"). See [GAMEPAD.md](GAMEPAD.md). (Gamepad is a web/desktop feature.)
+- **Gamepad:** pair a controller over Bluetooth and drive — touch works fully too.
+  See [GAMEPAD.md](GAMEPAD.md).
 
 ## Maturity & next steps
 

@@ -17,7 +17,7 @@ cd android-core
 Open the **MoldQueen** app → Connect → Ready → drive. Requires Android 12+ (grant the
 Bluetooth permission).
 
-**Full detail — what it is, the AdvertisingSet radio, the build toolchain, the
-Android-WebView gamepad gap, and release/signing — is in
+**Full detail — what it is, the AdvertisingSet radio, the build toolchain, gamepad,
+and release/signing — is in
 [`../dev-docs/ANDROID.md`](../dev-docs/ANDROID.md).** Project overview:
 [`../README.md`](../README.md).

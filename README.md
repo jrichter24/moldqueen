@@ -1,5 +1,6 @@
 <h1><img src="client/assets/moldqueen_icon.png" alt="" height="34" align="top"> moldqueen</h1>
 
+[![Website — live](https://img.shields.io/badge/website-live-2ea44f?logo=githubpages&logoColor=white)](https://jrichter24.github.io/moldqueen/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Linux%2FBlueZ-C51A4A?logo=raspberrypi&logoColor=white)
 ![Android](https://img.shields.io/badge/Android-standalone%20APK-3DDC84?logo=android&logoColor=white)
@@ -11,6 +12,10 @@
 
 <p align="center">
   <img src="client/assets/moldqueen_banner_v2.png" alt="moldqueen — Mould King RC control" width="760">
+</p>
+
+<p align="center">
+  <b>🌐 <a href="https://jrichter24.github.io/moldqueen/">jrichter24.github.io/moldqueen</a></b> — explore the project website
 </p>
 
 ## The idea: API-first — thin transport, smart client
@@ -43,6 +48,10 @@ scripts/start.sh        # frees the adapter from bluetoothd, brings the dongle u
 Full prep (disable onboard BT, mask `bluetoothd`, caps) and a dry-run mode:
 **[`dev-docs/QUICKSTART.md`](dev-docs/QUICKSTART.md)**.
 
+<p align="center">
+  <img src="docs/assets/raspberry_with_code_example.png" alt="The Raspberry Pi running the moldqueen radio core" width="600">
+</p>
+
 **Android (standalone — no Pi)** — own native radio + bundled client in one APK:
 
 ```bash
@@ -50,13 +59,21 @@ cd android-core && ./gradlew installDebug    # build + install to a connected de
 # → open the MoldQueen app  →  Connect  →  Ready  →  drive
 ```
 
-Build/device detail: **[`dev-docs/ANDROID.md`](dev-docs/ANDROID.md)** *(coming soon)*.
+Build/device detail: **[`dev-docs/ANDROID.md`](dev-docs/ANDROID.md)**.
+
+<p align="center">
+  <img src="docs/assets/android_bricks_on_phone_preview.png" alt="MoldQueen running standalone on an Android phone" width="600">
+</p>
 
 > **Just exploring?** Run the client alone against a Pi —
 > **[`dev-docs/DEV_CLIENT.md`](dev-docs/DEV_CLIENT.md)** (dev server) or
 > **[`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md)** (Docker).
 
 ## What it does
+
+<p align="center">
+  <img src="docs/assets/start_page_preview.png" alt="The moldqueen start-page chooser — layout cards with Generic/Model and MK4/MK6 badges" width="760">
+</p>
 
 - **Layouts** — pick one from the start-page chooser:
   - **Excavator** (model-specific): landscape HMI dashboard, drag-joysticks + hold buttons.
@@ -71,9 +88,9 @@ Build/device detail: **[`dev-docs/ANDROID.md`](dev-docs/ANDROID.md)** *(coming s
   wizard, status light, language picker, keyboard STOP, and gamepad path.
 - **Profile-driven auto-assign** — map a generic controller's 12 motors to channels by
   toy *profile* (vehicle / car / custom) with an inline editor and a zero-box guide.
-- **Gamepad** — drive with a DualSense (or any) controller on the excavator **and** the
-  generic layouts (web/desktop; Android System WebView lacks the Gamepad API → graceful
-  fallback to touch). *(detail: [`dev-docs/GAMEPAD.md`](dev-docs/GAMEPAD.md) — coming soon)*
+- **Gamepad** — pair a DualSense (or any) controller over Bluetooth and drive, on the
+  excavator **and** the generic layouts — in the browser or the Android app; touch always
+  works too. *(detail: [`dev-docs/GAMEPAD.md`](dev-docs/GAMEPAD.md))*
 - **6 languages** (EN/DE complete; ZH/KO/ES/FR seeded, EN fallback), editable per-layout
   title + colour.
 - **Safety** — affirmative keepalive (the client re-affirms intent ~10/s; the server
@@ -92,6 +109,10 @@ client/        # the INDEPENDENT smart web client (chooser · layouts · MK4Chro
    └── android-core/ # standalone Android radio core — native BLE; serves the client (Kotlin)
 ```
 
+<p align="center">
+  <img src="docs/assets/many_machienes_example.png" alt="The same UI on a Raspberry Pi, an Android phone, a laptop and an ESP32 — one WebSocket contract" width="720">
+</p>
+
 The client resolves *function → channel* and sends only low-level `set`; the core makes a
 nibble, crypts it (`MouldKingCrypt`), and broadcasts the BLE telegram. One telegram drives
 all hubs at once (12 nibbles = 3 slots × 4 channels). Deep dive — protocol, crypto, the
@@ -101,7 +122,7 @@ source of truth) and the machine-readable **[`asyncapi.yaml`](linux-core/mk4web/
 | Run it… | How | Detail |
 |---|---|---|
 | On the Pi (served) | `scripts/start.sh` → `http://<pi>:8080/` | [QUICKSTART](dev-docs/QUICKSTART.md) |
-| Android (standalone) | `./gradlew installDebug` | [ANDROID](dev-docs/ANDROID.md) *(soon)* |
+| Android (standalone) | `./gradlew installDebug` | [ANDROID](dev-docs/ANDROID.md) |
 | Client on the desktop | `client/serve.py` → point at a Pi | [DEV_CLIENT](dev-docs/DEV_CLIENT.md) |
 | Client in Docker | `Dockerfile.client` → point at a Pi | [REMOTE_CLIENT](dev-docs/REMOTE_CLIENT.md) |
 | On another board | — (the radio core is hardware-bound) | [PORTING](dev-docs/PORTING.md) |
@@ -114,7 +135,19 @@ source of truth) and the machine-readable **[`asyncapi.yaml`](linux-core/mk4web/
 - **Camera, ToF sensor** — telemetry over/alongside the API.
 - **AI brain / console client** — an agent driving the toy through the same WebSocket API.
 
-Detail + status: **[`dev-docs/ROADMAP.md`](dev-docs/ROADMAP.md)** *(coming soon)*.
+Detail + status: **[`dev-docs/ROADMAP.md`](dev-docs/ROADMAP.md)**.
+
+## Credit & attribution
+
+Building on, forking, or reusing moldqueen? A credit back is genuinely appreciated — it's
+MIT-licensed, so this is a **request, not a requirement**. Drop this line in your README,
+About screen, or docs:
+
+```markdown
+Built with [MoldQueen](https://github.com/jrichter24/moldqueen) — https://jrichter24.github.io/moldqueen/
+```
+
+→ Built with **[MoldQueen](https://github.com/jrichter24/moldqueen)** — <https://jrichter24.github.io/moldqueen/>
 
 ## Credits, license & disclaimer
 

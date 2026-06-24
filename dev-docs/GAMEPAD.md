@@ -1,20 +1,22 @@
 # Gamepad support
 
-Drive with a **PS5 DualSense** (or any browser-supported) controller. Works on the
-**excavator** dashboard **and both generic** layouts (12-axis, brick). (Back to the
+Drive with a **PS5 DualSense** (or any standard) controller — on the **excavator**
+dashboard **and both generic** layouts (12-axis, brick). (Back to the
 [README](../README.md).)
 
-> **Web/desktop only.** The browser **Gamepad API** is what reads the controller. Android's
-> **System WebView has no Gamepad API**, so the in-app Android client can't use a pad — it
-> degrades gracefully ("no controller") and **touch keeps working**. Use a desktop/mobile
-> **browser** (e.g. Chrome) pointed at the Pi for gamepad control.
+<p align="center">
+  <img src="../docs/assets/controller_example.png" alt="PlayStation and Xbox controllers" width="640">
+</p>
+
+**It's simple: pair the controller over Bluetooth, then drive.** This works whether you
+run moldqueen in a browser (pointed at a Pi) **or on the Android standalone app** — where
+the phone is both the radio *and* the client. Touch always keeps working alongside the pad.
 
 ## Pairing
 
-Pair the controller to the **device running the web client** (the machine with the
-browser) — over USB or Bluetooth — *not* to the Pi/phone running the radio. The page reads
-it through the browser; the resolved motion still travels the normal WS contract to whatever
-radio core you're connected to.
+Pair the controller over **Bluetooth** (or USB) to the device you're driving from — your
+computer or phone running moldqueen. Then open a layout and go: the gamepad and the
+on-screen controls drive the same toy through the same path.
 
 ## The Gamepad settings tab
 
@@ -27,7 +29,7 @@ gamepad). You get:
   `dpad_v/h`, `btn_13`, `btn_24`, `face_v`, `face_h`). Each row binds to either an **axis**
   (with invert) or a **button pair** (− / +).
 - **DualSense defaults** out of the box, **editable** per row, with **reset to defaults**.
-  Bindings persist in the browser.
+  Bindings persist on the device.
 
 ## How a gamepad maps to generic MOTORS
 
