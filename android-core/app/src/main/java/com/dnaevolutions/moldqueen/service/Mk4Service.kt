@@ -71,9 +71,9 @@ class Mk4Service(context: Context) {
 
     private class AndroidInfoConfig(private val ctx: Context) : InfoConfig {
         override val level = "light"
-        // version + BUILD NUMBER — shows in the client's Server-info tab so the running build
-        // is verifiable on-device (also in the APK versionName via adb).
-        override val version = "0.1.0+build.${com.dnaevolutions.moldqueen.BuildConfig.BUILD_NUMBER}"
+        // version — the APK's committed versionName (release "0.1.0"; debug "0.1.0-debug+<sha>").
+        // Shows in the client's Server-info tab so the running build is verifiable on-device.
+        override val version = com.dnaevolutions.moldqueen.BuildConfig.VERSION_NAME
         override val radioBackend = "android-ble"
         override val dryRun = false
         override val hci = "android-ble"

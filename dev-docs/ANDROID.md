@@ -48,9 +48,23 @@ Toolchain: **Kotlin 1.9.24 · Gradle 8.9 · JDK 17 · AGP 8.7.3 · minSdk 31 / c
 targetSdk 35** (the current Google Play floor, Android 15). The SDK needs `platform-35` +
 `build-tools;35.0.0` installed (via Android Studio's SDK Manager or `cmdline-tools`); the
 Gradle wrapper fetches Gradle itself. Package `com.dnaevolutions.moldqueen`
-(app name **MoldQueen**); `versionName` is `0.1-radio-proof+build.<N>` (build number auto-
-increments locally and is surfaced in the in-app server-info, so you can verify the exact
-build on the device).
+(app name **MoldQueen**).
+
+**Versioning (committed + deterministic — F-Droid/Play ready).** The release version is
+**`versionName "0.1.0"` / `versionCode 10000`**, set in [`app/build.gradle`](../android-core/app/build.gradle)
+from three numbers (`verMajor/verMinor/verPatch`) — it reads **no** gitignored counter, so a
+fresh from-source checkout reproduces it exactly. **To bump a release**, edit those three
+numbers; `versionCode` is derived as `major*1_000_000 + minor*10_000 + patch*100`:
+
+| version | versionCode |
+|---|---|
+| 0.1.0 | 10000 |
+| 0.1.1 | 10100 |
+| 0.2.0 | 20000 |
+| 1.0.0 | 1000000 |
+
+Debug builds append the short git SHA (`0.1.0-debug+<sha>`, "local" outside a git checkout)
+so each is identifiable on-device; the in-app server-info shows the running `versionName`.
 
 ```bash
 cd android-core
