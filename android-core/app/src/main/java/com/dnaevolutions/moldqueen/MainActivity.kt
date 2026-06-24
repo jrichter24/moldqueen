@@ -9,8 +9,10 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -26,6 +28,16 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var service: Mk4Service
     private lateinit var web: WebView
+
+    // Predictive-back-correct (targetSdk 35 default-on): while the WebView has history, consume
+    // Back to walk it; when it can't go back the callback disables itself and the system finishes
+    // the activity (clean exit, predictive close animation). Replaces the deprecated
+    // onBackPressed() override, which the ahead-of-time back model can bypass.
+    private val backCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            if (::web.isInitialized && web.canGoBack()) web.goBack()
+        }
+    }
 
     private val permLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -53,6 +65,10 @@ class MainActivity : AppCompatActivity() {
                     val uri = req.url
                     return if (isLocal(uri)) false else { openExternally(uri); true }
                 }
+                // Keep the Back callback's enabled state in sync with the WebView history.
+                override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
+                    backCallback.isEnabled = view.canGoBack()
+                }
             }
             webChromeClient = object : WebChromeClient() {
                 // target="_blank" / window.open: capture the target URL via a throwaway
@@ -75,7 +91,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
         setContentView(web)
+        // Edge-to-edge is enforced on targetSdk 35; pad the control surface into the safe area
+        // so it never sits under the status/nav bars or the display cutout. In immersive the
+        // bars are hidden (their insets collapse to 0) so the page stays full-bleed; the cutout
+        // inset still keeps the joysticks clear of the notch when present.
+        ViewCompat.setOnApplyWindowInsetsListener(web) { v, insets ->
+            val safe = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            v.setPadding(safe.left, safe.top, safe.right, safe.bottom)
+            insets
+        }
         enterImmersive()
+
+        onBackPressedDispatcher.addCallback(this, backCallback)
 
         permLauncher.launch(arrayOf(
             android.Manifest.permission.BLUETOOTH_ADVERTISE,
@@ -114,10 +143,5 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         if (::web.isInitialized) web.destroy()
         if (::service.isInitialized) service.stop()
-    }
-
-    @Suppress("DEPRECATION")
-    override fun onBackPressed() {
-        if (::web.isInitialized && web.canGoBack()) web.goBack() else super.onBackPressed()
     }
 }

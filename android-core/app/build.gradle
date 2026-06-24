@@ -18,13 +18,13 @@ buildNumberFile.text = "build=${buildNumber}\n"
 
 android {
     namespace 'com.dnaevolutions.moldqueen'
-    compileSdk 33
-    buildToolsVersion '33.0.0'
+    compileSdk 35
+    buildToolsVersion '35.0.0'
 
     defaultConfig {
         applicationId 'com.dnaevolutions.moldqueen'
         minSdk 31
-        targetSdk 33
+        targetSdk 35
         versionCode buildNumber
         versionName "0.1-radio-proof+build.${buildNumber}"
         buildConfigField 'int', 'BUILD_NUMBER', "${buildNumber}"
@@ -70,9 +70,9 @@ tasks.matching { it.name ==~ /merge.*Assets/ }.configureEach { dependsOn 'bundle
 tasks.named('preBuild') { dependsOn 'bundleClient' }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.10.1'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.activity:activity-ktx:1.7.2'
+    implementation 'androidx.core:core-ktx:1.15.0'        // compileSdk 35
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.activity:activity-ktx:1.9.3'  // OnBackPressedDispatcher / predictive back
     // Local WebSocket server (mirrors the Pi's websockets server). Pulls slf4j-api;
     // with no binding on Android it no-ops, which is fine for a LAN tool.
     implementation 'org.java-websocket:Java-WebSocket:1.5.6'

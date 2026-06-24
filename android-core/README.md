@@ -11,7 +11,7 @@ the shared contract (the other is [`../linux-core/`](../linux-core/)).
 
 ```bash
 cd android-core
-./gradlew installDebug         # build + install to a connected device  (Kotlin 1.9.22 · Gradle 8.1.1 · JDK 17)
+./gradlew installDebug         # build + install to a connected device  (Kotlin 1.9.24 · Gradle 8.9 · AGP 8.7.3 · JDK 17 · compileSdk/targetSdk 35)
 ```
 
 Open the **MoldQueen** app → Connect → Ready → drive. Requires Android 12+ (grant the

@@ -44,8 +44,10 @@ maintain; the phone serves the same `client/` the Pi does.
 
 ## Build & install
 
-Zero-install toolchain (the wrapper fetches Gradle): **Kotlin 1.9.22 · Gradle 8.1.1 ·
-JDK 17 · AGP 8.0.2 · minSdk 31 / targetSdk 33**. Package `com.dnaevolutions.moldqueen`
+Toolchain: **Kotlin 1.9.24 · Gradle 8.9 · JDK 17 · AGP 8.7.3 · minSdk 31 / compileSdk +
+targetSdk 35** (the current Google Play floor, Android 15). The SDK needs `platform-35` +
+`build-tools;35.0.0` installed (via Android Studio's SDK Manager or `cmdline-tools`); the
+Gradle wrapper fetches Gradle itself. Package `com.dnaevolutions.moldqueen`
 (app name **MoldQueen**); `versionName` is `0.1-radio-proof+build.<N>` (build number auto-
 increments locally and is surfaced in the in-app server-info, so you can verify the exact
 build on the device).
