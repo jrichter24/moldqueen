@@ -4,13 +4,20 @@ moldqueen includes third-party code, retained under its original license.
 
 ## MouldKingCrypt — J0EK3R/mkconnect-python
 
-`linux-core/mk4web/mouldking_crypt.py` (and the snapshot in
-`linux-core/reference/mouldking_crypt.py`) is a **port/derivative** of the
-`MouldKingCrypt` cipher from
-[J0EK3R/mkconnect-python](https://github.com/J0EK3R/mkconnect-python),
-re-expressed in our own module structure and verified byte-exact against the
-MK+tech app's captured adverts. It is used under the upstream MIT license,
-reproduced in full below:
+moldqueen re-implements the `MouldKingCrypt` cipher from
+[J0EK3R/mkconnect-python](https://github.com/J0EK3R/mkconnect-python) once per
+radio core. Each is a clean-room **port/derivative** — re-expressed in our own
+module structure (the technique studied, the code written fresh, not copied from
+the MK+tech app) and verified byte-exact against the same shared crypt vectors:
+
+- `linux-core/mk4web/mouldking_crypt.py` (and the snapshot in
+  `linux-core/reference/mouldking_crypt.py`) — the Python reference,
+  cross-checked against the MK+tech app's captured adverts.
+- `android-core/app/src/main/java/io/github/jrichter24/moldqueen/MouldKingCrypt.kt`
+  — the Kotlin port.
+- `esp32-core/components/mouldking_crypt/mouldking_crypt.c` — the C port.
+
+All are used under the upstream MIT license, reproduced in full below:
 
 ```
 MIT License

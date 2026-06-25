@@ -1,0 +1,8 @@
+# ESP-IDF build output + generated config (never commit these)
+/build/
+/build_host_test
+/build_host_test.exe
+sdkconfig
+sdkconfig.old
+managed_components/
+dependencies.lock

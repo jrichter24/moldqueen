@@ -37,6 +37,11 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## IN-PROGRESS
 
+- **esp32-core (ESP32-S3 radio core) — started.** Foundation laid in [`esp32-core/`](esp32-core/):
+  the clean-room **C MouldKingCrypt port** (byte-exact vs the shared CONNECT/STOP/CH0 vectors —
+  9/9 verified on-device) + the ESP-IDF skeleton (esp32s3, 16 MB flash + 8 MB octal PSRAM,
+  validated on the N16R8). **Next:** the NimBLE `0xFFF0` MK4 advertiser (in-place adv updates,
+  no stop/start runaway), then the WiFi WS server mirroring `api.py`. Toolchain: ESP-IDF v5.5.4.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   open at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`. Addressing
   maintainer (linsui) review: HTML description, full commit hash, `output` line removed.
