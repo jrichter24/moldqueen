@@ -59,7 +59,7 @@
     "ix.and.h3": "Alles auf dem Handy.",
     "ix.and.p": "Eine App, die alles selbst mitbringt. Sie nutzt den Bluetooth-Funk des Handys, liefert die Oberfläche direkt auf dem Gerät und kommt ohne Pi und ohne Netzwerk aus.",
     "ix.and.btnGet": "App herunterladen",
-    "ix.and.dl": "Aktuelle signierte Version: <b>v0.1.0</b>. Lade <code>moldqueen-v0.1.0.apk</code> herunter, erlaube die Installation aus unbekannten Quellen und öffne sie. <b>F-Droid: kommt bald.</b>",
+    "ix.and.dl": "Aktuelle signierte Version: <b>v0.1.1</b>. Lade <code>moldqueen-v0.1.1.apk</code> herunter, erlaube die Installation aus unbekannten Quellen und öffne sie. <b>F-Droid: kommt bald.</b>",
     "ix.and.src": "Oder selbst bauen, per USB:",
     "ix.and.muted": "Alle Builds und Release-Notizen findest du bei <a href=\"https://github.com/jrichter24/moldqueen/releases\" rel=\"noopener\">GitHub Releases</a>.",
     "ix.pi.num": "Raspberry Pi · Steuerkern",
