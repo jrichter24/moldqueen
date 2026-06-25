@@ -104,14 +104,19 @@ area; for a small one-file edit you already understand, just go direct.
 | `client/` web UI — dashboard, layouts, chooser, MK4Chrome, auto-assign, gamepad, **channel maps + function→channel resolution**, i18n | **client-dev** |
 | `linux-core/` — Pi radio core: the Python **broadcaster** (raw HCI), the **thin-transport WS server** (`mk4web/api.py`), bluetoothd/caps, the dongle-by-MAC | **linux-core-dev** |
 | `android-core/` — Kotlin standalone app: native BLE `AdvertisingSet`, the on-device WS server, `bundleClient`, the WebView, the Gradle build | **android-core-dev** |
+| `esp32-core/` (**planned**, sibling dir to be created) — the ESP32-S3 radio core: ESP-IDF + NimBLE, the clean-room **C MouldKingCrypt port**, the MK4 advertiser (`0xFFF0`), the WiFi **WS server mirroring `api.py`** + serving the single-source client from flash | **esp32-core-dev** |
 | `dev-docs/` + `docs/` (the GitHub Pages site) + `README` | **docs-dev** |
 | Review a finished chunk against the plan/standards | **code-reviewer** |
+| **Read-only whole-project audit** — real state vs claims, cross-core/doc **consistency**, **doc currency** (flags stale docs, citing location + divergence). Reports + cites, **decides nothing**, **read-only by construction** (no edit/commit/mutating shell) | **auditor** |
 
 Boundaries: the **client owns the maps + resolution** (thin transport, smart client) —
 radio agents never resolve functions; the **UI is single-sourced** (`client/`) and the
-cores *consume* it — don't fork it per platform. There is **no** agent for the removed
-`java-core/` / `web-gui/` scaffolds (and `bt-core/` never existed — radio = `linux-core/`);
-if a request smells like those, it's really client-/linux-/android-/docs-dev.
+cores *consume* it — don't fork it per platform. **`esp32-core-dev` is the third radio
+core** (peer to linux-/android-core, same client, same WS contract). The **`auditor` is
+read-only**: it surfaces reality + drift and hands every decision back — it never edits or
+decides. There is **no** agent for the removed `java-core/` / `web-gui/` scaffolds (and
+`bt-core/` never existed — radio = `linux-core/`); if a request smells like those, it's
+really client-/linux-/android-/esp32-/docs-dev.
 
 > **`code-reviewer` name collision:** a built-in `code-reviewer` *and*
 > `superpowers:code-reviewer` also exist — if you specifically want the user-level one,
@@ -150,6 +155,19 @@ agent roster (`.claude/agents/`), or the AI-assisted-workflow conventions change
 **Keep [`WORKBOARD.md`](WORKBOARD.md) updated** — the single living backlog so cross-session
 items don't get lost. Move items between FUTURE / IN-PROGRESS / STALE / FINISHED as work
 starts, stalls, or completes.
+
+**Documentation currency — docs are part of the change, not a follow-up.**
+- **The habit (prevention):** updating the affected docs is a **default step of every
+  change**, owned by **whoever makes the change**. You already read those docs (CLAUDE.md,
+  `dev-docs/PROJECT.md`/`HANDOVER.md`, `WORKBOARD.md`, the READMEs, the agent files) to do
+  the work — so you maintain them too. **A change is NOT complete until the docs reflect
+  it.** Each part owns its own files; there is deliberately **no central doc-writing agent**
+  (that would concentrate write access and undercut that ownership).
+- **The backstop (detection):** the read-only **`auditor`** is the safety net that flags
+  the drift the habit missed — it **reports** stale/missing/contradicted docs (citing the
+  location + the reality they diverge from) **for the owner to fix**. It **never edits
+  docs** and never decides; detection ≠ ownership. Run it when you want to ground planning
+  in reality or check for drift.
 
 **After cutting a release** (a new `v*` tag): update the **README** + **website (`docs/`)**
 Download/Install sections + the **version badge** to the new version, and verify the

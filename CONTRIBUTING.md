@@ -54,10 +54,13 @@ to give others a **working example** to copy for their own setup.
   thin-transport rule, operational gotchas) that a fresh session needs so it doesn't
   re-learn or contradict the project. It's equally useful to a new human contributor.
 - **[`.claude/agents/`](.claude/agents/)**: a small set of specialist subagent
-  definitions, one per active component (`client-dev`, `linux-core-dev`,
-  `android-core-dev`, `docs-dev`). Each has a description that scopes when it should be
-  used and explicit boundaries, so AI-assisted work is routed to the right area instead
-  of sprawling across the repo.
+  definitions — one per component (`client-dev`, `linux-core-dev`, `android-core-dev`,
+  `docs-dev`, plus the **planned** `esp32-core-dev`), and two cross-cutting agents:
+  `code-reviewer` (review a finished chunk against the plan) and the **read-only**
+  `auditor` (whole-project reality + documentation-currency checks — it reports and cites,
+  but cannot edit or decide). Each has a description that scopes when it should be used and
+  explicit boundaries, so AI-assisted work is routed to the right area instead of sprawling
+  across the repo.
 
 You don't need to use any of this to contribute. But if you want to run an AI-assisted
 workflow, these files are a tested starting point, copy them, adapt the facts and the
