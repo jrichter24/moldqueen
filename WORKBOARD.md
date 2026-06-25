@@ -14,6 +14,20 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   permits (e.g. `orientations: ["landscape"]` vs `["portrait","landscape"]`) and the host
   reads it, instead of hardcoding. The startpage-portrait change (see FINISHED) is the
   **first step** toward this, not the full system.
+- **Bump GitHub Actions versions (clear the Node-20 deprecation)** — low-priority maintenance.
+  CI + release pin actions (`actions/checkout@v4`, `actions/setup-java@v4`,
+  `android-actions/setup-android@v3`, `gradle/actions/setup-gradle@v4`,
+  `actions/upload-artifact@v4`) that internally use Node 20, which GitHub is deprecating for
+  Node 24. **Not urgent** — GitHub currently forces them onto Node 24 and they work; bump to
+  newer action majors when convenient. GitHub Actions only, not F-Droid.
+- **Reproducible builds for F-Droid (consideration — likely not retrofittable)** — v0.1.x was
+  submitted with *"No, I don't want this"*, so F-Droid signs with **F-Droid's** key. Reproducible
+  builds would let F-Droid ship **our** signature (users could switch channels without reinstall;
+  independent source-to-binary verification). Would need
+  `dependenciesInfo { includeInApk = false; includeInBundle = false }` in `build.gradle` plus a
+  matching signing setup. ⚠️ **One-way door** — the F-Droid inclusion template warns this can't be
+  enabled later once published with F-Droid's key. **Deliberate deferral**; revisit only when
+  re-evaluating at a major version.
 
 ## RECURRING (every release)
 
@@ -23,7 +37,10 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## IN-PROGRESS
 
-- _(none)_
+- **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
+  open at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`. Addressing
+  maintainer (linsui) review: HTML description, full commit hash, `output` line removed.
+  Awaiting review/merge.
 
 ## STALE (deferred / blocked)
 
