@@ -51,7 +51,7 @@ Gradle wrapper fetches Gradle itself. Package `io.github.jrichter24.moldqueen`
 (app name **MoldQueen**).
 
 **Versioning (committed + deterministic — F-Droid/Play ready).** The release version is
-**`versionName "0.1.1"` / `versionCode 10100`**, set as **literals** in [`app/build.gradle`](../android-core/app/build.gradle)
+**`versionName "0.1.2"` / `versionCode 10200`**, set as **literals** in [`app/build.gradle`](../android-core/app/build.gradle)
 (so F-Droid's regex-based autoupdate can read them) — it reads **no** gitignored counter, so a
 fresh from-source checkout reproduces it exactly. **To bump a release**, edit both literals;
 compute `versionCode` as `major*1_000_000 + minor*10_000 + patch*100`:
@@ -63,7 +63,7 @@ compute `versionCode` as `major*1_000_000 + minor*10_000 + patch*100`:
 | 0.2.0 | 20000 |
 | 1.0.0 | 1000000 |
 
-Debug builds append the short git SHA (`0.1.1-debug+<sha>`, "local" outside a git checkout)
+Debug builds append the short git SHA (`0.1.2-debug+<sha>`, "local" outside a git checkout)
 so each is identifiable on-device; the in-app server-info shows the running `versionName`.
 
 ```bash

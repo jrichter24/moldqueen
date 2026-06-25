@@ -2,43 +2,19 @@ Control Mould King building-block RC toys from your phone over Bluetooth: no Ras
 
 MoldQueen is a standalone Android app for driving Mould King building-block RC toys. It uses the phone's own Bluetooth radio and serves its control interface on the device, so it needs no Raspberry Pi, no network, and no cloud account. It speaks a reverse-engineered Bluetooth Low Energy broadcast protocol, and follows a "thin transport, smart client" design: the radio just broadcasts the toy's control telegrams, while the on-device client resolves every control to a channel and owns the per-toy mapping.
 
-**Control layouts**
-
+<b>Control layouts</b>
 Each toy gets a control surface, and any toy can fall back to a generic one:
-
-* A model-specific Excavator (Mould King 13112) dashboard with left and right tracks, arm, front arm, rotation, and bucket.
-* Generic, model-agnostic layouts (a 12-axis controller and a brick-style gamepad) that drive any Mould King MK4 model on these hubs.
-* Proportional drag joysticks and press-and-hold buttons.
-* Per-channel speed caps, channel inversion, and a RAW channel view for direct control.
-
-**Auto-assign**
-
+<ul><li>A model-specific Excavator (Mould King 13112) dashboard with left and right tracks, arm, front arm, rotation, and bucket.</li><li>Generic, model-agnostic layouts (a 12-axis controller and a brick-style gamepad) that drive any Mould King MK4 model on these hubs.</li><li>Proportional drag joysticks and press-and-hold buttons.</li><li>Per-channel speed caps, channel inversion, and a RAW channel view for direct control.</li></ul>
+<b>Auto-assign</b>
 Map a new toy's motors to channels in a few taps:
-
-* Pick a motor profile (tracked vehicle, car with steering, or custom) and a motor count.
-* The app assigns each motor to a slot and channel; adjust any row by hand.
-
-**Gamepad**
-
+<ul><li>Pick a motor profile (tracked vehicle, car with steering, or custom) and a motor count.</li><li>The app assigns each motor to a slot and channel; adjust any row by hand.</li></ul>
+<b>Gamepad</b>
 Drive with a physical controller instead of touch:
-
-* Pair a Bluetooth controller (for example a DualSense) and steer with the sticks.
-* Touch and gamepad work interchangeably.
-
-**Safety**
-
+<ul><li>Pair a Bluetooth controller (for example a DualSense) and steer with the sticks.</li><li>Touch and gamepad work interchangeably.</li></ul>
+<b>Safety</b>
 Stopping is built in:
-
-* An emergency STOP control that cuts all motion at once.
-* Auto-neutral keepalive: every active channel must be refreshed continuously, so a channel that stops being refreshed returns to neutral on its own. A dropped connection or a released control coasts back to a stop instead of running away.
-
-**Languages**
-
-* Six interface languages: English, German, Chinese, Korean, Spanish, and French.
-
-**Open and independent**
-
-* Free software under the MIT License; the full source is on GitHub.
-* The Mould King MK4 protocol was reverse-engineered for interoperability with hardware the author owns, for educational and personal use.
-* Builds on J0EK3R's MIT-licensed MouldKingCrypt work, ported byte-for-byte and verified against the stock app's adverts.
-* A private, independent, unofficial hobby project. Not affiliated with, authorized by, endorsed by, or sponsored by Mould King; "Mould King" is used only descriptively for interoperability.
+<ul><li>An emergency STOP control that cuts all motion at once.</li><li>Auto-neutral keepalive: every active channel must be refreshed continuously, so a channel that stops being refreshed returns to neutral on its own. A dropped connection or a released control coasts back to a stop instead of running away.</li></ul>
+<b>Languages</b>
+<ul><li>Six interface languages: English, German, Chinese, Korean, Spanish, and French.</li></ul>
+<b>Open and independent</b>
+<ul><li>Free software under the MIT License; the full source is on GitHub.</li><li>The Mould King MK4 protocol was reverse-engineered for interoperability with hardware the author owns, for educational and personal use.</li><li>Builds on J0EK3R's MIT-licensed MouldKingCrypt work, ported byte-for-byte and verified against the stock app's adverts.</li><li>A private, independent, unofficial hobby project. Not affiliated with, authorized by, endorsed by, or sponsored by Mould King; "Mould King" is used only descriptively for interoperability.</li></ul>

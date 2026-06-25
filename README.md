@@ -34,7 +34,7 @@
 
 **📲 [Latest signed release](https://github.com/jrichter24/moldqueen/releases/latest)** — the standalone **Android app**, signed by the author.
 
-1. Download **`moldqueen-v0.1.1.apk`** from the [latest release](https://github.com/jrichter24/moldqueen/releases/latest).
+1. Download **`moldqueen-v0.1.2.apk`** from the [latest release](https://github.com/jrichter24/moldqueen/releases/latest).
 2. On your phone, allow **install from unknown sources** for your browser or file manager (Android prompts the first time).
 3. Open the APK to install, then launch **MoldQueen → Connect → Ready → drive**.
 

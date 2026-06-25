@@ -10,7 +10,7 @@ plugins {
 // gitignored counter, so a fresh from-source checkout reproduces them exactly.
 //
 //   versionCode = major*1_000_000 + minor*10_000 + patch*100
-//   0.1.0 = 10000   0.1.1 = 10100   0.2.0 = 20000   1.0.0 = 1000000
+//   0.1.0 = 10000   0.1.1 = 10100   0.1.2 = 10200   0.2.0 = 20000   1.0.0 = 1000000
 //   (trailing two digits stay 00 for a normal release; room for a same-patch re-tag, e.g. 10001.)
 
 // Debug-only identifier: short git SHA (deterministic per commit, no gitignored file, no
@@ -63,8 +63,8 @@ android {
         applicationId 'io.github.jrichter24.moldqueen'
         minSdk 31
         targetSdk 35
-        versionCode 10100                        // 0.1.1 — LITERAL (F-Droid autoupdate regex-reads it)
-        versionName "0.1.1"
+        versionCode 10200                        // 0.1.2 — LITERAL (F-Droid autoupdate regex-reads it)
+        versionName "0.1.2"
     }
 
     buildFeatures {
