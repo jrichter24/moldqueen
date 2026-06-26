@@ -1,4 +1,4 @@
-# WiFi station bring-up.
+# WiFi station + SoftAP + NVS credential store.
 idf_component_register(
     SRCS "mk4_wifi.c"
     INCLUDE_DIRS "include"

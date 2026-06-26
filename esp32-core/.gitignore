@@ -1,6 +1,5 @@
-# WiFi credentials — NEVER commit (use wifi_secrets.h.example as the template).
-# Unanchored so a copy in ANY directory is ignored; the .example template is a
-# different name and stays tracked.
+# Defensive: WiFi creds now live in NVS at RUNTIME (provisioning — see mk4_provision),
+# NOT compiled into any header. This guards against anyone re-introducing a creds file.
 wifi_secrets.h
 
 # ESP-IDF build output + generated config (never commit these)

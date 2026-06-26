@@ -28,20 +28,20 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   matching signing setup. ⚠️ **One-way door** — the F-Droid inclusion template warns this can't be
   enabled later once published with F-Droid's key. **Deliberate deferral**; revisit only when
   re-evaluating at a major version.
-- **ESP32 WiFi / standalone roadmap (cluster — design captured, NOT to build yet).** The
-  long-run "standalone ESP32" vision. The **current** WS-server slice stays simple (menuconfig
-  creds, station-only, WS server, no client-serving); these are the steps beyond it:
-  - **WiFi provisioning with fallback AP** (the intended connection model) — on boot, try a
-    known WiFi (creds in NVS); if it can't connect within a timeout (~15–30 s, TBD), start the
-    ESP32's own AP + serve a **minimal HTTP config page** to enter credentials; on valid creds
-    for a reachable network, save to NVS → connect → normal operation. **Override:** holding
-    **BOOT (GPIO0)** during boot forces AP/config mode even when a known network exists (read
-    GPIO0 at *runtime after boot* — it's the download-mode strap, not a boot strap). *Open
-    (decide at build):* captive-portal (auto-pops the page, fiddly DNS hijack) vs. plain page
-    (browse to 192.168.4.1, simpler); the connect-timeout value.
-  - **NVS credential store** — creds out of the repo AND out of the compiled binary (no
-    recompile to change WiFi). **Subsumed by provisioning** (it writes NVS; boot reads NVS).
-    The current slice's menuconfig creds are a stepping stone; NVS is the next step toward it.
+- **ESP32 WiFi / standalone roadmap (cluster).** ✅ **Done — WiFi provisioning + the NVS
+  credential store** (built; see esp32-core under IN-PROGRESS): on boot, try the NVS creds
+  (30 s); on empty/timeout, fall back to a SoftAP (`moldqueen-setup`, open) + a plain config
+  page at 192.168.4.1; save creds to NVS → reboot → connect. The firmware is now **distributable**
+  (no creds in git or the binary). A **physical re-provision trigger** (double-reset / BOOT-hold)
+  was evaluated and **DROPPED as unreliable on this board** — GPIO0 is the boot strap (BOOT-hold →
+  ROM download mode), and the EN-pin reset clears RTC memory (so neither an RTC nor an NVS-flag
+  double-reset detected the EN double-tap cleanly). Re-provisioning moves to the management page
+  (Group B). **Remaining:**
+  - **Group-A — provisioning/config page polish:** branding, a WiFi network scanner (scan-and-pick
+    vs the plain SSID field), a configurable WS port, mDNS + showing the MAC.
+  - **Group-B — a web status/management page** on the running device: show state (IP, WiFi, WS
+    clients), and a **re-provision button** (the replacement for the dropped physical trigger —
+    change WiFi without erasing NVS / reflashing).
   - **Operational AP mode** (distinct from provisioning's temporary config AP) — the ESP32 as
     its *own* WiFi network you connect to and drive over, for true standalone with no home
     network.
@@ -71,9 +71,13 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   thin-transport contract (`setup`/`set`/`stop`/`state`/`info` + pushes; `radio_backend`=
   `esp32-nimble`). **Hardware-confirmed on the N16R8:** the *unmodified* single-source client
   drives a real toy **over WiFi** (drive + STOP + auto-neutral over the live path, no WiFi/BLE
-  coexistence stutter); creds via gitignored `wifi_secrets.h` (+ `.example`). **Next:** WiFi
-  provisioning (NVS creds + fallback AP — see the FUTURE cluster) and serving the client from
-  flash. Toolchain: ESP-IDF v5.5.4.
+  coexistence stutter). **WiFi provisioning** is built too — NVS creds + auto-fallback SoftAP
+  (`moldqueen-setup`) + a plain `192.168.4.1` config page; the firmware is now **distributable**
+  (no creds in git or the binary). A physical re-provision trigger (double-reset / BOOT-hold) was
+  evaluated and **dropped as unreliable** (GPIO0 is the boot strap; the EN reset clears RTC) — it
+  moves to the web management page. **Next:** the Group-A config-page polish + the **Group-B web
+  management page** (incl. the re-provision button) and serving the client from flash (see the
+  FUTURE cluster). Toolchain: ESP-IDF v5.5.4.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   open at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`. Addressing
   maintainer (linsui) review: HTML description, full commit hash, `output` line removed.
