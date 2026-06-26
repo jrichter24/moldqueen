@@ -25,6 +25,7 @@
 #define MK4_ADVERTISER_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,6 +56,11 @@ void mk4_adv_stop(void);
 
 /* 1 once advertising has actually started (the host has synced), else 0. */
 int mk4_adv_is_ready(void);
+
+/* Consistent snapshot for the WS `state` push: the 12 channel values (-7..+7), the motion
+   telegram raw hex ("7dae18..82"), and the on-air AD hex ("1f 02 01 .." space-separated).
+   Mirrors api.py state_json's slots/raw/ad. */
+void mk4_adv_snapshot(int8_t ch_out[12], char *raw_hex, size_t raw_cap, char *ad_hex, size_t ad_cap);
 
 #ifdef __cplusplus
 }

@@ -7,11 +7,12 @@ transport, smart client** — it will broadcast already-resolved telegrams and r
 nothing itself.
 
 **Status: in progress.** The **MouldKingCrypt C port** (byte-exact), the **NimBLE 0xFFF0
-advertiser**, and the **safety layer** (auto-neutral keepalive + STOP) are in — the ESP32
-connects, drives a real hub, auto-neutrals a non-refreshed channel within 300 ms, and
-STOPs (kill+reconnect-at-neutral) — all hardware-confirmed. Still to come (owned by the
-`esp32-core-dev` agent): the WiFi WebSocket server mirroring `api.py`, and serving the
-client from flash.
+advertiser**, the **safety layer** (auto-neutral keepalive + STOP), and the **WiFi
+WebSocket server** mirroring `api.py` are in — the **unmodified** single-source client
+drives a real toy **over WiFi** (drive + STOP + auto-neutral over the live path, no
+WiFi/BLE coexistence stutter) — all hardware-confirmed. Still to come (owned by the
+`esp32-core-dev` agent): WiFi provisioning (NVS creds + fallback AP — see the WORKBOARD
+cluster) and serving the client from flash.
 
 ## Layout
 - `components/mouldking_crypt/` — the clean-room **C port of the MouldKing cipher**
@@ -30,12 +31,20 @@ client from flash.
   dead-man's-switch auto-neutrals any channel not refreshed within **300 ms** (matching
   `api.py` / `ApiCore`), and **STOP** tears the advertiser down + reconnects at neutral
   (the one deliberate teardown, distinct from per-change churn).
+- `components/mk4_wifi/` — WiFi **station** bring-up: join a home WiFi (creds from a
+  gitignored `wifi_secrets.h`), get a DHCP IP, print it.
+- `components/mk4_ws_server/` — the **WiFi WebSocket server** (`esp_http_server` WS, port
+  **8765**) mirroring the `api.py` thin-transport contract (`setup`/`set`/`stop`/`state`/
+  `info` + `lifecycle`/`state`/`info` pushes; `radio_backend` = `esp32-nimble`). `set`
+  feeds the advertiser's 300 ms keepalive; `stop` fires the STOP teardown — the live WiFi
+  command path is protected by the safety layer. The ESP32 does **not** serve the client
+  (served elsewhere; point its endpoint at `ws://<esp32-ip>:8765`).
 - `test/host_test.c` + `test/run_host_test.sh` — desktop build + run (no board, CI-able)
   for when a host C compiler (gcc/clang/cc) is available.
-- `main/` — the ESP-IDF **safety-test harness**: broadcasts CONNECT, then proves the two
-  safety behaviors on a track box (drive-with-refresh → cut refresh → auto-neutral; then
-  drive → STOP → drive again), then holds neutral. (The crypt self-test lives in `test/`
-  and runs via the host build.)
+- `main/` — the ESP-IDF app: join WiFi (`wifi_secrets.h`), bring up the advertiser + safety
+  layer, start the WS server, and print the IP to point the client at. (`wifi_secrets.h` is
+  gitignored — copy `wifi_secrets.h.example`. The crypt self-test lives in `test/` and runs
+  via the host build.)
 
 ## Target / config
 Heemol **ESP32-S3 N16R8 DevKitC-1** — 16 MB flash, 8 MB octal PSRAM. `sdkconfig.defaults`
@@ -46,13 +55,15 @@ In an ESP-IDF **v5.5.4** environment (see the esp32 build-env notes for the Wind
 activation), from `esp32-core/`:
 
 ```
+cp main/wifi_secrets.h.example main/wifi_secrets.h    # then fill in your WiFi creds (gitignored)
 idf.py set-target esp32s3
 idf.py build
-idf.py -p COM10 flash monitor    # safety-test harness: CONNECT, auto-neutral + STOP tests, then holds neutral
+idf.py -p COM10 flash monitor    # joins WiFi, prints the IP, runs the WS server on :8765
 ```
 
-> Driving a real hub: only **one** 0xFFF0 transmitter at a time — make sure the Pi
-> broadcaster and the phone app are not also advertising.
+Point the client's WS endpoint at `ws://<printed-ip>:8765` (the client is served
+elsewhere — the Pi / `client/serve.py`). Only **one** 0xFFF0 transmitter at a time — make
+sure the Pi broadcaster and the phone app are not also advertising.
 
 Host test (when a desktop compiler exists), from `esp32-core/`:
 

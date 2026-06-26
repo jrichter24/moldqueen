@@ -3,6 +3,7 @@
 #include "mouldking_crypt.h"
 
 #include <string.h>
+#include <stdio.h>
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "nvs_flash.h"
@@ -55,15 +56,14 @@ static void push_ad(void)
     }
 }
 
-/* Rebuild the motion telegram from s_channels and push it in place. Call with s_lock held. */
-static void rebuild_motion_locked(void)
+/* Build the 10-byte motion raw telegram from channel values:
+   7d ae 18 <6 channel bytes> 82; nibble = 0x8 + value, even index = high nibble. */
+static void motion_from_channels(const int8_t ch[12], uint8_t raw[10])
 {
-    /* motion raw: 7d ae 18 <6 channel bytes> 82; nibble = 0x8 + value, even index = high. */
-    uint8_t raw[10];
     raw[0] = 0x7d; raw[1] = 0xae; raw[2] = 0x18;
     for (int i = 0; i < 6; i++) {
-        int hi = 0x8 + s_channels[2 * i];
-        int lo = 0x8 + s_channels[2 * i + 1];
+        int hi = 0x8 + ch[2 * i];
+        int lo = 0x8 + ch[2 * i + 1];
         if (hi < 0x1) hi = 0x1;
         if (hi > 0xF) hi = 0xF;
         if (lo < 0x1) lo = 0x1;
@@ -71,6 +71,13 @@ static void rebuild_motion_locked(void)
         raw[3 + i] = (uint8_t)((hi << 4) | lo);
     }
     raw[9] = 0x82;
+}
+
+/* Rebuild the motion telegram from s_channels and push it in place. Call with s_lock held. */
+static void rebuild_motion_locked(void)
+{
+    uint8_t raw[10];
+    motion_from_channels(s_channels, raw);
     build_ad(raw, sizeof raw);
     push_ad();
 }
@@ -235,4 +242,30 @@ void mk4_adv_stop(void)
 int mk4_adv_is_ready(void)
 {
     return s_started ? 1 : 0;
+}
+
+void mk4_adv_snapshot(int8_t ch_out[12], char *raw_hex, size_t raw_cap, char *ad_hex, size_t ad_cap)
+{
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    for (int i = 0; i < 12; i++) ch_out[i] = s_channels[i];
+
+    uint8_t raw[10];
+    motion_from_channels(s_channels, raw);
+
+    /* raw hex, no spaces (e.g. "7dae18888888888882") */
+    int p = 0;
+    for (int i = 0; i < 10 && p + 2 < (int)raw_cap; i++)
+        p += snprintf(raw_hex + p, raw_cap - p, "%02x", raw[i]);
+
+    /* ad hex: leading length 1f + the 31 AD bytes, space-separated (matches the Pi's ad_hex) */
+    uint8_t ad[31];
+    ad[0] = 0x02; ad[1] = 0x01; ad[2] = 0x02;
+    ad[3] = 0x1b; ad[4] = 0xff; ad[5] = 0xf0; ad[6] = 0xff;
+    mk_crypt_encode(raw, 10, &ad[7]);
+    p = 0;
+    p += snprintf(ad_hex + p, ad_cap - p, "1f");
+    for (int i = 0; i < 31 && p < (int)ad_cap; i++)
+        p += snprintf(ad_hex + p, ad_cap - p, " %02x", ad[i]);
+
+    xSemaphoreGive(s_lock);
 }

@@ -1,3 +1,8 @@
+# WiFi credentials — NEVER commit (use wifi_secrets.h.example as the template).
+# Unanchored so a copy in ANY directory is ignored; the .example template is a
+# different name and stays tracked.
+wifi_secrets.h
+
 # ESP-IDF build output + generated config (never commit these)
 /build/
 /build_host_test
