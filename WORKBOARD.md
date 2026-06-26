@@ -38,12 +38,14 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 ## IN-PROGRESS
 
 - **esp32-core (ESP32-S3 radio core) — in progress.** In [`esp32-core/`](esp32-core/): the
-  clean-room **C MouldKingCrypt port** (byte-exact, 9/9 on-device) + the **NimBLE 0xFFF0
+  clean-room **C MouldKingCrypt port** (byte-exact, 9/9 on-device), the **NimBLE 0xFFF0
   advertiser** with in-place adv-data updates (`ble_gap_adv_set_data`, no stop/start runaway —
-  legacy advertising on purpose, since extended `EBUSY`s while active). **Hardware-confirmed:
-  the ESP32 connects + drives a real hub.** Skeleton on the N16R8 (16 MB flash + 8 MB octal
-  PSRAM). **Next:** auto-neutral keepalive + STOP=kill-reconnect-at-neutral, then the WiFi WS
-  server mirroring `api.py` (then serving the client from flash). Toolchain: ESP-IDF v5.5.4.
+  legacy advertising on purpose, since extended `EBUSY`s while active), and the **safety layer**:
+  per-channel auto-neutral keepalive (**300 ms** dead-man's-switch, matching api.py/ApiCore) +
+  **STOP** = kill+reconnect-at-neutral. **Hardware-confirmed on the N16R8:** connects + drives a
+  real hub; a non-refreshed channel auto-neutrals on its own; STOP halts + drive works again
+  after. **Next:** the WiFi WS server mirroring `api.py` (then serving the client from flash).
+  Toolchain: ESP-IDF v5.5.4.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   open at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`. Addressing
   maintainer (linsui) review: HTML description, full commit hash, `output` line removed.
