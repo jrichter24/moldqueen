@@ -1,6 +1,4 @@
 # Defaults for the Heemol ESP32-S3 N16R8 DevKitC-1 (16 MB flash, 8 MB octal PSRAM).
-# The test session found a fresh project defaults to 2MB / no-PSRAM — set these
-# correctly from the start so the real radio core has the flash + PSRAM it needs.
 
 CONFIG_IDF_TARGET="esp32s3"
 
@@ -12,3 +10,18 @@ CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
 CONFIG_SPIRAM=y
 CONFIG_SPIRAM_MODE_OCT=y
 CONFIG_SPIRAM_SPEED_80M=y
+
+# --- Bluetooth LE / NimBLE -------------------------------------------------
+# Use the NimBLE host. LEGACY advertising ONLY (NOT extended): legacy
+# ble_gap_adv_set_data updates the adv payload IN PLACE on a running advertiser,
+# whereas extended ble_gap_ext_adv_set_data returns EBUSY while active and would
+# force a stop/start (the frame-drop runaway). This is the SACRED rule.
+CONFIG_BT_ENABLED=y
+CONFIG_BT_NIMBLE_ENABLED=y
+CONFIG_BT_NIMBLE_EXT_ADV=n
+
+# --- Partition table -------------------------------------------------------
+# NimBLE makes the app bigger than the 1 MB single-app default; use a custom
+# table with a roomy app partition (we have 16 MB).
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
