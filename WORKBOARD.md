@@ -28,6 +28,31 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   matching signing setup. ⚠️ **One-way door** — the F-Droid inclusion template warns this can't be
   enabled later once published with F-Droid's key. **Deliberate deferral**; revisit only when
   re-evaluating at a major version.
+- **ESP32 WiFi / standalone roadmap (cluster — design captured, NOT to build yet).** The
+  long-run "standalone ESP32" vision. The **current** WS-server slice stays simple (menuconfig
+  creds, station-only, WS server, no client-serving); these are the steps beyond it:
+  - **WiFi provisioning with fallback AP** (the intended connection model) — on boot, try a
+    known WiFi (creds in NVS); if it can't connect within a timeout (~15–30 s, TBD), start the
+    ESP32's own AP + serve a **minimal HTTP config page** to enter credentials; on valid creds
+    for a reachable network, save to NVS → connect → normal operation. **Override:** holding
+    **BOOT (GPIO0)** during boot forces AP/config mode even when a known network exists (read
+    GPIO0 at *runtime after boot* — it's the download-mode strap, not a boot strap). *Open
+    (decide at build):* captive-portal (auto-pops the page, fiddly DNS hijack) vs. plain page
+    (browse to 192.168.4.1, simpler); the connect-timeout value.
+  - **NVS credential store** — creds out of the repo AND out of the compiled binary (no
+    recompile to change WiFi). **Subsumed by provisioning** (it writes NVS; boot reads NVS).
+    The current slice's menuconfig creds are a stepping stone; NVS is the next step toward it.
+  - **Operational AP mode** (distinct from provisioning's temporary config AP) — the ESP32 as
+    its *own* WiFi network you connect to and drive over, for true standalone with no home
+    network.
+  - **Serve the client from ESP32 flash** — **gated on the client-size problem**: the full
+    client (dashboard HTML/JS/CSS + images/GIFs/icons) may be several MB. Either (a)
+    aggressively size-limit the full client's assets, or (b) build a separate **"light client"**
+    (stripped dashboard, smaller assets) for embedded serving — full client from Pi/dev, lean
+    client from ESP32 flash. ⚠️ **Concern:** the browser page-load **asset burst** coexisting
+    with BLE on the shared 2.4 GHz radio is the heaviest moment + most likely to stutter —
+    measure if/when built. Needs a flash filesystem (SPIFFS/LittleFS) partition + the
+    `__WS_PORT__` / `__INIT_JSON__` injection the Pi/Android hosts do.
 
 ## RECURRING (every release)
 
