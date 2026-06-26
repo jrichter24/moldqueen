@@ -3,9 +3,39 @@
 > Living "current state" doc for starting fresh sessions without losing context.
 > **Not** a project reference — that's [`PROJECT.md`](PROJECT.md). Read this first
 > (~30s) at the start of a session; update + commit it before ending one.
-> **Last updated: 2026-06-20.**
+> **Last updated: 2026-06-26.**
 
-## Current state (done / working)
+## TL;DR — where we are right now (2026-06-26)
+
+- **Repo is PUBLIC** ([github.com/jrichter24/moldqueen](https://github.com/jrichter24/moldqueen)).
+- **Three radio cores, one WS contract:** Pi (`linux-core`), Android (`android-core`), and a
+  **working ESP32-S3** (`esp32-core`) — all consuming the same single-source client.
+- **Shipped:** signed Android releases **v0.1.0 / v0.1.1 / v0.1.2** via the gated CI release
+  workflow; package renamed to **`io.github.jrichter24.moldqueen`**.
+- **F-Droid MR !41291** is open and **under maintainer (linsui) review** at `fdroid/fdroiddata`.
+- **esp32-core (new) is a working third core** — drives a real toy over WiFi with the
+  unmodified client (4 slices done; details below). **Remaining:** WiFi provisioning +
+  serve-the-client-from-flash.
+- **Process:** a read-only **`auditor`** agent + a **documentation-currency** rule now exist
+  (docs are part of every change; the auditor flags drift, owners fix it).
+
+### esp32-core — the working third radio core (2026-06-26)
+A standalone ESP32-S3 (no Pi, no phone) running the MK4 advertiser **and** the same
+thin-transport WS API, consuming the **same client**. **Hardware-confirmed: the unmodified
+client drove a real toy over WiFi.** Four built + hardware-proven slices:
+1. **Clean-room C `MouldKingCrypt`** — byte-exact vs the Python reference (9/9 on-device).
+2. **NimBLE `0xFFF0` advertiser** — in-place `ble_gap_adv_set_data` (no stop/start runaway);
+   **legacy** advertising on purpose (extended advertising `EBUSY`'d while active).
+3. **300 ms per-channel auto-neutral keepalive**; **STOP = kill + reconnect at neutral**.
+4. **WiFi WebSocket server `:8765`** mirroring `api.py`'s thin-transport contract
+   (`setup`/`set`/`stop`/`state`/`info` + `lifecycle`/`state`/`info` pushes;
+   `radio_backend = esp32-nimble`).
+Components: `esp32-core/components/{mouldking_crypt, mk4_advertiser, mk4_wifi, mk4_ws_server}`
++ `main/`. Target **ESP32-S3 N16R8**, **ESP-IDF v5.5.4**.
+**Remaining (honestly not-done):** WiFi provisioning (NVS creds + fallback config AP) +
+serving the client from flash. Detail in [`PROJECT.md`](PROJECT.md) §6b.
+
+## Earlier state (done / working — history preserved below)
 - **SAFETY: gamepad runaway / STOP failures FIXED — verified on Pi + S25 (2026-06-20).**
   Hard-won insights (do NOT re-learn):
   * **The broadcaster REPEATS its last held state forever** (keepalive re-broadcasts the
@@ -173,9 +203,15 @@
   new scroll, and the page must also render raw via nginx). Static-only; verified live.
 
 ## In progress / next task
-- **Repo about to go PUBLIC.** Pending: push the handover commit (f266d13 already on
-  origin), confirm `local==origin` + clean tree. Then the **USER** flips visibility to
-  public (manual) and does a front-door skim of the rendered repo.
+- **esp32-core polish — provisioning + serve-from-flash.** The core works (drives a real
+  toy over WiFi); the two forward items are **WiFi provisioning** (NVS-stored credentials +
+  a fallback config AP when none are set) and **serving the client from ESP32 flash** (today
+  it's served elsewhere and pointed at the ESP32's `:8765`). That makes the ESP32 a truly
+  standalone appliance like the Pi/Android cores.
+- **F-Droid MR !41291 — awaiting maintainer (linsui).** Watch the MR at `fdroid/fdroiddata`;
+  respond to review feedback. Once merged, moldqueen is installable from F-Droid.
+- **Recurring:** after the next `v*` tag, bump the README + website (`docs/`) Download/Install
+  sections + version badge and verify release-download links (see `WORKBOARD.md` → RECURRING).
 
 ## Recent decisions still relevant
 - **DUAL-RADIO finding (2026-06-19) — don't re-investigate.** The Mould King hub is

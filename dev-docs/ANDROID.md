@@ -108,6 +108,14 @@ signed build; the signed-release CI workflow itself is a separate step.
 ## Maturity & next steps
 
 The radio/API/serving path is **working and feature-complete** (safety verified on S25);
-the app is also a reference implementation for any future mobile core. **Future:** a
-**signed release / Play-Store** build (today it's a local `installDebug`); see
-[ROADMAP.md](ROADMAP.md).
+the app is also a reference implementation for any future mobile core.
+
+**Releases — shipped.** **Signed** releases **v0.1.0 / v0.1.1 / v0.1.2** have shipped via the
+gated CI release workflow (signing reads CI secrets at build time per "Release signing" above;
+package `io.github.jrichter24.moldqueen`). So this is no longer a local-`installDebug`-only app —
+`installDebug` remains the dev inner loop, but tagged `v*` releases produce signed APKs.
+
+**F-Droid.** MR **!41291** is open at `fdroid/fdroiddata` and **under maintainer (linsui)
+review**; once merged, MoldQueen is installable from F-Droid (which builds from source and signs
+with its own key — see "Release signing", item 3). **Future:** a Play-Store listing remains a
+forward-looking item; see [ROADMAP.md](ROADMAP.md).

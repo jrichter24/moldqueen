@@ -30,9 +30,9 @@ serves the UI on-device. Read the root `CLAUDE.md` and `dev-docs/ANDROID.md`.
 ## Build / run
 - Toolchain (the wrapper fetches Gradle; SDK platform-35 + build-tools 35.0.0 required):
   **Kotlin 1.9.24 · Gradle 8.9 · JDK 17 · AGP 8.7.3 · minSdk 31 / targetSdk 35**. Package
-  `io.github.jrichter24.moldqueen`; release `versionName` `0.1.0` / `versionCode` `10000`
-  (committed + deterministic; debug appends the git short SHA), surfaced in the in-app
-  server-info.
+  `io.github.jrichter24.moldqueen`; release `versionName` `0.1.2` / `versionCode` `10200`
+  (committed + deterministic literals; debug appends the git short SHA), surfaced in the
+  in-app server-info.
 - `cd android-core && ./gradlew installDebug` (build + install over adb), or
   `assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`.
 - Runtime perms: `BLUETOOTH_ADVERTISE` / `BLUETOOTH_CONNECT` + `INTERNET`;
@@ -42,7 +42,9 @@ serves the UI on-device. Read the root `CLAUDE.md` and `dev-docs/ANDROID.md`.
 ## Known facts to keep straight
 - **Gamepad:** pair a controller over Bluetooth and drive — on the Android app too
   (touch always works alongside it). See [GAMEPAD.md](../../dev-docs/GAMEPAD.md).
-- **Release / Play-Store signing is future** — today it's a local `installDebug`.
+- **Signed releases v0.1.0–v0.1.2 have shipped** via the gated CI release workflow
+  (tagged `v*` → signed APK); `installDebug` is the dev inner loop. **F-Droid MR !41291**
+  is under maintainer review; a Play-Store listing remains future.
 - **You don't own the UI.** The web client (chooser/dashboard/layouts/MK4Chrome,
   function→channel resolution, channel maps) is **client-dev's** — you bundle and host
   it, you don't fork it. The Pi radio core is **linux-core-dev's**; docs/website are

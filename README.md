@@ -40,8 +40,8 @@
 
 It's one self-contained app — it owns the radio *and* serves the UI on-device, so no Pi or network is needed.
 Prefer to build it yourself? `cd android-core && ./gradlew installDebug` (over USB).
-**F-Droid:** coming soon (recipe submission pending). The **Raspberry Pi** path is in
-[Quickstart](#quickstart) below.
+**F-Droid:** MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291) under
+review. The **Raspberry Pi** path is in [Quickstart](#quickstart) below.
 
 ## The idea: API-first — thin transport, smart client
 
@@ -54,9 +54,10 @@ moldqueen is built around **one documented WebSocket contract** and an unusual s
   value)*, owns the per-layout channel map, and runs the keepalive + STOP safety latch.
 
 Because all the smarts live above the contract, **the radio core is swappable**: a
-**Raspberry Pi** (raw HCI/BlueZ) and a **standalone Android app** (native BLE) expose the
-*identical* WebSocket API and serve the *same* client — so the UI is written once and the
-hardware is pluggable. (The hubs are driven by *broadcasting* crafted BLE adverts, not over
+**Raspberry Pi** (raw HCI/BlueZ), a **standalone Android app** (native BLE), and an
+**ESP32-S3** (ESP-IDF + NimBLE, over WiFi) each expose the *identical* WebSocket API and
+serve the *same* client — so the UI is written once and the hardware is pluggable
+(*swap the radio core, keep the client*). (The hubs are driven by *broadcasting* crafted BLE adverts, not over
 GATT.) The **Mould King 13112 excavator** is the hardware-proven reference; the
 layout system + auto-assign let you drive **any** Mould King toy on these hubs.
 
@@ -75,6 +76,13 @@ Full prep (disable onboard BT, mask `bluetoothd`, caps) and a dry-run mode:
 
 <p align="center">
   <img src="docs/assets/raspberry_with_code_example.png" alt="The Raspberry Pi running the moldqueen radio core" width="600">
+</p>
+
+**ESP32-S3 (the third radio core)** — a tiny ESP-IDF + NimBLE board that drives real toys
+over WiFi today, exposing the same WebSocket contract as the Pi and Android cores:
+
+<p align="center">
+  <img src="docs/assets/esp32_with_code_example.png" alt="An ESP32-S3 running the moldqueen radio core, driving a Mould King hub over WiFi" width="600">
 </p>
 
 **Android (standalone — no Pi)** — own native radio + bundled client in one APK:
@@ -155,7 +163,8 @@ WebSocket contract:
 client/        # the INDEPENDENT smart web client (chooser · layouts · MK4Chrome · channel maps)
    │  ws://…:8765  (the contract: setup · set · stop · state · info)
    ├── linux-core/   # Pi radio core — raw HCI/BlueZ; serves the client (Python)
-   └── android-core/ # standalone Android radio core — native BLE; serves the client (Kotlin)
+   ├── android-core/ # standalone Android radio core — native BLE; serves the client (Kotlin)
+   └── esp32-core/   # ESP32-S3 radio core — ESP-IDF + NimBLE over WiFi (C)
 ```
 
 <p align="center">
@@ -172,15 +181,21 @@ source of truth) and the machine-readable **[`asyncapi.yaml`](linux-core/mk4web/
 |---|---|---|
 | On the Pi (served) | `scripts/start.sh` → `http://<pi>:8080/` | [QUICKSTART](dev-docs/QUICKSTART.md) |
 | Android (standalone) | `./gradlew installDebug` | [ANDROID](dev-docs/ANDROID.md) |
+| On an ESP32-S3 (over WiFi) | `idf.py flash` → `ws://<board>:8765` | [PORTING](dev-docs/PORTING.md) |
 | Client on the desktop | `client/serve.py` → point at a Pi | [DEV_CLIENT](dev-docs/DEV_CLIENT.md) |
 | Client in Docker | `Dockerfile.client` → point at a Pi | [REMOTE_CLIENT](dev-docs/REMOTE_CLIENT.md) |
-| On another board | — (the radio core is hardware-bound) | [PORTING](dev-docs/PORTING.md) |
+| On another board | port the thin-transport core (the cores are hardware-bound) | [PORTING](dev-docs/PORTING.md) |
 | Add your own toy/layout | a generic slot/channel layout, no core fork | [ADDING_A_LAYOUT](dev-docs/ADDING_A_LAYOUT.md) |
 
 ## Roadmap
 
+The **ESP32-S3 radio core** is now a working third sibling — it drives real toys over WiFi
+today (clean-room C `MouldKingCrypt` port, NimBLE `0xFFF0` advertiser, 300 ms auto-neutral
+safety, WiFi WebSocket server mirroring the Pi's `api.py`). What's still ahead:
+
+- **ESP32 polish** — WiFi provisioning (NVS creds + a fallback AP) and serving the client
+  from flash, so the board is fully standalone like the Android app.
 - **MK6 protocol support** — the greyed *MK6* card badges; second Mould King BLE variant.
-- **ESP32 radio core** — a third thin-transport core behind the same contract.
 - **Camera, ToF sensor** — telemetry over/alongside the API.
 - **AI brain / console client** — an agent driving the toy through the same WebSocket API.
 

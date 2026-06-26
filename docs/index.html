@@ -52,7 +52,7 @@
         <p class="eyebrow" data-i18n="ix.hero.eyebrow">Open source · API-first</p>
         <h1 data-i18n="ix.hero.h1">Control building-block RC toys through one clean API.</h1>
         <p class="tagline" data-i18n="ix.hero.tag">It drives Bluetooth-LE machines over a documented WebSocket contract. Mould King comes first.</p>
-        <p class="lead" data-i18n="ix.hero.lead">There's one smart web client, and a radio core you can swap out underneath it: a Raspberry Pi today, the Android app in your pocket, maybe an ESP32 later.</p>
+        <p class="lead" data-i18n="ix.hero.lead">There's one smart web client, and a radio core you can swap out underneath it: a Raspberry Pi, the Android app in your pocket, or a tiny ESP32 board. All three drive real toys today.</p>
         <div class="actions">
           <a class="btn btn-primary" href="#app"><span data-i18n="ix.hero.btnApp">Get the app</span> <span class="arr">→</span></a>
           <a class="btn" href="https://github.com/jrichter24/moldqueen" rel="noopener" data-i18n="ix.hero.btnGit">View on GitHub</a>
@@ -99,7 +99,7 @@
           <div class="copy">
             <div class="num" data-i18n="ix.f3.num">03 · Run anywhere</div>
             <h3 data-i18n="ix.f3.h3">Put the radio where you like.</h3>
-            <p data-i18n="ix.f3.p">The radio is only one end of the contract, so it can live wherever suits you: a Raspberry Pi over raw Bluetooth, the standalone Android app with no Pi at all, or the client served from your desktop or a Docker container against a remote core. The interface stays the same in every case.</p>
+            <p data-i18n="ix.f3.p">The radio is only one end of the contract, so it can live wherever suits you: a Raspberry Pi over raw Bluetooth, the standalone Android app with no Pi at all, a tiny ESP32 board over WiFi, or the client served from your desktop or a Docker container against a remote core. The interface stays the same in every case.</p>
           </div>
         </div>
       </div>
@@ -142,7 +142,7 @@
         <div class="section-head">
           <p class="eyebrow" data-i18n="ix.app.eyebrow">Get the app</p>
           <h2 data-i18n="ix.app.h2">Pick your radio.</h2>
-          <p class="lead" data-i18n="ix.app.lead">There are two ways to start driving. Both serve the same web UI; the only difference is where the Bluetooth radio sits.</p>
+          <p class="lead" data-i18n="ix.app.lead">Three radio cores, one web UI. They all speak the same contract; the only difference is where the radio sits: your phone, a Raspberry Pi, or a tiny ESP32 board.</p>
         </div>
 
         <div class="row">
@@ -163,7 +163,7 @@
             <p>
               <a class="btn btn-primary" href="https://github.com/jrichter24/moldqueen/releases/latest" rel="noopener"><span data-i18n="ix.and.btnGet">Download the app</span> <span class="arr">→</span></a>
             </p>
-            <p class="muted" data-i18n="ix.and.dl">Latest signed release: <b>v0.1.2</b>. Download <code>moldqueen-v0.1.2.apk</code>, allow install from unknown sources, then open it. <b>F-Droid: coming soon.</b></p>
+            <p class="muted" data-i18n="ix.and.dl">Latest signed release: <b>v0.1.2</b>. Download <code>moldqueen-v0.1.2.apk</code>, allow install from unknown sources, then open it. <b>F-Droid: <a href="https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291" rel="noopener">MR !41291 under review</a>.</b></p>
             <p class="muted" data-i18n="ix.and.src">Or build it yourself over USB:</p>
             <pre class="cmd"><span class="c"># repo cloned, device connected</span>
 cd android-core
@@ -187,6 +187,21 @@ scripts/start.sh
             <p class="muted" data-i18n="ix.pi.muted">The full setup, from unboxing to the first drive, is in the <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/QUICKSTART.md" rel="noopener">Quickstart</a>.</p>
           </div>
         </div>
+
+        <div class="row">
+          <div class="media">
+            <img class="shot" src="assets/esp32_with_code_example.png" alt="An ESP32-S3 board running the moldqueen radio core, with code" loading="lazy" />
+          </div>
+          <div class="copy">
+            <div class="num" data-i18n="ix.esp.num">ESP32 · standalone radio core</div>
+            <h3 data-i18n="ix.esp.h3">The smallest radio.</h3>
+            <p data-i18n="ix.esp.p">A third radio core on a tiny, cheap ESP32-S3 board: a clean-room C port of the codec, the same Bluetooth-LE advertiser, and the same WebSocket API over WiFi. It has already driven a real toy. No Pi, no phone, just the board on your network.</p>
+            <pre class="cmd"><span class="c"># ESP-IDF installed, board connected</span>
+cd esp32-core
+idf.py flash monitor</pre>
+            <p class="muted" data-i18n="ix.esp.muted">Still being polished: WiFi credentials in a setup screen and serving the UI from the board itself. Build notes are in the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener">esp32-core</a> folder.</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -201,6 +216,7 @@ scripts/start.sh
         <div class="rows">
           <div class="dline"><div class="k" data-i18n="ix.dev.k1">Raspberry Pi core</div><div class="v" data-i18n="ix.dev.v1">Python and raw Bluetooth HCI, the reference radio core. <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/README.md" rel="noopener">linux-core</a></div></div>
           <div class="dline"><div class="k" data-i18n="ix.dev.k2">Android core</div><div class="v" data-i18n="ix.dev.v2">Kotlin, a native BLE advertiser, the same API on the device. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ANDROID.md" rel="noopener">ANDROID.md</a></div></div>
+          <div class="dline"><div class="k" data-i18n="ix.dev.k5">ESP32 core</div><div class="v" data-i18n="ix.dev.v5">C and ESP-IDF, a NimBLE advertiser, the same API over WiFi. <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener">esp32-core</a></div></div>
           <div class="dline"><div class="k" data-i18n="ix.dev.k3">Desktop dev client</div><div class="v" data-i18n="ix.dev.v3">Serve the UI locally against a remote core, no build. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/DEV_CLIENT.md" rel="noopener">DEV_CLIENT.md</a></div></div>
           <div class="dline"><div class="k" data-i18n="ix.dev.k4">Docker</div><div class="v" data-i18n="ix.dev.v4">Ship the client as a container that points at your Pi. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md" rel="noopener">REMOTE_CLIENT.md</a></div></div>
         </div>
@@ -236,7 +252,7 @@ scripts/start.sh
         </div>
         <ul class="roadmap">
           <li data-i18n="ix.rm.mk6"><b>MK6 protocol.</b> <span>A second telegram codec for Mould King's per-byte MK6 hubs. It's what the greyed-out MK6 badges on the generic layouts are reserved for.</span></li>
-          <li data-i18n="ix.rm.esp"><b>ESP32 core.</b> <span>A small, cheap third radio core that stays on by itself and runs the advertiser plus the same API. No Pi or phone needed.</span></li>
+          <li data-i18n="ix.rm.esp"><b>ESP32 polish.</b> <span>The ESP32 core already drives toys over WiFi. What's left is the convenience layer: WiFi setup on the board (no hardcoded credentials) and serving the client straight from flash.</span></li>
           <li data-i18n="ix.rm.cam"><b>Camera (FPV).</b> <span>A first-person video feed from the machine, so you drive by what it sees. The same stream could feed an autonomous driver later.</span></li>
           <li data-i18n="ix.rm.tof"><b>Time-of-flight sensor.</b> <span>Distance and obstacle awareness as telemetry, alongside the control API.</span></li>
           <li data-i18n="ix.rm.ai"><b>AI brain.</b> <span>An agent that drives on its own by speaking the same WebSocket contract. Because of the thin-transport split, that's a new client rather than a rewrite.</span></li>

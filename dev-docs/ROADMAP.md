@@ -16,9 +16,14 @@ that speaks it. (Back to the [README](../README.md) · canonical state in
 
 ## Radio cores (more transports behind the same contract)
 
-- **ESP32 core.** A small, cheap, always-on **third radio core** — a standalone ESP32 that
-  runs the BLE advertiser + the same WebSocket API, so neither a Pi nor a phone is needed.
-  Same client, same contract; just another swappable transport.
+- **ESP32 core — WORKING (third radio core).** A small, cheap, always-on standalone ESP32-S3
+  that runs the NimBLE `0xFFF0` advertiser + the same thin-transport WebSocket API, so neither a
+  Pi nor a phone is needed. Same client, same contract. **It already drives a real toy over WiFi
+  with the unmodified client** — four hardware-proven slices: clean-room C `MouldKingCrypt`,
+  in-place NimBLE advertiser, 300 ms auto-neutral keepalive + STOP, and the WiFi WS server
+  mirroring `api.py` (`esp32-core/`; see [PROJECT.md](PROJECT.md) §6b). **Forward-looking
+  polish:** WiFi provisioning (NVS creds + fallback config AP) and serving the client from
+  ESP32 flash — to make it a fully standalone appliance like the Pi/Android cores.
 
 ## Sensing & autonomy (new clients of the API)
 
@@ -34,8 +39,10 @@ that speaks it. (Back to the [README](../README.md) · canonical state in
 
 ## Smaller / in-flight
 
-- **Signed Android release** — a Play-Store / signed APK (today it's a local
-  `installDebug`; see [ANDROID.md](ANDROID.md)).
+- **Android release — signed APKs SHIPPED; Play-Store still forward-looking.** Signed
+  releases **v0.1.0 / v0.1.1 / v0.1.2** ship via the gated CI release workflow, and the
+  **F-Droid MR !41291** is under maintainer review. A **Play-Store** listing remains the
+  forward-looking item. See [ANDROID.md](ANDROID.md).
 - **Finish the excavator channel map** — a couple of functions are still placeholders to
   sweep on hardware (see [PROJECT.md](PROJECT.md)).
 - **Slot auto-detection** — today the connect wizard guides hub→slot buttoning manually.

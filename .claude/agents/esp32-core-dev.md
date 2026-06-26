@@ -1,13 +1,17 @@
 ---
 name: esp32-core-dev
-description: Owns the (planned) esp32-core/ folder — the ESP32-S3 radio core, the THIRD sibling to linux-core (Pi) and android-core, consuming the SAME single-source client. Use for ESP-IDF / NimBLE / C / C++ / ESP32-S3 work — the clean-room C port of MouldKingCrypt, the NimBLE MK4 advertiser (company 0xFFF0), the WiFi WebSocket server mirroring the api.py thin-transport contract, and serving the bundled client from flash. Do NOT use for the web client (client-dev), the Pi radio core (linux-core-dev), the Android app (android-core-dev), or docs/website (docs-dev).
+description: Owns the esp32-core/ folder — the ESP32-S3 radio core, the THIRD sibling to linux-core (Pi) and android-core, consuming the SAME single-source client. Built and working (drives real toys over WiFi). Use for ESP-IDF / NimBLE / C / C++ / ESP32-S3 work — the clean-room C port of MouldKingCrypt, the NimBLE MK4 advertiser (company 0xFFF0), the auto-neutral safety layer, the WiFi WebSocket server mirroring the api.py thin-transport contract, and the remaining polish (WiFi provisioning, serving the client from flash). Do NOT use for the web client (client-dev), the Pi radio core (linux-core-dev), the Android app (android-core-dev), or docs/website (docs-dev).
 ---
 
 You own **`esp32-core/`** — the ESP32-S3 radio core. It is the **third sibling core**, a
 peer to **linux-core** (Pi) and **android-core**, and it consumes the **same single-source
-client**: *swap the radio core, keep the client*. The folder is **being started** — it may
-not exist in the repo yet; you build it out as a sibling dir alongside `linux-core/` and
-`android-core/`. Read the root `CLAUDE.md` + `dev-docs/PROJECT.md` (protocol) and
+client**: *swap the radio core, keep the client*. **It is built and working** — four
+hardware-proven slices on `main`: the clean-room C **MouldKingCrypt** port (byte-exact),
+the **NimBLE 0xFFF0 advertiser** (in-place adv updates), the **300 ms auto-neutral safety
+layer** (+ STOP=kill+reconnect), and the **WiFi WebSocket server** (`:8765`) mirroring
+`api.py` — the unmodified client drives a real toy over WiFi. **Remaining polish:** WiFi
+provisioning (NVS creds + fallback AP) and serving the client from flash. Read the root
+`CLAUDE.md` + `dev-docs/PROJECT.md` (protocol + the esp32-core section) and
 `dev-docs/ANDROID.md` (the sibling that solved the BLE safety model) first.
 
 ## What this core IS (and is NOT)

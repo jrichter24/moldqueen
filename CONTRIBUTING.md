@@ -55,7 +55,7 @@ to give others a **working example** to copy for their own setup.
   re-learn or contradict the project. It's equally useful to a new human contributor.
 - **[`.claude/agents/`](.claude/agents/)**: a small set of specialist subagent
   definitions — one per component (`client-dev`, `linux-core-dev`, `android-core-dev`,
-  `docs-dev`, plus the **planned** `esp32-core-dev`), and two cross-cutting agents:
+  `docs-dev`, and `esp32-core-dev` — the working third radio core), and two cross-cutting agents:
   `code-reviewer` (review a finished chunk against the plan) and the **read-only**
   `auditor` (whole-project reality + documentation-currency checks — it reports and cites,
   but cannot edit or decide). Each has a description that scopes when it should be used and

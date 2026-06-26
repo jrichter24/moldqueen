@@ -29,6 +29,10 @@ WEB_DIR          = os.environ.get("MK4_WEB_DIR", os.path.join(REPO_ROOT, "client
 ASSETS_DIR       = os.environ.get("MK4_ASSETS_DIR", os.path.join(REPO_ROOT, "client", "assets"))
 
 # Server identity + WS {"cmd":"info"} disclosure tier.
+# NOTE: this is the WS-CONTRACT / SERVER version, surfaced via {"cmd":"info"} and the
+# asyncapi.yaml examples. It is INTENTIONALLY DECOUPLED from the app-release versions
+# (the Android v0.1.x / versionCode line) — bump it only when the WS contract changes,
+# NOT on every app release. A mismatch with the app version is expected, not drift.
 VERSION = "0.1.0"
 # Disclosure tier for the server-info message: "safe" (minimal/non-identifying),
 # "light" (DEFAULT; + radio backend, dry-run, hci index, ports — NO MAC), or "debug"

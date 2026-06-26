@@ -2,9 +2,9 @@
 
 > This is the authoritative project document. Where any other doc (the CLAUDE.md
 > files, or the snapshots in `linux-core/reference/`) disagrees, **this file wins.**
-> Last major update: 2026-06-18 (pluggable layouts: manifest + server-derived
-> `/<id>` routes + per-layout function maps + an inactive template; rawhci default
-> radio backend; server-info tiers; shared `shell.css`).
+> Last major update: 2026-06-26 (a working **esp32-core** — the third radio core,
+> drives real toys over WiFi today; signed Android releases v0.1.0–v0.1.2 shipped;
+> F-Droid MR !41291 under maintainer review; §6/§8 reconciled).
 
 ---
 
@@ -33,8 +33,15 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
   **inactive template**, and a shared **`shell.css`**. Radio behind a backend
   abstraction with **rawhci** (raw HCI socket, no hcitool) the default. Tiered
   **server-info** over the WS (`{cmd:info}`) + a client readout.
+- ✅ **Three radio cores behind one WS contract** — the Pi (`linux-core`), Android
+  (`android-core`), and now a working **ESP32-S3** (`esp32-core`, drives a real toy over
+  WiFi today; see §6b) — all consuming the **same single-source client**.
+- ✅ **Shipped:** signed Android releases **v0.1.0 / v0.1.1 / v0.1.2** via the gated CI
+  release workflow (package `io.github.jrichter24.moldqueen`); F-Droid MR **!41291** is
+  open and under maintainer review.
 - 🔜 Next: finish the channel→function map (sweep placeholders); slot
-  auto-detection; a console/AI client; then the camera/sensor/AI phases.
+  auto-detection; esp32-core WiFi provisioning + serve-from-flash; a console/AI client;
+  then the camera/sensor/AI phases.
 
 ---
 
@@ -187,6 +194,10 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   (works in `--ws-only`): **`MK4_INFO_LEVEL`** / `--info-level` = `safe` (app/version/
   lifecycle), `light` (DEFAULT; + backend/dry_run/hci/ports, no MAC) or `debug`
   (+ MAC/hostname/paths/bluetoothd). Unknown → light.
+  > **Version note:** the `version` reported here (from `mk4web/config.py`'s `VERSION`) is the
+  > **WS-contract / server** version and is **intentionally decoupled** from the app-release
+  > versions (the signed Android releases v0.1.x). They track different things — the WS
+  > protocol/server vs the shipped app — so a mismatch is **by design, not drift.**
 - **Channel map (client-side)** — per-layout `client/web/channel_map.<id>.json` shipped
   default + the **active** map (default + the client's overrides), persisted in the
   browser; `promote` saves it as the new default. The **smart client** loads / validates /
@@ -284,6 +295,39 @@ held/repeated state, so safety = **make the held state neutral**, not "send a ze
   do NOT rely on a "frozen axis" heuristic). The Android APK stamps an auto-increment **build
   number** into `versionName` (`+build.N`) and Server-info so the running build is verifiable.
 
+### 6b. esp32-core — the third radio core (WORKING, drives toys over WiFi today)
+
+[`esp32-core/`](../esp32-core/) is a **third radio core**, a peer to `linux-core` (Pi) and
+`android-core`: a standalone **ESP32-S3** (no Pi, no phone) that runs the MK4 advertiser **and**
+the same thin-transport WebSocket API, consuming the **same single-source client**. It is a
+**working core** — hardware-confirmed: the **unmodified** client drove a **real toy over WiFi**.
+Four built slices, all hardware-proven:
+
+1. **Clean-room C `MouldKingCrypt` port** — a from-scratch C implementation of the same crypt
+   (preamble / bit-reversal / CRC-16-CCITT / dual LFSR whitening), **byte-exact** against the
+   Python reference (9/9 on-device self-tests). Same "don't reinvent the crypt" rule —
+   it reproduces the verified bytes, not a new scheme.
+2. **NimBLE `0xFFF0` advertiser** — broadcasts the MK4 telegrams (company `0xFFF0`) via
+   **legacy** advertising, updating the running advertiser **IN PLACE** with
+   **`ble_gap_adv_set_data`** (no stop/start). Legacy is deliberate: **extended** advertising
+   returned `EBUSY` runaways while active, so the core holds one legacy advertiser and overwrites
+   its data register — the ESP32 analogue of the Pi's raw-HCI `set_data` and Android's
+   `AdvertisingSet.setAdvertisingData()`.
+3. **Auto-neutral keepalive + STOP** — the same safety model: a **300 ms per-channel** keepalive
+   re-asserts neutral on any channel not refreshed in time, and **STOP = kill the advertiser +
+   reconnect at neutral** (not "send a zero").
+4. **WiFi WebSocket server on `:8765`** — **mirrors `api.py`'s thin-transport contract**:
+   client→server `setup` / `set` / `stop` / `state` / `info` and pushed `lifecycle` / `state` /
+   `info`; it holds **no** channel map (the smart client resolves everything). Server-info reports
+   `radio_backend = esp32-nimble`.
+
+**Components** live in `esp32-core/components/{mouldking_crypt, mk4_advertiser, mk4_wifi,
+mk4_ws_server}` + `main/`. **Target:** ESP32-S3 **N16R8**, **ESP-IDF v5.5.4**.
+
+**Remaining polish (honestly not-done):** WiFi **provisioning** (NVS-stored credentials +
+a fallback config AP when none are set) and **serving the client from flash** (today the
+client is served elsewhere and pointed at the ESP32's WS endpoint).
+
 ---
 
 ## 7. How to run
@@ -322,9 +366,14 @@ see `mk4web/config.py`).
 
 ## 8. Open problems / next steps
 
-- **RAW page + configurable API endpoint — PLANNED.** The retired simple page is to
-  be replaced by a dedicated **RAW** slot/channel page; expose a configurable API
-  endpoint alongside it.
+- ✅ **RAW page + configurable API endpoint — SHIPPED.** The retired simple page was
+  replaced by the dedicated **RAW** slot/channel layout (`/raw`), and the configurable WS
+  endpoint (`clientconfig.js`, persisted in localStorage) ships alongside it — see §6.
+- **esp32-core (third radio core) — WORKING; remaining = provisioning + serve-from-flash.**
+  The four slices (clean-room C crypt, NimBLE `0xFFF0` in-place advertiser, 300 ms keepalive +
+  STOP, WiFi WS server mirroring `api.py`) are **done and hardware-proven** (drives a real toy
+  over WiFi with the unmodified client; see §6b). **Remaining:** WiFi provisioning (NVS creds +
+  fallback config AP) and serving the client from ESP32 flash.
 - **Finish the channel map** — sweep the placeholder channels (slot-0 ch1–3, slot-1
   ch1/ch3+) and confirm each function by driving it via Settings → Test.
 - **Reverse-speed calibration** — `reverse_scale` defaults to identity; measure the
@@ -361,7 +410,10 @@ moldqueen/
 │   │   └── asyncapi.yaml      # WS API contract (served at /asyncapi.yaml)
 │   └── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                              #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
-└── android-core/              # Kotlin — standalone Android app (radio + local WS API + serves client/)
+├── android-core/              # Kotlin — standalone Android app (radio + local WS API + serves client/)
+└── esp32-core/                # ESP-IDF/C — third radio core: NimBLE 0xFFF0 advertiser + WiFi WS API (mirrors api.py)
+    ├── components/{mouldking_crypt, mk4_advertiser, mk4_wifi, mk4_ws_server}
+    └── main/                  # app entry — ESP32-S3 N16R8, ESP-IDF v5.5.4
 ```
 
 Other docs: [`QUICKSTART.md`](QUICKSTART.md) (boxes → driving),
