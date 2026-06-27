@@ -20,14 +20,14 @@
 </p>
 
 <p align="center">
-  <b>🌐 <a href="https://jrichter24.github.io/moldqueen/">jrichter24.github.io/moldqueen</a></b> — explore the project website
+  <b><a href="https://jrichter24.github.io/moldqueen/">jrichter24.github.io/moldqueen</a></b> — explore the project website
 </p>
 
 <p align="center">
-  <a href="https://github.com/sponsors/jrichter24" target="_blank"><img src="https://img.shields.io/badge/Sponsor_on_GitHub-%F0%9F%92%9C-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Sponsor moldqueen on GitHub" height="36"></a>
+  <a href="https://github.com/sponsors/jrichter24" target="_blank"><img src="https://img.shields.io/badge/Sponsor_on_GitHub-23272e?style=flat-square&labelColor=23272e&color=2f343b&logo=githubsponsors&logoColor=white" alt="Sponsor moldqueen on GitHub" height="28"></a>
   &nbsp;
-  <a href="https://ko-fi.com/A437HBY" target="_blank"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support moldqueen on Ko-fi" height="36"></a>
-  <br><sub>Free &amp; open source. If it helps you, <a href="https://github.com/sponsors/jrichter24">💜 sponsor on GitHub</a> or <a href="https://ko-fi.com/A437HBY">☕ buy me a coffee</a>. No ads, no affiliate links.</sub>
+  <a href="https://ko-fi.com/A437HBY" target="_blank"><img src="https://img.shields.io/badge/Ko--fi-23272e?style=flat-square&labelColor=23272e&color=2f343b&logo=ko-fi&logoColor=white" alt="Support moldqueen on Ko-fi" height="28"></a>
+  <br><sub>Free &amp; open source. No ads, no affiliate links.</sub>
 </p>
 
 ## Download — install the app
@@ -63,7 +63,9 @@ layout system + auto-assign let you drive **any** Mould King toy on these hubs.
 
 ## Quickstart
 
-**Raspberry Pi (primary path)** — Pi with a USB BLE dongle, Python 3.13, a solid 5 V/3 A PSU:
+### Raspberry Pi (primary path)
+
+Pi with a USB BLE dongle, Python 3.13, a solid 5 V/3 A PSU:
 
 ```bash
 git clone https://github.com/jrichter24/moldqueen && cd moldqueen
@@ -78,7 +80,11 @@ Full prep (disable onboard BT, mask `bluetoothd`, caps) and a dry-run mode:
   <img src="docs/assets/raspberry_with_code_example.png" alt="The Raspberry Pi running the moldqueen radio core" width="600">
 </p>
 
-**ESP32-S3 (the third radio core)** — a tiny ESP-IDF + NimBLE board that drives real toys
+---
+
+### ESP32-S3 (the third radio core)
+
+A tiny ESP-IDF + NimBLE board that drives real toys
 over WiFi today, exposing the same WebSocket contract as the Pi and Android cores. It's a
 usable standalone appliance: no credentials are baked in, so on first boot it opens a setup
 WiFi (`moldqueen-setup`) for you to enter your network; after that it's discoverable as
@@ -91,7 +97,11 @@ Step-by-step setup walkthrough: **[`dev-docs/ESP32_SETUP.md`](dev-docs/ESP32_SET
   <img src="docs/assets/esp32_with_code_example.png" alt="An ESP32-S3 running the moldqueen radio core, driving a Mould King hub over WiFi" width="600">
 </p>
 
-**Android (standalone — no Pi)** — own native radio + bundled client in one APK:
+---
+
+### Android (standalone, no Pi)
+
+Own native radio + bundled client in one APK:
 
 ```bash
 cd android-core && ./gradlew installDebug    # build + install to a connected device

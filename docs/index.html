@@ -52,6 +52,9 @@
         <img class="hero-img" src="assets/hero_alt_1.webp" alt="" loading="lazy" />
         <img class="hero-img" src="assets/hero_alt_2.webp" alt="" loading="lazy" />
       </div>
+      <button type="button" class="hero-next" id="heroNext" data-i18n-aria="ix.hero.nextImg" aria-label="Next hero image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
       <div class="wrap">
        <div class="hero-copy">
         <p class="eyebrow" data-i18n="ix.hero.eyebrow">Open source · API-first</p>
@@ -279,6 +282,18 @@ idf.py flash monitor</pre>
             </button>
           </div>
           <div class="step-indicator" aria-live="polite"><span data-i18n="ix.es.stepOf">Step 1 of 5</span></div>
+        </div>
+
+        <!-- Click-to-zoom lightbox for the current step screenshot (hidden until opened by JS). -->
+        <div class="lightbox" id="espLightbox" role="dialog" aria-modal="true" aria-label="ESP32 setup screenshot" hidden>
+          <div class="lightbox-backdrop" data-close></div>
+          <figure class="lightbox-figure">
+            <button type="button" class="lightbox-close" id="espLightboxClose" data-i18n-aria="ix.es.zoomClose" aria-label="Close zoomed screenshot" data-close>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <img class="lightbox-img" id="espLightboxImg" src="" alt="" />
+            <figcaption class="lightbox-cap" id="espLightboxCap"></figcaption>
+          </figure>
         </div>
 
         <p class="tiles-note" data-i18n="ix.es.note">No credentials are stored in git or the binary. The full written walkthrough is in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ESP32_SETUP.md" rel="noopener">ESP32_SETUP.md</a>; build and flash notes are in the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener">esp32-core</a> folder.</p>

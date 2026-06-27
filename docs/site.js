@@ -30,6 +30,7 @@
     "ix.hero.lead": "Oben ein smarter Web-Client, darunter ein austauschbarer Funkkern: ein Raspberry Pi, in der Hosentasche die Android-App oder ein winziges ESP32-Board. Alle drei steuern schon heute echte Modelle.",
     "ix.hero.btnApp": "Zur App",
     "ix.hero.btnGit": "Auf GitHub ansehen",
+    "ix.hero.nextImg": "Nächstes Bild",
     // ---- index: features ----
     "ix.feat.eyebrow": "Was es anders macht",
     "ix.feat.h2": "Thin Transport, smarter Client.",
@@ -88,6 +89,7 @@
     "ix.es.prev": "Vorheriger Schritt",
     "ix.es.next": "Nächster Schritt",
     "ix.es.stepOf": "Schritt 1 von 5",
+    "ix.es.zoomClose": "Vergrößertes Bild schließen",
     "ix.es.note": "Es werden keine Zugangsdaten in Git oder der Binärdatei gespeichert. Die vollständige schriftliche Anleitung steht in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ESP32_SETUP.md\" rel=\"noopener\">ESP32_SETUP.md</a>; Build- und Flash-Hinweise stehen im Ordner <a href=\"https://github.com/jrichter24/moldqueen/tree/main/esp32-core\" rel=\"noopener\">esp32-core</a>.",
     // ---- index: developers ----
     "ix.dev.eyebrow": "Für Entwickler",
@@ -366,14 +368,16 @@
 
   // ===================================================================== hero slider
   // Auto-rotating, restrained crossfade through the hero images. Pure CSS opacity
-  // transition (.is-active); JS only swaps the active class on a timer. Pauses on hover
-  // and when the tab is hidden; honours prefers-reduced-motion (stays on image 1).
+  // transition (.is-active); JS only swaps the active class. The slides and the manual
+  // "next" arrow are ALWAYS wired. Only the auto-advance TIMER honours
+  // prefers-reduced-motion (a click is explicit, so the arrow still advances). Pauses on
+  // hover and when the tab is hidden.
   (function () {
     var slider = document.getElementById("heroSlider");
     if (!slider) return;
     var slides = Array.prototype.slice.call(slider.querySelectorAll(".hero-img"));
     if (slides.length < 2) return;
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     var i = 0, timer = null, paused = false;
     var INTERVAL = 5000;
     function show(n) {
@@ -382,11 +386,16 @@
       slides[i].classList.add("is-active");
     }
     function tick() { if (!paused && !document.hidden) show(i + 1); }
-    function start() { if (!timer) timer = setInterval(tick, INTERVAL); }
+    function start() { if (reduce) return; if (!timer) timer = setInterval(tick, INTERVAL); }
     function stop() { if (timer) { clearInterval(timer); timer = null; } }
     slider.addEventListener("mouseenter", function () { paused = true; });
     slider.addEventListener("mouseleave", function () { paused = false; });
     document.addEventListener("visibilitychange", function () { if (document.hidden) stop(); else start(); });
+
+    // manual advance: next image + reset the timer so it doesn't tick immediately after
+    var nextBtn = document.getElementById("heroNext");
+    if (nextBtn) nextBtn.addEventListener("click", function () { show(i + 1); stop(); start(); });
+
     start();
   })();
 
@@ -460,6 +469,53 @@
       if (e.key === "ArrowLeft") { go(cur - 1); e.preventDefault(); }
       else if (e.key === "ArrowRight") { go(cur + 1); e.preventDefault(); }
     });
+
+    // ---- click-to-zoom lightbox: clicking the current screenshot opens it full-size ----
+    var lb = document.getElementById("espLightbox");
+    var lbImg = document.getElementById("espLightboxImg");
+    var lbCap = document.getElementById("espLightboxCap");
+    var lbClose = document.getElementById("espLightboxClose");
+    if (lb && lbImg && lbCap && lbClose) {
+      var lastFocus = null;
+      function openLb(step) {
+        var img = step.querySelector(".shot");
+        var num = step.querySelector(".step-copy .num");
+        var desc = step.querySelector(".step-copy p");
+        if (!img) return;
+        lbImg.src = img.currentSrc || img.src;
+        lbImg.alt = img.getAttribute("alt") || "";
+        var cap = num ? num.textContent : "";
+        if (desc) cap += (cap ? " - " : "") + desc.textContent;
+        lbCap.textContent = cap;
+        lastFocus = document.activeElement;
+        lb.hidden = false;
+        document.body.classList.add("lb-open");
+        lbClose.focus();
+      }
+      function closeLb() {
+        if (lb.hidden) return;
+        lb.hidden = true;
+        document.body.classList.remove("lb-open");
+        if (lastFocus && typeof lastFocus.focus === "function") lastFocus.focus();
+      }
+      steps.forEach(function (s) {
+        var img = s.querySelector(".shot");
+        if (!img) return;
+        img.classList.add("zoomable");
+        img.addEventListener("click", function () { if (s.classList.contains("is-active")) openLb(s); });
+      });
+      lb.addEventListener("click", function (e) {
+        if (e.target.hasAttribute("data-close")) closeLb();
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && !lb.hidden) closeLb();
+      });
+      // keep focus inside the dialog (single focusable: the close button)
+      lb.addEventListener("keydown", function (e) {
+        if (e.key === "Tab") { e.preventDefault(); lbClose.focus(); }
+      });
+    }
+
     render();
   })();
 

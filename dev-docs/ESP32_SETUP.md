@@ -33,7 +33,7 @@ Join it from your phone or laptop. It needs no password.
 The board also re-enters this setup mode automatically if a previously saved network is
 unreachable, and you can force it on demand from the management page (see below).
 
-![Joining the open moldqueen-setup WiFi](../docs/assets/esp32_connect/step_0_select_wlan.jpeg)
+<img src="../docs/assets/esp32_connect/step_0_select_wlan.jpeg" alt="Joining the open moldqueen-setup WiFi" height="420">
 
 ## Step 2 - Open the setup page
 
@@ -44,7 +44,7 @@ JavaScript are all inlined, so it loads even though the setup AP has no internet
 This page is **not** the moldqueen client. It is a small configuration page served by the
 board only while it is in setup mode.
 
-![The branded ESP32 setup page at 192.168.4.1](../docs/assets/esp32_connect/step_1_open_setup.jpeg)
+<img src="../docs/assets/esp32_connect/step_1_open_setup.jpeg" alt="The branded ESP32 setup page at 192.168.4.1" height="420">
 
 ## Step 3 - Pick your network and port
 
@@ -60,7 +60,7 @@ The page shows your device **MAC** and the resulting `ws://moldqueenesp.local:<p
 with copy buttons. On save, the board stores the credentials and port to flash (NVS), shows a
 matching branded confirmation page, and reboots into station mode to join your network.
 
-![The setup page with the scanned network list, password and port fields](../docs/assets/esp32_connect/step_2_setup_select_wlan_and_port.jpeg)
+<img src="../docs/assets/esp32_connect/step_2_setup_select_wlan_and_port.jpeg" alt="The setup page with the scanned network list, password and port fields" height="420">
 
 ## Step 4 - Reach the board by name
 
@@ -79,7 +79,7 @@ boot, and the management page shows the IP in its status card. You can also look
 your router by the device **MAC** shown on the setup page. Then reach the board at
 `http://<ip>:8080` and point the client at `ws://<ip>:<port>`.
 
-![The ESP32 status and management page](../docs/assets/esp32_connect/step_3_open_status_page.jpeg)
+<img src="../docs/assets/esp32_connect/step_3_open_status_page.jpeg" alt="The ESP32 status and management page" height="420">
 
 ## Step 5 - Manage the board and drive
 
@@ -102,7 +102,7 @@ ws://moldqueenesp.local:<port>
 (default port **8765**; use the IP form if `.local` does not resolve). Then connect and drive
 exactly as you would against the Pi or Android cores.
 
-![The management page cards: status, restart, switch to setup, change network](../docs/assets/esp32_connect/step_4_manage_device.jpeg)
+<img src="../docs/assets/esp32_connect/step_4_manage_device.jpeg" alt="The management page cards: status, restart, switch to setup, change network" height="420">
 
 ## Notes
 
