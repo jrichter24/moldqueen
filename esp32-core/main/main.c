@@ -28,6 +28,7 @@
 #include "mk4_provision.h"
 #include "mk4_advertiser.h"
 #include "mk4_ws_server.h"
+#include "mk4_mgmt.h"
 
 static const char *TAG = "mk4_main";
 
@@ -57,15 +58,21 @@ void app_main(void)
 
     uint16_t ws_port = mk4_wifi_ws_port_load();   /* NVS, default 8765 */
 
+    /* Software force-AP (the management page's "switch to setup") — one-shot: skip the station
+       attempt and go straight to provisioning. The reliable replacement for the dropped
+       hardware re-provision trigger. */
+    bool force_ap = mk4_wifi_force_ap_take();
+    if (force_ap) ESP_LOGW(TAG, "force-AP flag set -> provisioning (re-provision on demand)");
+
     char ssid[33], pass[65], ip[16];
-    bool have = mk4_wifi_creds_load(ssid, sizeof ssid, pass, sizeof pass);
+    bool have = !force_ap && mk4_wifi_creds_load(ssid, sizeof ssid, pass, sizeof pass);
     bool connected = false;
 
     if (have) {
         ESP_LOGI(TAG, "NVS has creds for '%s' -> trying station for %d s", ssid, STA_TIMEOUT_MS / 1000);
         connected = mk4_wifi_connect_sta(ssid, pass, ip, sizeof ip, STA_TIMEOUT_MS);
         if (!connected) ESP_LOGW(TAG, "could not join '%s' -> falling back to provisioning", ssid);
-    } else {
+    } else if (!force_ap) {
         ESP_LOGW(TAG, "no WiFi creds in NVS -> provisioning");
     }
 
@@ -75,14 +82,17 @@ void app_main(void)
         return;
     }
 
-    /* NORMAL OPERATION (unchanged + proven). */
+    /* NORMAL OPERATION (the proven drive path is unchanged; the management page is an
+       additional HTTP surface on :8080, not a change to driving). */
     mk4_adv_init();
     mk4_ws_start(ws_port);
     start_mdns(ws_port);
+    mk4_mgmt_start(ws_port);
     ESP_LOGI(TAG, "========================================================");
     ESP_LOGI(TAG, " READY. Point the client's WS endpoint at either:");
     ESP_LOGI(TAG, "     ws://%s.local:%u", MDNS_HOSTNAME, ws_port);
     ESP_LOGI(TAG, "     ws://%s:%u", ip, ws_port);
+    ESP_LOGI(TAG, " Manage the device at http://%s.local:8080/", MDNS_HOSTNAME);
     ESP_LOGI(TAG, "========================================================");
 
     while (1) vTaskDelay(pdMS_TO_TICKS(10000));

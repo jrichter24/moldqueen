@@ -30,8 +30,18 @@ void mk4_wifi_creds_clear(void);
 uint16_t mk4_wifi_ws_port_load(void);
 void mk4_wifi_ws_port_save(uint16_t port);
 
+/* Software force-AP flag (NVS): set => the next boot enters provisioning; take = read+clear
+   (one-shot). The reliable replacement for the dropped hardware re-provision trigger. */
+void mk4_wifi_force_ap_set(void);
+bool mk4_wifi_force_ap_take(void);
+
 /* The station MAC as "AA:BB:CC:DD:EE:FF" — the address the router shows. */
 void mk4_wifi_mac_str(char *out, size_t cap);
+
+/* Live status for the management page: current dotted-quad IP, connected SSID, STA RSSI (dBm). */
+void mk4_wifi_ip_str(char *out, size_t cap);
+void mk4_wifi_current_ssid(char *out, size_t cap);
+int  mk4_wifi_sta_rssi(void);
 
 /* Connect in station mode with `timeout_ms`. Returns true on got-IP (copies the dotted-quad
    into ip_out, caller provides >= 16 bytes); false on timeout/failure (then call
@@ -41,6 +51,10 @@ bool mk4_wifi_connect_sta(const char *ssid, const char *pass, char *ip_out, size
 /* Scan visible networks (briefly, in STA mode) and cache their SSIDs. Call BEFORE
    mk4_wifi_start_ap (scanning needs STA; the AP comes up afterwards). */
 void mk4_wifi_scan_cache(void);
+
+/* Scan while CONNECTED as STA (normal op) — does not stop WiFi; the connection survives.
+   Caches the same way as mk4_wifi_scan_cache (read back with mk4_wifi_scan_get). */
+void mk4_wifi_scan_live(void);
 
 /* Copy up to `max` cached networks (deduped, hidden skipped, strongest-first) into
    ssids[][33] and rssi[] (dBm); returns the count. rssi may be NULL. */

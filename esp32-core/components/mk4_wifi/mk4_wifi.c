@@ -24,6 +24,7 @@ static const char *TAG = "mk4_wifi";
 
 static EventGroupHandle_t s_eg;
 static char s_ip[16];
+static char s_ssid[33];          /* the connected SSID (shown on the management page) */
 static int  s_retries;
 static int  s_max_retries;
 static volatile bool s_giving_up;
@@ -131,6 +132,49 @@ void mk4_wifi_mac_str(char *out, size_t cap)
              mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
 
+void mk4_wifi_ip_str(char *out, size_t cap)
+{
+    if (cap) { strncpy(out, s_ip, cap - 1); out[cap - 1] = 0; }
+}
+
+void mk4_wifi_current_ssid(char *out, size_t cap)
+{
+    if (cap) { strncpy(out, s_ssid, cap - 1); out[cap - 1] = 0; }
+}
+
+int mk4_wifi_sta_rssi(void)
+{
+    wifi_ap_record_t ap;
+    return (esp_wifi_sta_get_ap_info(&ap) == ESP_OK) ? ap.rssi : 0;
+}
+
+/* Software force-AP flag (NVS) — the reliable replacement for the dropped hardware re-provision
+   trigger. The management page sets it; the boot logic takes (reads + clears) it. One-shot. */
+void mk4_wifi_force_ap_set(void)
+{
+    nvs_handle_t h;
+    if (nvs_open(NVS_NS, NVS_READWRITE, &h) == ESP_OK) {
+        nvs_set_u8(h, "force_ap", 1);
+        nvs_commit(h);
+        nvs_close(h);
+        ESP_LOGW(TAG, "force-AP flag set — next boot goes to provisioning");
+    }
+}
+
+bool mk4_wifi_force_ap_take(void)
+{
+    nvs_handle_t h;
+    uint8_t v = 0;
+    if (nvs_open(NVS_NS, NVS_READWRITE, &h) == ESP_OK) {
+        if (nvs_get_u8(h, "force_ap", &v) == ESP_OK && v) {
+            nvs_erase_key(h, "force_ap");   /* one-shot: clear so a later power-cycle is normal */
+            nvs_commit(h);
+        }
+        nvs_close(h);
+    }
+    return v != 0;
+}
+
 bool mk4_wifi_connect_sta(const char *ssid, const char *pass, char *ip_out, size_t ip_cap, int timeout_ms)
 {
     stack_init();
@@ -145,6 +189,8 @@ bool mk4_wifi_connect_sta(const char *ssid, const char *pass, char *ip_out, size
     strncpy((char *)wc.sta.ssid, ssid, sizeof wc.sta.ssid - 1);
     strncpy((char *)wc.sta.password, pass ? pass : "", sizeof wc.sta.password - 1);
     wc.sta.threshold.authmode = WIFI_AUTH_OPEN;
+    strncpy(s_ssid, ssid, sizeof s_ssid - 1);
+    s_ssid[sizeof s_ssid - 1] = 0;
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wc));
@@ -164,6 +210,49 @@ bool mk4_wifi_connect_sta(const char *ssid, const char *pass, char *ip_out, size
     return false;
 }
 
+/* Pull the just-finished scan's results into the cache (dedup, hidden skipped, strongest-first). */
+static void scan_collect(void)
+{
+    s_scan_count = 0;
+    uint16_t n = 0;
+    esp_wifi_scan_get_ap_num(&n);
+    if (n == 0) return;
+    wifi_ap_record_t *recs = calloc(n, sizeof(wifi_ap_record_t));
+    if (!recs) return;
+    esp_wifi_scan_get_ap_records(&n, recs);
+    for (int i = 0; i < n; i++) {
+        const char *s = (const char *)recs[i].ssid;
+        if (s[0] == 0) continue;          /* hidden */
+        int8_t rssi = recs[i].rssi;
+        int found = -1;
+        for (int j = 0; j < s_scan_count; j++)
+            if (strcmp(s_scan_ssids[j], s) == 0) { found = j; break; }
+        if (found >= 0) {
+            if (rssi > s_scan_rssi[found]) s_scan_rssi[found] = rssi;   /* keep strongest */
+            continue;
+        }
+        if (s_scan_count >= SCAN_MAX) continue;
+        strncpy(s_scan_ssids[s_scan_count], s, 32);
+        s_scan_ssids[s_scan_count][32] = 0;
+        s_scan_rssi[s_scan_count] = rssi;
+        s_scan_count++;
+    }
+    /* strongest-first (insertion sort; N <= SCAN_MAX) */
+    for (int a = 1; a < s_scan_count; a++) {
+        char tmps[33]; strcpy(tmps, s_scan_ssids[a]);
+        int8_t tmpr = s_scan_rssi[a];
+        int b = a - 1;
+        while (b >= 0 && s_scan_rssi[b] < tmpr) {
+            strcpy(s_scan_ssids[b + 1], s_scan_ssids[b]);
+            s_scan_rssi[b + 1] = s_scan_rssi[b];
+            b--;
+        }
+        strcpy(s_scan_ssids[b + 1], tmps);
+        s_scan_rssi[b + 1] = tmpr;
+    }
+    free(recs);
+}
+
 void mk4_wifi_scan_cache(void)
 {
     stack_init();
@@ -174,52 +263,19 @@ void mk4_wifi_scan_cache(void)
     ESP_ERROR_CHECK(esp_wifi_start());
 
     wifi_scan_config_t sc = { 0 };   /* active scan, all channels */
-    esp_err_t e = esp_wifi_scan_start(&sc, true);   /* blocking */
-    if (e == ESP_OK) {
-        uint16_t n = 0;
-        esp_wifi_scan_get_ap_num(&n);
-        if (n > 0) {
-            wifi_ap_record_t *recs = calloc(n, sizeof(wifi_ap_record_t));
-            if (recs) {
-                esp_wifi_scan_get_ap_records(&n, recs);
-                for (int i = 0; i < n; i++) {
-                    const char *s = (const char *)recs[i].ssid;
-                    if (s[0] == 0) continue;          /* hidden */
-                    int8_t rssi = recs[i].rssi;
-                    int found = -1;
-                    for (int j = 0; j < s_scan_count; j++)
-                        if (strcmp(s_scan_ssids[j], s) == 0) { found = j; break; }
-                    if (found >= 0) {
-                        if (rssi > s_scan_rssi[found]) s_scan_rssi[found] = rssi;   /* keep strongest */
-                        continue;
-                    }
-                    if (s_scan_count >= SCAN_MAX) continue;
-                    strncpy(s_scan_ssids[s_scan_count], s, 32);
-                    s_scan_ssids[s_scan_count][32] = 0;
-                    s_scan_rssi[s_scan_count] = rssi;
-                    s_scan_count++;
-                }
-                /* strongest-first (insertion sort; N <= SCAN_MAX) */
-                for (int a = 1; a < s_scan_count; a++) {
-                    char tmps[33]; strcpy(tmps, s_scan_ssids[a]);
-                    int8_t tmpr = s_scan_rssi[a];
-                    int b = a - 1;
-                    while (b >= 0 && s_scan_rssi[b] < tmpr) {
-                        strcpy(s_scan_ssids[b + 1], s_scan_ssids[b]);
-                        s_scan_rssi[b + 1] = s_scan_rssi[b];
-                        b--;
-                    }
-                    strcpy(s_scan_ssids[b + 1], tmps);
-                    s_scan_rssi[b + 1] = tmpr;
-                }
-                free(recs);
-            }
-        }
-        ESP_LOGI(TAG, "scan: %d network(s) cached", s_scan_count);
-    } else {
-        ESP_LOGW(TAG, "scan failed: %d", e);
-    }
+    if (esp_wifi_scan_start(&sc, true) == ESP_OK) scan_collect();   /* blocking */
+    else ESP_LOGW(TAG, "scan failed");
+    ESP_LOGI(TAG, "scan: %d network(s) cached", s_scan_count);
     esp_wifi_stop();   /* start_ap brings up the AP next */
+}
+
+void mk4_wifi_scan_live(void)
+{
+    s_scan_count = 0;
+    wifi_scan_config_t sc = { 0 };   /* scan while CONNECTED — do not change mode or stop WiFi */
+    if (esp_wifi_scan_start(&sc, true) == ESP_OK) scan_collect();
+    else ESP_LOGW(TAG, "live scan failed");
+    ESP_LOGI(TAG, "live scan: %d network(s) cached", s_scan_count);
 }
 
 int mk4_wifi_scan_get(char ssids[][33], int8_t *rssi, int max)

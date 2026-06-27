@@ -45,11 +45,15 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
     endpoint**, a matching **branded Saved page**, and **mDNS** discovery (`moldqueenesp.local`,
     renamed from `moldqueondevice`; proven end-to-end — the client drives via the name). All
     assets inlined/self-contained (offline AP); no creds in git or the binary.
-  - **Group-B — a web status/management page** on the running device (at
-    `moldqueenesp.local:8080`): show state (IP, WiFi, WS clients), add a **status-page link** to
-    the setup/Saved pages, and **change-network / force-AP / restart** + a **re-provision path**
-    (the replacement for the dropped physical trigger — change WiFi without erasing NVS /
-    reflashing).
+  - ✅ **Group-B — web management page — DONE** (hardware + host-verified): a branded, bilingual
+    status/management page at **`http://moldqueenesp.local:8080`** (normal op) — cards for live
+    status (IP/MAC/SSID/signal/uptime/firmware/endpoint, with copy buttons for endpoint / mgmt-URL
+    / IP / MAC), **restart**, **switch-to-setup** (a **software force-AP** via an NVS flag — the
+    reliable replacement for the dropped hardware double-reset, re-provision on demand), and
+    **change-network** directly (save new creds → reboot to the new network, non-bricking AP
+    fallback). Responsive layout, status/signal color-coding, favicon, support links; the
+    **`:8080` link** is on the Group A setup pages. No-auth LAN-trust (like the WS API). Shared
+    branding factored into `mk4_webui`.
   - **Pi mDNS (`moldqueenrasp.local`) + the binary/release pipeline** — give the linux-core the
     sibling `.local` name, and a build/flash distribution path for the ESP32 firmware.
   - **Operational AP mode** (distinct from provisioning's temporary config AP) — the ESP32 as
@@ -87,11 +91,12 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   MAC/endpoint, a matching Saved page) and **mDNS discovery** (`moldqueenesp.local`); the
   firmware is now **distributable** (no creds in git or the binary). A physical re-provision
   trigger (double-reset / BOOT-hold) was evaluated and **dropped as unreliable** (GPIO0 is the
-  boot strap; the EN reset clears RTC) — it moves to the web management page. **Group A
-  (discovery + config-page polish) is DONE + hardware-verified.** **Next:** the **Group-B web
-  management page** at `moldqueenesp.local:8080` (status link + change-network / force-AP /
-  restart / re-provision), then **Pi mDNS (`moldqueenrasp.local`) + the binary pipeline**, and
-  serving the client from flash (see the FUTURE cluster). Toolchain: ESP-IDF v5.5.4.
+  boot strap; the EN reset clears RTC) — replaced by the management page's software force-AP.
+  **Groups A + B are DONE + hardware-verified** — discovery (mDNS `moldqueenesp.local`) + the
+  branded bilingual config/Saved pages, and the **management page** at `moldqueenesp.local:8080`
+  (status, restart, **software switch-to-setup** = reliable re-provision, change-network), with
+  the `:8080` link on the setup pages. **Next:** **Pi mDNS (`moldqueenrasp.local`) + the binary
+  pipeline**, and serving the client from flash (see the FUTURE cluster). Toolchain: ESP-IDF v5.5.4.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   open at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`. Addressing
   maintainer (linsui) review: HTML description, full commit hash, `output` line removed.
