@@ -16,14 +16,17 @@ that speaks it. (Back to the [README](../README.md) · canonical state in
 
 ## Radio cores (more transports behind the same contract)
 
-- **ESP32 core — WORKING (third radio core).** A small, cheap, always-on standalone ESP32-S3
-  that runs the NimBLE `0xFFF0` advertiser + the same thin-transport WebSocket API, so neither a
-  Pi nor a phone is needed. Same client, same contract. **It already drives a real toy over WiFi
-  with the unmodified client** — four hardware-proven slices: clean-room C `MouldKingCrypt`,
-  in-place NimBLE advertiser, 300 ms auto-neutral keepalive + STOP, and the WiFi WS server
-  mirroring `api.py` (`esp32-core/`; see [PROJECT.md](PROJECT.md) §6b). **Forward-looking
-  polish:** WiFi provisioning (NVS creds + fallback config AP) and serving the client from
-  ESP32 flash — to make it a fully standalone appliance like the Pi/Android cores.
+- **ESP32 core — a usable standalone appliance (third radio core).** A small, cheap, always-on
+  standalone ESP32-S3 that runs the NimBLE `0xFFF0` advertiser + the same thin-transport
+  WebSocket API, so neither a Pi nor a phone is needed. Same client, same contract. **It drives
+  a real toy over WiFi with the unmodified client** — four hardware-proven control slices
+  (clean-room C `MouldKingCrypt`, in-place NimBLE advertiser, 300 ms auto-neutral keepalive +
+  STOP, the WiFi WS server mirroring `api.py`), **plus** WiFi provisioning (no creds baked in:
+  a fallback `moldqueen-setup` AP + a branded bilingual setup page), **mDNS discovery** as
+  `moldqueenesp.local`, and a **management page** at `moldqueenesp.local:8080` (status, restart,
+  switch-to-setup, change-network) — all done and hardware-verified (`esp32-core/`; see
+  [PROJECT.md](PROJECT.md) §6b). **Next:** Pi mDNS (`moldqueenrasp.local` for linux-core), then
+  the binary/release pipeline (a distributable `.bin`); serve-client-from-flash after.
 
 ## Sensing & autonomy (new clients of the API)
 

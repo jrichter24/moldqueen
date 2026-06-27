@@ -3,26 +3,31 @@
 > Living "current state" doc for starting fresh sessions without losing context.
 > **Not** a project reference — that's [`PROJECT.md`](PROJECT.md). Read this first
 > (~30s) at the start of a session; update + commit it before ending one.
-> **Last updated: 2026-06-26.**
+> **Last updated: 2026-06-27.**
 
-## TL;DR — where we are right now (2026-06-26)
+## TL;DR — where we are right now (2026-06-27)
 
 - **Repo is PUBLIC** ([github.com/jrichter24/moldqueen](https://github.com/jrichter24/moldqueen)).
-- **Three radio cores, one WS contract:** Pi (`linux-core`), Android (`android-core`), and a
-  **working ESP32-S3** (`esp32-core`) — all consuming the same single-source client.
+- **Three radio cores, one WS contract:** Pi (`linux-core`), Android (`android-core`), and the
+  **ESP32-S3** (`esp32-core`) — all consuming the same single-source client.
 - **Shipped:** signed Android releases **v0.1.0 / v0.1.1 / v0.1.2** via the gated CI release
   workflow; package renamed to **`io.github.jrichter24.moldqueen`**.
 - **F-Droid MR !41291** is open and **under maintainer (linsui) review** at `fdroid/fdroiddata`.
-- **esp32-core (new) is a working third core** — drives a real toy over WiFi with the
-  unmodified client (4 slices done; details below). **Remaining:** WiFi provisioning +
-  serve-the-client-from-flash.
+- **esp32-core is now a usable standalone appliance** — drives a real toy over WiFi with the
+  unmodified client, and is **self-provisioning + self-managing**: WiFi provisioning (no creds
+  baked in), mDNS discovery `moldqueenesp.local`, and a management page on :8080 are all in and
+  hardware-verified (details below). **Next:** Pi mDNS (`moldqueenrasp.local` for linux-core),
+  then the binary/release pipeline (distributable `.bin`); serve-client-from-flash after.
+- **Client fix shipped:** the WS-endpoint field (`client/web/clientconfig.js`) no longer
+  clears/overwrites while you're editing it.
 - **Process:** a read-only **`auditor`** agent + a **documentation-currency** rule now exist
   (docs are part of every change; the auditor flags drift, owners fix it).
 
-### esp32-core — the working third radio core (2026-06-26)
+### esp32-core — a usable standalone appliance (2026-06-27)
 A standalone ESP32-S3 (no Pi, no phone) running the MK4 advertiser **and** the same
 thin-transport WS API, consuming the **same client**. **Hardware-confirmed: the unmodified
-client drove a real toy over WiFi.** Four built + hardware-proven slices:
+client drove a real toy over WiFi**, reached by name over a self-provisioned WiFi join, no creds
+baked in. The four control slices, all hardware-proven:
 1. **Clean-room C `MouldKingCrypt`** — byte-exact vs the Python reference (9/9 on-device).
 2. **NimBLE `0xFFF0` advertiser** — in-place `ble_gap_adv_set_data` (no stop/start runaway);
    **legacy** advertising on purpose (extended advertising `EBUSY`'d while active).
@@ -30,10 +35,26 @@ client drove a real toy over WiFi.** Four built + hardware-proven slices:
 4. **WiFi WebSocket server `:8765`** mirroring `api.py`'s thin-transport contract
    (`setup`/`set`/`stop`/`state`/`info` + `lifecycle`/`state`/`info` pushes;
    `radio_backend = esp32-nimble`).
-Components: `esp32-core/components/{mouldking_crypt, mk4_advertiser, mk4_wifi, mk4_ws_server}`
-+ `main/`. Target **ESP32-S3 N16R8**, **ESP-IDF v5.5.4**.
-**Remaining (honestly not-done):** WiFi provisioning (NVS creds + fallback config AP) +
-serving the client from flash. Detail in [`PROJECT.md`](PROJECT.md) §6b.
+
+On top of those, **done + hardware-verified**:
+5. **WiFi provisioning (no creds baked in)** — NVS creds; boot logic = **force-AP flag / no
+   creds / 30 s connect-timeout → provisioning AP**, else station → normal op. Fallback = open
+   SoftAP **`moldqueen-setup`** at `192.168.4.1`. The firmware is **distributable**.
+6. **Group A — discovery + a branded bilingual setup page** at `192.168.4.1` (inlined MoldQueen
+   icon rendering offline, EN/DE, scanned-network list with signal strength, show-password,
+   configurable WS port, copy MAC/endpoint, a matching Saved page) + **mDNS** discovery as
+   **`moldqueenesp.local`** (proven end-to-end — the client drives via the name).
+7. **Group B — a management page** at **`moldqueenesp.local:8080`** (normal op): status / restart
+   / **switch-to-setup** (a **software** force-AP via a one-shot NVS flag) / change-network, with
+   AP fallback so bad creds never brick it. Unauthenticated + LAN-only, like the WS API.
+A **hardware** re-provision trigger (double-reset / BOOT-hold) was evaluated and **dropped as
+unreliable** (GPIO0 is the boot strap; the EN reset clears RTC) — **replaced by the software
+switch-to-setup**. Two version surfaces by design: the management page shows a **git-describe
+firmware version** (`esp_app_get_description`), the WS `info.version` is the literal marker
+**`esp32-core`**.
+Components (seven): `esp32-core/components/{mouldking_crypt, mk4_advertiser, mk4_wifi,
+mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/`. Target **ESP32-S3 N16R8**,
+**ESP-IDF v5.5.4**. Detail in [`PROJECT.md`](PROJECT.md) §6b.
 
 ## Earlier state (done / working — history preserved below)
 - **SAFETY: gamepad runaway / STOP failures FIXED — verified on Pi + S25 (2026-06-20).**
@@ -203,11 +224,11 @@ serving the client from flash. Detail in [`PROJECT.md`](PROJECT.md) §6b.
   new scroll, and the page must also render raw via nginx). Static-only; verified live.
 
 ## In progress / next task
-- **esp32-core polish — provisioning + serve-from-flash.** The core works (drives a real
-  toy over WiFi); the two forward items are **WiFi provisioning** (NVS-stored credentials +
-  a fallback config AP when none are set) and **serving the client from ESP32 flash** (today
-  it's served elsewhere and pointed at the ESP32's `:8765`). That makes the ESP32 a truly
-  standalone appliance like the Pi/Android cores.
+- **esp32-core finishing — Pi mDNS, then the release pipeline.** The core is a usable
+  standalone appliance now (drives a real toy over WiFi; provisioning + Group A + Group B all
+  done and hardware-verified). Next: **Pi mDNS (`moldqueenrasp.local` for linux-core** — PLANNED,
+  not built; give the Pi the sibling `.local` name), then the **binary/release pipeline** (a
+  distributable ESP32 `.bin`); **serve-client-from-flash** after that.
 - **F-Droid MR !41291 — awaiting maintainer (linsui).** Watch the MR at `fdroid/fdroiddata`;
   respond to review feedback. Once merged, moldqueen is installable from F-Droid.
 - **Recurring:** after the next `v*` tag, bump the README + website (`docs/`) Download/Install

@@ -28,45 +28,23 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   matching signing setup. ⚠️ **One-way door** — the F-Droid inclusion template warns this can't be
   enabled later once published with F-Droid's key. **Deliberate deferral**; revisit only when
   re-evaluating at a major version.
-- **ESP32 WiFi / standalone roadmap (cluster).** ✅ **Done — WiFi provisioning + the NVS
-  credential store** (built; see esp32-core under IN-PROGRESS): on boot, try the NVS creds
-  (30 s); on empty/timeout, fall back to a SoftAP (`moldqueen-setup`, open) + a plain config
-  page at 192.168.4.1; save creds to NVS → reboot → connect. The firmware is now **distributable**
-  (no creds in git or the binary). A **physical re-provision trigger** (double-reset / BOOT-hold)
-  was evaluated and **DROPPED as unreliable on this board** — GPIO0 is the boot strap (BOOT-hold →
-  ROM download mode), and the EN-pin reset clears RTC memory (so neither an RTC nor an NVS-flag
-  double-reset detected the EN double-tap cleanly). Re-provisioning moves to the management page
-  (Group B). **Remaining:**
-  - ✅ **Group-A — provisioning/config-page polish — DONE** (hardware-verified): a **branded,
-    bilingual (EN/DE)** config page (inlined MoldQueen icon rendering **offline**, "MoldQueen
-    (ESP32)" title), a **scrollable scanned-network list with signal strength**, a
-    **show-password** toggle + careful-password hint, a **configurable WS port** (with helper
-    text; it flows through to the shown endpoint — tested at **9000**), **copy MAC / copy
-    endpoint**, a matching **branded Saved page**, and **mDNS** discovery (`moldqueenesp.local`,
-    renamed from `moldqueondevice`; proven end-to-end — the client drives via the name). All
-    assets inlined/self-contained (offline AP); no creds in git or the binary.
-  - ✅ **Group-B — web management page — DONE** (hardware + host-verified): a branded, bilingual
-    status/management page at **`http://moldqueenesp.local:8080`** (normal op) — cards for live
-    status (IP/MAC/SSID/signal/uptime/firmware/endpoint, with copy buttons for endpoint / mgmt-URL
-    / IP / MAC), **restart**, **switch-to-setup** (a **software force-AP** via an NVS flag — the
-    reliable replacement for the dropped hardware double-reset, re-provision on demand), and
-    **change-network** directly (save new creds → reboot to the new network, non-bricking AP
-    fallback). Responsive layout, status/signal color-coding, favicon, support links; the
-    **`:8080` link** is on the Group A setup pages. No-auth LAN-trust (like the WS API). Shared
-    branding factored into `mk4_webui`.
+- **ESP32 WiFi / standalone roadmap (cluster) — remaining future items.** Provisioning,
+  Group A (discovery + setup page), and Group B (the management page) are **DONE** (moved to
+  FINISHED below). Still future:
   - **Pi mDNS (`moldqueenrasp.local`) + the binary/release pipeline** — give the linux-core the
-    sibling `.local` name, and a build/flash distribution path for the ESP32 firmware.
+    sibling `.local` name (PLANNED, not built), and a build/flash distribution path for the
+    ESP32 firmware (a distributable `.bin`). **This is the next ESP32 task.**
+  - **Serve the client from ESP32 flash** (after the above) — **gated on the client-size
+    problem**: the full client (dashboard HTML/JS/CSS + images/GIFs/icons) may be several MB.
+    Either (a) aggressively size-limit the full client's assets, or (b) build a separate
+    **"light client"** (stripped dashboard, smaller assets) for embedded serving — full client
+    from Pi/dev, lean client from ESP32 flash. ⚠️ **Concern:** the browser page-load **asset
+    burst** coexisting with BLE on the shared 2.4 GHz radio is the heaviest moment + most likely
+    to stutter — measure if/when built. Needs a flash filesystem (SPIFFS/LittleFS) partition +
+    the `__WS_PORT__` / `__INIT_JSON__` injection the Pi/Android hosts do.
   - **Operational AP mode** (distinct from provisioning's temporary config AP) — the ESP32 as
     its *own* WiFi network you connect to and drive over, for true standalone with no home
     network.
-  - **Serve the client from ESP32 flash** — **gated on the client-size problem**: the full
-    client (dashboard HTML/JS/CSS + images/GIFs/icons) may be several MB. Either (a)
-    aggressively size-limit the full client's assets, or (b) build a separate **"light client"**
-    (stripped dashboard, smaller assets) for embedded serving — full client from Pi/dev, lean
-    client from ESP32 flash. ⚠️ **Concern:** the browser page-load **asset burst** coexisting
-    with BLE on the shared 2.4 GHz radio is the heaviest moment + most likely to stutter —
-    measure if/when built. Needs a flash filesystem (SPIFFS/LittleFS) partition + the
-    `__WS_PORT__` / `__INIT_JSON__` injection the Pi/Android hosts do.
 
 ## RECURRING (every release)
 
@@ -76,27 +54,11 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## IN-PROGRESS
 
-- **esp32-core (ESP32-S3 radio core) — in progress.** In [`esp32-core/`](esp32-core/): the
-  clean-room **C MouldKingCrypt port** (byte-exact, 9/9 on-device), the **NimBLE 0xFFF0
-  advertiser** with in-place adv-data updates (`ble_gap_adv_set_data`, no stop/start runaway —
-  legacy advertising on purpose, since extended `EBUSY`s while active), the **safety layer**
-  (per-channel **300 ms** auto-neutral keepalive + **STOP** = kill+reconnect-at-neutral), and the
-  **WiFi WebSocket server** (`esp_http_server` WS on :8765, WiFi station) mirroring the `api.py`
-  thin-transport contract (`setup`/`set`/`stop`/`state`/`info` + pushes; `radio_backend`=
-  `esp32-nimble`). **Hardware-confirmed on the N16R8:** the *unmodified* single-source client
-  drives a real toy **over WiFi** (drive + STOP + auto-neutral over the live path, no WiFi/BLE
-  coexistence stutter). **WiFi provisioning** is built too — NVS creds + auto-fallback SoftAP
-  (`moldqueen-setup`) + a **branded, bilingual config page** at `192.168.4.1` (inlined icon,
-  EN/DE, scanned-network list with signal strength, show-password, configurable WS port, copy
-  MAC/endpoint, a matching Saved page) and **mDNS discovery** (`moldqueenesp.local`); the
-  firmware is now **distributable** (no creds in git or the binary). A physical re-provision
-  trigger (double-reset / BOOT-hold) was evaluated and **dropped as unreliable** (GPIO0 is the
-  boot strap; the EN reset clears RTC) — replaced by the management page's software force-AP.
-  **Groups A + B are DONE + hardware-verified** — discovery (mDNS `moldqueenesp.local`) + the
-  branded bilingual config/Saved pages, and the **management page** at `moldqueenesp.local:8080`
-  (status, restart, **software switch-to-setup** = reliable re-provision, change-network), with
-  the `:8080` link on the setup pages. **Next:** **Pi mDNS (`moldqueenrasp.local`) + the binary
-  pipeline**, and serving the client from flash (see the FUTURE cluster). Toolchain: ESP-IDF v5.5.4.
+- **esp32-core (ESP32-S3 radio core) — finishing.** The core is a usable standalone appliance
+  (control slices + provisioning + Group A + Group B all DONE + hardware-verified; see FINISHED
+  below). The remaining work is the **next ESP32 task: Pi mDNS (`moldqueenrasp.local` for
+  linux-core** — PLANNED, not built), then the **binary/release pipeline** (a distributable
+  `.bin`); **serve-client-from-flash** after (see the FUTURE cluster). Toolchain: ESP-IDF v5.5.4.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   open at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`. Addressing
   maintainer (linsui) review: HTML description, full commit hash, `output` line removed.
@@ -110,6 +72,26 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## FINISHED (recent, for context)
 
+- **esp32-core — a usable standalone appliance** (hardware-verified on the N16R8). The four
+  control slices — clean-room **C MouldKingCrypt** (byte-exact, 9/9 on-device), the **NimBLE
+  0xFFF0 advertiser** (in-place `ble_gap_adv_set_data`, legacy on purpose since extended
+  `EBUSY`s while active), the **300 ms auto-neutral keepalive + STOP**, and the **WiFi WS
+  server** (`:8765`) mirroring `api.py`'s thin-transport contract (`radio_backend`=
+  `esp32-nimble`) — the *unmodified* client drives a real toy over WiFi, no coexistence stutter.
+  **Plus:** **WiFi provisioning** (NVS creds, **no creds baked in**; boot = force-AP flag / no
+  creds / 30 s timeout → fallback open SoftAP `moldqueen-setup` at `192.168.4.1`; firmware
+  distributable). **Group A** — a **branded bilingual (EN/DE)** setup page (inlined icon offline,
+  scanned-network list with signal strength, show-password, configurable WS port tested at 9000,
+  copy MAC/endpoint, a matching Saved page) + **mDNS** discovery `moldqueenesp.local` (renamed
+  from `moldqueondevice`; proven end-to-end). **Group B** — a **management page** at
+  `moldqueenesp.local:8080` (status, restart, **software switch-to-setup** via a one-shot NVS
+  force-AP flag, change-network with non-bricking AP fallback), with the `:8080` link on the
+  setup pages; no-auth LAN-trust like the WS API. A **hardware** re-provision trigger
+  (double-reset / BOOT-hold) was evaluated and **dropped as unreliable** (GPIO0 is the boot
+  strap; the EN reset clears RTC) — replaced by the software switch-to-setup. Shared branding
+  factored into `mk4_webui`; seven components total. (Next: Pi mDNS, then the release pipeline.)
+- **Client WS-endpoint field fix** — `client/web/clientconfig.js`: the endpoint field no longer
+  clears/overwrites itself while you're typing in it.
 - **v0.1.0 — first signed release** — the release pipeline is live: deterministic versioning
   (0.1.0 / 10000), package rename to `io.github.jrichter24.moldqueen`, FOSS-only deps, CI test
   gate (Python/Android/JS), release signingConfig, and a gated `v*`-tag release workflow that

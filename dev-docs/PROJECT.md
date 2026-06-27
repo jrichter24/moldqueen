@@ -2,9 +2,10 @@
 
 > This is the authoritative project document. Where any other doc (the CLAUDE.md
 > files, or the snapshots in `linux-core/reference/`) disagrees, **this file wins.**
-> Last major update: 2026-06-26 (a working **esp32-core** — the third radio core,
-> drives real toys over WiFi today; signed Android releases v0.1.0–v0.1.2 shipped;
-> F-Droid MR !41291 under maintainer review; §6/§8 reconciled).
+> Last major update: 2026-06-27 (the **esp32-core** is now a usable standalone appliance —
+> WiFi provisioning, mDNS discovery `moldqueenesp.local`, and a management page on :8080 are
+> all in and hardware-verified; signed Android releases v0.1.0-v0.1.2 shipped; F-Droid MR
+> !41291 under maintainer review; §1/§6b/§8 reconciled to the management milestone).
 
 ---
 
@@ -40,8 +41,9 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
   release workflow (package `io.github.jrichter24.moldqueen`); F-Droid MR **!41291** is
   open and under maintainer review.
 - 🔜 Next: finish the channel→function map (sweep placeholders); slot
-  auto-detection; esp32-core WiFi provisioning + serve-from-flash; a console/AI client;
-  then the camera/sensor/AI phases.
+  auto-detection; esp32-core — Pi mDNS (`moldqueenrasp.local` for linux-core), then the
+  binary/release pipeline (distributable `.bin`); serve-client-from-flash after; a
+  console/AI client; then the camera/sensor/AI phases.
 
 ---
 
@@ -198,6 +200,10 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   > **WS-contract / server** version and is **intentionally decoupled** from the app-release
   > versions (the signed Android releases v0.1.x). They track different things — the WS
   > protocol/server vs the shipped app — so a mismatch is **by design, not drift.**
+  > **ESP32 has two distinct version surfaces (by design):** its **management page** shows a
+  > **git-describe firmware version** (e.g. `v0.1.2-NN-gSHA`, via `esp_app_get_description`),
+  > while its **WS `info.version`** is the literal marker **`esp32-core`** — the firmware
+  > build identity vs the WS-contract marker, not a mismatch.
 - **Channel map (client-side)** — per-layout `client/web/channel_map.<id>.json` shipped
   default + the **active** map (default + the client's overrides), persisted in the
   browser; `promote` saves it as the new default. The **smart client** loads / validates /
@@ -300,8 +306,9 @@ held/repeated state, so safety = **make the held state neutral**, not "send a ze
 [`esp32-core/`](../esp32-core/) is a **third radio core**, a peer to `linux-core` (Pi) and
 `android-core`: a standalone **ESP32-S3** (no Pi, no phone) that runs the MK4 advertiser **and**
 the same thin-transport WebSocket API, consuming the **same single-source client**. It is a
-**working core** — hardware-confirmed: the **unmodified** client drove a **real toy over WiFi**.
-Four built slices, all hardware-proven:
+**usable standalone appliance** — hardware-confirmed: the **unmodified** client drove a **real
+toy over WiFi**, reached by name over a self-provisioned WiFi join, with no creds baked in.
+The four control slices, all hardware-proven:
 
 1. **Clean-room C `MouldKingCrypt` port** — a from-scratch C implementation of the same crypt
    (preamble / bit-reversal / CRC-16-CCITT / dual LFSR whitening), **byte-exact** against the
@@ -321,12 +328,48 @@ Four built slices, all hardware-proven:
    `info`; it holds **no** channel map (the smart client resolves everything). Server-info reports
    `radio_backend = esp32-nimble`.
 
-**Components** live in `esp32-core/components/{mouldking_crypt, mk4_advertiser, mk4_wifi,
-mk4_ws_server}` + `main/`. **Target:** ESP32-S3 **N16R8**, **ESP-IDF v5.5.4**.
+On top of those four, the board is now **self-provisioning and self-managing** (all
+hardware-verified):
 
-**Remaining polish (honestly not-done):** WiFi **provisioning** (NVS-stored credentials +
-a fallback config AP when none are set) and **serving the client from flash** (today the
-client is served elsewhere and pointed at the ESP32's WS endpoint).
+5. **WiFi provisioning (no creds baked in)** — credentials live in **NVS** (flash, never in
+   git or the binary). Boot logic: **force-AP flag / no creds / a 30 s station connect-timeout
+   → provisioning AP**, else station → normal op. The fallback is an open SoftAP
+   **`moldqueen-setup`** at **`192.168.4.1`**. So the firmware is **distributable** — anyone
+   flashes the same binary and enters their own WiFi.
+6. **Group A — discovery + a branded bilingual setup page.** The provisioning page at
+   `http://192.168.4.1/` is **self-contained and offline** (the MoldQueen icon inlined as
+   base64, CSS/JS inlined, **EN/DE** i18n). It shows a **scanned-network list with signal
+   strength** (tap to fill the SSID), a **show-password** toggle, a **configurable WS port**,
+   and **copy buttons** for the device MAC and the resulting `ws://moldqueenesp.local:<port>`
+   endpoint; on save it stores creds + port to NVS, shows a matching branded **Saved** page,
+   and reboots into station mode. In normal op the board advertises **mDNS** (hostname
+   **`moldqueenesp`**, a `_ws._tcp` service on the configured port) so the client uses
+   **`ws://moldqueenesp.local:<port>`** instead of an IP — proven end-to-end (the client drives
+   via the `.local` name).
+7. **Group B — a device management page** at **`http://moldqueenesp.local:8080`** (normal op),
+   branded + bilingual + favicon: cards for live **status** (IP/MAC/SSID/signal/uptime/firmware/
+   WS endpoint, with copy buttons for the endpoint, the management URL, the IP and the MAC),
+   **restart**, **switch-to-setup**, and **change-network** (scan + new creds → reboot to the new
+   network, with the boot logic's AP fallback so bad creds never brick it). **Unauthenticated +
+   LAN-only by design**, consistent with the unauthenticated WS API.
+
+> **Decision — re-provision trigger: software, not hardware.** A **physical** re-provision
+> trigger (a double-reset / BOOT-hold to force the setup AP) was evaluated and **DROPPED as
+> unreliable on this board**: GPIO0 is the boot strap (BOOT-hold drops the chip into ROM
+> download mode) and the EN-pin reset clears RTC memory, so neither an RTC- nor an NVS-flag
+> double-reset detected the EN double-tap cleanly. It was **replaced by a software
+> switch-to-setup** — a **one-shot NVS force-AP flag** that the boot logic checks (set from the
+> management page); the next boot enters provisioning. The board also re-enters provisioning
+> **automatically** when the saved network is unreachable.
+
+**Components** (seven) live in `esp32-core/components/{mouldking_crypt, mk4_advertiser,
+mk4_wifi, mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/` (`mk4_webui` holds the
+shared web-UI assets so the provisioning pages and the management page render as one product).
+**Target:** ESP32-S3 **N16R8**, **ESP-IDF v5.5.4**.
+
+**Remaining (honestly not-done):** **Pi mDNS** (`moldqueenrasp.local` for linux-core — PLANNED,
+not built), then the **binary/release pipeline** (a distributable `.bin`); **serving the client
+from flash** after (today the client is served elsewhere and pointed at the ESP32's WS endpoint).
 
 ---
 
@@ -369,11 +412,14 @@ see `mk4web/config.py`).
 - ✅ **RAW page + configurable API endpoint — SHIPPED.** The retired simple page was
   replaced by the dedicated **RAW** slot/channel layout (`/raw`), and the configurable WS
   endpoint (`clientconfig.js`, persisted in localStorage) ships alongside it — see §6.
-- **esp32-core (third radio core) — WORKING; remaining = provisioning + serve-from-flash.**
-  The four slices (clean-room C crypt, NimBLE `0xFFF0` in-place advertiser, 300 ms keepalive +
-  STOP, WiFi WS server mirroring `api.py`) are **done and hardware-proven** (drives a real toy
-  over WiFi with the unmodified client; see §6b). **Remaining:** WiFi provisioning (NVS creds +
-  fallback config AP) and serving the client from ESP32 flash.
+- **esp32-core (third radio core) — a usable standalone appliance.** The four control slices
+  (clean-room C crypt, NimBLE `0xFFF0` in-place advertiser, 300 ms keepalive + STOP, WiFi WS
+  server mirroring `api.py`) **plus** WiFi provisioning (NVS creds, no creds baked in, fallback
+  `moldqueen-setup` AP), mDNS discovery (`moldqueenesp.local`), and the management page
+  (`moldqueenesp.local:8080` — status/restart/switch-to-setup/change-network) are **done and
+  hardware-proven** (drives a real toy over WiFi with the unmodified client, reached by name;
+  see §6b). **Remaining:** Pi mDNS (`moldqueenrasp.local` for linux-core), then the
+  binary/release pipeline (distributable `.bin`); serve-client-from-flash after.
 - **Finish the channel map** — sweep the placeholder channels (slot-0 ch1–3, slot-1
   ch1/ch3+) and confirm each function by driving it via Settings → Test.
 - **Reverse-speed calibration** — `reverse_scale` defaults to identity; measure the
@@ -411,9 +457,10 @@ moldqueen/
 │   └── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                              #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
 ├── android-core/              # Kotlin — standalone Android app (radio + local WS API + serves client/)
-└── esp32-core/                # ESP-IDF/C — third radio core: NimBLE 0xFFF0 advertiser + WiFi WS API (mirrors api.py)
-    ├── components/{mouldking_crypt, mk4_advertiser, mk4_wifi, mk4_ws_server}
-    └── main/                  # app entry — ESP32-S3 N16R8, ESP-IDF v5.5.4
+└── esp32-core/                # ESP-IDF/C — third radio core: NimBLE 0xFFF0 advertiser + WiFi WS API (mirrors api.py); self-provisioning standalone appliance
+    ├── components/{mouldking_crypt, mk4_advertiser, mk4_wifi, mk4_ws_server,  # crypt + advertiser + WiFi/NVS + thin-transport WS
+    │               mk4_provision, mk4_mgmt, mk4_webui}                        # setup AP/page + management page (:8080) + shared branded web-UI
+    └── main/                  # app entry + boot logic (force-AP/no-creds/timeout → setup AP) — ESP32-S3 N16R8, ESP-IDF v5.5.4
 ```
 
 Other docs: [`QUICKSTART.md`](QUICKSTART.md) (boxes → driving),

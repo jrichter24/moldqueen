@@ -32,6 +32,7 @@
         <li><a href="#features" data-i18n="ix.nav.design">Design</a></li>
         <li><a href="#layouts" data-i18n="ix.nav.layouts">Layouts</a></li>
         <li><a href="#app" data-i18n="ix.nav.app">Get the app</a></li>
+        <li><a href="#esp-setup" data-i18n="ix.nav.esp">ESP32 setup</a></li>
         <li><a href="#dev" data-i18n="ix.nav.dev">Developers</a></li>
         <li><a href="#support" data-i18n="ix.nav.support">Support</a></li>
         <li><a href="#about" data-i18n="ix.nav.about">About</a></li>
@@ -195,13 +196,75 @@ scripts/start.sh
           <div class="copy">
             <div class="num" data-i18n="ix.esp.num">ESP32 · standalone radio core</div>
             <h3 data-i18n="ix.esp.h3">The smallest radio.</h3>
-            <p data-i18n="ix.esp.p">A third radio core on a tiny, cheap ESP32-S3 board: a clean-room C port of the codec, the same Bluetooth-LE advertiser, and the same WebSocket API over WiFi. It has already driven a real toy. No Pi, no phone, just the board on your network.</p>
+            <p data-i18n="ix.esp.p">A third radio core on a tiny, cheap ESP32-S3 board: a clean-room C port of the codec, the same Bluetooth-LE advertiser, and the same WebSocket API over WiFi. It is a usable standalone appliance. No credentials are baked in: flash it, then a branded setup page asks for your WiFi. After that it joins your network and you reach it by name, no IP to chase. No Pi, no phone, just the board.</p>
             <pre class="cmd"><span class="c"># ESP-IDF installed, board connected</span>
 cd esp32-core
 idf.py flash monitor</pre>
-            <p class="muted" data-i18n="ix.esp.muted">Still being polished: WiFi credentials in a setup screen and serving the UI from the board itself. Build notes are in the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener">esp32-core</a> folder.</p>
+            <p class="muted" data-i18n="ix.esp.muted">First boot opens a setup WiFi (<code>moldqueen-setup</code>) to enter your network; after that the board is discoverable as <code>moldqueenesp.local</code> with a built-in management page at <a href="#esp-setup">moldqueenesp.local:8080</a>. Walk the setup below, or see the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener">esp32-core</a> folder.</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- 5b. ESP32 SETUP GUIDE (screenshot walkthrough) =================== -->
+    <section class="section" id="esp-setup">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow" data-i18n="ix.es.eyebrow">ESP32 setup</p>
+          <h2 data-i18n="ix.es.h2">Setting up the ESP32.</h2>
+          <p class="lead" data-i18n="ix.es.lead">Once the firmware is flashed there is nothing to compile in. The board has no WiFi credentials, so it opens its own setup network the first time. These are the five steps from a freshly flashed board to driving over WiFi.</p>
+        </div>
+        <div class="row">
+          <div class="media">
+            <img class="shot contain" src="assets/esp32_connect/step_0_select_wlan.jpeg" alt="A phone WiFi list showing the open moldqueen-setup network" loading="lazy" />
+          </div>
+          <div class="copy">
+            <div class="num" data-i18n="ix.es.n1">Step 1 · Join the setup WiFi</div>
+            <p data-i18n="ix.es.s1">Join the open <code>moldqueen-setup</code> WiFi the board broadcasts on first boot. It needs no password.</p>
+          </div>
+        </div>
+
+        <div class="row rev">
+          <div class="media">
+            <img class="shot contain" src="assets/esp32_connect/step_1_open_setup.jpeg" alt="The branded moldqueen ESP32 setup page open in a browser at 192.168.4.1" loading="lazy" />
+          </div>
+          <div class="copy">
+            <div class="num" data-i18n="ix.es.n2">Step 2 · Open the setup page</div>
+            <p data-i18n="ix.es.s2">Open the setup page at <code>http://192.168.4.1</code>. It is branded and bilingual, and works fully offline.</p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="media">
+            <img class="shot contain" src="assets/esp32_connect/step_2_setup_select_wlan_and_port.jpeg" alt="The setup page with a scanned WiFi list, password field and WebSocket port field" loading="lazy" />
+          </div>
+          <div class="copy">
+            <div class="num" data-i18n="ix.es.n3">Step 3 · Pick your network and port</div>
+            <p data-i18n="ix.es.s3">Pick your network from the scanned list, enter the password, set the WebSocket port if you like, and save. The board reboots and joins your WiFi.</p>
+          </div>
+        </div>
+
+        <div class="row rev">
+          <div class="media">
+            <img class="shot contain" src="assets/esp32_connect/step_3_open_status_page.jpeg" alt="The ESP32 status and management page open at moldqueenesp.local:8080" loading="lazy" />
+          </div>
+          <div class="copy">
+            <div class="num" data-i18n="ix.es.n4">Step 4 · Open the status page</div>
+            <p data-i18n="ix.es.s4">Back on your own network, open the status page at <code>http://moldqueenesp.local:8080</code>. Discovery is by name, so there is no IP to look up.</p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="media">
+            <img class="shot contain" src="assets/esp32_connect/step_4_manage_device.jpeg" alt="The management page cards: status, restart, switch to setup, change network" loading="lazy" />
+          </div>
+          <div class="copy">
+            <div class="num" data-i18n="ix.es.n5">Step 5 · Manage the board</div>
+            <p data-i18n="ix.es.s5">Manage the board from there: live status, restart, switch back to the setup WiFi, or change network. Point the client endpoint at <code>ws://moldqueenesp.local:&lt;port&gt;</code> and drive.</p>
+          </div>
+        </div>
+
+        <p class="tiles-note" data-i18n="ix.es.note">No credentials are stored in git or the binary. Build and flash notes are in the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener">esp32-core</a> folder.</p>
       </div>
     </section>
 
@@ -252,7 +315,7 @@ idf.py flash monitor</pre>
         </div>
         <ul class="roadmap">
           <li data-i18n="ix.rm.mk6"><b>MK6 protocol.</b> <span>A second telegram codec for Mould King's per-byte MK6 hubs. It's what the greyed-out MK6 badges on the generic layouts are reserved for.</span></li>
-          <li data-i18n="ix.rm.esp"><b>ESP32 polish.</b> <span>The ESP32 core already drives toys over WiFi. What's left is the convenience layer: WiFi setup on the board (no hardcoded credentials) and serving the client straight from flash.</span></li>
+          <li data-i18n="ix.rm.esp"><b>ESP32 finishing.</b> <span>The ESP32 core is a usable standalone appliance: WiFi setup on the board, discovery as <code>moldqueenesp.local</code>, and a management page are all in. Next is Pi mDNS (<code>moldqueenrasp.local</code> for the Raspberry Pi core), then a binary/release pipeline (a distributable <code>.bin</code>), and serving the client from flash after that.</span></li>
           <li data-i18n="ix.rm.cam"><b>Camera (FPV).</b> <span>A first-person video feed from the machine, so you drive by what it sees. The same stream could feed an autonomous driver later.</span></li>
           <li data-i18n="ix.rm.tof"><b>Time-of-flight sensor.</b> <span>Distance and obstacle awareness as telemetry, alongside the control API.</span></li>
           <li data-i18n="ix.rm.ai"><b>AI brain.</b> <span>An agent that drives on its own by speaking the same WebSocket contract. Because of the thin-transport split, that's a new client rather than a rewrite.</span></li>

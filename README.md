@@ -79,7 +79,12 @@ Full prep (disable onboard BT, mask `bluetoothd`, caps) and a dry-run mode:
 </p>
 
 **ESP32-S3 (the third radio core)** — a tiny ESP-IDF + NimBLE board that drives real toys
-over WiFi today, exposing the same WebSocket contract as the Pi and Android cores:
+over WiFi today, exposing the same WebSocket contract as the Pi and Android cores. It's a
+usable standalone appliance: no credentials are baked in, so on first boot it opens a setup
+WiFi (`moldqueen-setup`) for you to enter your network; after that it's discoverable as
+`moldqueenesp.local` and carries a built-in management page at `moldqueenesp.local:8080`
+(status, restart, switch-to-setup, change-network). Point the client at
+`ws://moldqueenesp.local:8765` and drive.
 
 <p align="center">
   <img src="docs/assets/esp32_with_code_example.png" alt="An ESP32-S3 running the moldqueen radio core, driving a Mould King hub over WiFi" width="600">
@@ -181,7 +186,7 @@ source of truth) and the machine-readable **[`asyncapi.yaml`](linux-core/mk4web/
 |---|---|---|
 | On the Pi (served) | `scripts/start.sh` → `http://<pi>:8080/` | [QUICKSTART](dev-docs/QUICKSTART.md) |
 | Android (standalone) | `./gradlew installDebug` | [ANDROID](dev-docs/ANDROID.md) |
-| On an ESP32-S3 (over WiFi) | `idf.py flash` → `ws://<board>:8765` | [PORTING](dev-docs/PORTING.md) |
+| On an ESP32-S3 (over WiFi) | `idf.py flash` → join `moldqueen-setup`, enter WiFi → `ws://moldqueenesp.local:8765` | [PORTING](dev-docs/PORTING.md) |
 | Client on the desktop | `client/serve.py` → point at a Pi | [DEV_CLIENT](dev-docs/DEV_CLIENT.md) |
 | Client in Docker | `Dockerfile.client` → point at a Pi | [REMOTE_CLIENT](dev-docs/REMOTE_CLIENT.md) |
 | On another board | port the thin-transport core (the cores are hardware-bound) | [PORTING](dev-docs/PORTING.md) |
@@ -189,12 +194,16 @@ source of truth) and the machine-readable **[`asyncapi.yaml`](linux-core/mk4web/
 
 ## Roadmap
 
-The **ESP32-S3 radio core** is now a working third sibling — it drives real toys over WiFi
-today (clean-room C `MouldKingCrypt` port, NimBLE `0xFFF0` advertiser, 300 ms auto-neutral
-safety, WiFi WebSocket server mirroring the Pi's `api.py`). What's still ahead:
+The **ESP32-S3 radio core** is now a working third sibling, a usable standalone appliance.
+It drives real toys over WiFi today (clean-room C `MouldKingCrypt` port, NimBLE `0xFFF0`
+advertiser, 300 ms auto-neutral safety, WiFi WebSocket server mirroring the Pi's `api.py`),
+plus **WiFi provisioning** (no creds baked in: a fallback `moldqueen-setup` AP + a branded
+bilingual setup page), **mDNS discovery** as `moldqueenesp.local`, and a **management page**
+at `moldqueenesp.local:8080` (status, restart, switch-to-setup, change-network). What's still
+ahead:
 
-- **ESP32 polish** — WiFi provisioning (NVS creds + a fallback AP) and serving the client
-  from flash, so the board is fully standalone like the Android app.
+- **ESP32 finishing:** Pi mDNS (`moldqueenrasp.local` for linux-core), then the binary/release
+  pipeline (a distributable `.bin`); serve-client-from-flash after.
 - **MK6 protocol support** — the greyed *MK6* card badges; second Mould King BLE variant.
 - **Camera, ToF sensor** — telemetry over/alongside the API.
 - **AI brain / console client** — an agent driving the toy through the same WebSocket API.
