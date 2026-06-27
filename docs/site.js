@@ -85,7 +85,10 @@
     "ix.es.s4": "Zurück in deinem eigenen Netz öffnest du die Statusseite unter <code>http://moldqueenesp.local:8080</code>. Gefunden wird es per Name, es gibt also keine IP nachzuschlagen.",
     "ix.es.n5": "Schritt 5 · Das Board verwalten",
     "ix.es.s5": "Von dort verwaltest du das Board: Live-Status, Neustart, Zurück ins Einrichtungs-WLAN oder Netzwerk wechseln. Richte den Client-Endpunkt auf <code>ws://moldqueenesp.local:&lt;port&gt;</code> und fahr los.",
-    "ix.es.note": "Es werden keine Zugangsdaten in Git oder der Binärdatei gespeichert. Build- und Flash-Hinweise stehen im Ordner <a href=\"https://github.com/jrichter24/moldqueen/tree/main/esp32-core\" rel=\"noopener\">esp32-core</a>.",
+    "ix.es.prev": "Vorheriger Schritt",
+    "ix.es.next": "Nächster Schritt",
+    "ix.es.stepOf": "Schritt 1 von 5",
+    "ix.es.note": "Es werden keine Zugangsdaten in Git oder der Binärdatei gespeichert. Die vollständige schriftliche Anleitung steht in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ESP32_SETUP.md\" rel=\"noopener\">ESP32_SETUP.md</a>; Build- und Flash-Hinweise stehen im Ordner <a href=\"https://github.com/jrichter24/moldqueen/tree/main/esp32-core\" rel=\"noopener\">esp32-core</a>.",
     // ---- index: developers ----
     "ix.dev.eyebrow": "Für Entwickler",
     "ix.dev.h2": "Zum Auseinandernehmen gebaut.",
@@ -177,6 +180,9 @@
     index: { en: "moldqueen: open control for building-block RC toys", de: "moldqueen: offene Steuerung für ferngesteuerte Klemmbaustein-Modelle" },
     privacy: { en: "Privacy Policy · moldqueen", de: "Datenschutz · moldqueen" }
   };
+  // "Step N of M" indicator template ($N = current, $M = total). Kept here (not as a
+  // plain data-i18n string) because it interpolates the live step number.
+  var STEP_OF = { en: "Step $N of $M", de: "Schritt $N von $M" };
   var TILE = {
     genericController: { en: "Generic controller", de: "Generischer Controller" },
     motors: { en: "motors", de: "Motoren" },
@@ -193,6 +199,12 @@
   var i18nEls = Array.prototype.slice.call(document.querySelectorAll("[data-i18n]"));
   var EN = {};
   i18nEls.forEach(function (el) { EN[el.getAttribute("data-i18n")] = el.innerHTML; });
+  // Elements whose aria-label is translated (key reused from the DE/EN dictionaries).
+  var ariaEls = Array.prototype.slice.call(document.querySelectorAll("[data-i18n-aria]"));
+  ariaEls.forEach(function (el) {
+    var k = el.getAttribute("data-i18n-aria");
+    if (EN[k] == null) EN[k] = el.getAttribute("aria-label") || "";
+  });
 
   var curLang = "en";
   try { if (localStorage.getItem("mq_lang") === "de") curLang = "de"; } catch (e) {}
@@ -205,6 +217,11 @@
       var v = (curLang === "de" && DE[k] != null) ? DE[k] : EN[k];
       if (v != null) el.innerHTML = v;
     });
+    ariaEls.forEach(function (el) {
+      var k = el.getAttribute("data-i18n-aria");
+      var v = (curLang === "de" && DE[k] != null) ? DE[k] : EN[k];
+      if (v != null) el.setAttribute("aria-label", v);
+    });
     root.setAttribute("lang", curLang);
     var t = META_TITLE[page]; if (t) document.title = (curLang === "de" && t.de) ? t.de : t.en;
     try { localStorage.setItem("mq_lang", curLang); } catch (e) {}
@@ -213,6 +230,7 @@
       b.classList.toggle("active", on); b.setAttribute("aria-pressed", on ? "true" : "false");
     });
     if (lastCards) renderTiles();
+    if (typeof refreshStepper === "function") refreshStepper();
   }
   document.querySelectorAll(".langbtn").forEach(function (b) {
     b.addEventListener("click", function () { applyLang(b.getAttribute("data-lang")); });
@@ -345,6 +363,105 @@
       })
       .catch(function () { failTiles("load"); });
   }
+
+  // ===================================================================== hero slider
+  // Auto-rotating, restrained crossfade through the hero images. Pure CSS opacity
+  // transition (.is-active); JS only swaps the active class on a timer. Pauses on hover
+  // and when the tab is hidden; honours prefers-reduced-motion (stays on image 1).
+  (function () {
+    var slider = document.getElementById("heroSlider");
+    if (!slider) return;
+    var slides = Array.prototype.slice.call(slider.querySelectorAll(".hero-img"));
+    if (slides.length < 2) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var i = 0, timer = null, paused = false;
+    var INTERVAL = 5000;
+    function show(n) {
+      slides[i].classList.remove("is-active");
+      i = (n + slides.length) % slides.length;
+      slides[i].classList.add("is-active");
+    }
+    function tick() { if (!paused && !document.hidden) show(i + 1); }
+    function start() { if (!timer) timer = setInterval(tick, INTERVAL); }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    slider.addEventListener("mouseenter", function () { paused = true; });
+    slider.addEventListener("mouseleave", function () { paused = false; });
+    document.addEventListener("visibilitychange", function () { if (document.hidden) stop(); else start(); });
+    start();
+  })();
+
+  // ===================================================================== ESP32 step slider
+  // User-paced setup walkthrough: one step visible at a time, NEXT/PREV + clickable dots,
+  // a "Step N of 5" indicator, and left/right arrow keys when the slider is focused.
+  // Degrades to a plain vertical stack of all 5 steps when JS is off (.no-js fallback CSS).
+  var refreshStepper = null;
+  (function () {
+    var stepper = document.getElementById("espStepper");
+    if (!stepper) return;
+    var steps = Array.prototype.slice.call(stepper.querySelectorAll(".step"));
+    if (!steps.length) return;
+    var prevBtn = stepper.querySelector(".step-prev");
+    var nextBtn = stepper.querySelector(".step-next");
+    var dotsWrap = stepper.querySelector(".step-dots");
+    var indicator = stepper.querySelector(".step-indicator span");
+    var total = steps.length;
+    var cur = 0;
+
+    stepper.classList.remove("no-js");      // upgrade: show one step at a time
+    stepper.setAttribute("tabindex", "0");
+    stepper.setAttribute("role", "group");
+    stepper.setAttribute("aria-roledescription", "carousel");
+
+    // build dots
+    var dots = [];
+    if (dotsWrap) {
+      for (var d = 0; d < total; d++) {
+        (function (n) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "step-dot";
+          b.setAttribute("role", "tab");
+          b.setAttribute("aria-label", "Step " + (n + 1));
+          b.addEventListener("click", function () { go(n); });
+          dotsWrap.appendChild(b);
+          dots.push(b);
+        })(d);
+      }
+    }
+
+    function indicatorText() {
+      var tmpl = tl(STEP_OF) || "Step $N of $M";
+      return tmpl.replace("$N", String(cur + 1)).replace("$M", String(total));
+    }
+    refreshStepper = function () {
+      if (indicator) indicator.textContent = indicatorText();
+    };
+    function render() {
+      steps.forEach(function (s, n) {
+        var on = n === cur;
+        s.classList.toggle("is-active", on);
+        s.setAttribute("aria-hidden", on ? "false" : "true");
+      });
+      dots.forEach(function (b, n) {
+        var on = n === cur;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      if (prevBtn) prevBtn.disabled = (cur === 0);
+      if (nextBtn) nextBtn.disabled = (cur === total - 1);
+      stepper.setAttribute("data-step", String(cur));
+      refreshStepper();
+    }
+    function go(n) { cur = (n < 0 ? 0 : n >= total ? total - 1 : n); render(); }
+
+    if (prevBtn) prevBtn.addEventListener("click", function () { go(cur - 1); });
+    if (nextBtn) nextBtn.addEventListener("click", function () { go(cur + 1); });
+    stepper.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") { go(cur - 1); e.preventDefault(); }
+      else if (e.key === "ArrowRight") { go(cur + 1); e.preventDefault(); }
+    });
+    render();
+  })();
 
   // ===================================================================== boot
   applyLang(curLang);

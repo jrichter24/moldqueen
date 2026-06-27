@@ -7,7 +7,7 @@
   <meta name="description" content="moldqueen drives Bluetooth-LE building-block RC toys over one documented WebSocket API. One smart web client, and a thin-transport radio core you can swap (Raspberry Pi, Android, or your desktop). Mould King comes first." />
   <meta name="theme-color" content="#0a0d12" />
   <link rel="icon" href="assets/moldqueen_icon.png" />
-  <link rel="preload" as="image" href="assets/hero.png" />
+  <link rel="preload" as="image" href="assets/hero.webp" type="image/webp" />
   <link rel="stylesheet" href="styles.css" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="moldqueen: open control for building-block RC toys" />
@@ -45,9 +45,13 @@
   </header>
 
   <main>
-    <!-- 1. HERO: full-bleed banner image, clean bottom-left copy ============ -->
+    <!-- 1. HERO: full-bleed banner image (auto-rotating crossfade slider), clean bottom-left copy === -->
     <section class="hero" id="home">
-      <img class="hero-img" src="assets/hero.png" alt="A Mould King building-block RC excavator, controlled by moldqueen" />
+      <div class="hero-slider" id="heroSlider" aria-hidden="true">
+        <img class="hero-img is-active" src="assets/hero.webp" alt="A Mould King building-block RC excavator, controlled by moldqueen" />
+        <img class="hero-img" src="assets/hero_alt_1.webp" alt="" loading="lazy" />
+        <img class="hero-img" src="assets/hero_alt_2.webp" alt="" loading="lazy" />
+      </div>
       <div class="wrap">
        <div class="hero-copy">
         <p class="eyebrow" data-i18n="ix.hero.eyebrow">Open source · API-first</p>
@@ -214,57 +218,70 @@ idf.py flash monitor</pre>
           <h2 data-i18n="ix.es.h2">Setting up the ESP32.</h2>
           <p class="lead" data-i18n="ix.es.lead">Once the firmware is flashed there is nothing to compile in. The board has no WiFi credentials, so it opens its own setup network the first time. These are the five steps from a freshly flashed board to driving over WiFi.</p>
         </div>
-        <div class="row">
-          <div class="media">
-            <img class="shot contain" src="assets/esp32_connect/step_0_select_wlan.jpeg" alt="A phone WiFi list showing the open moldqueen-setup network" loading="lazy" />
+        <!-- User-paced step slider: one step visible at a time. Without JS, all 5 steps
+             show as a plain stack (see .stepper.no-js fallback); JS upgrades it to a slider. -->
+        <div class="stepper no-js" id="espStepper" data-step="0">
+          <div class="step-stage">
+            <div class="step" data-i="0">
+              <div class="step-media">
+                <img class="shot contain" src="assets/esp32_connect/step_0_select_wlan.jpeg" alt="A phone WiFi list showing the open moldqueen-setup network" loading="lazy" />
+              </div>
+              <div class="step-copy">
+                <div class="num" data-i18n="ix.es.n1">Step 1 · Join the setup WiFi</div>
+                <p data-i18n="ix.es.s1">Join the open <code>moldqueen-setup</code> WiFi the board broadcasts on first boot. It needs no password.</p>
+              </div>
+            </div>
+            <div class="step" data-i="1">
+              <div class="step-media">
+                <img class="shot contain" src="assets/esp32_connect/step_1_open_setup.jpeg" alt="The branded moldqueen ESP32 setup page open in a browser at 192.168.4.1" loading="lazy" />
+              </div>
+              <div class="step-copy">
+                <div class="num" data-i18n="ix.es.n2">Step 2 · Open the setup page</div>
+                <p data-i18n="ix.es.s2">Open the setup page at <code>http://192.168.4.1</code>. It is branded and bilingual, and works fully offline.</p>
+              </div>
+            </div>
+            <div class="step" data-i="2">
+              <div class="step-media">
+                <img class="shot contain" src="assets/esp32_connect/step_2_setup_select_wlan_and_port.jpeg" alt="The setup page with a scanned WiFi list, password field and WebSocket port field" loading="lazy" />
+              </div>
+              <div class="step-copy">
+                <div class="num" data-i18n="ix.es.n3">Step 3 · Pick your network and port</div>
+                <p data-i18n="ix.es.s3">Pick your network from the scanned list, enter the password, set the WebSocket port if you like, and save. The board reboots and joins your WiFi.</p>
+              </div>
+            </div>
+            <div class="step" data-i="3">
+              <div class="step-media">
+                <img class="shot contain" src="assets/esp32_connect/step_3_open_status_page.jpeg" alt="The ESP32 status and management page open at moldqueenesp.local:8080" loading="lazy" />
+              </div>
+              <div class="step-copy">
+                <div class="num" data-i18n="ix.es.n4">Step 4 · Open the status page</div>
+                <p data-i18n="ix.es.s4">Back on your own network, open the status page at <code>http://moldqueenesp.local:8080</code>. Discovery is by name, so there is no IP to look up.</p>
+              </div>
+            </div>
+            <div class="step" data-i="4">
+              <div class="step-media">
+                <img class="shot contain" src="assets/esp32_connect/step_4_manage_device.jpeg" alt="The management page cards: status, restart, switch to setup, change network" loading="lazy" />
+              </div>
+              <div class="step-copy">
+                <div class="num" data-i18n="ix.es.n5">Step 5 · Manage the board</div>
+                <p data-i18n="ix.es.s5">Manage the board from there: live status, restart, switch back to the setup WiFi, or change network. Point the client endpoint at <code>ws://moldqueenesp.local:&lt;port&gt;</code> and drive.</p>
+              </div>
+            </div>
           </div>
-          <div class="copy">
-            <div class="num" data-i18n="ix.es.n1">Step 1 · Join the setup WiFi</div>
-            <p data-i18n="ix.es.s1">Join the open <code>moldqueen-setup</code> WiFi the board broadcasts on first boot. It needs no password.</p>
+          <!-- Slider controls (shown only when JS upgrades the stepper) -->
+          <div class="step-controls">
+            <button type="button" class="step-nav step-prev" data-i18n-aria="ix.es.prev" aria-label="Previous step">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="step-dots" role="tablist" aria-label="Setup steps"></div>
+            <button type="button" class="step-nav step-next" data-i18n-aria="ix.es.next" aria-label="Next step">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
           </div>
+          <div class="step-indicator" aria-live="polite"><span data-i18n="ix.es.stepOf">Step 1 of 5</span></div>
         </div>
 
-        <div class="row rev">
-          <div class="media">
-            <img class="shot contain" src="assets/esp32_connect/step_1_open_setup.jpeg" alt="The branded moldqueen ESP32 setup page open in a browser at 192.168.4.1" loading="lazy" />
-          </div>
-          <div class="copy">
-            <div class="num" data-i18n="ix.es.n2">Step 2 · Open the setup page</div>
-            <p data-i18n="ix.es.s2">Open the setup page at <code>http://192.168.4.1</code>. It is branded and bilingual, and works fully offline.</p>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="media">
-            <img class="shot contain" src="assets/esp32_connect/step_2_setup_select_wlan_and_port.jpeg" alt="The setup page with a scanned WiFi list, password field and WebSocket port field" loading="lazy" />
-          </div>
-          <div class="copy">
-            <div class="num" data-i18n="ix.es.n3">Step 3 · Pick your network and port</div>
-            <p data-i18n="ix.es.s3">Pick your network from the scanned list, enter the password, set the WebSocket port if you like, and save. The board reboots and joins your WiFi.</p>
-          </div>
-        </div>
-
-        <div class="row rev">
-          <div class="media">
-            <img class="shot contain" src="assets/esp32_connect/step_3_open_status_page.jpeg" alt="The ESP32 status and management page open at moldqueenesp.local:8080" loading="lazy" />
-          </div>
-          <div class="copy">
-            <div class="num" data-i18n="ix.es.n4">Step 4 · Open the status page</div>
-            <p data-i18n="ix.es.s4">Back on your own network, open the status page at <code>http://moldqueenesp.local:8080</code>. Discovery is by name, so there is no IP to look up.</p>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="media">
-            <img class="shot contain" src="assets/esp32_connect/step_4_manage_device.jpeg" alt="The management page cards: status, restart, switch to setup, change network" loading="lazy" />
-          </div>
-          <div class="copy">
-            <div class="num" data-i18n="ix.es.n5">Step 5 · Manage the board</div>
-            <p data-i18n="ix.es.s5">Manage the board from there: live status, restart, switch back to the setup WiFi, or change network. Point the client endpoint at <code>ws://moldqueenesp.local:&lt;port&gt;</code> and drive.</p>
-          </div>
-        </div>
-
-        <p class="tiles-note" data-i18n="ix.es.note">No credentials are stored in git or the binary. Build and flash notes are in the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener">esp32-core</a> folder.</p>
+        <p class="tiles-note" data-i18n="ix.es.note">No credentials are stored in git or the binary. The full written walkthrough is in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ESP32_SETUP.md" rel="noopener">ESP32_SETUP.md</a>; build and flash notes are in the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener">esp32-core</a> folder.</p>
       </div>
     </section>
 

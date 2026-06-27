@@ -85,6 +85,7 @@ WiFi (`moldqueen-setup`) for you to enter your network; after that it's discover
 `moldqueenesp.local` and carries a built-in management page at `moldqueenesp.local:8080`
 (status, restart, switch-to-setup, change-network). Point the client at
 `ws://moldqueenesp.local:8765` and drive.
+Step-by-step setup walkthrough: **[`dev-docs/ESP32_SETUP.md`](dev-docs/ESP32_SETUP.md)**.
 
 <p align="center">
   <img src="docs/assets/esp32_with_code_example.png" alt="An ESP32-S3 running the moldqueen radio core, driving a Mould King hub over WiFi" width="600">
