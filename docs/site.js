@@ -61,17 +61,17 @@
     "ix.and.h3": "Alles auf dem Handy.",
     "ix.and.p": "Eine App, die alles selbst mitbringt. Sie nutzt den Bluetooth-Funk des Handys, liefert die Oberfläche direkt auf dem Gerät und kommt ohne Pi und ohne Netzwerk aus.",
     "ix.and.btnGet": "App herunterladen",
-    "ix.and.dl": "Aktuelle signierte Version: <b>v0.1.2</b>. Lade <code>moldqueen-v0.1.2.apk</code> herunter, erlaube die Installation aus unbekannten Quellen und öffne sie. <b>F-Droid: <a href=\"https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291\" rel=\"noopener\">MR !41291 in Prüfung</a>.</b>",
+    "ix.and.dl": "Aktuelle signierte Version: <b>v0.1.2</b>. Lade <code>moldqueen-v0.1.2.apk</code> herunter, erlaube die Installation aus unbekannten Quellen und öffne sie. <b>F-Droid: <a href=\"https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291\" rel=\"noopener\" target=\"_blank\">MR !41291 in Prüfung</a>.</b>",
     "ix.and.src": "Oder selbst bauen, per USB:",
-    "ix.and.muted": "Alle Builds und Release-Notizen findest du bei <a href=\"https://github.com/jrichter24/moldqueen/releases\" rel=\"noopener\">GitHub Releases</a>.",
+    "ix.and.muted": "Alle Builds und Release-Notizen findest du bei <a href=\"https://github.com/jrichter24/moldqueen/releases\" rel=\"noopener\" target=\"_blank\">GitHub Releases</a>.",
     "ix.pi.num": "Raspberry Pi · Steuerkern",
     "ix.pi.h3": "Der Referenz-Funk.",
     "ix.pi.p": "Lass den kompletten Funkkern auf einem Pi mit Bluetooth-LE-USB-Stick laufen und ruf die Oberfläche dann aus jedem Browser im Netzwerk auf:",
-    "ix.pi.muted": "Die ganze Einrichtung, vom Auspacken bis zur ersten Fahrt, steht im <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/QUICKSTART.md\" rel=\"noopener\">Quickstart</a>.",
+    "ix.pi.muted": "Die ganze Einrichtung, vom Auspacken bis zur ersten Fahrt, steht im <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/QUICKSTART.md\" rel=\"noopener\" target=\"_blank\">Quickstart</a>.",
     "ix.esp.num": "ESP32 · eigenständiger Funkkern",
     "ix.esp.h3": "Der kleinste Funk.",
     "ix.esp.p": "Ein dritter Funkkern auf einem winzigen, günstigen ESP32-S3-Board: ein sauber neu geschriebener C-Codec, derselbe Bluetooth-LE-Advertiser und dieselbe WebSocket-Schnittstelle über WLAN. Es ist ein eigenständiges Gerät zum Loslegen. Nichts ist fest hinterlegt: flashen, dann fragt eine gebrandete Einrichtungsseite nach deinem WLAN. Danach hängt es in deinem Netz und du erreichst es per Name, ganz ohne IP-Suche. Kein Pi, kein Handy, nur das Board.",
-    "ix.esp.muted": "Beim ersten Start öffnet das Board ein Einrichtungs-WLAN (<code>moldqueen-setup</code>) für die Netzwerkdaten; danach ist es als <code>moldqueenesp.local</code> auffindbar, mit eingebauter Verwaltungsseite unter <a href=\"#esp-setup\">moldqueenesp.local:8080</a>. Folge der Einrichtung unten oder sieh in den Ordner <a href=\"https://github.com/jrichter24/moldqueen/tree/main/esp32-core\" rel=\"noopener\">esp32-core</a>.",
+    "ix.esp.muted": "Beim ersten Start öffnet das Board ein Einrichtungs-WLAN (<code>moldqueen-setup</code>) für die Netzwerkdaten; danach ist es als <code>moldqueenesp.local</code> auffindbar, mit eingebauter Verwaltungsseite unter <a href=\"#esp-setup\">moldqueenesp.local:8080</a>. Folge der Einrichtung unten oder sieh in den Ordner <a href=\"https://github.com/jrichter24/moldqueen/tree/main/esp32-core\" rel=\"noopener\" target=\"_blank\">esp32-core</a>.",
     // ---- index: esp32 setup guide ----
     "ix.es.eyebrow": "ESP32-Einrichtung",
     "ix.es.h2": "Den ESP32 einrichten.",
@@ -83,30 +83,30 @@
     "ix.es.n3": "Schritt 3 · Netzwerk und Port wählen",
     "ix.es.s3": "Wähle dein Netzwerk aus der gescannten Liste, gib das Passwort ein, lege bei Bedarf den WebSocket-Port fest und speichere. Das Board startet neu und verbindet sich mit deinem WLAN.",
     "ix.es.n4": "Schritt 4 · Statusseite öffnen",
-    "ix.es.s4": "Zurück in deinem eigenen Netz öffnest du die Statusseite unter <code>http://moldqueenesp.local:8080</code>. Gefunden wird es per Name, es gibt also keine IP nachzuschlagen.",
+    "ix.es.s4": "Zurück in deinem eigenen Netz öffnest du die Statusseite unter <a href=\"http://moldqueenesp.local:8080\" rel=\"noopener\" target=\"_blank\"><code>http://moldqueenesp.local:8080</code></a>. Gefunden wird es per Name, es gibt also keine IP nachzuschlagen.",
     "ix.es.n5": "Schritt 5 · Das Board verwalten",
     "ix.es.s5": "Von dort verwaltest du das Board: Live-Status, Neustart, Zurück ins Einrichtungs-WLAN oder Netzwerk wechseln. Richte den Client-Endpunkt auf <code>ws://moldqueenesp.local:&lt;port&gt;</code> und fahr los.",
     "ix.es.prev": "Vorheriger Schritt",
     "ix.es.next": "Nächster Schritt",
     "ix.es.stepOf": "Schritt 1 von 5",
     "ix.es.zoomClose": "Vergrößertes Bild schließen",
-    "ix.es.note": "Es werden keine Zugangsdaten in Git oder der Binärdatei gespeichert. Die vollständige schriftliche Anleitung steht in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ESP32_SETUP.md\" rel=\"noopener\">ESP32_SETUP.md</a>; Build- und Flash-Hinweise stehen im Ordner <a href=\"https://github.com/jrichter24/moldqueen/tree/main/esp32-core\" rel=\"noopener\">esp32-core</a>.",
+    "ix.es.note": "Es werden keine Zugangsdaten in Git oder der Binärdatei gespeichert. Die vollständige schriftliche Anleitung steht in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ESP32_SETUP.md\" rel=\"noopener\" target=\"_blank\">ESP32_SETUP.md</a>; Build- und Flash-Hinweise stehen im Ordner <a href=\"https://github.com/jrichter24/moldqueen/tree/main/esp32-core\" rel=\"noopener\" target=\"_blank\">esp32-core</a>.",
     // ---- index: developers ----
     "ix.dev.eyebrow": "Für Entwickler",
     "ix.dev.h2": "Zum Auseinandernehmen gebaut.",
     "ix.dev.lead": "Im Mittelpunkt steht die Schnittstelle. Der Funkkern ist reiner Transport: Er kümmert sich um den Funk und den Sicherheits-Ablauf, mehr nicht. Der smarte Client hält die Kanalzuordnung und übersetzt jede Funktion in einen einfachen Kanalbefehl. So lässt sich die eine Seite austauschen, ohne die andere anzufassen.",
     "ix.dev.k1": "Raspberry-Pi-Kern",
-    "ix.dev.v1": "Python und rohes Bluetooth-HCI, der Referenz-Funkkern. <a href=\"https://github.com/jrichter24/moldqueen/blob/main/linux-core/README.md\" rel=\"noopener\">linux-core</a>",
+    "ix.dev.v1": "Python und rohes Bluetooth-HCI, der Referenz-Funkkern. <a href=\"https://github.com/jrichter24/moldqueen/blob/main/linux-core/README.md\" rel=\"noopener\" target=\"_blank\">linux-core</a>",
     "ix.dev.k2": "Android-Kern",
-    "ix.dev.v2": "Kotlin, ein nativer BLE-Advertiser, dieselbe API direkt auf dem Gerät. <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ANDROID.md\" rel=\"noopener\">ANDROID.md</a>",
+    "ix.dev.v2": "Kotlin, ein nativer BLE-Advertiser, dieselbe API direkt auf dem Gerät. <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ANDROID.md\" rel=\"noopener\" target=\"_blank\">ANDROID.md</a>",
     "ix.dev.k5": "ESP32-Kern",
-    "ix.dev.v5": "C und ESP-IDF, ein NimBLE-Advertiser, dieselbe API über WLAN. <a href=\"https://github.com/jrichter24/moldqueen/tree/main/esp32-core\" rel=\"noopener\">esp32-core</a>",
+    "ix.dev.v5": "C und ESP-IDF, ein NimBLE-Advertiser, dieselbe API über WLAN. <a href=\"https://github.com/jrichter24/moldqueen/tree/main/esp32-core\" rel=\"noopener\" target=\"_blank\">esp32-core</a>",
     "ix.dev.k3": "Desktop-Dev-Client",
-    "ix.dev.v3": "Die Oberfläche lokal gegen einen entfernten Kern ausliefern, ohne Build. <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/DEV_CLIENT.md\" rel=\"noopener\">DEV_CLIENT.md</a>",
+    "ix.dev.v3": "Die Oberfläche lokal gegen einen entfernten Kern ausliefern, ohne Build. <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/DEV_CLIENT.md\" rel=\"noopener\" target=\"_blank\">DEV_CLIENT.md</a>",
     "ix.dev.k4": "Docker",
-    "ix.dev.v4": "Den Client als Container ausliefern, der auf deinen Pi zeigt. <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md\" rel=\"noopener\">REMOTE_CLIENT.md</a>",
-    "ix.dev.callout": "<strong>Das Protokoll.</strong> Gesteuert wird über herstellereigene Bluetooth-LE-Advertisements: ein Telegramm aus zwölf Nibble-Kanälen (MK4), das alle verbundenen Hubs gleichzeitig ansteuert. Der Codec ist Byte für Byte gegen die offizielle App geprüft. Vollständige Referenz in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/PROJECT.md\" rel=\"noopener\">PROJECT.md</a> und im maschinenlesbaren <a href=\"https://github.com/jrichter24/moldqueen/blob/main/linux-core/mk4web/asyncapi.yaml\" rel=\"noopener\">AsyncAPI</a>.",
-    "ix.dev.p": "Du willst dein eigenes Modell ergänzen? Ein Layout besteht nur aus Client-Dateien: ein Manifest-Eintrag, eine schlanke Seite und eine Kanalzuordnung. Die gemeinsame Oberfläche (Menü, Einstellungen, Verbindungsassistent, Gamepad, STOP) bekommst du geschenkt. Sieh dir <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ADDING_A_LAYOUT.md\" rel=\"noopener\">Adding a layout</a> und die übrigen <a href=\"https://github.com/jrichter24/moldqueen/tree/main/dev-docs\" rel=\"noopener\">Entwickler-Docs</a> an. Issues und Pull Requests sind auf <a href=\"https://github.com/jrichter24/moldqueen\" rel=\"noopener\">GitHub</a> willkommen.",
+    "ix.dev.v4": "Den Client als Container ausliefern, der auf deinen Pi zeigt. <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md\" rel=\"noopener\" target=\"_blank\">REMOTE_CLIENT.md</a>",
+    "ix.dev.callout": "<strong>Das Protokoll.</strong> Gesteuert wird über herstellereigene Bluetooth-LE-Advertisements: ein Telegramm aus zwölf Nibble-Kanälen (MK4), das alle verbundenen Hubs gleichzeitig ansteuert. Der Codec ist Byte für Byte gegen die offizielle App geprüft. Vollständige Referenz in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/PROJECT.md\" rel=\"noopener\" target=\"_blank\">PROJECT.md</a> und im maschinenlesbaren <a href=\"https://github.com/jrichter24/moldqueen/blob/main/linux-core/mk4web/asyncapi.yaml\" rel=\"noopener\" target=\"_blank\">AsyncAPI</a>.",
+    "ix.dev.p": "Du willst dein eigenes Modell ergänzen? Ein Layout besteht nur aus Client-Dateien: ein Manifest-Eintrag, eine schlanke Seite und eine Kanalzuordnung. Die gemeinsame Oberfläche (Menü, Einstellungen, Verbindungsassistent, Gamepad, STOP) bekommst du geschenkt. Sieh dir <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ADDING_A_LAYOUT.md\" rel=\"noopener\" target=\"_blank\">Adding a layout</a> und die übrigen <a href=\"https://github.com/jrichter24/moldqueen/tree/main/dev-docs\" rel=\"noopener\" target=\"_blank\">Entwickler-Docs</a> an. Issues und Pull Requests sind auf <a href=\"https://github.com/jrichter24/moldqueen\" rel=\"noopener\" target=\"_blank\">GitHub</a> willkommen.",
     // ---- index: support ----
     "ix.sup.eyebrow": "Unterstützen",
     "ix.sup.h2": "Unterstütze das Projekt.",
@@ -122,7 +122,7 @@
     "ix.rm.cam": "<b>Kamera (FPV).</b> <span>Ein Live-Bild aus Sicht der Maschine, du fährst also nach dem, was sie sieht. Denselben Stream könnte später ein autonomer Fahrer nutzen.</span>",
     "ix.rm.tof": "<b>Time-of-Flight-Sensor.</b> <span>Abstand und Hindernisse als Telemetrie, parallel zur Steuer-Schnittstelle.</span>",
     "ix.rm.ai": "<b>KI-Steuerung.</b> <span>Ein Agent, der über dieselbe WebSocket-Schnittstelle selbstständig fährt. Dank der Thin-Transport-Trennung ist das ein neuer Client, kein Umbau.</span>",
-    "ix.rm.note": "Alle Details in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ROADMAP.md\" rel=\"noopener\">ROADMAP.md</a>.",
+    "ix.rm.note": "Alle Details in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ROADMAP.md\" rel=\"noopener\" target=\"_blank\">ROADMAP.md</a>.",
     // ---- index: about ----
     "ix.ab.eyebrow": "Über",
     "ix.ab.h2": "Ein unabhängiges Hobbyprojekt.",
@@ -130,16 +130,16 @@
     "ix.ab.discH": "Haftungsausschluss",
     "ix.ab.disc": "Ein privates, inoffizielles Hobbyprojekt. Es steht in <strong>keiner</strong> Verbindung zu <strong>Mould King</strong> / Shenzhen Yuxing und wird von dort weder genehmigt noch unterstützt oder gesponsert. „Mould King“ und verwandte Marken gehören ihren jeweiligen Inhabern und werden hier nur beschreibend verwendet, zur Interoperabilität. Das Protokoll wurde für die Interoperabilität mit Hardware nachgebaut, die dem Autor gehört, zu Bildungs- und privaten Zwecken.",
     "ix.ab.credH": "Danksagungen",
-    "ix.ab.cred": "Die <code>MouldKingCrypt</code>-Verschlüsselung ist Byte für Byte aus <a href=\"https://github.com/J0EK3R/mkconnect-python\" rel=\"noopener\">J0EK3R/mkconnect-python</a> portiert (MIT, © 2024 J0EK3R); von dort stammt auch die Grundlage für das MK4/MK6-Protokoll. <a href=\"https://github.com/imurvai/brickcontroller2\" rel=\"noopener\">BrickController2</a> diente als weitere Protokoll-Referenz. Vollständige Nennung in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/THIRD-PARTY-NOTICES.md\" rel=\"noopener\">THIRD-PARTY-NOTICES.md</a>.",
+    "ix.ab.cred": "Die <code>MouldKingCrypt</code>-Verschlüsselung ist Byte für Byte aus <a href=\"https://github.com/J0EK3R/mkconnect-python\" rel=\"noopener\" target=\"_blank\">J0EK3R/mkconnect-python</a> portiert (MIT, © 2024 J0EK3R); von dort stammt auch die Grundlage für das MK4/MK6-Protokoll. <a href=\"https://github.com/imurvai/brickcontroller2\" rel=\"noopener\" target=\"_blank\">BrickController2</a> diente als weitere Protokoll-Referenz. Vollständige Nennung in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/THIRD-PARTY-NOTICES.md\" rel=\"noopener\" target=\"_blank\">THIRD-PARTY-NOTICES.md</a>.",
     "ix.ab.builtH": "Wie es entstanden ist",
     "ix.ab.built": "moldqueen ist mit KI-Unterstützung entstanden: die frühe Arbeit mit Claude (Fable), die spätere mit Claude Opus 4.8. KI-Coding-Assistenten halfen bei der Umsetzung. Architektur, Produktentscheidungen, Tests und das finale Code-Review blieben in menschlicher Hand.",
     "ix.ab.authH": "Autor",
-    "ix.ab.auth": "Entwickelt von Dr. Jens Richter. Hintergrund in Physik und Elektrotechnik; hauptberuflich Tourenoptimierung mit genetischen und KI-Algorithmen bei <a href=\"https://www.dna-evolutions.com/\" rel=\"noopener\">DNA Evolutions</a>. Auf <a href=\"https://www.linkedin.com/in/li-jens-richter\" rel=\"noopener\">LinkedIn</a> erreichst du mich. <span class=\"muted\">Entstanden für meinen Sohn Jonas, der Bagger und Hubschrauber liebt.</span>",
+    "ix.ab.auth": "Entwickelt von Dr. Jens Richter. Hintergrund in Physik und Elektrotechnik; hauptberuflich Tourenoptimierung mit genetischen und KI-Algorithmen bei <a href=\"https://www.dna-evolutions.com/\" rel=\"noopener\" target=\"_blank\">DNA Evolutions</a>. Auf <a href=\"https://www.linkedin.com/in/li-jens-richter\" rel=\"noopener\" target=\"_blank\">LinkedIn</a> erreichst du mich. <span class=\"muted\">Entstanden für meinen Sohn Jonas, der Bagger und Hubschrauber liebt.</span>",
     "ix.ab.attrH": "Nennung &amp; Weitergabe",
     "ix.ab.attrP": "Du baust auf moldqueen auf oder forkst es? Über eine Nennung freue ich mich. Es steht unter der MIT-Lizenz, das ist also eine Bitte, keine Pflicht. Eine Zeile wie diese in deiner README oder im Info-Bereich reicht völlig:",
     "ix.ab.attrSnip": "Erstellt mit moldqueen (https://github.com/jrichter24/moldqueen)",
     "ix.ab.licH": "Lizenz",
-    "ix.ab.lic": "Veröffentlicht unter der <a href=\"https://github.com/jrichter24/moldqueen/blob/main/LICENSE\" rel=\"noopener\">MIT-Lizenz</a>.",
+    "ix.ab.lic": "Veröffentlicht unter der <a href=\"https://github.com/jrichter24/moldqueen/blob/main/LICENSE\" rel=\"noopener\" target=\"_blank\">MIT-Lizenz</a>.",
     "ix.ab.support": "Gefällt dir das Projekt? Du kannst mir <a href=\"https://ko-fi.com/A437HBY\" rel=\"noopener\" target=\"_blank\">auf Ko-fi einen Kaffee spendieren ☕</a>.",
     "ix.foot.privacy": "Datenschutz",
     "ix.foot.license": "Lizenz (MIT)",
@@ -174,7 +174,7 @@
     "pp.changeH": "Änderungen",
     "pp.changeP": "Diese Erklärung kann sich mit der App weiterentwickeln. Käme zum Beispiel später eine optionale Funktion wie ein Kamerastream hinzu, würde sie hier beschrieben und bliebe lokal, sofern nichts anderes angegeben ist. Wesentliche Änderungen erkennst du am Datum „zuletzt aktualisiert“ oben.",
     "pp.contactH": "Kontakt",
-    "pp.contactP": "Fragen zum Datenschutz? Öffne ein Issue auf <a href=\"https://github.com/jrichter24/moldqueen/issues\" rel=\"noopener\">GitHub</a> oder schreib an <a href=\"mailto:jens.richter@dna-evolutions.com\">jens.richter@dna-evolutions.com</a>.",
+    "pp.contactP": "Fragen zum Datenschutz? Öffne ein Issue auf <a href=\"https://github.com/jrichter24/moldqueen/issues\" rel=\"noopener\" target=\"_blank\">GitHub</a> oder schreib an <a href=\"mailto:jens.richter@dna-evolutions.com\">jens.richter@dna-evolutions.com</a>.",
     "pp.foot.fine": "Ein unabhängiges, inoffizielles Hobbyprojekt. Keine Verbindung zu Mould King / Shenzhen Yuxing.",
   };
 
@@ -505,7 +505,9 @@
         img.addEventListener("click", function () { if (s.classList.contains("is-active")) openLb(s); });
       });
       lb.addEventListener("click", function (e) {
-        if (e.target.hasAttribute("data-close")) closeLb();
+        // closest(): clicking the X lands on its inner <svg>/<path> (no data-close);
+        // walk up to the button/backdrop that carries data-close so the X closes too.
+        if (e.target.closest("[data-close]")) closeLb();
       });
       document.addEventListener("keydown", function (e) {
         if (e.key === "Escape" && !lb.hidden) closeLb();

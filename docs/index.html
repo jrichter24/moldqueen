@@ -36,7 +36,7 @@
         <li><a href="#dev" data-i18n="ix.nav.dev">Developers</a></li>
         <li><a href="#support" data-i18n="ix.nav.support">Support</a></li>
         <li><a href="#about" data-i18n="ix.nav.about">About</a></li>
-        <li><a class="cta" href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a></li>
+        <li><a class="cta" href="https://github.com/jrichter24/moldqueen" rel="noopener" target="_blank">GitHub</a></li>
         <li class="lang" role="group" aria-label="Language">
           <button type="button" class="langbtn" data-lang="en">EN</button><span class="langsep">|</span><button type="button" class="langbtn" data-lang="de">DE</button>
         </li>
@@ -63,7 +63,7 @@
         <p class="lead" data-i18n="ix.hero.lead">There's one smart web client, and a radio core you can swap out underneath it: a Raspberry Pi, the Android app in your pocket, or a tiny ESP32 board. All three drive real toys today.</p>
         <div class="actions">
           <a class="btn btn-primary" href="#app"><span data-i18n="ix.hero.btnApp">Get the app</span> <span class="arr">→</span></a>
-          <a class="btn" href="https://github.com/jrichter24/moldqueen" rel="noopener" data-i18n="ix.hero.btnGit">View on GitHub</a>
+          <a class="btn" href="https://github.com/jrichter24/moldqueen" rel="noopener" target="_blank" data-i18n="ix.hero.btnGit">View on GitHub</a>
         </div>
        </div>
       </div>
@@ -138,7 +138,7 @@
         </div>
 
         <div class="tiles" id="tiles">
-          <noscript><div class="tiles-fail">Enable JavaScript to load the live layouts, or browse them in the <a href="https://github.com/jrichter24/moldqueen/tree/main/client/web" rel="noopener">repository</a>.</div></noscript>
+          <noscript><div class="tiles-fail">Enable JavaScript to load the live layouts, or browse them in the <a href="https://github.com/jrichter24/moldqueen/tree/main/client/web" rel="noopener" target="_blank">repository</a>.</div></noscript>
         </div>
         <p class="tiles-note" data-i18n="ix.tiles.note">Cards are pulled live from the project manifest. The badges match the app: <strong>Generic</strong> or <strong>Model</strong>, plus the supported protocol. <strong>MK4</strong> works today; a greyed-out <strong>MK6</strong> is on the <a href="#roadmap">roadmap</a>. Hover a card to expand it.</p>
       </div>
@@ -169,14 +169,14 @@
             <h3 data-i18n="ix.and.h3">Everything on the phone.</h3>
             <p data-i18n="ix.and.p">A self-contained app. It uses the phone's own Bluetooth radio, serves the interface on the device, and needs neither a Pi nor a network.</p>
             <p>
-              <a class="btn btn-primary" href="https://github.com/jrichter24/moldqueen/releases/latest" rel="noopener"><span data-i18n="ix.and.btnGet">Download the app</span> <span class="arr">→</span></a>
+              <a class="btn btn-primary" href="https://github.com/jrichter24/moldqueen/releases/latest" rel="noopener" target="_blank"><span data-i18n="ix.and.btnGet">Download the app</span> <span class="arr">→</span></a>
             </p>
-            <p class="muted" data-i18n="ix.and.dl">Latest signed release: <b>v0.1.2</b>. Download <code>moldqueen-v0.1.2.apk</code>, allow install from unknown sources, then open it. <b>F-Droid: <a href="https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291" rel="noopener">MR !41291 under review</a>.</b></p>
+            <p class="muted" data-i18n="ix.and.dl">Latest signed release: <b>v0.1.2</b>. Download <code>moldqueen-v0.1.2.apk</code>, allow install from unknown sources, then open it. <b>F-Droid: <a href="https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291" rel="noopener" target="_blank">MR !41291 under review</a>.</b></p>
             <p class="muted" data-i18n="ix.and.src">Or build it yourself over USB:</p>
             <pre class="cmd"><span class="c"># repo cloned, device connected</span>
 cd android-core
 ./gradlew installDebug</pre>
-            <p class="muted" data-i18n="ix.and.muted">All builds and release notes are on <a href="https://github.com/jrichter24/moldqueen/releases" rel="noopener">GitHub Releases</a>.</p>
+            <p class="muted" data-i18n="ix.and.muted">All builds and release notes are on <a href="https://github.com/jrichter24/moldqueen/releases" rel="noopener" target="_blank">GitHub Releases</a>.</p>
           </div>
         </div>
 
@@ -192,7 +192,7 @@ cd android-core
 cd moldqueen
 scripts/start.sh
 <span class="c"># then open http://&lt;pi&gt;:8080/</span></pre>
-            <p class="muted" data-i18n="ix.pi.muted">The full setup, from unboxing to the first drive, is in the <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/QUICKSTART.md" rel="noopener">Quickstart</a>.</p>
+            <p class="muted" data-i18n="ix.pi.muted">The full setup, from unboxing to the first drive, is in the <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/QUICKSTART.md" rel="noopener" target="_blank">Quickstart</a>.</p>
           </div>
         </div>
 
@@ -207,7 +207,7 @@ scripts/start.sh
             <pre class="cmd"><span class="c"># ESP-IDF installed, board connected</span>
 cd esp32-core
 idf.py flash monitor</pre>
-            <p class="muted" data-i18n="ix.esp.muted">First boot opens a setup WiFi (<code>moldqueen-setup</code>) to enter your network; after that the board is discoverable as <code>moldqueenesp.local</code> with a built-in management page at <a href="#esp-setup">moldqueenesp.local:8080</a>. Walk the setup below, or see the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener">esp32-core</a> folder.</p>
+            <p class="muted" data-i18n="ix.esp.muted">First boot opens a setup WiFi (<code>moldqueen-setup</code>) to enter your network; after that the board is discoverable as <code>moldqueenesp.local</code> with a built-in management page at <a href="#esp-setup">moldqueenesp.local:8080</a>. Walk the setup below, or see the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener" target="_blank">esp32-core</a> folder.</p>
           </div>
         </div>
       </div>
@@ -258,7 +258,7 @@ idf.py flash monitor</pre>
               </div>
               <div class="step-copy">
                 <div class="num" data-i18n="ix.es.n4">Step 4 · Open the status page</div>
-                <p data-i18n="ix.es.s4">Back on your own network, open the status page at <code>http://moldqueenesp.local:8080</code>. Discovery is by name, so there is no IP to look up.</p>
+                <p data-i18n="ix.es.s4">Back on your own network, open the status page at <a href="http://moldqueenesp.local:8080" rel="noopener" target="_blank"><code>http://moldqueenesp.local:8080</code></a>. Discovery is by name, so there is no IP to look up.</p>
               </div>
             </div>
             <div class="step" data-i="4">
@@ -296,7 +296,7 @@ idf.py flash monitor</pre>
           </figure>
         </div>
 
-        <p class="tiles-note" data-i18n="ix.es.note">No credentials are stored in git or the binary. The full written walkthrough is in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ESP32_SETUP.md" rel="noopener">ESP32_SETUP.md</a>; build and flash notes are in the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener">esp32-core</a> folder.</p>
+        <p class="tiles-note" data-i18n="ix.es.note">No credentials are stored in git or the binary. The full written walkthrough is in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ESP32_SETUP.md" rel="noopener" target="_blank">ESP32_SETUP.md</a>; build and flash notes are in the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener" target="_blank">esp32-core</a> folder.</p>
       </div>
     </section>
 
@@ -309,16 +309,16 @@ idf.py flash monitor</pre>
           <p class="lead" data-i18n="ix.dev.lead">What matters is the contract. The radio core is a thin transport: it owns the radio and the safety lifecycle, nothing more. The smart client owns the channel map and turns every function into a low-level write. You can replace one side without touching the other.</p>
         </div>
         <div class="rows">
-          <div class="dline"><div class="k" data-i18n="ix.dev.k1">Raspberry Pi core</div><div class="v" data-i18n="ix.dev.v1">Python and raw Bluetooth HCI, the reference radio core. <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/README.md" rel="noopener">linux-core</a></div></div>
-          <div class="dline"><div class="k" data-i18n="ix.dev.k2">Android core</div><div class="v" data-i18n="ix.dev.v2">Kotlin, a native BLE advertiser, the same API on the device. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ANDROID.md" rel="noopener">ANDROID.md</a></div></div>
-          <div class="dline"><div class="k" data-i18n="ix.dev.k5">ESP32 core</div><div class="v" data-i18n="ix.dev.v5">C and ESP-IDF, a NimBLE advertiser, the same API over WiFi. <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener">esp32-core</a></div></div>
-          <div class="dline"><div class="k" data-i18n="ix.dev.k3">Desktop dev client</div><div class="v" data-i18n="ix.dev.v3">Serve the UI locally against a remote core, no build. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/DEV_CLIENT.md" rel="noopener">DEV_CLIENT.md</a></div></div>
-          <div class="dline"><div class="k" data-i18n="ix.dev.k4">Docker</div><div class="v" data-i18n="ix.dev.v4">Ship the client as a container that points at your Pi. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md" rel="noopener">REMOTE_CLIENT.md</a></div></div>
+          <div class="dline"><div class="k" data-i18n="ix.dev.k1">Raspberry Pi core</div><div class="v" data-i18n="ix.dev.v1">Python and raw Bluetooth HCI, the reference radio core. <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/README.md" rel="noopener" target="_blank">linux-core</a></div></div>
+          <div class="dline"><div class="k" data-i18n="ix.dev.k2">Android core</div><div class="v" data-i18n="ix.dev.v2">Kotlin, a native BLE advertiser, the same API on the device. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ANDROID.md" rel="noopener" target="_blank">ANDROID.md</a></div></div>
+          <div class="dline"><div class="k" data-i18n="ix.dev.k5">ESP32 core</div><div class="v" data-i18n="ix.dev.v5">C and ESP-IDF, a NimBLE advertiser, the same API over WiFi. <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener" target="_blank">esp32-core</a></div></div>
+          <div class="dline"><div class="k" data-i18n="ix.dev.k3">Desktop dev client</div><div class="v" data-i18n="ix.dev.v3">Serve the UI locally against a remote core, no build. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/DEV_CLIENT.md" rel="noopener" target="_blank">DEV_CLIENT.md</a></div></div>
+          <div class="dline"><div class="k" data-i18n="ix.dev.k4">Docker</div><div class="v" data-i18n="ix.dev.v4">Ship the client as a container that points at your Pi. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md" rel="noopener" target="_blank">REMOTE_CLIENT.md</a></div></div>
         </div>
         <div class="callout" data-i18n="ix.dev.callout">
-          <strong>The protocol.</strong> Control rides on manufacturer-specific Bluetooth-LE advertisements: a twelve-channel nibble telegram (MK4) that drives every connected hub at once. The codec is verified byte-exact against the official app. Full reference in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/PROJECT.md" rel="noopener">PROJECT.md</a> and the machine-readable <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/mk4web/asyncapi.yaml" rel="noopener">AsyncAPI</a>.
+          <strong>The protocol.</strong> Control rides on manufacturer-specific Bluetooth-LE advertisements: a twelve-channel nibble telegram (MK4) that drives every connected hub at once. The codec is verified byte-exact against the official app. Full reference in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/PROJECT.md" rel="noopener" target="_blank">PROJECT.md</a> and the machine-readable <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/mk4web/asyncapi.yaml" rel="noopener" target="_blank">AsyncAPI</a>.
         </div>
-        <p data-i18n="ix.dev.p">Want to add your own toy? A layout is just client files: a manifest entry, a thin page, and a channel map. The shared chrome (menu, settings, connect wizard, gamepad, STOP) comes for free. See <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ADDING_A_LAYOUT.md" rel="noopener">Adding a layout</a> and the rest of the <a href="https://github.com/jrichter24/moldqueen/tree/main/dev-docs" rel="noopener">developer docs</a>. Issues and pull requests are welcome on <a href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a>.</p>
+        <p data-i18n="ix.dev.p">Want to add your own toy? A layout is just client files: a manifest entry, a thin page, and a channel map. The shared chrome (menu, settings, connect wizard, gamepad, STOP) comes for free. See <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ADDING_A_LAYOUT.md" rel="noopener" target="_blank">Adding a layout</a> and the rest of the <a href="https://github.com/jrichter24/moldqueen/tree/main/dev-docs" rel="noopener" target="_blank">developer docs</a>. Issues and pull requests are welcome on <a href="https://github.com/jrichter24/moldqueen" rel="noopener" target="_blank">GitHub</a>.</p>
       </div>
     </section>
 
@@ -352,7 +352,7 @@ idf.py flash monitor</pre>
           <li data-i18n="ix.rm.tof"><b>Time-of-flight sensor.</b> <span>Distance and obstacle awareness as telemetry, alongside the control API.</span></li>
           <li data-i18n="ix.rm.ai"><b>AI brain.</b> <span>An agent that drives on its own by speaking the same WebSocket contract. Because of the thin-transport split, that's a new client rather than a rewrite.</span></li>
         </ul>
-        <p class="tiles-note" data-i18n="ix.rm.note">Full detail in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ROADMAP.md" rel="noopener">ROADMAP.md</a>.</p>
+        <p class="tiles-note" data-i18n="ix.rm.note">Full detail in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ROADMAP.md" rel="noopener" target="_blank">ROADMAP.md</a>.</p>
       </div>
     </section>
 
@@ -370,20 +370,20 @@ idf.py flash monitor</pre>
           <p data-i18n="ix.ab.disc">A private, unofficial hobby project. It is <strong>not</strong> affiliated with, authorized by, endorsed by, or sponsored by <strong>Mould King</strong> / Shenzhen Yuxing. “Mould King” and related marks belong to their owners and are used here only descriptively, for interoperability. The protocol was reverse-engineered for interoperability with hardware the author owns, for educational and personal use.</p>
 
           <h3 data-i18n="ix.ab.credH">Credits</h3>
-          <p data-i18n="ix.ab.cred">The <code>MouldKingCrypt</code> cipher is ported byte-for-byte from <a href="https://github.com/J0EK3R/mkconnect-python" rel="noopener">J0EK3R/mkconnect-python</a> (MIT, © 2024 J0EK3R), which also provided the groundwork for the MK4/MK6 protocol. <a href="https://github.com/imurvai/brickcontroller2" rel="noopener">BrickController2</a> was a further protocol reference. Full attribution in <a href="https://github.com/jrichter24/moldqueen/blob/main/THIRD-PARTY-NOTICES.md" rel="noopener">THIRD-PARTY-NOTICES.md</a>.</p>
+          <p data-i18n="ix.ab.cred">The <code>MouldKingCrypt</code> cipher is ported byte-for-byte from <a href="https://github.com/J0EK3R/mkconnect-python" rel="noopener" target="_blank">J0EK3R/mkconnect-python</a> (MIT, © 2024 J0EK3R), which also provided the groundwork for the MK4/MK6 protocol. <a href="https://github.com/imurvai/brickcontroller2" rel="noopener" target="_blank">BrickController2</a> was a further protocol reference. Full attribution in <a href="https://github.com/jrichter24/moldqueen/blob/main/THIRD-PARTY-NOTICES.md" rel="noopener" target="_blank">THIRD-PARTY-NOTICES.md</a>.</p>
 
           <h3 data-i18n="ix.ab.builtH">How it was built</h3>
           <p data-i18n="ix.ab.built">moldqueen was built with AI assistance: the early work used Claude (Fable), the later work Claude Opus 4.8. AI coding assistants helped with implementation. Architecture, product decisions, testing, and final code review remained under human control.</p>
 
           <h3 data-i18n="ix.ab.authH">Author</h3>
-          <p data-i18n="ix.ab.auth">Built by Dr. Jens Richter. Background in physics and electrical engineering; by day, tour optimization with genetic and AI algorithms at <a href="https://www.dna-evolutions.com/" rel="noopener">DNA Evolutions</a>. Find me on <a href="https://www.linkedin.com/in/li-jens-richter" rel="noopener">LinkedIn</a>. <span class="muted">Built for my son Jonas, who loves excavators and helicopters.</span></p>
+          <p data-i18n="ix.ab.auth">Built by Dr. Jens Richter. Background in physics and electrical engineering; by day, tour optimization with genetic and AI algorithms at <a href="https://www.dna-evolutions.com/" rel="noopener" target="_blank">DNA Evolutions</a>. Find me on <a href="https://www.linkedin.com/in/li-jens-richter" rel="noopener" target="_blank">LinkedIn</a>. <span class="muted">Built for my son Jonas, who loves excavators and helicopters.</span></p>
 
           <h3 data-i18n="ix.ab.attrH">Credit &amp; attribution</h3>
           <p data-i18n="ix.ab.attrP">Building on moldqueen, or forking it? A credit back is appreciated. It's MIT-licensed, so this is a request, not a requirement. A line like this in your README or about screen is plenty:</p>
           <p><code data-i18n="ix.ab.attrSnip">Built with moldqueen (https://github.com/jrichter24/moldqueen)</code></p>
 
           <h3 data-i18n="ix.ab.licH">License</h3>
-          <p data-i18n="ix.ab.lic">Released under the <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener">MIT License</a>.</p>
+          <p data-i18n="ix.ab.lic">Released under the <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener" target="_blank">MIT License</a>.</p>
           <p data-i18n="ix.ab.support">Like the project? You can <a href="https://ko-fi.com/A437HBY" rel="noopener" target="_blank">buy me a coffee on Ko-fi ☕</a>.</p>
         </div>
       </div>
@@ -395,11 +395,11 @@ idf.py flash monitor</pre>
       <div class="frow">
         <a class="brand" href="#home" aria-label="moldqueen"><img src="assets/moldqueen_icon.png" alt="" style="width:24px;height:24px" /><span>moldqueen</span></a>
         <nav aria-label="Footer">
-          <a href="https://github.com/jrichter24/moldqueen" rel="noopener">GitHub</a>
+          <a href="https://github.com/jrichter24/moldqueen" rel="noopener" target="_blank">GitHub</a>
           <a href="privacy.html" data-i18n="ix.foot.privacy">Privacy</a>
           <a href="https://github.com/sponsors/jrichter24" rel="noopener" target="_blank" data-i18n="ix.foot.sponsor">💜 Sponsor</a>
           <a href="https://ko-fi.com/A437HBY" rel="noopener" target="_blank" data-i18n="ix.foot.support">☕ Coffee</a>
-          <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener" data-i18n="ix.foot.license">License (MIT)</a>
+          <a href="https://github.com/jrichter24/moldqueen/blob/main/LICENSE" rel="noopener" target="_blank" data-i18n="ix.foot.license">License (MIT)</a>
         </nav>
       </div>
       <p class="fine"><span data-i18n="ix.foot.fine">An independent, unofficial hobby project. Not affiliated with Mould King / Shenzhen Yuxing; trademarks are used descriptively, for interoperability.</span> © <span id="year">2026</span> Jens Richter.</p>
