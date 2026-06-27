@@ -1,11 +1,13 @@
-/* WiFi station + SoftAP + NVS creds + BOOT button — see mk4_wifi.h. */
+/* WiFi station + SoftAP + NVS creds/port + network scan — see mk4_wifi.h. */
 #include "mk4_wifi.h"
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_netif.h"
+#include "esp_mac.h"
 #include "esp_log.h"
 #include "nvs.h"
 #include "freertos/FreeRTOS.h"
@@ -15,6 +17,7 @@
 static const char *TAG = "mk4_wifi";
 
 #define NVS_NS    "wifi"
+#define SCAN_MAX  12
 
 #define GOT_IP_BIT BIT0
 #define FAIL_BIT   BIT1
@@ -24,14 +27,19 @@ static char s_ip[16];
 static int  s_retries;
 static int  s_max_retries;
 static volatile bool s_giving_up;
+static volatile bool s_no_autoconnect;   /* in scan/AP mode the STA must not auto-connect */
 static bool s_stack_inited;
+
+static char   s_scan_ssids[SCAN_MAX][33];
+static int8_t s_scan_rssi[SCAN_MAX];
+static int    s_scan_count;
 
 static void on_event(void *arg, esp_event_base_t base, int32_t id, void *data)
 {
     if (base == WIFI_EVENT && id == WIFI_EVENT_STA_START) {
-        esp_wifi_connect();
+        if (!s_no_autoconnect) esp_wifi_connect();
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
-        if (s_giving_up) return;
+        if (s_giving_up || s_no_autoconnect) return;
         if (s_retries < s_max_retries) { s_retries++; esp_wifi_connect(); }
         else xEventGroupSetBits(s_eg, FAIL_BIT);
     } else if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
@@ -42,8 +50,7 @@ static void on_event(void *arg, esp_event_base_t base, int32_t id, void *data)
     }
 }
 
-/* One-time WiFi stack bring-up (netif + event loop + esp_wifi_init + handlers + both
-   default netifs so STA->AP fallback within one boot is clean). Idempotent. */
+/* One-time WiFi stack bring-up (idempotent). */
 static void stack_init(void)
 {
     if (s_stack_inited) return;
@@ -94,19 +101,50 @@ void mk4_wifi_creds_clear(void)
     }
 }
 
+uint16_t mk4_wifi_ws_port_load(void)
+{
+    nvs_handle_t h;
+    uint16_t p = 8765;
+    if (nvs_open(NVS_NS, NVS_READONLY, &h) == ESP_OK) {
+        nvs_get_u16(h, "ws_port", &p);
+        nvs_close(h);
+    }
+    return p ? p : 8765;
+}
+
+void mk4_wifi_ws_port_save(uint16_t port)
+{
+    nvs_handle_t h;
+    if (nvs_open(NVS_NS, NVS_READWRITE, &h) == ESP_OK) {
+        nvs_set_u16(h, "ws_port", port);
+        nvs_commit(h);
+        nvs_close(h);
+        ESP_LOGI(TAG, "ws_port saved to NVS (%u)", port);
+    }
+}
+
+void mk4_wifi_mac_str(char *out, size_t cap)
+{
+    uint8_t mac[6] = {0};
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);   /* from eFuse — no WiFi init needed */
+    snprintf(out, cap, "%02X:%02X:%02X:%02X:%02X:%02X",
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+}
+
 bool mk4_wifi_connect_sta(const char *ssid, const char *pass, char *ip_out, size_t ip_cap, int timeout_ms)
 {
     stack_init();
     s_retries = 0;
     s_giving_up = false;
-    s_max_retries = 100;     /* retry within the timeout window; the wait below bounds total time */
+    s_no_autoconnect = false;     /* this path WANTS the STA to connect */
+    s_max_retries = 100;
     xEventGroupClearBits(s_eg, GOT_IP_BIT | FAIL_BIT);
 
     wifi_config_t wc;
     memset(&wc, 0, sizeof wc);
     strncpy((char *)wc.sta.ssid, ssid, sizeof wc.sta.ssid - 1);
     strncpy((char *)wc.sta.password, pass ? pass : "", sizeof wc.sta.password - 1);
-    wc.sta.threshold.authmode = WIFI_AUTH_OPEN;   /* accept whatever the AP offers */
+    wc.sta.threshold.authmode = WIFI_AUTH_OPEN;
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wc));
@@ -119,7 +157,6 @@ bool mk4_wifi_connect_sta(const char *ssid, const char *pass, char *ip_out, size
         if (ip_out && ip_cap) { strncpy(ip_out, s_ip, ip_cap - 1); ip_out[ip_cap - 1] = 0; }
         return true;
     }
-    /* timeout or exhausted retries -> give up cleanly so the AP can start fresh */
     s_giving_up = true;
     ESP_LOGW(TAG, "STA connect failed/timeout for '%s'", ssid);
     esp_wifi_stop();
@@ -127,11 +164,81 @@ bool mk4_wifi_connect_sta(const char *ssid, const char *pass, char *ip_out, size
     return false;
 }
 
+void mk4_wifi_scan_cache(void)
+{
+    stack_init();
+    s_scan_count = 0;
+    s_no_autoconnect = true;       /* scan only — do not auto-connect the STA */
+    s_giving_up = true;
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    wifi_scan_config_t sc = { 0 };   /* active scan, all channels */
+    esp_err_t e = esp_wifi_scan_start(&sc, true);   /* blocking */
+    if (e == ESP_OK) {
+        uint16_t n = 0;
+        esp_wifi_scan_get_ap_num(&n);
+        if (n > 0) {
+            wifi_ap_record_t *recs = calloc(n, sizeof(wifi_ap_record_t));
+            if (recs) {
+                esp_wifi_scan_get_ap_records(&n, recs);
+                for (int i = 0; i < n; i++) {
+                    const char *s = (const char *)recs[i].ssid;
+                    if (s[0] == 0) continue;          /* hidden */
+                    int8_t rssi = recs[i].rssi;
+                    int found = -1;
+                    for (int j = 0; j < s_scan_count; j++)
+                        if (strcmp(s_scan_ssids[j], s) == 0) { found = j; break; }
+                    if (found >= 0) {
+                        if (rssi > s_scan_rssi[found]) s_scan_rssi[found] = rssi;   /* keep strongest */
+                        continue;
+                    }
+                    if (s_scan_count >= SCAN_MAX) continue;
+                    strncpy(s_scan_ssids[s_scan_count], s, 32);
+                    s_scan_ssids[s_scan_count][32] = 0;
+                    s_scan_rssi[s_scan_count] = rssi;
+                    s_scan_count++;
+                }
+                /* strongest-first (insertion sort; N <= SCAN_MAX) */
+                for (int a = 1; a < s_scan_count; a++) {
+                    char tmps[33]; strcpy(tmps, s_scan_ssids[a]);
+                    int8_t tmpr = s_scan_rssi[a];
+                    int b = a - 1;
+                    while (b >= 0 && s_scan_rssi[b] < tmpr) {
+                        strcpy(s_scan_ssids[b + 1], s_scan_ssids[b]);
+                        s_scan_rssi[b + 1] = s_scan_rssi[b];
+                        b--;
+                    }
+                    strcpy(s_scan_ssids[b + 1], tmps);
+                    s_scan_rssi[b + 1] = tmpr;
+                }
+                free(recs);
+            }
+        }
+        ESP_LOGI(TAG, "scan: %d network(s) cached", s_scan_count);
+    } else {
+        ESP_LOGW(TAG, "scan failed: %d", e);
+    }
+    esp_wifi_stop();   /* start_ap brings up the AP next */
+}
+
+int mk4_wifi_scan_get(char ssids[][33], int8_t *rssi, int max)
+{
+    int n = s_scan_count < max ? s_scan_count : max;
+    for (int i = 0; i < n; i++) {
+        strncpy(ssids[i], s_scan_ssids[i], 32);
+        ssids[i][32] = 0;
+        if (rssi) rssi[i] = s_scan_rssi[i];
+    }
+    return n;
+}
+
 void mk4_wifi_start_ap(const char *ap_ssid, const char *ap_pass)
 {
     stack_init();
-    s_giving_up = true;        /* stop any STA retry from interfering */
-    esp_wifi_stop();           /* in case a STA attempt was running */
+    s_giving_up = true;
+    s_no_autoconnect = true;
+    esp_wifi_stop();
 
     wifi_config_t wc;
     memset(&wc, 0, sizeof wc);

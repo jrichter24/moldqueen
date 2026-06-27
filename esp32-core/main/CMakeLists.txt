@@ -1,6 +1,6 @@
-# The ESP-IDF app: provisioning + WiFi station + NimBLE advertiser + WS server.
+# The ESP-IDF app: provisioning + WiFi station + NimBLE advertiser + WS server + mDNS.
 idf_component_register(
     SRCS "main.c"
     INCLUDE_DIRS "."
-    REQUIRES mk4_advertiser mk4_wifi mk4_ws_server mk4_provision nvs_flash
+    REQUIRES mk4_advertiser mk4_wifi mk4_ws_server mk4_provision nvs_flash mdns
 )

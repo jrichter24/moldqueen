@@ -1,0 +1,5 @@
+## Managed-component dependencies (the IDF component-manager pulls these from the registry
+## at build time into managed_components/, which is gitignored). mDNS is no longer bundled
+## in the IDF core (v5.x) — it ships as espressif/mdns.
+dependencies:
+  espressif/mdns: "^1.0.0"

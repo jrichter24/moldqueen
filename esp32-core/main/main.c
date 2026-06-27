@@ -5,24 +5,24 @@
  *   NVS has creds and station connects within 30 s  -> NORMAL OPERATION
  *   else (no creds / connect failed)                -> PROVISIONING (fallback SoftAP)
  *
- * There is NO physical re-provision trigger. A double-reset / BOOT-hold override was
- * evaluated and DROPPED as unreliable on this board (GPIO0 is the boot strap, so BOOT-hold
- * enters ROM download mode; and the EN-pin reset power-gates the chip — clearing RTC memory,
- * and even an NVS-flag double-reset did not detect the EN double-tap cleanly). Re-provisioning
- * (changing WiFi) will move to the planned HTTP management page. For now the board re-enters
- * provisioning AUTOMATICALLY when the saved network is unreachable (empty NVS or a 30 s
- * connect timeout); to force it, erase NVS (reflash).
+ * Discovery: in normal operation the device advertises mDNS as moldqueenesp.local and a
+ * _ws._tcp service on the (NVS-configured) WS port, so the client can use
+ * ws://moldqueenesp.local:<port> instead of an IP. The MAC is shown on the config page as
+ * a fallback for networks where .local doesn't resolve.
  *
- * PROVISIONING: SoftAP "moldqueen-setup" + a tiny config page at http://192.168.4.1/.
- * NORMAL OPERATION (proven): the NimBLE advertiser + safety layer + the WS server on :8765;
- * the client (pointed at the printed IP) drives the toy over WiFi.
- * Creds live ONLY in NVS (flash) — never compiled in, never in git.
+ * No physical re-provision trigger (a double-reset / BOOT-hold override was evaluated and
+ * dropped — see the provisioning slice). Re-provisioning moves to the planned web management
+ * page; for now the board re-enters provisioning when the saved network is unreachable.
+ *
+ * NORMAL OPERATION (proven): the NimBLE advertiser + safety layer + the WS server on the
+ * configured port. Creds + the WS port live ONLY in NVS (flash) — never in source or binary.
  */
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include "mdns.h"
 
 #include "mk4_wifi.h"
 #include "mk4_provision.h"
@@ -31,8 +31,18 @@
 
 static const char *TAG = "mk4_main";
 
-#define WS_PORT        8765
+#define MDNS_HOSTNAME  "moldqueenesp"
 #define STA_TIMEOUT_MS 30000
+
+static void start_mdns(uint16_t ws_port)
+{
+    esp_err_t e = mdns_init();
+    if (e != ESP_OK) { ESP_LOGW(TAG, "mdns_init failed: %d (discovery by IP only)", e); return; }
+    mdns_hostname_set(MDNS_HOSTNAME);
+    mdns_instance_name_set("MoldQueen ESP32");
+    mdns_service_add("MoldQueen control", "_ws", "_tcp", ws_port, NULL, 0);
+    ESP_LOGI(TAG, "mDNS up: %s.local  (_ws._tcp:%u)", MDNS_HOSTNAME, ws_port);
+}
 
 void app_main(void)
 {
@@ -44,6 +54,8 @@ void app_main(void)
         r = nvs_flash_init();
     }
     ESP_ERROR_CHECK(r);
+
+    uint16_t ws_port = mk4_wifi_ws_port_load();   /* NVS, default 8765 */
 
     char ssid[33], pass[65], ip[16];
     bool have = mk4_wifi_creds_load(ssid, sizeof ssid, pass, sizeof pass);
@@ -65,10 +77,12 @@ void app_main(void)
 
     /* NORMAL OPERATION (unchanged + proven). */
     mk4_adv_init();
-    mk4_ws_start(WS_PORT);
+    mk4_ws_start(ws_port);
+    start_mdns(ws_port);
     ESP_LOGI(TAG, "========================================================");
-    ESP_LOGI(TAG, " READY. Point the client's WS endpoint at:");
-    ESP_LOGI(TAG, "     ws://%s:%d", ip, WS_PORT);
+    ESP_LOGI(TAG, " READY. Point the client's WS endpoint at either:");
+    ESP_LOGI(TAG, "     ws://%s.local:%u", MDNS_HOSTNAME, ws_port);
+    ESP_LOGI(TAG, "     ws://%s:%u", ip, ws_port);
     ESP_LOGI(TAG, "========================================================");
 
     while (1) vTaskDelay(pdMS_TO_TICKS(10000));

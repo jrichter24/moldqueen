@@ -37,11 +37,21 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   ROM download mode), and the EN-pin reset clears RTC memory (so neither an RTC nor an NVS-flag
   double-reset detected the EN double-tap cleanly). Re-provisioning moves to the management page
   (Group B). **Remaining:**
-  - **Group-A — provisioning/config page polish:** branding, a WiFi network scanner (scan-and-pick
-    vs the plain SSID field), a configurable WS port, mDNS + showing the MAC.
-  - **Group-B — a web status/management page** on the running device: show state (IP, WiFi, WS
-    clients), and a **re-provision button** (the replacement for the dropped physical trigger —
-    change WiFi without erasing NVS / reflashing).
+  - ✅ **Group-A — provisioning/config-page polish — DONE** (hardware-verified): a **branded,
+    bilingual (EN/DE)** config page (inlined MoldQueen icon rendering **offline**, "MoldQueen
+    (ESP32)" title), a **scrollable scanned-network list with signal strength**, a
+    **show-password** toggle + careful-password hint, a **configurable WS port** (with helper
+    text; it flows through to the shown endpoint — tested at **9000**), **copy MAC / copy
+    endpoint**, a matching **branded Saved page**, and **mDNS** discovery (`moldqueenesp.local`,
+    renamed from `moldqueondevice`; proven end-to-end — the client drives via the name). All
+    assets inlined/self-contained (offline AP); no creds in git or the binary.
+  - **Group-B — a web status/management page** on the running device (at
+    `moldqueenesp.local:8080`): show state (IP, WiFi, WS clients), add a **status-page link** to
+    the setup/Saved pages, and **change-network / force-AP / restart** + a **re-provision path**
+    (the replacement for the dropped physical trigger — change WiFi without erasing NVS /
+    reflashing).
+  - **Pi mDNS (`moldqueenrasp.local`) + the binary/release pipeline** — give the linux-core the
+    sibling `.local` name, and a build/flash distribution path for the ESP32 firmware.
   - **Operational AP mode** (distinct from provisioning's temporary config AP) — the ESP32 as
     its *own* WiFi network you connect to and drive over, for true standalone with no home
     network.
@@ -72,12 +82,16 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   `esp32-nimble`). **Hardware-confirmed on the N16R8:** the *unmodified* single-source client
   drives a real toy **over WiFi** (drive + STOP + auto-neutral over the live path, no WiFi/BLE
   coexistence stutter). **WiFi provisioning** is built too — NVS creds + auto-fallback SoftAP
-  (`moldqueen-setup`) + a plain `192.168.4.1` config page; the firmware is now **distributable**
-  (no creds in git or the binary). A physical re-provision trigger (double-reset / BOOT-hold) was
-  evaluated and **dropped as unreliable** (GPIO0 is the boot strap; the EN reset clears RTC) — it
-  moves to the web management page. **Next:** the Group-A config-page polish + the **Group-B web
-  management page** (incl. the re-provision button) and serving the client from flash (see the
-  FUTURE cluster). Toolchain: ESP-IDF v5.5.4.
+  (`moldqueen-setup`) + a **branded, bilingual config page** at `192.168.4.1` (inlined icon,
+  EN/DE, scanned-network list with signal strength, show-password, configurable WS port, copy
+  MAC/endpoint, a matching Saved page) and **mDNS discovery** (`moldqueenesp.local`); the
+  firmware is now **distributable** (no creds in git or the binary). A physical re-provision
+  trigger (double-reset / BOOT-hold) was evaluated and **dropped as unreliable** (GPIO0 is the
+  boot strap; the EN reset clears RTC) — it moves to the web management page. **Group A
+  (discovery + config-page polish) is DONE + hardware-verified.** **Next:** the **Group-B web
+  management page** at `moldqueenesp.local:8080` (status link + change-network / force-AP /
+  restart / re-provision), then **Pi mDNS (`moldqueenrasp.local`) + the binary pipeline**, and
+  serving the client from flash (see the FUTURE cluster). Toolchain: ESP-IDF v5.5.4.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   open at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`. Addressing
   maintainer (linsui) review: HTML description, full commit hash, `output` line removed.

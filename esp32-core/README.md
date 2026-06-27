@@ -8,13 +8,15 @@ nothing itself.
 
 **Status: in progress.** The **MouldKingCrypt C port** (byte-exact), the **NimBLE 0xFFF0
 advertiser**, the **safety layer** (auto-neutral keepalive + STOP), the **WiFi WebSocket
-server** mirroring `api.py`, and **WiFi provisioning** (NVS creds + a fallback AP config
-page) are in — the **unmodified** single-source client drives a real toy **over WiFi**
-(drive + STOP + auto-neutral over the live path, no WiFi/BLE coexistence stutter), and the
-firmware is now **distributable** (no creds compiled in — anyone flashes it and enters
-their own WiFi) — all hardware-confirmed. Still to come (owned by the `esp32-core-dev`
-agent): a web status/management page (incl. a re-provision button) and serving the client
-from flash.
+server** mirroring `api.py`, **WiFi provisioning** (NVS creds + a fallback AP config page),
+and **device discovery** (mDNS `moldqueenesp.local` + a **branded bilingual config/saved
+page**) are in — the **unmodified** single-source client drives a real toy **over WiFi**
+(drive + STOP + auto-neutral over the live path, no WiFi/BLE coexistence stutter, reached
+via the `.local` name and a custom WS port), and the firmware is now **distributable** (no
+creds compiled in — anyone flashes it and enters their own WiFi) — all hardware-confirmed.
+Still to come (owned by the `esp32-core-dev` agent): a **Group B** web status/management
+page (at `moldqueenesp.local:8080` — status link, change-network / force-AP / restart, the
+re-provision path) and serving the client from flash.
 
 ## Layout
 - `components/mouldking_crypt/` — the clean-room **C port of the MouldKing cipher**
@@ -33,13 +35,20 @@ from flash.
   dead-man's-switch auto-neutrals any channel not refreshed within **300 ms** (matching
   `api.py` / `ApiCore`), and **STOP** tears the advertiser down + reconnects at neutral
   (the one deliberate teardown, distinct from per-change churn).
-- `components/mk4_wifi/` — WiFi **station** + **SoftAP** + the **NVS credential store**.
-  Joins a home WiFi from creds stored in **NVS** (flash — never compiled in, never in git),
-  gets a DHCP IP, prints it; and brings up the SoftAP for provisioning.
+- `components/mk4_wifi/` — WiFi **station** + **SoftAP** + the **NVS store** (creds + the
+  configurable **WS port**). Joins a home WiFi from creds stored in **NVS** (flash — never
+  compiled in, never in git), gets a DHCP IP, prints it; brings up the SoftAP for
+  provisioning; and provides the **pre-AP network scan** (SSID + RSSI, strongest-first) and
+  the device **MAC** for the config page.
 - `components/mk4_provision/` — **provisioning**: a SoftAP (`moldqueen-setup`, open) + a
-  tiny self-contained config page at **`http://192.168.4.1/`** (plain page, no captive
-  portal — it is NOT the moldqueen client). On submit it saves the WiFi creds to NVS and
-  reboots into station mode.
+  **branded, self-contained config page** at **`http://192.168.4.1/`** (it is NOT the
+  moldqueen client). Fully offline (the AP has no internet): the **MoldQueen icon is inlined
+  (base64)**, CSS/JS inlined, **EN/DE i18n**. It shows a **scrollable scanned-network list
+  with signal strength** (tap to fill the SSID), a **show-password** toggle, a
+  careful-password hint, a **WS-port** field (with helper text), and **copy buttons** for the
+  device MAC and the resulting `ws://moldqueenesp.local:<port>` endpoint. On submit it saves
+  the WiFi creds + WS port to NVS, shows a matching **branded Saved page** (endpoint + MAC,
+  copyable), and reboots into station mode.
 - `components/mk4_ws_server/` — the **WiFi WebSocket server** (`esp_http_server` WS, port
   **8765**) mirroring the `api.py` thin-transport contract (`setup`/`set`/`stop`/`state`/
   `info` + `lifecycle`/`state`/`info` pushes; `radio_backend` = `esp32-nimble`). `set`
@@ -49,9 +58,11 @@ from flash.
 - `test/host_test.c` + `test/run_host_test.sh` — desktop build + run (no board, CI-able)
   for when a host C compiler (gcc/clang/cc) is available.
 - `main/` — the ESP-IDF app + boot logic: **NVS creds → try station (30 s) → on success
-  normal op (advertiser + safety + WS server) / on empty-or-timeout → provisioning AP**.
-  Prints the IP to point the client at. (The crypt self-test lives in `test/` and runs via
-  the host build.)
+  normal op (advertiser + safety + WS server + mDNS) / on empty-or-timeout → provisioning
+  AP**. In normal op it advertises **mDNS** (hostname `moldqueenesp`, a `_ws._tcp` service on
+  the configured port) so the client can use `ws://moldqueenesp.local:<port>` instead of an
+  IP; it also prints the IP. (The crypt self-test lives in `test/` and runs via the host
+  build.)
 
 ## Target / config
 Heemol **ESP32-S3 N16R8 DevKitC-1** — 16 MB flash, 8 MB octal PSRAM. `sdkconfig.defaults`
@@ -68,11 +79,13 @@ idf.py -p COM10 flash monitor    # first boot (empty NVS) -> provisioning AP
 ```
 
 **First-time setup (no creds baked in):** on first boot (empty NVS) the board starts the
-SoftAP **`moldqueen-setup`** (open). Join it, browse to **`http://192.168.4.1/`**, enter
-your WiFi, and Save — it saves to NVS, reboots, joins your network, and prints its IP.
-Point the client's WS endpoint at `ws://<printed-ip>:8765` (the client is served
-elsewhere — the Pi / `client/serve.py`). Only **one** 0xFFF0 transmitter at a time — make
-sure the Pi broadcaster and the phone app are not also advertising.
+SoftAP **`moldqueen-setup`** (open). Join it, browse to **`http://192.168.4.1/`**, pick your
+WiFi from the scanned list (or type it), enter the password, optionally set the WS port, and
+Save — it saves to NVS, reboots, and joins your network. Point the client's WS endpoint at
+**`ws://moldqueenesp.local:<port>`** (default port 8765; mDNS, so no IP needed — the printed
+IP also works). The client is served elsewhere (the Pi / `client/serve.py`). Only **one**
+0xFFF0 transmitter at a time — make sure the Pi broadcaster and the phone app are not also
+advertising.
 
 **Re-provisioning / changing WiFi:** there is **no physical override** yet — a
 double-reset / BOOT-hold trigger was evaluated and **dropped as unreliable on this board**
