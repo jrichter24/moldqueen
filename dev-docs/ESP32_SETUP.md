@@ -114,5 +114,7 @@ exactly as you would against the Pi or Android cores.
 - A full credential wipe is done by erasing flash and reflashing (`idf.py -p <port>
   erase-flash`, then flash again); see [`../esp32-core/README.md`](../esp32-core/README.md).
 
-Note the Pi core is not yet discoverable as `moldqueenrasp.local`; that mDNS name is planned,
-not shipped. Only the ESP32 (`moldqueenesp.local`) is discoverable by name today.
+Both cores are discoverable by name today: the ESP32 as `moldqueenesp.local`, and the Pi
+(linux-core) as `moldqueenrasp.local` — the latter is an additive avahi alias published by
+`scripts/mdns.sh` (wired into `scripts/start.sh`), so the Pi's own `<hostname>.local` and IP
+keep working and the name no-ops gracefully if `avahi-utils` isn't installed.

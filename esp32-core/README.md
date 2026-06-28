@@ -1,4 +1,4 @@
-# esp32-core — the ESP32-S3 radio core (in progress)
+# esp32-core — the ESP32-S3 radio core (usable standalone appliance)
 
 The third moldqueen radio core, a peer to [`linux-core/`](../linux-core/) (Raspberry Pi)
 and [`android-core/`](../android-core/), consuming the **same single-source client** over
@@ -6,17 +6,18 @@ the **same WebSocket contract**: *swap the radio core, keep the client*. It is *
 transport, smart client** — it will broadcast already-resolved telegrams and resolve
 nothing itself.
 
-**Status: in progress.** The **MouldKingCrypt C port** (byte-exact), the **NimBLE 0xFFF0
-advertiser**, the **safety layer** (auto-neutral keepalive + STOP), the **WiFi WebSocket
-server** mirroring `api.py`, **WiFi provisioning** (NVS creds + a fallback AP config page),
-**device discovery** (mDNS `moldqueenesp.local` + a **branded bilingual config/saved page**),
-and a **device management page** (`http://moldqueenesp.local:8080` — status, restart,
-switch-to-setup, change-network) are in — the **unmodified** single-source client drives a
-real toy **over WiFi** (drive + STOP + auto-neutral over the live path, no WiFi/BLE
-coexistence stutter, reached via the `.local` name and a custom WS port), and the firmware is
-now **distributable** (no creds compiled in — anyone flashes it and enters their own WiFi) —
-all hardware-confirmed. Still to come (owned by the `esp32-core-dev` agent): **Pi mDNS
-(`moldqueenrasp.local`) + a binary/release pipeline**, and serving the client from flash.
+**Status: a usable standalone appliance** (no Pi, no phone). The **MouldKingCrypt C port**
+(byte-exact), the **NimBLE 0xFFF0 advertiser**, the **safety layer** (auto-neutral keepalive +
+STOP), the **WiFi WebSocket server** mirroring `api.py`, **WiFi provisioning** (NVS creds + a
+fallback AP config page), **device discovery** (mDNS `moldqueenesp.local` + a **branded
+bilingual config/saved page**), and a **device management page**
+(`http://moldqueenesp.local:8080` — status, restart, switch-to-setup, change-network) are all
+in — the **unmodified** single-source client drives a real toy **over WiFi** (drive + STOP +
+auto-neutral over the live path, no WiFi/BLE coexistence stutter, reached via the `.local` name
+and a custom WS port), and the firmware is **distributable** (no creds compiled in — anyone
+flashes it and enters their own WiFi) — all hardware-confirmed. Still to come (owned by the
+`esp32-core-dev` agent): a **binary/release pipeline** (a distributable `.bin`), then **serving
+the client from flash**.
 
 ## Layout
 - `components/mouldking_crypt/` — the clean-room **C port of the MouldKing cipher**

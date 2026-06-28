@@ -2,10 +2,11 @@
 
 > This is the authoritative project document. Where any other doc (the CLAUDE.md
 > files, or the snapshots in `linux-core/reference/`) disagrees, **this file wins.**
-> Last major update: 2026-06-27 (the **esp32-core** is now a usable standalone appliance —
+> Last major update: 2026-06-28 (the **esp32-core** is now a usable standalone appliance —
 > WiFi provisioning, mDNS discovery `moldqueenesp.local`, and a management page on :8080 are
-> all in and hardware-verified; signed Android releases v0.1.0-v0.1.2 shipped; F-Droid MR
-> !41291 under maintainer review; §1/§6b/§8 reconciled to the management milestone).
+> all in and hardware-verified; **Pi mDNS `moldqueenrasp.local` shipped** for linux-core;
+> signed Android releases v0.1.0-v0.1.2 shipped; F-Droid MR !41291 under maintainer review;
+> §1/§6b/§8 reconciled to the Pi-mDNS milestone).
 
 ---
 
@@ -40,10 +41,12 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
 - ✅ **Shipped:** signed Android releases **v0.1.0 / v0.1.1 / v0.1.2** via the gated CI
   release workflow (package `io.github.jrichter24.moldqueen`); F-Droid MR **!41291** is
   open and under maintainer review.
+- ✅ **Pi mDNS shipped** — linux-core now advertises **`moldqueenrasp.local`** (additive
+  avahi alias via `scripts/mdns.sh`, wired into `scripts/start.sh`; optional
+  `scripts/moldqueen-mdns.service`), mirroring the ESP32's `moldqueenesp.local`.
 - 🔜 Next: finish the channel→function map (sweep placeholders); slot
-  auto-detection; esp32-core — Pi mDNS (`moldqueenrasp.local` for linux-core), then the
-  binary/release pipeline (distributable `.bin`); serve-client-from-flash after; a
-  console/AI client; then the camera/sensor/AI phases.
+  auto-detection; esp32-core — the binary/release pipeline (distributable `.bin`), then
+  serve-client-from-flash; a console/AI client; then the camera/sensor/AI phases.
 
 ---
 
@@ -367,9 +370,14 @@ mk4_wifi, mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/` (`mk4_we
 shared web-UI assets so the provisioning pages and the management page render as one product).
 **Target:** ESP32-S3 **N16R8**, **ESP-IDF v5.5.4**.
 
-**Remaining (honestly not-done):** **Pi mDNS** (`moldqueenrasp.local` for linux-core — PLANNED,
-not built), then the **binary/release pipeline** (a distributable `.bin`); **serving the client
-from flash** after (today the client is served elsewhere and pointed at the ESP32's WS endpoint).
+**Pi mDNS — SHIPPED.** linux-core now advertises **`moldqueenrasp.local`** (an additive
+`avahi-publish` alias via `scripts/mdns.sh`, wired into `scripts/start.sh`; optional
+`scripts/moldqueen-mdns.service` to survive reboot), mirroring this ESP32's
+`moldqueenesp.local` — no system-hostname rename, graceful no-op without `avahi-utils`.
+
+**Remaining (honestly not-done):** the **binary/release pipeline** (a distributable `.bin`),
+then **serving the client from flash** (today the client is served elsewhere and pointed at the
+ESP32's WS endpoint).
 
 ---
 
@@ -418,8 +426,9 @@ see `mk4web/config.py`).
   `moldqueen-setup` AP), mDNS discovery (`moldqueenesp.local`), and the management page
   (`moldqueenesp.local:8080` — status/restart/switch-to-setup/change-network) are **done and
   hardware-proven** (drives a real toy over WiFi with the unmodified client, reached by name;
-  see §6b). **Remaining:** Pi mDNS (`moldqueenrasp.local` for linux-core), then the
-  binary/release pipeline (distributable `.bin`); serve-client-from-flash after.
+  see §6b). **Pi mDNS is also shipped** (`moldqueenrasp.local` for linux-core — additive avahi
+  alias via `scripts/mdns.sh`/`start.sh`). **Remaining:** the binary/release pipeline
+  (distributable `.bin`), then serve-client-from-flash.
 - **Finish the channel map** — sweep the placeholder channels (slot-0 ch1–3, slot-1
   ch1/ch3+) and confirm each function by driving it via Settings → Test.
 - **Reverse-speed calibration** — `reverse_scale` defaults to identity; measure the

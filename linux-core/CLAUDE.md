@@ -16,7 +16,6 @@ The working control stack is **[`mk4web/`](mk4web/)** (see below). It broadcasts
 **MK4 12-channel nibble protocol** — **one** telegram drives **all** hubs at once
 (company `0xFFF0`) — on a USB dongle (resolved by MAC, see below) via raw HCI. The
 verified codec is [`reference/mouldking_crypt.py`](reference/mouldking_crypt.py).
-(`radio_worker.py` is a leftover stub from the bootstrap — not used.)
 
 ## ⚠️ Operational gotchas (live service)
 
@@ -51,9 +50,6 @@ python3 -m venv .venv            # already created during bootstrap
 source .venv/bin/activate
 pip install -r requirements.txt  # pytest
 pytest                           # all tests pass
-
-# stub smoke test (no BLE): pipe newline-framed payloads to the worker
-printf '\x01\x02\x03\n' | python radio_worker.py
 ```
 
 ## ⚠️ Privileges & bluetoothd contention (real, not yet done)
@@ -76,7 +72,7 @@ BlueZ tooling is already installed for inspection/bring-up later:
 The control protocol is solved and **two-hub simultaneous control is confirmed**.
 The full write-up + the verified codec are committed under
 [`reference/`](reference/): `CONNECT_PROCEDURE.md`, `channel_map.md`,
-`mouldking_crypt.py`, `mk4_test.py`. The real `radio_worker` should match these.
+`mouldking_crypt.py`, `mk4_test.py`.
 
 - **Protocol: MK4 12-channel nibble** (company id **0xFFF0**). Motion telegram raw
   = `7d ae 18 <6 channel bytes> 82` (`0x8` nibble = neutral; `>0x8`/`<0x8` =
@@ -94,9 +90,6 @@ The full write-up + the verified codec are committed under
   raw HCI (`hcitool -i <hciN> cmd 0x08 0x0006/0x0008/0x000a`).
 - The earlier **MK6.0 device-0/1 model was a dead end and is SUPERSEDED** (see the
   appendix in `reference/CONNECT_PROCEDURE.md`).
-
-**No radio bring-up is wired into the `radio_worker` yet** — the proven method
-lives in [`reference/`](reference/) and needs porting into the worker.
 
 ## mk4web — the MK4 control webservice
 
@@ -169,8 +162,6 @@ linux-core/
 │                          # (the web UI is the INDEPENDENT ../client/ peer; api.py serves it via config.WEB_DIR)
 ├── reference/             # verified snapshots: CONNECT_PROCEDURE.md, channel_map.md,
 │                          #   mouldking_crypt.py, mk4_test.py, MKtech_reverse_engineering_report.md
-├── radio_worker.py        # leftover bootstrap stub (stdin → log hex; NOT used)
-├── test_radio_worker.py   # pytest, passing
 ├── requirements.txt       # websockets + pytest
 └── .venv/                 # virtualenv (gitignored)
 ```

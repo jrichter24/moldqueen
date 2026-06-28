@@ -228,11 +228,12 @@ mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/`. Target **ESP32-S3
   new scroll, and the page must also render raw via nginx). Static-only; verified live.
 
 ## In progress / next task
-- **esp32-core finishing — Pi mDNS, then the release pipeline.** The core is a usable
+- **esp32-core finishing — the release pipeline, then serve-from-flash.** The core is a usable
   standalone appliance now (drives a real toy over WiFi; provisioning + Group A + Group B all
-  done and hardware-verified). Next: **Pi mDNS (`moldqueenrasp.local` for linux-core** — PLANNED,
-  not built; give the Pi the sibling `.local` name), then the **binary/release pipeline** (a
-  distributable ESP32 `.bin`); **serve-client-from-flash** after that.
+  done and hardware-verified). **Pi mDNS is shipped** (`moldqueenrasp.local` for linux-core —
+  additive avahi alias via `scripts/mdns.sh` wired into `start.sh`, optional
+  `scripts/moldqueen-mdns.service`). Next: the **binary/release pipeline** (a distributable
+  ESP32 `.bin`), then **serve-client-from-flash**.
 - **F-Droid MR !41291 — awaiting maintainer (linsui).** Watch the MR at `fdroid/fdroiddata`;
   respond to review feedback. Once merged, moldqueen is installable from F-Droid.
 - **Recurring:** after the next `v*` tag, bump the README + website (`docs/`) Download/Install

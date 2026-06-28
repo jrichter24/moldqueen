@@ -11,8 +11,10 @@
  * a fallback for networks where .local doesn't resolve.
  *
  * No physical re-provision trigger (a double-reset / BOOT-hold override was evaluated and
- * dropped — see the provisioning slice). Re-provisioning moves to the planned web management
- * page; for now the board re-enters provisioning when the saved network is unreachable.
+ * dropped — see the provisioning slice). Re-provisioning is handled by the management page on
+ * :8080 (software "switch to setup", which sets the one-shot NVS force-AP flag the boot logic
+ * checks above); the board also re-enters provisioning automatically when the saved network is
+ * unreachable.
  *
  * NORMAL OPERATION (proven): the NimBLE advertiser + safety layer + the WS server on the
  * configured port. Creds + the WS port live ONLY in NVS (flash) — never in source or binary.
