@@ -7,6 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-2f343b?style=flat-square&labelColor=23272e)](LICENSE)
 ![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Linux%2FBlueZ-2f343b?style=flat-square&labelColor=23272e&logo=raspberrypi&logoColor=white)
 ![Android](https://img.shields.io/badge/Android-standalone%20APK-2f343b?style=flat-square&labelColor=23272e&logo=android&logoColor=white)
+![ESP32-S3](https://img.shields.io/badge/ESP32--S3-standalone%20appliance-2f343b?style=flat-square&labelColor=23272e&logo=espressif&logoColor=white)
 ![Gamepad](https://img.shields.io/badge/gamepad-DualSense%20%2F%20any-2f343b?style=flat-square&labelColor=23272e)
 ![Python 3.13](https://img.shields.io/badge/python-3.13-2f343b?style=flat-square&labelColor=23272e&logo=python&logoColor=white)
 [![status: two-hub control working](https://img.shields.io/badge/status-two--hub%20control%20working-2d6a4f?style=flat-square&labelColor=23272e)](#what-it-does)
