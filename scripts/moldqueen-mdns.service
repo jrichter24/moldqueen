@@ -1,0 +1,27 @@
+# OPTIONAL — always-on mDNS name for the Pi core (survives reboot, independent of
+# scripts/start.sh). The project ships NO enabled systemd units; this is a template you
+# install yourself if you want moldqueenrasp.local advertised whenever the Pi is up.
+# scripts/start.sh ALREADY advertises it while the core runs, so this is only for
+# "always reachable by name" without launching the core.
+#
+# Install (substitutes the repo path + your user, enables on boot):
+#   sed "s|__REPO__|$(pwd)|; s|__USER__|$USER|" scripts/moldqueen-mdns.service \
+#     | sudo tee /etc/systemd/system/moldqueen-mdns.service >/dev/null
+#   sudo systemctl enable --now moldqueen-mdns
+# Remove:
+#   sudo systemctl disable --now moldqueen-mdns && sudo rm /etc/systemd/system/moldqueen-mdns.service
+[Unit]
+Description=moldqueen — mDNS name (moldqueenrasp.local) for the Pi radio core
+Documentation=https://github.com/jrichter24/moldqueen
+After=avahi-daemon.service network-online.target
+Wants=avahi-daemon.service
+
+[Service]
+Type=simple
+ExecStart=__REPO__/scripts/mdns.sh
+Restart=on-failure
+RestartSec=3
+User=__USER__
+
+[Install]
+WantedBy=multi-user.target

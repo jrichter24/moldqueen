@@ -14,6 +14,12 @@ The fastest path to driving the Mould King 13112 from a Raspberry Pi. (Deep deta
   ```bash
   cd linux-core && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
   ```
+- **Optional — discovery by name** (`sudo apt install avahi-utils`): lets the Pi advertise
+  **`moldqueenrasp.local`** so the client can point at `ws://moldqueenrasp.local:8765` instead of
+  the IP — mirroring the ESP32's `moldqueenesp.local`. `avahi-daemon` ships with Raspberry Pi OS;
+  `start.sh` advertises the name automatically while the core runs (additive — the Pi's own
+  `<hostname>.local` and the IP still work). Skip it and the core still works by IP. See
+  [§ mDNS](#mdns--reach-the-pi-by-name) below.
 
 ## 1. Start the API server (owns the radio)
 
@@ -30,8 +36,9 @@ The broadcaster starts **IDLE** — nothing is transmitted until you connect in 
 
 ## 2. Open the page, pick a layout
 
-Browse to **`http://<pi-ip>:8080/`** → the **layout chooser** → **Excavator (13112)**
-(opens `/excavator`). (Your choice is remembered next time.)
+Browse to **`http://<pi-ip>:8080/`** (or **`http://moldqueenrasp.local:8080/`** with
+`avahi-utils` installed) → the **layout chooser** → **Excavator (13112)** (opens
+`/excavator`). (Your choice is remembered next time.)
 
 ## 3. Cold-start with the wizard
 
@@ -56,6 +63,28 @@ That's it. 🦾
 ---
 
 ## Advanced
+
+### mDNS — reach the Pi by name
+
+With `avahi-utils` installed (`sudo apt install avahi-utils`; `avahi-daemon` already ships
+with Raspberry Pi OS), the Pi advertises **`moldqueenrasp.local`** so you can use the name
+instead of the IP — `ws://moldqueenrasp.local:8765` (or `http://moldqueenrasp.local:8080/`),
+mirroring the ESP32's `moldqueenesp.local`.
+
+- **How:** `scripts/start.sh` launches `scripts/mdns.sh` in the background while the core runs.
+  It's an **additive** alias (`avahi-publish -a moldqueenrasp.local <ip>`) — the Pi's own
+  `<hostname>.local` and the IP keep working, and the system hostname is **not** renamed.
+- **Graceful:** if `avahi-utils` isn't installed, mDNS is skipped and the core still works by IP.
+  Disable it explicitly with `MK4_NO_MDNS=1`; change the name with `MK4_MDNS_NAME=foo`.
+- **Always-on (optional, survives reboot, no need to run the core):** install the shipped
+  systemd unit template —
+
+  ```bash
+  sed "s|__REPO__|$(pwd)|; s|__USER__|$USER|" scripts/moldqueen-mdns.service \
+    | sudo tee /etc/systemd/system/moldqueen-mdns.service >/dev/null
+  sudo systemctl enable --now moldqueen-mdns
+  ```
+- **Check it:** `avahi-resolve -n moldqueenrasp.local` (on the Pi or any LAN machine with mDNS).
 
 **Run the client elsewhere (e.g. your desktop).** Run the API websocket-only on the
 Pi and serve the UI separately, then point it at the Pi:

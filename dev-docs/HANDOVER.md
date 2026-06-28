@@ -16,8 +16,12 @@
 - **esp32-core is now a usable standalone appliance** — drives a real toy over WiFi with the
   unmodified client, and is **self-provisioning + self-managing**: WiFi provisioning (no creds
   baked in), mDNS discovery `moldqueenesp.local`, and a management page on :8080 are all in and
-  hardware-verified (details below). **Next:** Pi mDNS (`moldqueenrasp.local` for linux-core),
-  then the binary/release pipeline (distributable `.bin`); serve-client-from-flash after.
+  hardware-verified (details below).
+- **Pi mDNS DONE (`moldqueenrasp.local`)** — the linux-core now advertises the sibling name
+  (`ws://moldqueenrasp.local:8765`), mirroring the ESP32. Additive avahi alias (`scripts/mdns.sh`
+  via `start.sh`; optional systemd unit), no hostname rename, graceful without `avahi-utils`
+  (the one new apt dep, installed on the test Pi). Hardware-verified on the LAN. **Next ESP32
+  task:** the binary/release pipeline (distributable `.bin`); serve-client-from-flash after.
 - **Client fix shipped:** the WS-endpoint field (`client/web/clientconfig.js`) no longer
   clears/overwrites while you're editing it.
 - **Process:** a read-only **`auditor`** agent + a **documentation-currency** rule now exist

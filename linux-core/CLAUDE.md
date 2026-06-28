@@ -30,6 +30,11 @@ verified codec is [`reference/mouldking_crypt.py`](reference/mouldking_crypt.py)
   strings). The broadcaster usually needs **no** restart; only the API does.
 - **Dongle re-enumerates** (`hci1`→`hci3`) and comes up DOWN. Resolve by **MAC
   `00:A6:44:02:21:25`** / use `../scripts/start.sh`; never assume a fixed `hciN`.
+- **mDNS name `moldqueenrasp.local`** (mirrors the ESP32's `moldqueenesp.local`): an **additive**
+  avahi alias published by **`../scripts/mdns.sh`**, wired into `start.sh` (background, cleaned up
+  on exit; optional `../scripts/moldqueen-mdns.service` for always-on). Needs **`avahi-utils`**
+  (apt); **graceful** if absent (core still works by IP). No system-hostname rename. `MK4_NO_MDNS=1`
+  to skip, `MK4_MDNS_NAME` to rename. Check: `avahi-resolve -n moldqueenrasp.local`.
 
 ## Stack
 

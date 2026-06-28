@@ -111,6 +111,17 @@ else
   fail "websockets not installed. Run: cd linux-core && . .venv/bin/activate && pip install -r requirements.txt"
 fi
 
+# ── 5. mDNS name discovery (optional, additive) ─────────────────
+hdr "5. mDNS name discovery (optional — ${MK4_MDNS_NAME:-moldqueenrasp}.local)"
+if [ "${MK4_NO_MDNS:-0}" = "1" ]; then
+  info "mDNS disabled (MK4_NO_MDNS=1) — reach the core by IP."
+elif command -v avahi-publish >/dev/null 2>&1 && { systemctl is-active --quiet avahi-daemon 2>/dev/null || pgrep -x avahi-daemon >/dev/null 2>&1; }; then
+  pass "avahi ready — will advertise ${MK4_MDNS_NAME:-moldqueenrasp}.local (additive; the Pi's <hostname>.local + IP still work)"
+else
+  info "avahi-utils + avahi-daemon not both present — mDNS name skipped (the core still works by IP)."
+  info "enable name discovery: sudo apt install avahi-utils"
+fi
+
 # ── result / stop for --check ───────────────────────────────────
 hdr "result"
 if [ "$MODE" = "check" ]; then
@@ -120,11 +131,11 @@ fi
 if [ "$ISSUES" -ne 0 ]; then fail "$ISSUES blocking issue(s) — NOT launching. Fix above, or run: scripts/start.sh --check"; exit 1; fi
 pass "preflight clean — launching"
 
-# ── 5. launch (broadcaster → socket → api) ──────────────────────
-hdr "5. launch"
+# ── 6. launch (broadcaster → socket → api → mDNS) ───────────────
+hdr "6. launch"
 BC_SUDO=""; [ "$MODE" = "live" ] && BC_SUDO="$SUDO"
-BC_PID=""; API_PID=""
-cleanup(){ trap - EXIT INT TERM; printf "\nstopping…\n"; [ -n "$API_PID" ] && kill "$API_PID" 2>/dev/null || true; [ -n "$BC_PID" ] && $BC_SUDO kill -INT "$BC_PID" 2>/dev/null || true; rm -f "$SOCK" 2>/dev/null || true; }
+BC_PID=""; API_PID=""; MDNS_PID=""
+cleanup(){ trap - EXIT INT TERM; printf "\nstopping…\n"; [ -n "$MDNS_PID" ] && kill "$MDNS_PID" 2>/dev/null || true; [ -n "$API_PID" ] && kill "$API_PID" 2>/dev/null || true; [ -n "$BC_PID" ] && $BC_SUDO kill -INT "$BC_PID" 2>/dev/null || true; rm -f "$SOCK" 2>/dev/null || true; }
 trap cleanup EXIT INT TERM
 
 BC_ARGS=(--hci "$HCI"); [ "$MODE" = "dry-run" ] && BC_ARGS+=(--dry-run)
@@ -140,10 +151,22 @@ if [ -S "$SOCK" ]; then pass "IPC socket up: $SOCK"; else info "socket not seen 
 API_PID=$!
 ip="$(hostname -I 2>/dev/null | awk '{print $1}')"; ip="${ip:-localhost}"
 pass "api started"
+
+# mDNS name (optional, additive, graceful): advertise moldqueenrasp.local so the client
+# can use the name instead of the IP — mirrors the ESP32's moldqueenesp.local. No-ops if
+# avahi-utils is absent (the core still works by IP). Set MK4_NO_MDNS=1 to skip.
+MDNS_NAME="${MK4_MDNS_NAME:-moldqueenrasp}"
+if [ "${MK4_NO_MDNS:-0}" != "1" ]; then
+  ( exec "$REPO_ROOT/scripts/mdns.sh" ) &
+  MDNS_PID=$!
+  pass "mDNS publisher started (${MDNS_NAME}.local — additive; IP also works)"
+fi
+
 if [ "$WS_ONLY" = "1" ]; then
-  hdr "READY — WebSocket API on ws://$ip:${MK4_WS_PORT:-8765} (no web page; bring your own client)"
+  hdr "READY — WebSocket API on ws://$ip:${MK4_WS_PORT:-8765}  (or ws://${MDNS_NAME}.local:${MK4_WS_PORT:-8765})"
+  info "no web page (bring your own client)"
 else
-  hdr "READY — open  http://$ip:$HTTP_PORT/"
+  hdr "READY — open  http://$ip:$HTTP_PORT/   (or http://${MDNS_NAME}.local:$HTTP_PORT/)"
 fi
 info "Cold-start in the browser: Connect → press ONE hub's button to TWO flashes (slot 1) → Ready → drive."
 info "The big STOP button (and closing the page) forces neutral. Ctrl-C here stops both processes."

@@ -73,7 +73,9 @@ scripts/start.sh        # frees the adapter from bluetoothd, brings the dongle u
 # → open http://<pi>:8080/  →  Connect  →  button one hub to slot 1  →  Ready  →  drive
 ```
 
-Full prep (disable onboard BT, mask `bluetoothd`, caps) and a dry-run mode:
+With `avahi-utils` installed the Pi is discoverable by name as **`moldqueenrasp.local`**
+(`ws://moldqueenrasp.local:8765`), mirroring the ESP32's `moldqueenesp.local` — additive, the IP
+still works. Full prep (disable onboard BT, mask `bluetoothd`, caps), mDNS, and a dry-run mode:
 **[`dev-docs/QUICKSTART.md`](dev-docs/QUICKSTART.md)**.
 
 <p align="center">

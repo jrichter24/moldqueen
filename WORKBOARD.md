@@ -31,9 +31,9 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 - **ESP32 WiFi / standalone roadmap (cluster) — remaining future items.** Provisioning,
   Group A (discovery + setup page), and Group B (the management page) are **DONE** (moved to
   FINISHED below). Still future:
-  - **Pi mDNS (`moldqueenrasp.local`) + the binary/release pipeline** — give the linux-core the
-    sibling `.local` name (PLANNED, not built), and a build/flash distribution path for the
-    ESP32 firmware (a distributable `.bin`). **This is the next ESP32 task.**
+  - **ESP32 binary/release pipeline** — a build/flash distribution path for the ESP32 firmware
+    (a distributable `.bin`). **This is the next ESP32 task.** *(Pi mDNS `moldqueenrasp.local` is
+    DONE — see FINISHED.)*
   - **Serve the client from ESP32 flash** (after the above) — **gated on the client-size
     problem**: the full client (dashboard HTML/JS/CSS + images/GIFs/icons) may be several MB.
     Either (a) aggressively size-limit the full client's assets, or (b) build a separate
@@ -56,8 +56,8 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 - **esp32-core (ESP32-S3 radio core) — finishing.** The core is a usable standalone appliance
   (control slices + provisioning + Group A + Group B all DONE + hardware-verified; see FINISHED
-  below). The remaining work is the **next ESP32 task: Pi mDNS (`moldqueenrasp.local` for
-  linux-core** — PLANNED, not built), then the **binary/release pipeline** (a distributable
+  below). **Pi mDNS (`moldqueenrasp.local` for linux-core) is DONE** (see FINISHED). The
+  remaining work is the **next ESP32 task: the binary/release pipeline** (a distributable
   `.bin`); **serve-client-from-flash** after (see the FUTURE cluster). Toolchain: ESP-IDF v5.5.4.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   open at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`. Addressing
@@ -72,6 +72,16 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## FINISHED (recent, for context)
 
+- **Pi mDNS discovery — `moldqueenrasp.local`** (linux-core, hardware-verified on the LAN). The
+  Pi core is now reachable by a stable name (`ws://moldqueenrasp.local:8765`), mirroring the
+  ESP32's `moldqueenesp.local`. Mechanism: an **additive avahi address-record alias**
+  (`avahi-publish -a moldqueenrasp.local <ip>`, from `avahi-utils`) via a shipped
+  **`scripts/mdns.sh`** wired into **`scripts/start.sh`** (background, cleaned up on exit) + an
+  optional **`scripts/moldqueen-mdns.service`** template for always-on. **No system-hostname
+  rename** (the Pi's own `<hostname>.local` and the IP still resolve); **graceful** (no-ops if
+  `avahi-utils` absent — core still works by IP; `MK4_NO_MDNS=1` to skip, `MK4_MDNS_NAME` to
+  rename). Documented in QUICKSTART + README. `avahi-daemon` ships with Raspberry Pi OS;
+  `avahi-utils` is the one apt dep.
 - **esp32-core — a usable standalone appliance** (hardware-verified on the N16R8). The four
   control slices — clean-room **C MouldKingCrypt** (byte-exact, 9/9 on-device), the **NimBLE
   0xFFF0 advertiser** (in-place `ble_gap_adv_set_data`, legacy on purpose since extended
