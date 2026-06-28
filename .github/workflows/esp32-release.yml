@@ -110,6 +110,6 @@ jobs:
             `moldqueenesp.local` (WS API on :8765, management page on :8080).
           generate_release_notes: true
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.MK_PROJECT_VER, '-') }}
           files: ${{ env.MERGED_BIN }}
           fail_on_unmatched_files: true
