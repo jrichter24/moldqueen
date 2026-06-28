@@ -1,0 +1,115 @@
+name: ESP32 Release
+
+# Builds the esp32-core firmware clean and publishes ONE merged, flashable .bin to a GitHub
+# Release. Triggered by a SEPARATE tag scheme `esp-v*` (independent of the Android `v*`
+# releases). GitHub's `on.push.tags: ['v*']` requires the tag to START with `v`, so `esp-v*`
+# does NOT match `v*` — this workflow and release.yml are disjoint and never double-fire.
+#
+# Firmware version comes FROM THE TAG: esp-v0.1.0 -> MK_PROJECT_VER=0.1.0 -> baked into the
+# image (esp_app_get_description()->version, shown on the mgmt page / Server-info). Dev/local
+# builds leave MK_PROJECT_VER unset and keep ESP-IDF's git-describe default (see CMakeLists.txt).
+#
+# No signing / no secrets: ESP32 firmware isn't signed like the APK. Plain build + release.
+
+on:
+  push:
+    tags:
+      - 'esp-v*'
+
+permissions:
+  contents: write          # create the Release + upload the merged .bin asset
+
+jobs:
+  release:
+    name: Build + publish merged ESP32 firmware
+    runs-on: ubuntu-latest
+    # Official Espressif IDF image pinned to v5.5.4 (matches the local toolchain). Carries the
+    # full ESP-IDF env + esptool; the build runs through its entrypoint (sets up IDF_PATH etc.).
+    container: espressif/idf:v5.5.4
+    defaults:
+      run:
+        working-directory: esp32-core
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      # esp-v0.1.0 -> 0.1.0 (strip the `esp-v` prefix). This is the version the firmware bakes
+      # in and the value we assert the build produced. A clean tag checkout has no -dirty suffix.
+      - name: Derive version from tag
+        run: |
+          set -e
+          VER="${GITHUB_REF_NAME#esp-v}"
+          if [ "$VER" = "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag '$GITHUB_REF_NAME' does not start with 'esp-v'; cannot derive a version."
+            exit 1
+          fi
+          echo "MK_PROJECT_VER=$VER" >> "$GITHUB_ENV"
+          echo "tag=$GITHUB_REF_NAME -> firmware version=$VER"
+
+      # Clean build inside the IDF env. MK_PROJECT_VER (from the tag) flows into CMakeLists.txt,
+      # so the baked-in version is the clean tag, not git-describe. The IDF image's entrypoint
+      # sources export.sh before running the command.
+      - name: Build firmware (target esp32s3)
+        run: |
+          . "$IDF_PATH/export.sh"
+          idf.py set-target esp32s3
+          idf.py build
+
+      # The build's flasher_args.json is the authoritative offset->file map. For this project's
+      # partitions.csv it is bootloader@0x0, partition-table@0x8000, app@0x10000 — but we DERIVE
+      # the offsets from the file rather than hardcode them, so the workflow reflects what was
+      # actually produced. `esptool merge_bin` packs them into one image; a full merged image is
+      # always written at a single offset 0x0.
+      - name: Merge into one flashable .bin (offsets derived from flasher_args.json)
+        run: |
+          set -e
+          . "$IDF_PATH/export.sh"
+          cd build
+          OUT="moldqueen-esp32-${GITHUB_REF_NAME}.bin"
+          # Build the "<offset> <file>" pair list straight from flasher_args.json (flash_files map).
+          PAIRS=$(python3 -c "import json; d=json.load(open('flasher_args.json'))['flash_files']; print(' '.join(f'{off} {f}' for off,f in sorted(d.items(), key=lambda kv: int(kv[0],16))))")
+          echo "merge_bin inputs (offset file ...): $PAIRS"
+          esptool.py --chip esp32s3 merge_bin -o "$OUT" \
+            --flash_mode dio --flash_freq 80m --flash_size 16MB \
+            $PAIRS
+          ls -l "$OUT"
+          echo "MERGED_BIN=esp32-core/build/$OUT" >> "$GITHUB_ENV"
+
+      # Parity check (mirrors release.yml's version-vs-tag assert). project_description.json's
+      # .project_version is the canonical build metadata — it's exactly what was passed to the
+      # build and what esp_app_get_description()->version reports — so it's the simplest, most
+      # reliable readback. On mismatch, fail loudly.
+      - name: Verify baked-in firmware version matches the tag
+        run: |
+          set -e
+          BUILT=$(python3 -c "import json; print(json.load(open('build/project_description.json'))['project_version'])")
+          echo "expected=$MK_PROJECT_VER  built(project_description.json)=$BUILT"
+          if [ "$BUILT" != "$MK_PROJECT_VER" ]; then
+            echo "::error::Firmware version '$BUILT' != tag-derived '$MK_PROJECT_VER'. The MK_PROJECT_VER override did not take effect (CMakeLists plumbing? dirty tree?)."
+            exit 1
+          fi
+
+      - name: Create GitHub Release + attach merged .bin
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: moldqueen-esp32 ${{ github.ref_name }}
+          body: |
+            Merged, flashable firmware for **moldqueen-esp32 ${{ github.ref_name }}**
+            (Heemol ESP32-S3 N16R8 DevKitC-1, 16 MB flash).
+
+            One image — bootloader + partition table + app already at their offsets. Flash the
+            whole thing to **0x0**:
+
+            ```
+            esptool.py --chip esp32s3 write_flash 0x0 moldqueen-esp32-${{ github.ref_name }}.bin
+            ```
+
+            After flashing, the device boots into WiFi setup (`moldqueen-setup` AP at
+            192.168.4.1) if it has no saved credentials; once provisioned it's reachable at
+            `moldqueenesp.local` (WS API on :8765, management page on :8080).
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: ${{ env.MERGED_BIN }}
+          fail_on_unmatched_files: true
