@@ -52,6 +52,12 @@ code,pre{font-family:var(--mono)}
 .navlinks a.active::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--accent)}
 .navlinks .cta{color:var(--ink);border:1px solid var(--line-2);padding:.45rem .9rem;border-radius:7px}
 .navlinks .cta:hover{border-color:var(--accent)}
+/* "Get started" disclosure parent (open/close JS arrives in a later step;
+   for now the submenu stays inline and reachable so the nav fully works). */
+.navlinks .submenu-toggle{background:none;border:0;font:inherit;color:var(--muted);font-size:.9rem;
+  cursor:pointer;padding:.3rem 0;white-space:nowrap;transition:color .2s}
+.navlinks .submenu-toggle:hover{color:var(--ink)}
+.navlinks .submenu{display:flex;align-items:center;gap:1.4rem;list-style:none;margin:0 0 0 1.4rem;padding:0}
 .lang{display:inline-flex;align-items:center;gap:.3rem;margin-left:.3rem}
 .langbtn{background:none;border:0;color:var(--muted);font:inherit;font-size:.82rem;font-weight:700;letter-spacing:.04em;cursor:pointer;padding:.2rem .15rem}
 .langbtn:hover{color:var(--ink)}
@@ -69,6 +75,9 @@ code,pre{font-family:var(--mono)}
   .navlinks a.active::after{display:none}
   .navlinks .cta{border:0;padding:.9rem 0}
   .navlinks .lang{padding:.8rem 0}
+  /* In the drawer the "Get started" group flattens to an indented stack (CSS only). */
+  .navlinks .submenu-toggle{padding:.9rem 0;border-bottom:1px solid var(--line);font-size:1.05rem;text-align:left;width:100%}
+  .navlinks .submenu{flex-direction:column;align-items:stretch;gap:0;margin:0;padding-left:1.1rem}
 }
 
 /* ---------- buttons ---------- */

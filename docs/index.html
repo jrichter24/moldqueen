@@ -31,9 +31,15 @@
       <ul class="navlinks" id="navlinks">
         <li><a href="#features" data-i18n="ix.nav.design">Design</a></li>
         <li><a href="#layouts" data-i18n="ix.nav.layouts">Layouts</a></li>
-        <li><a href="#app" data-i18n="ix.nav.app">Get the Android app</a></li>
-        <li><a href="#esp-setup" data-i18n="ix.nav.esp">ESP32 setup</a></li>
-        <li><a href="#combine" data-i18n="ix.nav.combine">Docker client</a></li>
+        <li class="has-submenu">
+          <button type="button" class="submenu-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="submenu-start" data-i18n="ix.nav.start">Get started</button>
+          <ul class="submenu" id="submenu-start">
+            <li><a href="#app" data-i18n="ix.nav.app">Get the Android app</a></li>
+            <li><a href="#esp-setup" data-i18n="ix.nav.esp">ESP32 setup</a></li>
+            <li><a href="#docker" data-i18n="ix.nav.docker">Docker client</a></li>
+          </ul>
+        </li>
+        <li><a href="#combine" data-i18n="ix.nav.combine">One client, any radio</a></li>
         <li><a href="#dev" data-i18n="ix.nav.dev">Developers</a></li>
         <li><a href="#support" data-i18n="ix.nav.support">Support</a></li>
         <li><a href="#about" data-i18n="ix.nav.about">About</a></li>
@@ -368,6 +374,24 @@ idf.py flash monitor</pre>
       </div>
     </section>
 
+    <!-- 5b. DOCKER CLIENT ================================================= -->
+    <section class="section" id="docker">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow" data-i18n="ix.dock.eyebrow">Docker client</p>
+          <h2 data-i18n="ix.dock.h2">Run the client in one command.</h2>
+          <p class="lead" data-i18n="ix.dock.lead">Already have a radio core on your network? Skip the build entirely. A published, public container hosts just the web UI, so one command puts the client on your machine and you point it at your device.</p>
+        </div>
+        <p data-i18n="ix.dock.p">Already have a radio core running? A published, public container serves just the web UI, with no Python and no build. It hosts the client over <code>http://localhost</code>, so it connects straight to a plain <code>ws://</code> device on your network. It is a real local-hosting option for driving your own device, not a hosted demo.</p>
+        <pre class="cmd">docker run --rm -p 8080:8080 ghcr.io/jrichter24/moldqueen-client:latest
+<span class="c"># then open http://localhost:8080/ and point the WS endpoint at your device</span></pre>
+        <p>
+          <a class="btn btn-primary" href="https://github.com/jrichter24/moldqueen/pkgs/container/moldqueen-client" rel="noopener" target="_blank"><span data-i18n="ix.dock.btn">Get the Docker image</span> <span class="arr">→</span></a>
+        </p>
+        <p class="muted" data-i18n="ix.dock.muted">Use <code>:latest</code> for the newest build or pin <code>:0.1.0</code> for the current version. The host port is the left number, so remap freely (<code>-p 9090:8080</code>). Point the endpoint at <code>ws://moldqueenrasp.local:8765</code>, <code>ws://moldqueenesp.local:8765</code>, or the IP form. Detail in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md" rel="noopener" target="_blank">REMOTE_CLIENT.md</a>.</p>
+      </div>
+    </section>
+
     <!-- 6. DEVELOPERS ===================================================== -->
     <section class="section" id="dev">
       <div class="wrap">
@@ -381,15 +405,8 @@ idf.py flash monitor</pre>
           <div class="dline"><div class="k" data-i18n="ix.dev.k2">Android core</div><div class="v" data-i18n="ix.dev.v2">Kotlin, a native BLE advertiser, the same API on the device. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ANDROID.md" rel="noopener" target="_blank">ANDROID.md</a></div></div>
           <div class="dline"><div class="k" data-i18n="ix.dev.k5">ESP32 core</div><div class="v" data-i18n="ix.dev.v5">C and ESP-IDF, a NimBLE advertiser, the same API over WiFi. <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener" target="_blank">esp32-core</a></div></div>
           <div class="dline"><div class="k" data-i18n="ix.dev.k3">Desktop dev client</div><div class="v" data-i18n="ix.dev.v3">Serve the UI locally against a remote core, no build. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/DEV_CLIENT.md" rel="noopener" target="_blank">DEV_CLIENT.md</a></div></div>
-          <div class="dline"><div class="k" data-i18n="ix.dev.k4">Docker</div><div class="v" data-i18n="ix.dev.v4">A published, public client-only image, one command, no build. <a href="https://github.com/jrichter24/moldqueen/pkgs/container/moldqueen-client" rel="noopener" target="_blank">ghcr package</a> · <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md" rel="noopener" target="_blank">REMOTE_CLIENT.md</a></div></div>
+          <div class="dline"><div class="k" data-i18n="ix.dev.k4">Docker</div><div class="v" data-i18n="ix.dev.v4">A published, public client-only image, one command, no build. See the <a href="#docker">Docker client</a> section. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md" rel="noopener" target="_blank">REMOTE_CLIENT.md</a></div></div>
         </div>
-        <p data-i18n="ix.dock.p">Already have a radio core running? A published, public container serves just the web UI, with no Python and no build. It hosts the client over <code>http://localhost</code>, so it connects straight to a plain <code>ws://</code> device on your network. It is a real local-hosting option for driving your own device, not a hosted demo.</p>
-        <pre class="cmd">docker run --rm -p 8080:8080 ghcr.io/jrichter24/moldqueen-client:latest
-<span class="c"># then open http://localhost:8080/ and point the WS endpoint at your device</span></pre>
-        <p>
-          <a class="btn btn-primary" href="https://github.com/jrichter24/moldqueen/pkgs/container/moldqueen-client" rel="noopener" target="_blank"><span data-i18n="ix.dock.btn">Get the Docker image</span> <span class="arr">→</span></a>
-        </p>
-        <p class="muted" data-i18n="ix.dock.muted">Use <code>:latest</code> for the newest build or pin <code>:0.1.0</code> for the current version. The host port is the left number, so remap freely (<code>-p 9090:8080</code>). Point the endpoint at <code>ws://moldqueenrasp.local:8765</code>, <code>ws://moldqueenesp.local:8765</code>, or the IP form. Detail in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md" rel="noopener" target="_blank">REMOTE_CLIENT.md</a>.</p>
         <div class="callout" data-i18n="ix.dev.callout">
           <strong>The protocol.</strong> Control rides on manufacturer-specific Bluetooth-LE advertisements: a twelve-channel nibble telegram (MK4) that drives every connected hub at once. The codec is verified byte-exact against the official app. Full reference in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/PROJECT.md" rel="noopener" target="_blank">PROJECT.md</a> and the machine-readable <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/mk4web/asyncapi.yaml" rel="noopener" target="_blank">AsyncAPI</a>.
         </div>
