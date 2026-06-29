@@ -8,6 +8,10 @@
   function lerp(a, b, t) { return a + (b - a) * t; }
   function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
   function mixRGB(A, B, t) { return [Math.round(lerp(A[0], B[0], t)), Math.round(lerp(A[1], B[1], t)), Math.round(lerp(A[2], B[2], t))]; }
+  // WCAG: sRGB relative luminance + contrast ratio (for the scroll-tracking buttons).
+  function _chan(c) { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+  function relLum(rgb) { return 0.2126 * _chan(rgb[0]) + 0.7152 * _chan(rgb[1]) + 0.0722 * _chan(rgb[2]); }
+  function contrast(a, b) { var la = relLum(a), lb = relLum(b), hi = Math.max(la, lb), lo = Math.min(la, lb); return (hi + 0.05) / (lo + 0.05); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
   function pretty(s) { return String(s).replace(/_/g, " "); }
@@ -266,6 +270,18 @@
   var DARK_BG = [9, 11, 15], LIGHT_BG = [241, 243, 246];
   var LIGHT_INK = [237, 241, 246], DARK_INK = [18, 22, 30];
   var DARK_ACC = [96, 178, 233], LIGHT_ACC = [27, 105, 160];
+  // Button fill (--btn-bg) tracks the scroll tone CONTINUOUSLY between these two
+  // accent endpoints, then is held off the page bg by a contrast floor; the label
+  // (--btn-fg) is chosen per-frame for >=4.5:1 (WCAG AA) against the final fill.
+  var BTN_BG_STANDOFF = 1.9;          // min fill-vs-bg contrast (aesthetic: fill must read as a button)
+  var BTN_LABEL_AA = 4.5;             // WCAG AA for the label on the fill
+  var BTN_WHITE = [255, 255, 255], BTN_BLACK = [4, 18, 29];
+  var BTN_DARK_POLE = [10, 32, 52], BTN_LIGHT_POLE = [156, 208, 246]; // deep / bright blue pulls
+  function btnLabel(fill) {
+    var rw = contrast(BTN_WHITE, fill), rb = contrast(BTN_BLACK, fill);
+    var fg = rw >= rb ? BTN_WHITE : BTN_BLACK;
+    return { fg: fg, ratio: Math.max(rw, rb) };
+  }
   var anchor = document.getElementById("app");
 
   function progress() {
@@ -284,12 +300,29 @@
     var ink = ti ? DARK_INK : LIGHT_INK;
     var acc = ti ? LIGHT_ACC : DARK_ACC;
     var haloA = clamp01(1 - Math.abs(L - 0.5) / 0.14) * 0.55;
+    // Button fill: continuous accent interpolation, then held off the page bg AND
+    // out of the mid-luminance band (where no label clears AA) by one push toward
+    // whichever pole contrasts more with the current bg. Label flips black<->white
+    // per-frame to keep >=4.5:1 on the final fill at every scroll position.
+    var fill = mixRGB(DARK_ACC, LIGHT_ACC, L);
+    var btnOk = function (c) { return contrast(c, bg) >= BTN_BG_STANDOFF && btnLabel(c).ratio >= BTN_LABEL_AA; };
+    if (!btnOk(fill)) {
+      // pick the pole by actual CONTRAST RATIO with the bg (ratio is non-linear, so near the mid
+      // crossover the larger-luminance-delta pole can be the worse-contrast one) -- selecting by
+      // ratio holds the 1.9 fill-vs-bg standoff at every L, not just at the coarse samples.
+      var pole = contrast(BTN_DARK_POLE, bg) >= contrast(BTN_LIGHT_POLE, bg) ? BTN_DARK_POLE : BTN_LIGHT_POLE;
+      var t = 0;
+      while (!btnOk(fill) && t < 1.0001) { t += 0.04; fill = mixRGB(mixRGB(DARK_ACC, LIGHT_ACC, L), pole, clamp01(t)); }
+    }
+    var btnFg = btnLabel(fill).fg;
     root.style.setProperty("--bg", "rgb(" + bg.join(",") + ")");
     root.style.setProperty("--bg-rgb", bg.join(","));
     root.style.setProperty("--ink", "rgb(" + ink.join(",") + ")");
     root.style.setProperty("--ink-rgb", ink.join(","));
     root.style.setProperty("--accent", "rgb(" + acc.join(",") + ")");
     root.style.setProperty("--accent-rgb", acc.join(","));
+    root.style.setProperty("--btn-bg", "rgb(" + fill.join(",") + ")");
+    root.style.setProperty("--btn-fg", "rgb(" + btnFg.join(",") + ")");
     root.style.setProperty("--halo-rgb", ti < 0.5 ? "0,0,0" : "255,255,255");
     root.style.setProperty("--halo-a", haloA.toFixed(3));
   }

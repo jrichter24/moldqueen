@@ -5,6 +5,7 @@
   --bg:#0a0d12; --bg-rgb:10,13,18;
   --ink:#eef2f7; --ink-rgb:238,242,247;
   --accent:#46a0dc; --accent-rgb:70,160,220;
+  --btn-bg:#60b2e9; --btn-fg:#04121d; /* primary-button fill+label; site.js tracks these to the scroll tone (continuous, AA-locked). Static fallback for no-JS / reduced-motion. */
   --halo-rgb:0,0,0; --halo-a:0;
   --muted:rgba(var(--ink-rgb),.66);
   --faint:rgba(var(--ink-rgb),.45);
@@ -77,7 +78,7 @@ code,pre{font-family:var(--mono)}
 .btn:hover{border-color:var(--accent);transform:translateY(-1px)}
 .btn .arr{transition:transform .2s}
 .btn:hover .arr{transform:translateX(4px)}
-.btn-primary{background:var(--accent);border-color:var(--accent);color:#04121d}
+.btn-primary{background:var(--btn-bg);border-color:var(--btn-bg);color:var(--btn-fg)}
 .btn-primary:hover{filter:brightness(1.08)}
 .btn.ph{opacity:.5;cursor:not-allowed;border-style:dashed;color:var(--muted)}
 .btn.ph:hover{border-color:var(--line-2);color:var(--muted);transform:none}
@@ -351,7 +352,7 @@ pre.cmd .c{color:var(--faint)}
 .foot .fine{margin-top:1.4rem;color:#697585;font-size:.84rem;max-width:78ch}
 
 /* ---------- utility pages (privacy / inspiration): pinned dark ---------- */
-body.util{--bg:#0a0d12;--bg-rgb:10,13,18;--ink:#eef2f7;--ink-rgb:238,242,247;--accent:#46a0dc;--accent-rgb:70,160,220;--halo-a:0}
+body.util{--bg:#0a0d12;--bg-rgb:10,13,18;--ink:#eef2f7;--ink-rgb:238,242,247;--accent:#46a0dc;--accent-rgb:70,160,220;--btn-bg:#60b2e9;--btn-fg:#04121d;--halo-a:0}
 .pagehead{padding-block:clamp(2.8rem,8vh,5rem) clamp(1.4rem,4vh,2.4rem);border-bottom:1px solid var(--line)}
 .pagehead h1{font-size:clamp(2.1rem,5vw,3.4rem)}
 .pagehead .lead{color:var(--muted);margin-top:.9rem;max-width:60ch}
