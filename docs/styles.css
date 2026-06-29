@@ -58,7 +58,7 @@ code,pre{font-family:var(--mono)}
 .langsep{color:var(--line-2);font-size:.82rem}
 .navtoggle{display:none;background:none;border:0;color:var(--ink);cursor:pointer;width:42px;height:42px}
 .navtoggle svg{width:24px;height:24px}
-@media (max-width:980px){
+@media (max-width:1100px){
   .navtoggle{display:inline-flex;align-items:center;justify-content:center}
   .navlinks{position:fixed;inset:var(--nav-h) 0 auto 0;flex-direction:column;align-items:stretch;gap:0;
     background:var(--bg);border-bottom:1px solid var(--line);padding:.4rem var(--pad) 1.1rem;
@@ -128,6 +128,47 @@ code,pre{font-family:var(--mono)}
 .row .copy h3{font-size:clamp(1.5rem,2.6vw,2.2rem);margin-bottom:.9rem}
 .row .copy p{color:var(--muted);font-size:1.08rem;max-width:48ch}
 @media (max-width:820px){.row{grid-template-columns:1fr;gap:1.4rem}.row.rev .media{order:0}}
+
+/* ---------- capability capstone (server/client matrix below the radio cards) ---------- */
+/* Sits after the last .row; .row:last-child zeroes its own bottom padding, so give the
+   capstone its own top border + spacing for a clean separation. */
+.combine{border-top:1px solid var(--line);margin-top:clamp(2.4rem,6vh,4.5rem);padding-top:clamp(2.4rem,6vh,4rem)}
+.combine .combine-h{font-size:clamp(1.5rem,2.6vw,2.2rem);margin-bottom:.9rem}
+.combine .combine-lead{color:var(--muted);font-size:1.08rem;max-width:60ch;margin-bottom:2rem}
+.cap{width:100%;border-collapse:collapse;font-size:1rem;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.cap thead th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;font-weight:800;
+  color:var(--faint);padding:1rem 1.2rem;background:var(--surface);border-bottom:1px solid var(--line-2)}
+.cap thead th:not(.cap-corner){text-align:center;width:9rem}
+.cap tbody th{text-align:left;font-weight:700;color:var(--ink);padding:1rem 1.2rem;border-bottom:1px solid var(--line)}
+.cap tbody td{text-align:center;padding:1rem 1.2rem;border-bottom:1px solid var(--line);font-size:1.15rem;line-height:1}
+.cap tbody tr:last-child th,.cap tbody tr:last-child td{border-bottom:0}
+.cap td.yes{color:var(--accent);font-weight:800}
+.cap td.no{color:var(--faint)}
+.cap .cap-fn{color:var(--accent);text-decoration:none;font-weight:800}
+.cap .cap-fn sup{font-size:.7em}
+/* planned roadmap rows: muted + a dashed "planned" pill, modelled on .proto.soon */
+.cap tr.planned th,.cap tr.planned td{color:var(--muted);background:var(--surface)}
+.cap tr.planned td.yes{color:rgba(var(--accent-rgb),.6)}
+.cap-soon{display:inline-block;margin-left:.5rem;font-size:.6rem;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;vertical-align:middle;padding:.18rem .5rem;border-radius:6px;
+  color:var(--faint);border:1px dashed var(--line-2);background:transparent}
+.combine-note{margin-top:1.2rem;color:var(--faint);font-size:.9rem;max-width:60ch}
+.combine-note sup{color:var(--accent);font-weight:800;margin-right:.15rem}
+@media (max-width:620px){
+  /* reflow each row into a stacked block; keep the same accessible <table> markup */
+  .cap{border-radius:0;border-left:0;border-right:0}
+  .cap thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+  .cap tbody,.cap tbody tr,.cap tbody th,.cap tbody td{display:block;width:auto}
+  .cap tbody tr{border:1px solid var(--line);border-radius:12px;padding:.4rem .2rem;margin-bottom:1rem;background:var(--surface)}
+  .cap tbody tr:last-child{margin-bottom:0}
+  .cap tbody th{border-bottom:1px solid var(--line);padding:.7rem 1rem .8rem;font-size:1.05rem}
+  .cap tbody td{display:flex;justify-content:space-between;align-items:center;text-align:right;
+    padding:.55rem 1rem;border-bottom:1px solid var(--line);font-size:1.05rem}
+  .cap tbody tr td:last-child{border-bottom:0}
+  .cap tbody td::before{content:attr(data-label);color:var(--muted);font-size:.82rem;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase}
+  .cap tr.planned th,.cap tr.planned td{background:transparent}
+}
 
 .media{position:relative}
 .shot{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:16px;border:1px solid var(--line);

@@ -33,6 +33,7 @@
         <li><a href="#layouts" data-i18n="ix.nav.layouts">Layouts</a></li>
         <li><a href="#app" data-i18n="ix.nav.app">Get the Android app</a></li>
         <li><a href="#esp-setup" data-i18n="ix.nav.esp">ESP32 setup</a></li>
+        <li><a href="#combine" data-i18n="ix.nav.combine">Docker client</a></li>
         <li><a href="#dev" data-i18n="ix.nav.dev">Developers</a></li>
         <li><a href="#support" data-i18n="ix.nav.support">Support</a></li>
         <li><a href="#about" data-i18n="ix.nav.about">About</a></li>
@@ -211,6 +212,67 @@ cd esp32-core
 idf.py flash monitor</pre>
             <p class="muted" data-i18n="ix.esp.muted">First boot opens a setup WiFi (<code>moldqueen-setup</code>) to enter your network; after that the board is discoverable as <code>moldqueenesp.local</code> with a built-in management page at <a href="#esp-setup">moldqueenesp.local:8080</a>. Walk the setup below, or see the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener" target="_blank">esp32-core</a> folder.</p>
           </div>
+        </div>
+
+        <!-- Capstone: capability overview. NOT a 4th radio card; it sits below the three
+             cards and visualises the server/client decoupling. -->
+        <div class="combine" id="combine">
+          <p class="eyebrow" data-i18n="ix.combine.eyebrow">Mix and match</p>
+          <h3 class="combine-h" data-i18n="ix.combine.h3">One client, any radio.</h3>
+          <p class="combine-lead" data-i18n="ix.combine.lead">There is one smart client and it runs the same everywhere: the Pi-served page, the Android WebView, a Docker container, the desktop dev server, and soon iPhone and Mac. Learn the interface once and pick any server with any client. The table below shows what each build hosts today.</p>
+
+          <table class="cap">
+            <thead>
+              <tr>
+                <th scope="col" class="cap-corner"><span data-i18n="ix.combine.col0">Build</span></th>
+                <th scope="col" data-i18n="ix.combine.colServer">Server (radio)</th>
+                <th scope="col" data-i18n="ix.combine.colClient">Client (UI)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row" data-i18n="ix.combine.rAndroid">Android app</th>
+                <td data-label="Server" class="yes" aria-label="yes">✓</td>
+                <td data-label="Client" class="yes" aria-label="yes">✓</td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n="ix.combine.rPi">Raspberry Pi <a class="cap-fn" href="#combine-note" aria-describedby="combine-note"><sup>1</sup></a></th>
+                <td data-label="Server" class="yes" aria-label="yes">✓</td>
+                <td data-label="Client" class="yes" aria-label="yes">✓</td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n="ix.combine.rEsp">ESP32</th>
+                <td data-label="Server" class="yes" aria-label="yes">✓</td>
+                <td data-label="Client" class="no" aria-label="no">−</td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n="ix.combine.rDesktop">Desktop dev client</th>
+                <td data-label="Server" class="no" aria-label="no">−</td>
+                <td data-label="Client" class="yes" aria-label="yes">✓</td>
+              </tr>
+              <tr>
+                <th scope="row" data-i18n="ix.combine.rDocker">Docker image</th>
+                <td data-label="Server" class="no" aria-label="no">−</td>
+                <td data-label="Client" class="yes" aria-label="yes">✓</td>
+              </tr>
+              <tr class="planned">
+                <th scope="row"><span data-i18n="ix.combine.rAndroidS">Android (server-only)</span> <span class="cap-soon" data-i18n="ix.combine.planned">planned</span></th>
+                <td data-label="Server" class="yes" aria-label="yes">✓</td>
+                <td data-label="Client" class="no" aria-label="no">−</td>
+              </tr>
+              <tr class="planned">
+                <th scope="row"><span data-i18n="ix.combine.rAndroidC">Android (client-only)</span> <span class="cap-soon" data-i18n="ix.combine.planned">planned</span></th>
+                <td data-label="Server" class="no" aria-label="no">−</td>
+                <td data-label="Client" class="yes" aria-label="yes">✓</td>
+              </tr>
+              <tr class="planned">
+                <th scope="row"><span data-i18n="ix.combine.rApple">iPhone / Mac client</span> <span class="cap-soon" data-i18n="ix.combine.planned">planned</span></th>
+                <td data-label="Server" class="no" aria-label="no">−</td>
+                <td data-label="Client" class="yes" aria-label="yes">✓</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="combine-note" id="combine-note" data-i18n="ix.combine.note"><sup>1</sup> The Pi is a monolith: it can run the full server plus client, or be told to run server-only or client-only.</p>
         </div>
       </div>
     </section>
