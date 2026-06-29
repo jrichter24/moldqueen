@@ -1,0 +1,80 @@
+name: Client Release
+
+# Builds the single-source web client (client/, served by serve.py) as a Docker image and
+# publishes it to the GitHub Container Registry (ghcr.io). Triggered by a SEPARATE tag scheme
+# `client-v*`, independent of the Android `v*` (release.yml) and ESP32 `esp-v*` (esp32-release.yml)
+# schemes. GitHub tag-pattern matching anchors at the START of the tag name, so `v*` and `esp-v*`
+# do NOT match `client-v*` (it starts with `c`) — the three release workflows are disjoint and
+# never double-fire. ci.yml is branch/PR-triggered (no tags), so a tag push never fires it.
+#
+# Image: ghcr.io/jrichter24/moldqueen-client, tagged with the version derived from the git tag
+# (client-v0.1.0 -> 0.1.0) AND `:latest`, so `:latest` always tracks the newest client release.
+# It serves the UI only (no broadcaster, no radio) — point it at a remote core's WS API via the
+# in-app "API endpoint" setting (ws://<host>:8765). See dev-docs/REMOTE_CLIENT.md.
+#
+# Auth: the built-in GITHUB_TOKEN (no external secrets) + `packages: write`.
+# NOTE (one-time manual step, NOT in this workflow): ghcr packages default to PRIVATE. After the
+# first successful push, set the package visibility to PUBLIC once in the repo/package settings.
+
+on:
+  push:
+    tags:
+      - 'client-v*'
+
+permissions:
+  contents: read          # checkout
+  packages: write         # push the image to ghcr.io
+
+env:
+  IMAGE: ghcr.io/jrichter24/moldqueen-client
+
+jobs:
+  publish:
+    name: Build + publish client image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # client-v0.1.0 -> 0.1.0 (strip the `client-v` prefix). The trigger already restricts to
+      # client-v*, but assert anyway so a mis-tag fails loudly instead of publishing a bad tag.
+      - name: Derive version from tag
+        run: |
+          set -e
+          VER="${GITHUB_REF_NAME#client-v}"
+          if [ "$VER" = "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag '$GITHUB_REF_NAME' does not start with 'client-v'; cannot derive a version."
+            exit 1
+          fi
+          echo "VERSION=$VER" >> "$GITHUB_ENV"
+          echo "tag=$GITHUB_REF_NAME -> client image version=$VER"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Context = repo ROOT (the Dockerfile COPYs client/serve.py + client/web/ + client/assets/
+      # from root); file = Dockerfile.client. Push :<version> AND :latest so latest tracks newest.
+      # The OCI source label makes the published package link back to this repo on ghcr.
+      # Single platform (linux/amd64); arm64 is a trivial add (append linux/arm64 to platforms and
+      # add a docker/setup-qemu-action@v3 step before buildx for the emulator).
+      - name: Build + push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.client
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ env.IMAGE }}:${{ env.VERSION }}
+            ${{ env.IMAGE }}:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/jrichter24/moldqueen
+            org.opencontainers.image.description=moldqueen single-source web client (UI only; point at a remote core's WS API)
+            org.opencontainers.image.version=${{ env.VERSION }}
+            org.opencontainers.image.revision=${{ github.sha }}
