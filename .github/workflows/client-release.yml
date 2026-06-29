@@ -70,6 +70,7 @@ jobs:
           file: Dockerfile.client
           push: true
           platforms: linux/amd64
+          provenance: false        # publish a clean single-platform image (no "unknown/unknown" attestation entry)
           tags: |
             ${{ env.IMAGE }}:${{ env.VERSION }}
             ${{ env.IMAGE }}:latest
