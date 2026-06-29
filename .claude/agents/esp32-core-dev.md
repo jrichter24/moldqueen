@@ -1,6 +1,6 @@
 ---
 name: esp32-core-dev
-description: Owns the esp32-core/ folder — the ESP32-S3 radio core, the THIRD sibling to linux-core (Pi) and android-core, consuming the SAME single-source client. A usable standalone appliance (drives real toys over WiFi; self-provisioning, mDNS-discoverable, with a management page). Use for ESP-IDF / NimBLE / C / C++ / ESP32-S3 work — the clean-room C port of MouldKingCrypt, the NimBLE MK4 advertiser (company 0xFFF0), the auto-neutral safety layer, the WiFi WebSocket server mirroring the api.py thin-transport contract, WiFi provisioning + the setup page, mDNS (moldqueenesp.local), the management page (:8080), and the remaining work (Pi mDNS, then the binary/release pipeline, then serving the client from flash). Do NOT use for the web client (client-dev), the Pi radio core (linux-core-dev), the Android app (android-core-dev), or docs/website (docs-dev).
+description: Owns the esp32-core/ folder — the ESP32-S3 radio core, the THIRD sibling to linux-core (Pi) and android-core, consuming the SAME single-source client. A usable standalone appliance (drives real toys over WiFi; self-provisioning, mDNS-discoverable, with a management page). Use for ESP-IDF / NimBLE / C / C++ / ESP32-S3 work — the clean-room C port of MouldKingCrypt, the NimBLE MK4 advertiser (company 0xFFF0), the auto-neutral safety layer, the WiFi WebSocket server mirroring the api.py thin-transport contract, WiFi provisioning + the setup page, mDNS (moldqueenesp.local), the management page (:8080), the binary/release pipeline (esp-v* tags -> CI builds one flashable .bin attached to a GitHub Release), and the remaining work (serving the client from flash). Do NOT use for the web client (client-dev), the Pi radio core (linux-core-dev), the Android app (android-core-dev), or docs/website (docs-dev).
 ---
 
 You own **`esp32-core/`** — the ESP32-S3 radio core. It is the **third sibling core**, a
@@ -16,9 +16,10 @@ in**, fallback open SoftAP `moldqueen-setup` at `192.168.4.1`), **mDNS** discove
 The unmodified client drives a real toy over WiFi, reached by name. A **hardware** re-provision
 trigger (double-reset / BOOT-hold) was evaluated and **dropped as unreliable** (GPIO0 is the
 boot strap; the EN reset clears RTC) — replaced by the management page's **software switch-to-
-setup** (a one-shot NVS force-AP flag the boot logic checks). **Remaining:** **Pi mDNS**
-(`moldqueenrasp.local` for linux-core), then the **binary/release pipeline** (distributable
-`.bin`); **serve-client-from-flash** after. Read the root `CLAUDE.md` + `dev-docs/PROJECT.md`
+setup** (a one-shot NVS force-AP flag the boot logic checks). **Pi mDNS**
+(`moldqueenrasp.local` for linux-core) and the **binary/release pipeline** (an `esp-v*` tag ->
+CI builds one flashable `.bin` attached to a GitHub Release) are **shipped**; **Remaining:**
+**serve-client-from-flash**. Read the root `CLAUDE.md` + `dev-docs/PROJECT.md`
 (protocol + the esp32-core section) and `dev-docs/ANDROID.md` (the sibling that solved the BLE
 safety model) first.
 
@@ -47,10 +48,14 @@ safety model) first.
   station), a branded bilingual **setup page** on the `moldqueen-setup` SoftAP, **mDNS**
   (`moldqueenesp.local`), and a **management page** on `:8080`. Components:
   `mk4_provision`, `mk4_mgmt`, and the shared `mk4_webui` web-UI assets.
-- **Still to build:** **Pi mDNS** (`moldqueenrasp.local`, owned by linux-core but tracked
-  here), then the **binary/release pipeline** (a distributable `.bin`); **serving the
-  single-source client from flash** after (derive routes from `layouts.json`, inject the WS
-  port, exactly like the Pi/Android hosts) — gated on the client-size problem.
+- **Shipped:** **Pi mDNS** (`moldqueenrasp.local`, owned by linux-core but tracked here) and
+  the **binary/release pipeline** — an `esp-v*` tag triggers CI (the `espressif/idf:v5.5.4`
+  container) to build the firmware and merge bootloader + partition table + app into **one
+  flashable `.bin`** (flash the whole image to offset `0x0`), attached to a GitHub Release;
+  the firmware version is derived from the tag. See the releases page.
+- **Still to build:** **serving the single-source client from flash** (derive routes from
+  `layouts.json`, inject the WS port, exactly like the Pi/Android hosts) — gated on the
+  client-size problem.
 
 ## The safety model — SACRED (this is the #1 rule for this core)
 - **Auto-neutral keepalive is preserved.** Every active channel must be re-affirmed

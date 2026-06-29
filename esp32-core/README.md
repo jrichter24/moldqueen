@@ -15,9 +15,12 @@ bilingual config/saved page**), and a **device management page**
 in — the **unmodified** single-source client drives a real toy **over WiFi** (drive + STOP +
 auto-neutral over the live path, no WiFi/BLE coexistence stutter, reached via the `.local` name
 and a custom WS port), and the firmware is **distributable** (no creds compiled in — anyone
-flashes it and enters their own WiFi) — all hardware-confirmed. Still to come (owned by the
-`esp32-core-dev` agent): a **binary/release pipeline** (a distributable `.bin`), then **serving
-the client from flash**.
+flashes it and enters their own WiFi) — all hardware-confirmed. The **binary/release pipeline**
+is **live** and the **first release is published**: tag `esp-v*` and CI (GitHub Actions, the
+`espressif/idf:v5.5.4` container) builds the firmware and merges bootloader + partition table +
+app into **one flashable `.bin`** attached to a GitHub Release (flash the whole image to offset
+`0x0`). See the [releases page](https://github.com/jrichter24/moldqueen/releases). Still to come
+(owned by the `esp32-core-dev` agent): **serving the client from flash**.
 
 ## Layout
 - `components/mouldking_crypt/` — the clean-room **C port of the MouldKing cipher**

@@ -25,8 +25,9 @@ that speaks it. (Back to the [README](../README.md) · canonical state in
   a fallback `moldqueen-setup` AP + a branded bilingual setup page), **mDNS discovery** as
   `moldqueenesp.local`, and a **management page** at `moldqueenesp.local:8080` (status, restart,
   switch-to-setup, change-network) — all done and hardware-verified (`esp32-core/`; see
-  [PROJECT.md](PROJECT.md) §6b). **Next:** Pi mDNS (`moldqueenrasp.local` for linux-core), then
-  the binary/release pipeline (a distributable `.bin`); serve-client-from-flash after.
+  [PROJECT.md](PROJECT.md) §6b). Pi mDNS (`moldqueenrasp.local` for linux-core) and the
+  binary/release pipeline (a downloadable `.bin`, published per `esp-v*` tag) are shipped too;
+  **Next:** serve-client-from-flash.
 
 ## Sensing & autonomy (new clients of the API)
 

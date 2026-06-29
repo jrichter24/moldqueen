@@ -298,6 +298,10 @@ idf.py flash monitor</pre>
           </figure>
         </div>
 
+        <p>
+          <a class="btn btn-primary" href="https://github.com/jrichter24/moldqueen/releases/latest" rel="noopener" target="_blank"><span data-i18n="ix.es.btnFw">Download ESP32 firmware (.bin)</span> <span class="arr">→</span></a>
+        </p>
+        <p class="muted" data-i18n="ix.es.fw">Latest release: <b>esp-v0.1.0</b>. Grab <code>moldqueen-esp32-&lt;tag&gt;.bin</code> and flash the single image at offset <code>0x0</code>: <code>esptool.py --chip esp32s3 write_flash 0x0 moldqueen-esp32-&lt;tag&gt;.bin</code>.</p>
         <p class="tiles-note" data-i18n="ix.es.note">No credentials are stored in git or the binary. The full written walkthrough is in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ESP32_SETUP.md" rel="noopener" target="_blank">ESP32_SETUP.md</a>; build and flash notes are in the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener" target="_blank">esp32-core</a> folder.</p>
       </div>
     </section>
@@ -349,7 +353,7 @@ idf.py flash monitor</pre>
         </div>
         <ul class="roadmap">
           <li data-i18n="ix.rm.mk6"><b>MK6 protocol.</b> <span>A second telegram codec for Mould King's per-byte MK6 hubs. It's what the greyed-out MK6 badges on the generic layouts are reserved for.</span></li>
-          <li data-i18n="ix.rm.esp"><b>ESP32 finishing.</b> <span>The ESP32 core is a usable standalone appliance: WiFi setup on the board, discovery as <code>moldqueenesp.local</code>, and a management page are all in. Next is Pi mDNS (<code>moldqueenrasp.local</code> for the Raspberry Pi core), then a binary/release pipeline (a distributable <code>.bin</code>), and serving the client from flash after that.</span></li>
+          <li data-i18n="ix.rm.esp"><b>ESP32 finishing.</b> <span>The ESP32 core is a usable standalone appliance: WiFi setup on the board, discovery as <code>moldqueenesp.local</code>, a management page, Pi mDNS (<code>moldqueenrasp.local</code> for the Raspberry Pi core), and a binary/release pipeline (a downloadable <code>.bin</code>) are all in. Serving the client from flash is next.</span></li>
           <li data-i18n="ix.rm.cam"><b>Camera (FPV).</b> <span>A first-person video feed from the machine, so you drive by what it sees. The same stream could feed an autonomous driver later.</span></li>
           <li data-i18n="ix.rm.tof"><b>Time-of-flight sensor.</b> <span>Distance and obstacle awareness as telemetry, alongside the control API.</span></li>
           <li data-i18n="ix.rm.ai"><b>AI brain.</b> <span>An agent that drives on its own by speaking the same WebSocket contract. Because of the thin-transport split, that's a new client rather than a rewrite.</span></li>

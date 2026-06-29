@@ -94,6 +94,15 @@ WiFi (`moldqueen-setup`) for you to enter your network; after that it's discover
 `moldqueenesp.local` and carries a built-in management page at `moldqueenesp.local:8080`
 (status, restart, switch-to-setup, change-network). Point the client at
 `ws://moldqueenesp.local:8765` and drive.
+
+**🔌 Download the firmware:** grab `moldqueen-esp32-<tag>.bin` from the
+**[latest release](https://github.com/jrichter24/moldqueen/releases/latest)** (current:
+`esp-v0.1.0`) and flash the single image at offset `0x0`:
+
+```bash
+esptool.py --chip esp32s3 write_flash 0x0 moldqueen-esp32-<tag>.bin
+```
+
 Step-by-step setup walkthrough: **[`dev-docs/ESP32_SETUP.md`](dev-docs/ESP32_SETUP.md)**.
 
 <p align="center">
@@ -216,8 +225,9 @@ bilingual setup page), **mDNS discovery** as `moldqueenesp.local`, and a **manag
 at `moldqueenesp.local:8080` (status, restart, switch-to-setup, change-network). What's still
 ahead:
 
-- **ESP32 finishing:** Pi mDNS (`moldqueenrasp.local` for linux-core), then the binary/release
-  pipeline (a distributable `.bin`); serve-client-from-flash after.
+- **ESP32 finishing:** Pi mDNS (`moldqueenrasp.local` for linux-core) and the binary/release
+  pipeline (a downloadable `.bin`, published per `esp-v*` tag) are shipped; serve-client-from-flash
+  is next.
 - **MK6 protocol support** — the greyed *MK6* card badges; second Mould King BLE variant.
 - **Camera, ToF sensor** — telemetry over/alongside the API.
 - **AI brain / console client** — an agent driving the toy through the same WebSocket API.

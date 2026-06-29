@@ -29,12 +29,10 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   enabled later once published with F-Droid's key. **Deliberate deferral**; revisit only when
   re-evaluating at a major version.
 - **ESP32 WiFi / standalone roadmap (cluster) — remaining future items.** Provisioning,
-  Group A (discovery + setup page), and Group B (the management page) are **DONE** (moved to
-  FINISHED below). Still future:
-  - **ESP32 binary/release pipeline** — a build/flash distribution path for the ESP32 firmware
-    (a distributable `.bin`). **This is the next ESP32 task.** *(Pi mDNS `moldqueenrasp.local` is
-    DONE — see FINISHED.)*
-  - **Serve the client from ESP32 flash** (after the above) — **gated on the client-size
+  Group A (discovery + setup page), Group B (the management page), Pi mDNS, and the
+  **binary/release pipeline** are all **DONE** (moved to FINISHED below). Still future:
+  - **Serve the client from ESP32 flash** — **the next ESP32 task** (after the shipped release
+    pipeline). **Gated on the client-size
     problem**: the full client (dashboard HTML/JS/CSS + images/GIFs/icons) may be several MB.
     Either (a) aggressively size-limit the full client's assets, or (b) build a separate
     **"light client"** (stripped dashboard, smaller assets) for embedded serving — full client
@@ -56,9 +54,10 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 - **esp32-core (ESP32-S3 radio core) — finishing.** The core is a usable standalone appliance
   (control slices + provisioning + Group A + Group B all DONE + hardware-verified; see FINISHED
-  below). **Pi mDNS (`moldqueenrasp.local` for linux-core) is DONE** (see FINISHED). The
-  remaining work is the **next ESP32 task: the binary/release pipeline** (a distributable
-  `.bin`); **serve-client-from-flash** after (see the FUTURE cluster). Toolchain: ESP-IDF v5.5.4.
+  below). **Pi mDNS (`moldqueenrasp.local` for linux-core) is DONE**, and the
+  **binary/release pipeline is DONE** (`esp-v0.1.0` published — see FINISHED). The
+  remaining work is the **next ESP32 task: serve-client-from-flash** (see the FUTURE cluster).
+  Toolchain: ESP-IDF v5.5.4.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   open at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`. Addressing
   maintainer (linsui) review: HTML description, full commit hash, `output` line removed.
@@ -72,6 +71,17 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## FINISHED (recent, for context)
 
+- **ESP32 binary/release pipeline — SHIPPED** (`.github/workflows/esp32-release.yml`, on main).
+  Triggers on **`esp-v*`** tags; builds in `espressif/idf:v5.5.4` and merges
+  bootloader + partition-table + app into **one flashable `.bin`** (flash the whole image at
+  offset `0x0`). **Version comes from the tag** (`esp-v0.1.0` → `0.1.0` via `MK_PROJECT_VER`,
+  parity-checked); the **prerelease flag keys off the stripped version** — a dry-run
+  `esp-v0.1.0-rc1` caught + fixed a prerelease bug before the real cut. First real release:
+  **`esp-v0.1.0`**, a FULL release, asset **`moldqueen-esp32-esp-v0.1.0.bin`** (~1.14 MB),
+  flash command in the release body
+  (`esptool.py --chip esp32s3 write_flash 0x0 moldqueen-esp32-<tag>.bin`). Releases:
+  <https://github.com/jrichter24/moldqueen/releases/tag/esp-v0.1.0>. (Next ESP32 task:
+  serve-client-from-flash.)
 - **Pi mDNS discovery — `moldqueenrasp.local`** (linux-core, hardware-verified on the LAN). The
   Pi core is now reachable by a stable name (`ws://moldqueenrasp.local:8765`), mirroring the
   ESP32's `moldqueenesp.local`. Mechanism: an **additive avahi address-record alias**
@@ -99,7 +109,8 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   setup pages; no-auth LAN-trust like the WS API. A **hardware** re-provision trigger
   (double-reset / BOOT-hold) was evaluated and **dropped as unreliable** (GPIO0 is the boot
   strap; the EN reset clears RTC) — replaced by the software switch-to-setup. Shared branding
-  factored into `mk4_webui`; seven components total. (Next: Pi mDNS, then the release pipeline.)
+  factored into `mk4_webui`; seven components total. (Pi mDNS + the release pipeline shipped after
+  this — see above; next is serve-client-from-flash.)
 - **Client WS-endpoint field fix** — `client/web/clientconfig.js`: the endpoint field no longer
   clears/overwrites itself while you're typing in it.
 - **v0.1.0 — first signed release** — the release pipeline is live: deterministic versioning

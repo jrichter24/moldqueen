@@ -3,9 +3,9 @@
 > Living "current state" doc for starting fresh sessions without losing context.
 > **Not** a project reference — that's [`PROJECT.md`](PROJECT.md). Read this first
 > (~30s) at the start of a session; update + commit it before ending one.
-> **Last updated: 2026-06-27.**
+> **Last updated: 2026-06-29.**
 
-## TL;DR — where we are right now (2026-06-27)
+## TL;DR — where we are right now (2026-06-29)
 
 - **Repo is PUBLIC** ([github.com/jrichter24/moldqueen](https://github.com/jrichter24/moldqueen)).
 - **Three radio cores, one WS contract:** Pi (`linux-core`), Android (`android-core`), and the
@@ -20,8 +20,16 @@
 - **Pi mDNS DONE (`moldqueenrasp.local`)** — the linux-core now advertises the sibling name
   (`ws://moldqueenrasp.local:8765`), mirroring the ESP32. Additive avahi alias (`scripts/mdns.sh`
   via `start.sh`; optional systemd unit), no hostname rename, graceful without `avahi-utils`
-  (the one new apt dep, installed on the test Pi). Hardware-verified on the LAN. **Next ESP32
-  task:** the binary/release pipeline (distributable `.bin`); serve-client-from-flash after.
+  (the one new apt dep, installed on the test Pi). Hardware-verified on the LAN.
+- **ESP32 binary/release pipeline SHIPPED + first release published** — `.github/workflows/esp32-release.yml`
+  (on main) triggers on **`esp-v*`** tags, builds in `espressif/idf:v5.5.4`, and merges
+  bootloader + partition-table + app into **one flashable `.bin`** (flash at offset `0x0`).
+  Version comes from the tag (`esp-v0.1.0` → `0.1.0` via `MK_PROJECT_VER`, parity-checked); the
+  prerelease flag keys off the stripped version (a dry-run `esp-v0.1.0-rc1` caught + fixed a
+  prerelease bug first). First real release: **`esp-v0.1.0`**, FULL release, asset
+  **`moldqueen-esp32-esp-v0.1.0.bin`** (~1.14 MB), flash command in the release body
+  (`esptool.py --chip esp32s3 write_flash 0x0 moldqueen-esp32-<tag>.bin`). **Next ESP32
+  task:** serve-client-from-flash.
 - **Client fix shipped:** the WS-endpoint field (`client/web/clientconfig.js`) no longer
   clears/overwrites while you're editing it.
 - **Process:** a read-only **`auditor`** agent + a **documentation-currency** rule now exist
@@ -228,12 +236,13 @@ mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/`. Target **ESP32-S3
   new scroll, and the page must also render raw via nginx). Static-only; verified live.
 
 ## In progress / next task
-- **esp32-core finishing — the release pipeline, then serve-from-flash.** The core is a usable
-  standalone appliance now (drives a real toy over WiFi; provisioning + Group A + Group B all
-  done and hardware-verified). **Pi mDNS is shipped** (`moldqueenrasp.local` for linux-core —
-  additive avahi alias via `scripts/mdns.sh` wired into `start.sh`, optional
-  `scripts/moldqueen-mdns.service`). Next: the **binary/release pipeline** (a distributable
-  ESP32 `.bin`), then **serve-client-from-flash**.
+- **esp32-core finishing — next is serve-from-flash.** The core is a usable standalone
+  appliance now (drives a real toy over WiFi; provisioning + Group A + Group B all done and
+  hardware-verified). **Pi mDNS is shipped** (`moldqueenrasp.local` for linux-core — additive
+  avahi alias via `scripts/mdns.sh` wired into `start.sh`, optional
+  `scripts/moldqueen-mdns.service`), and the **binary/release pipeline is shipped** too
+  (`.github/workflows/esp32-release.yml` builds one flashable `.bin` on `esp-v*` tags;
+  **`esp-v0.1.0` published**). Next: **serve-client-from-flash** (or Jens decides).
 - **F-Droid MR !41291 — awaiting maintainer (linsui).** Watch the MR at `fdroid/fdroiddata`;
   respond to review feedback. Once merged, moldqueen is installable from F-Droid.
 - **Recurring:** after the next `v*` tag, bump the README + website (`docs/`) Download/Install

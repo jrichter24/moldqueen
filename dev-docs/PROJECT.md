@@ -2,11 +2,14 @@
 
 > This is the authoritative project document. Where any other doc (the CLAUDE.md
 > files, or the snapshots in `linux-core/reference/`) disagrees, **this file wins.**
-> Last major update: 2026-06-28 (the **esp32-core** is now a usable standalone appliance —
-> WiFi provisioning, mDNS discovery `moldqueenesp.local`, and a management page on :8080 are
-> all in and hardware-verified; **Pi mDNS `moldqueenrasp.local` shipped** for linux-core;
-> signed Android releases v0.1.0-v0.1.2 shipped; F-Droid MR !41291 under maintainer review;
-> §1/§6b/§8 reconciled to the Pi-mDNS milestone).
+> Last major update: 2026-06-29 (the **ESP32 binary/release pipeline is shipped** —
+> `.github/workflows/esp32-release.yml` builds one flashable `.bin` on `esp-v*` tags, and
+> **`esp-v0.1.0` is published**; the next ESP32 item is serve-client-from-flash. Prior
+> milestone: the **esp32-core** is a usable standalone appliance — WiFi provisioning, mDNS
+> discovery `moldqueenesp.local`, a management page on :8080, all hardware-verified; **Pi mDNS
+> `moldqueenrasp.local` shipped** for linux-core; signed Android releases v0.1.0-v0.1.2;
+> F-Droid MR !41291 under maintainer review; §1/§6b/§8 reconciled to the release-pipeline
+> milestone).
 
 ---
 
@@ -44,9 +47,13 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
 - ✅ **Pi mDNS shipped** — linux-core now advertises **`moldqueenrasp.local`** (additive
   avahi alias via `scripts/mdns.sh`, wired into `scripts/start.sh`; optional
   `scripts/moldqueen-mdns.service`), mirroring the ESP32's `moldqueenesp.local`.
+- ✅ **ESP32 binary/release pipeline shipped** — `.github/workflows/esp32-release.yml`
+  builds one flashable `.bin` (merged bootloader + partition-table + app, flashed at `0x0`)
+  on **`esp-v*`** tags, version from the tag; **`esp-v0.1.0` is published** (asset
+  `moldqueen-esp32-esp-v0.1.0.bin`). See §6b.
 - 🔜 Next: finish the channel→function map (sweep placeholders); slot
-  auto-detection; esp32-core — the binary/release pipeline (distributable `.bin`), then
-  serve-client-from-flash; a console/AI client; then the camera/sensor/AI phases.
+  auto-detection; esp32-core — serve-client-from-flash; a console/AI client; then the
+  camera/sensor/AI phases.
 
 ---
 
@@ -375,9 +382,18 @@ shared web-UI assets so the provisioning pages and the management page render as
 `scripts/moldqueen-mdns.service` to survive reboot), mirroring this ESP32's
 `moldqueenesp.local` — no system-hostname rename, graceful no-op without `avahi-utils`.
 
-**Remaining (honestly not-done):** the **binary/release pipeline** (a distributable `.bin`),
-then **serving the client from flash** (today the client is served elsewhere and pointed at the
-ESP32's WS endpoint).
+**Binary/release pipeline — SHIPPED.** `.github/workflows/esp32-release.yml` (on main)
+triggers on **`esp-v*`** tags, builds in `espressif/idf:v5.5.4`, and merges
+**bootloader + partition-table + app into one flashable `.bin`** (flash the whole image at
+offset `0x0` — `esptool.py --chip esp32s3 write_flash 0x0 moldqueen-esp32-<tag>.bin`). The
+**version is derived from the tag** (`esp-v0.1.0` → `0.1.0` via `MK_PROJECT_VER`,
+parity-checked) and the **prerelease flag keys off the stripped version** (a dry-run
+`esp-v0.1.0-rc1` caught + fixed a prerelease bug first). First real release: **`esp-v0.1.0`**,
+a FULL release, asset **`moldqueen-esp32-esp-v0.1.0.bin`** (~1.14 MB):
+<https://github.com/jrichter24/moldqueen/releases/tag/esp-v0.1.0>.
+
+**Remaining (honestly not-done):** **serving the client from flash** (today the client is
+served elsewhere and pointed at the ESP32's WS endpoint) — the next ESP32 item.
 
 ---
 
@@ -427,8 +443,9 @@ see `mk4web/config.py`).
   (`moldqueenesp.local:8080` — status/restart/switch-to-setup/change-network) are **done and
   hardware-proven** (drives a real toy over WiFi with the unmodified client, reached by name;
   see §6b). **Pi mDNS is also shipped** (`moldqueenrasp.local` for linux-core — additive avahi
-  alias via `scripts/mdns.sh`/`start.sh`). **Remaining:** the binary/release pipeline
-  (distributable `.bin`), then serve-client-from-flash.
+  alias via `scripts/mdns.sh`/`start.sh`), and the **binary/release pipeline is shipped** too
+  (`.github/workflows/esp32-release.yml` builds one flashable `.bin` on `esp-v*` tags;
+  **`esp-v0.1.0` published**). **Remaining:** serve-client-from-flash.
 - **Finish the channel map** — sweep the placeholder channels (slot-0 ch1–3, slot-1
   ch1/ch3+) and confirm each function by driving it via Settings → Test.
 - **Reverse-speed calibration** — `reverse_scale` defaults to identity; measure the

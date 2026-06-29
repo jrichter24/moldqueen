@@ -91,6 +91,8 @@
     "ix.es.stepOf": "Schritt 1 von 5",
     "ix.es.zoomClose": "Vergrößertes Bild schließen",
     "ix.es.note": "Es werden keine Zugangsdaten in Git oder der Binärdatei gespeichert. Die vollständige schriftliche Anleitung steht in <a href=\"https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ESP32_SETUP.md\" rel=\"noopener\" target=\"_blank\">ESP32_SETUP.md</a>; Build- und Flash-Hinweise stehen im Ordner <a href=\"https://github.com/jrichter24/moldqueen/tree/main/esp32-core\" rel=\"noopener\" target=\"_blank\">esp32-core</a>.",
+    "ix.es.btnFw": "ESP32-Firmware herunterladen (.bin)",
+    "ix.es.fw": "Aktuelle Version: <b>esp-v0.1.0</b>. Lade <code>moldqueen-esp32-&lt;tag&gt;.bin</code> herunter und flashe das einzelne Image an Offset <code>0x0</code>: <code>esptool.py --chip esp32s3 write_flash 0x0 moldqueen-esp32-&lt;tag&gt;.bin</code>.",
     // ---- index: developers ----
     "ix.dev.eyebrow": "Für Entwickler",
     "ix.dev.h2": "Zum Auseinandernehmen gebaut.",
@@ -118,7 +120,7 @@
     "ix.rm.h2": "Wohin es geht.",
     "ix.rm.lead": "Eine Richtung, keine Versprechen. Roter Faden ist das API-first-Design: Jeder Punkt ist entweder ein neuer Funkkern hinter derselben Schnittstelle oder ein neuer Client, der sie bedient.",
     "ix.rm.mk6": "<b>MK6-Protokoll.</b> <span>Ein zweiter Telegramm-Codec für Mould Kings MK6-Hubs (byteweises Format). Dafür sind die ausgegrauten MK6-Abzeichen an den generischen Layouts schon reserviert.</span>",
-    "ix.rm.esp": "<b>ESP32-Fertigstellung.</b> <span>Der ESP32-Kern ist ein eigenständiges Gerät zum Loslegen: WLAN-Einrichtung am Board, Auffinden als <code>moldqueenesp.local</code> und eine Verwaltungsseite sind alle vorhanden. Als Nächstes kommt mDNS für den Pi (<code>moldqueenrasp.local</code> für den Raspberry-Pi-Kern), dann eine Binary-/Release-Pipeline (eine verteilbare <code>.bin</code>) und danach das Ausliefern des Clients aus dem Flash.</span>",
+    "ix.rm.esp": "<b>ESP32-Fertigstellung.</b> <span>Der ESP32-Kern ist ein eigenständiges Gerät zum Loslegen: WLAN-Einrichtung am Board, Auffinden als <code>moldqueenesp.local</code>, eine Verwaltungsseite, mDNS für den Pi (<code>moldqueenrasp.local</code> für den Raspberry-Pi-Kern) und eine Binary-/Release-Pipeline (eine herunterladbare <code>.bin</code>) sind alle vorhanden. Als Nächstes kommt das Ausliefern des Clients aus dem Flash.</span>",
     "ix.rm.cam": "<b>Kamera (FPV).</b> <span>Ein Live-Bild aus Sicht der Maschine, du fährst also nach dem, was sie sieht. Denselben Stream könnte später ein autonomer Fahrer nutzen.</span>",
     "ix.rm.tof": "<b>Time-of-Flight-Sensor.</b> <span>Abstand und Hindernisse als Telemetrie, parallel zur Steuer-Schnittstelle.</span>",
     "ix.rm.ai": "<b>KI-Steuerung.</b> <span>Ein Agent, der über dieselbe WebSocket-Schnittstelle selbstständig fährt. Dank der Thin-Transport-Trennung ist das ein neuer Client, kein Umbau.</span>",
