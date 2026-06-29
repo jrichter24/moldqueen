@@ -92,8 +92,8 @@ code,pre{font-family:var(--mono)}
 .hero::after{content:"";position:absolute;inset:0;z-index:1;
   background:linear-gradient(90deg,rgba(4,6,10,.92) 0%,rgba(4,6,10,.72) 28%,rgba(4,6,10,.15) 62%,rgba(4,6,10,0) 100%),
              linear-gradient(0deg,rgba(4,6,10,.92) 0%,rgba(4,6,10,.25) 32%,rgba(4,6,10,0) 60%)}
-/* manual "next image" arrow, bottom-right over the hero (subtle, on-brand) */
-.hero-next{position:absolute;z-index:3;right:clamp(1rem,3vw,2.4rem);bottom:clamp(1.4rem,5vh,3rem);
+/* manual "next image" arrow, vertically centered on the right edge of the hero (subtle, on-brand) */
+.hero-next{position:absolute;z-index:3;right:clamp(1rem,3vw,2.4rem);top:50%;transform:translateY(-50%);
   display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;
   border:1px solid rgba(255,255,255,.35);border-radius:50%;
   background:rgba(8,12,18,.42);color:#f3f6fa;cursor:pointer;
