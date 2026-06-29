@@ -42,13 +42,34 @@ The Pi's API is **permissive by design** for a LAN hobby tool:
 > specific origin allowlist / network is a future option; don't expose the Pi's
 > API to the open internet.
 
-## 3. Run the client in Docker (on your desktop)
+## 3. Run the client in Docker (the "no Python, one command" path)
 
-A **client-only** image ([`Dockerfile.client`](../Dockerfile.client)) packages the
-independent client (`client/`) served by its own [`client/serve.py`](../client/serve.py) —
-**no broadcaster, no radio**. `serve.py` **derives** the routes from `layouts.json` and
-injects the placeholders exactly like the Pi, so a **new layout works with no Docker/route
-config** (the old hardcoded nginx mirror is retired).
+A **client-only** image packages the independent client (`client/`) served by its own
+[`client/serve.py`](../client/serve.py), with **no broadcaster, no radio**. `serve.py`
+**derives** the routes from `layouts.json` and injects the placeholders exactly like the Pi,
+so a **new layout works with no Docker/route config** (the old hardcoded nginx mirror is
+retired). This is the **no-Python, one-command** way to host the client, sitting alongside
+[`serve.py`](#4-no-docker--the-clients-own-dev-server) (needs Python) and the Pi-served page
+(needs the full core).
+
+### 3a. Run the published image (recommended)
+
+A public image is published to the GitHub Container Registry, so you don't have to build
+anything:
+
+```bash
+docker run --rm -p 8080:8080 ghcr.io/jrichter24/moldqueen-client:latest
+```
+
+- **Tags:** `:latest` tracks the newest build; `:0.1.0` pins the current version.
+- **Port:** the container listens on `8080`; the **host** port is the **left** number, so
+  remap freely (e.g. `-p 9090:8080`).
+- **Package page** (not a GitHub Release; it lives on the repo's Packages tab):
+  <https://github.com/jrichter24/moldqueen/pkgs/container/moldqueen-client>.
+
+### 3b. Or build it yourself
+
+The image is built from [`Dockerfile.client`](../Dockerfile.client):
 
 ```bash
 # from the repo root (build context must include client/)
@@ -56,16 +77,26 @@ docker build -f Dockerfile.client -t moldqueen-client .
 docker run --rm -p 8080:8080 moldqueen-client
 ```
 
-Then:
+### Then, either way
 
 1. Open **http://localhost:8080/** → pick a layout.
-2. Open the endpoint setting (Settings / API connection) and enter your Pi's API,
-   e.g. `ws://192.168.178.98:8765` → **Connect**.
-3. Drive — the UI runs locally, the radio runs on the Pi.
+2. Open the endpoint setting (Settings / API connection) and point it at your device, e.g.
+   `ws://moldqueenrasp.local:8765` (Pi), `ws://moldqueenesp.local:8765` (ESP32), or the IP
+   form `ws://192.168.178.98:8765` → **Connect**.
+3. Drive. The UI runs locally, the radio runs on your device.
+
+### Why local hosting works (same-protocol, no mixed content)
+
+The Docker image serves the client over **`http://localhost`**, so the browser lets it open
+a plain **`ws://` LAN device** (same insecure scheme, **no mixed-content block**). That's the
+key difference from an **https** Pages-hosted client, which a browser **would block** from
+reaching a `ws://` device. Docker (or `serve.py`) is therefore the real **local-hosting**
+answer for driving **your own** device. It is **not** a hosted demo and does **not** drive a
+toy without a device.
 
 Notes:
-- The image is meant for a **desktop with Docker** (amd64/arm64). It does not need
-  to be built on the Pi.
+- The image is meant for a **desktop with Docker** (the published image is `linux/amd64`).
+  It does not need to be built on the Pi.
 - `serve.py` injects the endpoint placeholder; until you set an endpoint it defaults to
   the container host, and the channel map loads from the API once connected.
 

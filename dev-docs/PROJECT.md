@@ -271,9 +271,16 @@ over a local Unix socket (`/tmp/moldqueen_mk4.sock`):
   `--ws-only` / `--no-client` / `MK4_SERVE_CLIENT=0` runs the WebSocket only (no HTTP
   server); `--http-port N` (CLI > `MK4_HTTP_PORT`) overrides the page port. So you can
   (a) let the API serve the page, (b) serve the client elsewhere — script or the
-  client-only **Docker** image ([`../Dockerfile.client`](../Dockerfile.client)) — and
-  point it at the Pi via the in-app endpoint, or (c) bring your own WebSocket client.
-  Details: [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md), CORS/WS-origin permissive for LAN.
+  client-only **Docker** image — and point it at any core via the in-app endpoint, or (c)
+  bring your own WebSocket client. The client-only image is **published + public** at
+  `ghcr.io/jrichter24/moldqueen-client` (tags `:latest` / `:0.1.0`,
+  [package page](https://github.com/jrichter24/moldqueen/pkgs/container/moldqueen-client)),
+  the realized "no-Python, one-command" client-hosting option the split always envisioned;
+  it is still built from [`../Dockerfile.client`](../Dockerfile.client). It serves over
+  `http://localhost`, so it can reach a `ws://` LAN core (same-protocol, no mixed-content
+  block); that is local hosting, distinct from an https Pages client which a browser would
+  block from a `ws://` core. Details: [`REMOTE_CLIENT.md`](REMOTE_CLIENT.md), CORS/WS-origin
+  permissive for LAN.
 
 The retired **`java-core/`** (Java/Gradle scaffold) and **`web-gui/`** (minimal Node
 scaffold) were **removed**. Telegram building lives in Python (`mouldking_crypt.py`),

@@ -126,6 +126,26 @@ Build/device detail: **[`dev-docs/ANDROID.md`](dev-docs/ANDROID.md)**.
   <img src="docs/assets/android_bricks_on_phone_preview.png" alt="MoldQueen running standalone on an Android phone" width="600">
 </p>
 
+---
+
+### Run the client with Docker (no Python)
+
+A published, public client-only image serves the web UI with one command, no Python, no
+build. It hosts the client over `http://localhost`, so it can connect to a plain `ws://`
+device on your LAN (same protocol, no mixed-content block). It's a real local-hosting
+option for driving **your own** device, not a hosted demo:
+
+```bash
+docker run --rm -p 8080:8080 ghcr.io/jrichter24/moldqueen-client:latest
+# → open http://localhost:8080/  →  point the WS endpoint at your device
+#   (ws://moldqueenrasp.local:8765 / ws://moldqueenesp.local:8765 / ws://<ip>:8765)
+```
+
+The host port is the **left** number, so remap freely (e.g. `-p 9090:8080`). Use
+**`:latest`** for the newest build or pin **`:0.1.0`** for the current version. Image on
+the [GitHub Packages page](https://github.com/jrichter24/moldqueen/pkgs/container/moldqueen-client);
+depth in **[`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md)**.
+
 > **Just exploring?** Run the client alone against a Pi —
 > **[`dev-docs/DEV_CLIENT.md`](dev-docs/DEV_CLIENT.md)** (dev server) or
 > **[`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md)** (Docker).
@@ -211,7 +231,7 @@ source of truth) and the machine-readable **[`asyncapi.yaml`](linux-core/mk4web/
 | Android (standalone) | `./gradlew installDebug` | [ANDROID](dev-docs/ANDROID.md) |
 | On an ESP32-S3 (over WiFi) | `idf.py flash` → join `moldqueen-setup`, enter WiFi → `ws://moldqueenesp.local:8765` | [PORTING](dev-docs/PORTING.md) |
 | Client on the desktop | `client/serve.py` → point at a Pi | [DEV_CLIENT](dev-docs/DEV_CLIENT.md) |
-| Client in Docker | `Dockerfile.client` → point at a Pi | [REMOTE_CLIENT](dev-docs/REMOTE_CLIENT.md) |
+| Client in Docker | `docker run … ghcr.io/jrichter24/moldqueen-client:latest` → point at a device | [REMOTE_CLIENT](dev-docs/REMOTE_CLIENT.md) |
 | On another board | port the thin-transport core (the cores are hardware-bound) | [PORTING](dev-docs/PORTING.md) |
 | Add your own toy/layout | a generic slot/channel layout, no core fork | [ADDING_A_LAYOUT](dev-docs/ADDING_A_LAYOUT.md) |
 
