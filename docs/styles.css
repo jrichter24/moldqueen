@@ -52,12 +52,33 @@ code,pre{font-family:var(--mono)}
 .navlinks a.active::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--accent)}
 .navlinks .cta{color:var(--ink);border:1px solid var(--line-2);padding:.45rem .9rem;border-radius:7px}
 .navlinks .cta:hover{border-color:var(--accent)}
-/* "Get started" disclosure parent (open/close JS arrives in a later step;
-   for now the submenu stays inline and reachable so the nav fully works). */
-.navlinks .submenu-toggle{background:none;border:0;font:inherit;color:var(--muted);font-size:.9rem;
-  cursor:pointer;padding:.3rem 0;white-space:nowrap;transition:color .2s}
+/* "Get started" disclosure dropdown. The parent is a real <button>; site.js keeps
+   aria-expanded truthful and handles click/Esc/outside-click/child-click. On desktop
+   the submenu is a collapsed-by-default popover that ALSO opens on hover/focus-within
+   (mouse + keyboard); the <=1100px drawer flattens it to an indented stack instead. */
+.navlinks .has-submenu{position:relative}
+.navlinks .submenu-toggle{display:inline-flex;align-items:center;gap:.3rem;background:none;border:0;
+  font:inherit;color:var(--muted);font-size:.9rem;cursor:pointer;padding:.3rem 0;white-space:nowrap;
+  transition:color .2s}
 .navlinks .submenu-toggle:hover{color:var(--ink)}
-.navlinks .submenu{display:flex;align-items:center;gap:1.4rem;list-style:none;margin:0 0 0 1.4rem;padding:0}
+.navlinks .submenu-toggle::after{content:"";width:.42em;height:.42em;border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-.06em);
+  transition:transform .2s;opacity:.8}
+.navlinks .submenu-toggle[aria-expanded="true"]::after{transform:rotate(-135deg) translateY(-.02em)}
+.navlinks .submenu{position:absolute;top:calc(100% + .55rem);left:50%;transform:translateX(-50%) translateY(-.4rem);
+  display:flex;flex-direction:column;align-items:stretch;gap:0;list-style:none;margin:0;padding:.4rem 0;
+  min-width:13rem;background:rgba(var(--bg-rgb),.96);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 18px 40px rgba(0,0,0,.45);-webkit-backdrop-filter:saturate(150%) blur(14px);
+  backdrop-filter:saturate(150%) blur(14px);
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s,transform .18s,visibility .18s;z-index:120}
+.navlinks .submenu li{display:block}
+.navlinks .submenu a{display:block;padding:.5rem 1.1rem;white-space:nowrap}
+.navlinks .submenu a.active::after{display:none}
+/* open: hover OR keyboard focus-within OR JS-toggled aria-expanded=true */
+.navlinks .has-submenu:hover .submenu,
+.navlinks .has-submenu:focus-within .submenu,
+.navlinks .submenu-toggle[aria-expanded="true"] + .submenu{
+  opacity:1;visibility:visible;pointer-events:auto;transform:translateX(-50%) translateY(0)}
 .lang{display:inline-flex;align-items:center;gap:.3rem;margin-left:.3rem}
 .langbtn{background:none;border:0;color:var(--muted);font:inherit;font-size:.82rem;font-weight:700;letter-spacing:.04em;cursor:pointer;padding:.2rem .15rem}
 .langbtn:hover{color:var(--ink)}
@@ -75,9 +96,17 @@ code,pre{font-family:var(--mono)}
   .navlinks a.active::after{display:none}
   .navlinks .cta{border:0;padding:.9rem 0}
   .navlinks .lang{padding:.8rem 0}
-  /* In the drawer the "Get started" group flattens to an indented stack (CSS only). */
+  /* In the drawer the "Get started" group flattens to an indented, ALWAYS-VISIBLE stack
+     (no collapse/accordion). Override every desktop-popover property so the children
+     stay reachable in the hamburger menu. */
+  .navlinks .has-submenu{position:static}
   .navlinks .submenu-toggle{padding:.9rem 0;border-bottom:1px solid var(--line);font-size:1.05rem;text-align:left;width:100%}
-  .navlinks .submenu{flex-direction:column;align-items:stretch;gap:0;margin:0;padding-left:1.1rem}
+  .navlinks .submenu-toggle::after{display:none}
+  .navlinks .submenu{position:static;transform:none;display:flex;flex-direction:column;align-items:stretch;gap:0;
+    margin:0;padding:0 0 0 1.1rem;min-width:0;background:none;border:0;border-radius:0;box-shadow:none;
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+    opacity:1;visibility:visible;pointer-events:auto}
+  .navlinks .submenu a{padding:.9rem 0}
 }
 
 /* ---------- buttons ---------- */

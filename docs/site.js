@@ -27,7 +27,7 @@
     "ix.nav.app": "Zur Android-App",
     "ix.nav.esp": "ESP32-Einrichtung",
     "ix.nav.docker": "Docker-Client",
-    "ix.nav.combine": "Ein Client, jeder Funk",
+    "ix.nav.combine": "Kombinieren",
     "ix.nav.dev": "Entwickler",
     "ix.nav.about": "Über",
     "ix.nav.support": "Unterstützen",
@@ -356,6 +356,69 @@
       a.addEventListener("click", function () { nav.classList.remove("open"); toggle.setAttribute("aria-expanded", "false"); });
     });
   }
+
+  // ===================================================================== nav dropdown
+  // "Get started" submenu = a DISCLOSURE button (real <button>, aria-expanded made
+  // truthful). Disclosure (not an APG menubar) keeps Tab order natural -- the children
+  // are ordinary links, so Tab flows through them and out -- and stays simple; we add
+  // Down/Up arrow convenience on top. Hover + focus-within also reveal it via CSS, so
+  // mouse and keyboard both work; this JS only manages the click/Esc/outside/child paths
+  // and the aria state. It is fully independent of the scroll-tone rAF handler above
+  // (its own listeners, no shared state, no scroll/resize hooks) -> no conflict.
+  // On <=1100px the drawer flattens the submenu (CSS), so this collapse logic is desktop-only.
+  (function () {
+    var parent = document.querySelector(".has-submenu");
+    if (!parent) return;
+    var btn = parent.querySelector(".submenu-toggle");
+    var menu = parent.querySelector(".submenu");
+    if (!btn || !menu) return;
+    var items = Array.prototype.slice.call(menu.querySelectorAll("a"));
+    var inDrawer = function () { return window.matchMedia("(max-width:1100px)").matches; };
+
+    function setOpen(open) {
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      if (!open) parent.classList.remove("submenu-open"); else parent.classList.add("submenu-open");
+    }
+    function isOpen() { return btn.getAttribute("aria-expanded") === "true"; }
+    function close(focusBtn) { setOpen(false); if (focusBtn) btn.focus(); }
+
+    // click/tap toggles (drawer handles its own flatten -> don't fight it there)
+    btn.addEventListener("click", function () { if (inDrawer()) return; setOpen(!isOpen()); });
+
+    // keyboard on the parent: Down opens + moves into first child; Esc closes + refocuses
+    btn.addEventListener("keydown", function (e) {
+      if (inDrawer()) return;
+      if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); if (items[0]) items[0].focus(); }
+      else if (e.key === "Escape") { if (isOpen()) { e.preventDefault(); close(true); } }
+    });
+
+    // arrow traversal + Esc within the children
+    items.forEach(function (a, idx) {
+      a.addEventListener("keydown", function (e) {
+        if (inDrawer()) return;
+        if (e.key === "ArrowDown") { e.preventDefault(); (items[idx + 1] || items[0]).focus(); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); (items[idx - 1] || btn).focus(); }
+        else if (e.key === "Escape") { e.preventDefault(); close(true); }
+      });
+      // selecting a child closes the dropdown; the in-page anchor + scrollspy then run
+      a.addEventListener("click", function () { if (!inDrawer()) close(false); });
+    });
+
+    // click OUTSIDE the menu closes it
+    document.addEventListener("click", function (e) {
+      if (inDrawer()) return;
+      if (isOpen() && !parent.contains(e.target)) close(false);
+    });
+    // focus leaving the group (e.g. Tab out) closes it -- keeps aria honest
+    parent.addEventListener("focusout", function (e) {
+      if (inDrawer()) return;
+      if (isOpen() && !parent.contains(e.relatedTarget)) close(false);
+    });
+    // Esc anywhere closes the open dropdown and refocuses the parent button
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && isOpen() && !inDrawer()) { e.preventDefault(); close(true); }
+    });
+  })();
 
   // ===================================================================== scrollspy
   var links = Array.prototype.slice.call(document.querySelectorAll(".navlinks a[href^='#']"));
