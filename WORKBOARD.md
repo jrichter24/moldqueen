@@ -59,9 +59,10 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   remaining work is the **next ESP32 task: serve-client-from-flash** (see the FUTURE cluster).
   Toolchain: ESP-IDF v5.5.4.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
-  open at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`. Addressing
-  maintainer (linsui) review: HTML description, full commit hash, `output` line removed.
-  Awaiting review/merge.
+  at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`, is **merged** and the
+  app is now **available on F-Droid** at
+  [f-droid.org/packages/io.github.jrichter24.moldqueen](https://f-droid.org/packages/io.github.jrichter24.moldqueen/)
+  (maintainer linsui review addressed: HTML description, full commit hash, `output` line removed).
 
 ## STALE (deferred / blocked)
 
@@ -71,6 +72,19 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## FINISHED (recent, for context)
 
+- **Client Docker image — SHIPPED** (`.github/workflows/client-release.yml`, on main). A
+  public **client-only** image, `ghcr.io/jrichter24/moldqueen-client`, serves the web UI
+  (no radio) so you point it at a remote core's WS API. Triggered by a **separate `client-v*`**
+  tag scheme (disjoint from the Android `v*` and ESP32 `esp-v*` schemes — never double-fires),
+  tagged with the tag-derived version **plus `:latest`**. First release: **`client-v0.1.0`**;
+  package visibility set to **public**. `docker run --rm -p 8080:8080 ghcr.io/jrichter24/moldqueen-client:latest`.
+  Documented in README + website (#docker) + `dev-docs/REMOTE_CLIENT.md`.
+- **Website nav restructure — SHIPPED** (`docs/`). Added a **"Get started" nav dropdown**
+  (submenu), a dedicated **`#docker`** section for the client image, and a **`#combine`
+  "Mix & match"** capability table (which radio core does what). Also: a **5-slide hero**
+  (hero + 4 alternates, EN/DE captions), **"Android app"** label clarity across nav/sections,
+  and a **scroll-reactive button colour** on the black→white tone. Text kept EN/DE in parity
+  (per-page EN inline + shared DE dict in `site.js`).
 - **ESP32 binary/release pipeline — SHIPPED** (`.github/workflows/esp32-release.yml`, on main).
   Triggers on **`esp-v*`** tags; builds in `espressif/idf:v5.5.4` and merges
   bootloader + partition-table + app into **one flashable `.bin`** (flash the whole image at

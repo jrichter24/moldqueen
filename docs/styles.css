@@ -120,6 +120,9 @@ code,pre{font-family:var(--mono)}
 .btn-primary:hover{filter:brightness(1.08)}
 .btn.ph{opacity:.5;cursor:not-allowed;border-style:dashed;color:var(--muted)}
 .btn.ph:hover{border-color:var(--line-2);color:var(--muted);transform:none}
+.fdroid-badge{display:inline-flex;vertical-align:middle;margin-left:.6rem;transition:transform .2s}
+.fdroid-badge:hover{transform:translateY(-1px)}
+.fdroid-badge img{height:46px;width:auto;display:block}
 
 /* ---------- hero: full-bleed image, copy left-aligned in a clean bottom column ---------- */
 .hero{position:relative;overflow:hidden}

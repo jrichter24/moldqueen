@@ -45,8 +45,8 @@ that speaks it. (Back to the [README](../README.md) · canonical state in
 
 - **Android release — signed APKs SHIPPED; Play-Store still forward-looking.** Signed
   releases **v0.1.0 / v0.1.1 / v0.1.2** ship via the gated CI release workflow, and the
-  **F-Droid MR !41291** is under maintainer review. A **Play-Store** listing remains the
-  forward-looking item. See [ANDROID.md](ANDROID.md).
+  **F-Droid MR !41291** is merged (app now available on F-Droid). A **Play-Store**
+  listing remains the forward-looking item. See [ANDROID.md](ANDROID.md).
 - **Finish the excavator channel map** — a couple of functions are still placeholders to
   sweep on hardware (see [PROJECT.md](PROJECT.md)).
 - **Slot auto-detection** — today the connect wizard guides hub→slot buttoning manually.

@@ -14,7 +14,7 @@
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub-%F0%9F%92%9C%20sponsor-2f343b?style=flat-square&labelColor=23272e&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/jrichter24)
 [![Ko-fi: support](https://img.shields.io/badge/Ko--fi-%E2%98%95%20support-2f343b?style=flat-square&labelColor=23272e&logo=ko-fi&logoColor=white)](https://ko-fi.com/A437HBY)
 
-**Drive a [Mould King](https://www.mouldking.com/) building-block RC toy — over a reverse-engineered BLE protocol, through one clean WebSocket API.**
+**Drive a [Mould King](https://mouldkingcorp.com/) building-block RC toy — over a reverse-engineered BLE protocol, through one clean WebSocket API.**
 
 <p align="center">
   <img src="client/assets/moldqueen_banner_v2.png" alt="moldqueen — Mould King RC control" width="760">
@@ -31,6 +31,19 @@
   <br><sub>Free &amp; open source. No ads, no affiliate links.</sub>
 </p>
 
+## Contents
+
+- [Download — install the app](#download--install-the-app)
+- [The idea: API-first — thin transport, smart client](#the-idea-api-first--thin-transport-smart-client)
+- [Quickstart](#quickstart) — [Raspberry Pi](#raspberry-pi-primary-path) · [ESP32-S3](#esp32-s3-the-third-radio-core) · [Android](#android-standalone-no-pi) · [Docker](#run-the-client-with-docker-no-python)
+- [What it does](#what-it-does)
+- [Connection wizard](#connection-wizard)
+- [Architecture](#architecture)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Credit & attribution](#credit--attribution)
+- [Credits, license & disclaimer](#credits-license--disclaimer)
+
 ## Download — install the app
 
 **📲 [Latest signed release](https://github.com/jrichter24/moldqueen/releases/latest)** — the standalone **Android app**, signed by the author.
@@ -41,8 +54,12 @@
 
 It's one self-contained app — it owns the radio *and* serves the UI on-device, so no Pi or network is needed.
 Prefer to build it yourself? `cd android-core && ./gradlew installDebug` (over USB).
-**F-Droid:** MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291) under
-review. The **Raspberry Pi** path is in [Quickstart](#quickstart) below.
+
+**Also available on F-Droid** (via MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)):
+
+[![Get it on F-Droid](docs/assets/fdroid-badge.png)](https://f-droid.org/packages/io.github.jrichter24.moldqueen/)
+
+The **Raspberry Pi** path is in [Quickstart](#quickstart) below.
 
 ## The idea: API-first — thin transport, smart client
 
@@ -279,7 +296,8 @@ Built with [MoldQueen](https://github.com/jrichter24/moldqueen) — https://jric
 
 - **Author:** Dr. Jens Richter — physics & electrical engineering; by day, tour optimization
   with genetic/AI algorithms at [DNA Evolutions](https://www.dna-evolutions.com/)
-  ([LinkedIn](https://www.linkedin.com/in/li-jens-richter)). *Built for my son Jonas, who
+  ([LinkedIn](https://www.linkedin.com/in/li-jens-richter) ·
+  [Website](https://jrichter24.github.io)). *Built for my son Jonas, who
   loves excavators.* AI coding assistants helped with implementation. Architecture, product
   decisions, testing, and final code review remained under human control.
 - **Protocol groundwork:** [`J0EK3R/mkconnect-python`](https://github.com/J0EK3R/mkconnect-python)

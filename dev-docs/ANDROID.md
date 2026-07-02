@@ -115,7 +115,9 @@ gated CI release workflow (signing reads CI secrets at build time per "Release s
 package `io.github.jrichter24.moldqueen`). So this is no longer a local-`installDebug`-only app —
 `installDebug` remains the dev inner loop, but tagged `v*` releases produce signed APKs.
 
-**F-Droid.** MR **!41291** is open at `fdroid/fdroiddata` and **under maintainer (linsui)
-review**; once merged, MoldQueen is installable from F-Droid (which builds from source and signs
-with its own key — see "Release signing", item 3). **Future:** a Play-Store listing remains a
-forward-looking item; see [ROADMAP.md](ROADMAP.md).
+**F-Droid.** MR **!41291** at `fdroid/fdroiddata` is **merged** (maintainer linsui review
+addressed); MoldQueen is now **available on F-Droid** at
+[f-droid.org/packages/io.github.jrichter24.moldqueen](https://f-droid.org/packages/io.github.jrichter24.moldqueen/)
+(F-Droid builds from source and signs with its own key — see "Release
+signing", item 3). **Future:** a Play-Store listing remains a forward-looking item; see
+[ROADMAP.md](ROADMAP.md).

@@ -8,7 +8,7 @@
 > milestone: the **esp32-core** is a usable standalone appliance — WiFi provisioning, mDNS
 > discovery `moldqueenesp.local`, a management page on :8080, all hardware-verified; **Pi mDNS
 > `moldqueenrasp.local` shipped** for linux-core; signed Android releases v0.1.0-v0.1.2;
-> F-Droid MR !41291 under maintainer review; §1/§6b/§8 reconciled to the release-pipeline
+> F-Droid MR !41291 merged (app now available on F-Droid); §1/§6b/§8 reconciled to the release-pipeline
 > milestone).
 
 ---
@@ -43,7 +43,8 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
   WiFi today; see §6b) — all consuming the **same single-source client**.
 - ✅ **Shipped:** signed Android releases **v0.1.0 / v0.1.1 / v0.1.2** via the gated CI
   release workflow (package `io.github.jrichter24.moldqueen`); F-Droid MR **!41291** is
-  open and under maintainer review.
+  merged and the app is now **available on F-Droid** at
+  [f-droid.org/packages/io.github.jrichter24.moldqueen](https://f-droid.org/packages/io.github.jrichter24.moldqueen/).
 - ✅ **Pi mDNS shipped** — linux-core now advertises **`moldqueenrasp.local`** (additive
   avahi alias via `scripts/mdns.sh`, wired into `scripts/start.sh`; optional
   `scripts/moldqueen-mdns.service`), mirroring the ESP32's `moldqueenesp.local`.

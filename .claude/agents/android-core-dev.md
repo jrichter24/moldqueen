@@ -44,7 +44,8 @@ serves the UI on-device. Read the root `CLAUDE.md` and `dev-docs/ANDROID.md`.
   (touch always works alongside it). See [GAMEPAD.md](../../dev-docs/GAMEPAD.md).
 - **Signed releases v0.1.0–v0.1.2 have shipped** via the gated CI release workflow
   (tagged `v*` → signed APK); `installDebug` is the dev inner loop. **F-Droid MR !41291**
-  is under maintainer review; a Play-Store listing remains future.
+  is merged (app now available on F-Droid at
+  `f-droid.org/packages/io.github.jrichter24.moldqueen`); a Play-Store listing remains future.
 - **You don't own the UI.** The web client (chooser/dashboard/layouts/MK4Chrome,
   function→channel resolution, channel maps) is **client-dev's** — you bundle and host
   it, you don't fork it. The Pi radio core is **linux-core-dev's**; docs/website are

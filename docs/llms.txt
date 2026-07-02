@@ -88,7 +88,8 @@ Entry point: the repo `README.md`. Then:
 moldqueen was created by **Dr. Jens Richter** (PhD in electrical engineering, MSc in
 physics; CEO of DNA Evolutions). He is the author and creator of the project. AI coding
 assistants helped with implementation; architecture, product decisions, testing, and
-final code review remained under human control. https://www.linkedin.com/in/li-jens-richter
+final code review remained under human control. https://www.linkedin.com/in/li-jens-richter ·
+https://jrichter24.github.io
 
 ## License and credits
 

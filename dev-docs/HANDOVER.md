@@ -12,7 +12,9 @@
   **ESP32-S3** (`esp32-core`) — all consuming the same single-source client.
 - **Shipped:** signed Android releases **v0.1.0 / v0.1.1 / v0.1.2** via the gated CI release
   workflow; package renamed to **`io.github.jrichter24.moldqueen`**.
-- **F-Droid MR !41291** is open and **under maintainer (linsui) review** at `fdroid/fdroiddata`.
+- **F-Droid MR !41291** is **merged** at `fdroid/fdroiddata` (maintainer linsui review
+  addressed); the app is now **available on F-Droid** at
+  [f-droid.org/packages/io.github.jrichter24.moldqueen](https://f-droid.org/packages/io.github.jrichter24.moldqueen/).
 - **esp32-core is now a usable standalone appliance** — drives a real toy over WiFi with the
   unmodified client, and is **self-provisioning + self-managing**: WiFi provisioning (no creds
   baked in), mDNS discovery `moldqueenesp.local`, and a management page on :8080 are all in and
@@ -243,8 +245,9 @@ mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/`. Target **ESP32-S3
   `scripts/moldqueen-mdns.service`), and the **binary/release pipeline is shipped** too
   (`.github/workflows/esp32-release.yml` builds one flashable `.bin` on `esp-v*` tags;
   **`esp-v0.1.0` published**). Next: **serve-client-from-flash** (or Jens decides).
-- **F-Droid MR !41291 — awaiting maintainer (linsui).** Watch the MR at `fdroid/fdroiddata`;
-  respond to review feedback. Once merged, moldqueen is installable from F-Droid.
+- **F-Droid MR !41291 — merged; app is live.** The MR at `fdroid/fdroiddata` is merged (maintainer
+  linsui review addressed); MoldQueen is now **available on F-Droid** at
+  [f-droid.org/packages/io.github.jrichter24.moldqueen](https://f-droid.org/packages/io.github.jrichter24.moldqueen/).
 - **Recurring:** after the next `v*` tag, bump the README + website (`docs/`) Download/Install
   sections + version badge and verify release-download links (see `WORKBOARD.md` → RECURRING).
 

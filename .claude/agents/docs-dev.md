@@ -38,7 +38,7 @@ German **Werbekennzeichnung**), `styles.css`, `site.js`, and `docs/assets/` (Pag
   first supported brand**, not the whole identity.
 - **Accurate to reality:** MK4 12-channel nibble (one telegram drives all hubs, slot by
   hub button — **no device 0/1**), generic layouts + auto-assign, MK4Chrome, gamepad,
-  the real platforms (Pi / Android / desktop / Docker). **No** `java-core` / `bt-core` /
+  the real platforms (Pi / Android / ESP32 / desktop / Docker). **No** `java-core` / `bt-core` /
   `web-gui` (removed/never existed). Dev docs live in **`dev-docs/`**; `docs/` is the website.
 - **Disclaimer:** independent, unofficial; **not affiliated with Mould King / Shenzhen
   Yuxing**; `MouldKingCrypt` ported from J0EK3R/mkconnect-python (MIT); MIT-licensed.
