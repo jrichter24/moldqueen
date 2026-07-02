@@ -57,7 +57,7 @@ Prefer to build it yourself? `cd android-core && ./gradlew installDebug` (over U
 
 **Also available on F-Droid** (via MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)):
 
-[![Get it on F-Droid](docs/assets/fdroid-badge.png)](https://f-droid.org/packages/io.github.jrichter24.moldqueen/)
+<a href="https://f-droid.org/packages/io.github.jrichter24.moldqueen/"><img src="docs/assets/fdroid-badge.png" alt="Get it on F-Droid" width="200"></a>
 
 The **Raspberry Pi** path is in [Quickstart](#quickstart) below.
 
