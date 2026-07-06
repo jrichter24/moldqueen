@@ -24,7 +24,7 @@
     "ix.nav.design": "Konzept",
     "ix.nav.layouts": "Layouts",
     "ix.nav.start": "Erste Schritte",
-    "ix.nav.app": "Zur Android-App",
+    "ix.nav.app": "Wähle deinen Funk",
     "ix.nav.esp": "ESP32-Einrichtung",
     "ix.nav.docker": "Docker-Client",
     "ix.nav.combine": "Kombinieren",
@@ -35,7 +35,7 @@
     "ix.hero.h1": "Klemmbaustein-Modelle über eine einzige, saubere Schnittstelle steuern.",
     "ix.hero.tag": "moldqueen steuert Bluetooth-LE-Modelle über eine dokumentierte WebSocket-Schnittstelle. Den Anfang macht Mould King.",
     "ix.hero.lead": "Oben ein smarter Web-Client, darunter ein austauschbarer Funkkern: ein Raspberry Pi, in der Hosentasche die Android-App oder ein winziges ESP32-Board. Alle drei steuern schon heute echte Modelle.",
-    "ix.hero.btnApp": "Zur Android-App",
+    "ix.hero.btnApp": "Wähle deinen Funk (z. B. Android, Raspberry Pi)",
     "ix.hero.btnGit": "Auf GitHub ansehen",
     "ix.hero.nextImg": "Nächstes Bild",
     // ---- index: features ----
@@ -60,7 +60,7 @@
     "ix.gen.p": "Kein passendes Dashboard für genau dein Modell? Die generischen Layouts (ein Gamepad aus Klemmbausteinen und ein 12-Achsen-Raster) richten sich per geführtem Auto-Abgleich selbst auf deine Maschine ein. Du bewegst einen Stick, schaust, welcher Motor anspringt, und schon steht die Zuordnung. Danach fährst du per Touch oder Gamepad.",
     "ix.tiles.note": "Die Karten kommen live aus dem Projekt-Manifest. Die Abzeichen sind dieselben wie in der App: <strong>Generic</strong> oder <strong>Model</strong>, dazu das unterstützte Protokoll. <strong>MK4</strong> läuft heute, ein ausgegrautes <strong>MK6</strong> steht auf der <a href=\"#roadmap\">Roadmap</a>. Mit der Maus über eine Karte fahren, dann klappt sie auf.",
     // ---- index: get the app ----
-    "ix.app.eyebrow": "Zur Android-App",
+    "ix.app.eyebrow": "Drei Funkkerne",
     "ix.app.h2": "Wähle deinen Funk.",
     "ix.app.lead": "Drei Funkkerne, eine Oberfläche. Alle sprechen dieselbe Schnittstelle; sie unterscheiden sich nur darin, wo der Funk sitzt: dein Handy, ein Raspberry Pi oder ein winziges ESP32-Board.",
     "ix.and.tag": "Menü: zum Öffnen darüberfahren",
@@ -68,7 +68,7 @@
     "ix.and.h3": "Alles auf dem Handy.",
     "ix.and.p": "Eine App, die alles selbst mitbringt. Sie nutzt den Bluetooth-Funk des Handys, liefert die Oberfläche direkt auf dem Gerät und kommt ohne Pi und ohne Netzwerk aus.",
     "ix.and.btnGet": "Android-App herunterladen",
-    "ix.and.dl": "Aktuelle signierte Version: <b>v0.1.2</b>. Lade <code>moldqueen-v0.1.2.apk</code> herunter, erlaube die Installation aus unbekannten Quellen und öffne sie. <b>Jetzt auch <a href=\"https://f-droid.org/packages/io.github.jrichter24.moldqueen/\" rel=\"noopener\" target=\"_blank\">bei F-Droid verfügbar</a> (über MR !41291).</b>",
+    "ix.and.dl": "Aktuelle signierte Version: <b>v0.1.2</b>. Lade <code>moldqueen-v0.1.2.apk</code> herunter, erlaube die Installation aus unbekannten Quellen und öffne sie. <b>Jetzt auch <a href=\"https://f-droid.org/packages/io.github.jrichter24.moldqueen/\" rel=\"noopener\" target=\"_blank\">bei F-Droid verfügbar</a>.</b>",
     "ix.and.src": "Oder selbst bauen, per USB:",
     "ix.and.muted": "Alle Builds und Release-Notizen findest du bei <a href=\"https://github.com/jrichter24/moldqueen/releases\" rel=\"noopener\" target=\"_blank\">GitHub Releases</a>.",
     "ix.pi.num": "Raspberry Pi · Steuerkern",
@@ -282,6 +282,13 @@
   var BTN_LABEL_AA = 4.5;             // WCAG AA for the label on the fill
   var BTN_WHITE = [255, 255, 255], BTN_BLACK = [4, 18, 29];
   var BTN_DARK_POLE = [10, 32, 52], BTN_LIGHT_POLE = [156, 208, 246]; // deep / bright blue pulls
+  // Ghost/secondary .btn label sits directly on the page bg (transparent fill). --ink is
+  // shared with body text and dips below AA vs the bg near the mid-scroll crossover, so the
+  // ghost label gets its OWN continuous colour (--btn-ghost-fg): start from the design ink,
+  // and only where that falls under AA, push toward whichever PURE pole (black / white)
+  // contrasts more with the current bg, just far enough to hold >=4.5:1 at every position.
+  var GHOST_LABEL_AA = 4.6;   // AA (4.5) + headroom; the mid-scroll bg caps any text at ~4.61, so 4.6 is the practical max
+  var GHOST_WHITE = [255, 255, 255], GHOST_BLACK = [0, 0, 0]; // pure poles: ceiling ~4.61 vs the mid-grey bg
   function btnLabel(fill) {
     var rw = contrast(BTN_WHITE, fill), rb = contrast(BTN_BLACK, fill);
     var fg = rw >= rb ? BTN_WHITE : BTN_BLACK;
@@ -320,6 +327,12 @@
       while (!btnOk(fill) && t < 1.0001) { t += 0.04; fill = mixRGB(mixRGB(DARK_ACC, LIGHT_ACC, L), pole, clamp01(t)); }
     }
     var btnFg = btnLabel(fill).fg;
+    // Ghost .btn label: the design ink where it clears AA vs the bg, else pushed toward the
+    // better-contrasting pure pole until >=4.5:1 (loop exits at AA, or lands on the pole at
+    // ~4.58) -> AA-locked at every scroll position, independent of --ink.
+    var gPole = contrast(GHOST_WHITE, bg) >= contrast(GHOST_BLACK, bg) ? GHOST_WHITE : GHOST_BLACK;
+    var ghost = ink, gp = 0;
+    while (contrast(ghost, bg) < GHOST_LABEL_AA && gp < 1.0001) { gp += 0.04; ghost = mixRGB(ink, gPole, clamp01(gp)); }
     root.style.setProperty("--bg", "rgb(" + bg.join(",") + ")");
     root.style.setProperty("--bg-rgb", bg.join(","));
     root.style.setProperty("--ink", "rgb(" + ink.join(",") + ")");
@@ -328,6 +341,7 @@
     root.style.setProperty("--accent-rgb", acc.join(","));
     root.style.setProperty("--btn-bg", "rgb(" + fill.join(",") + ")");
     root.style.setProperty("--btn-fg", "rgb(" + btnFg.join(",") + ")");
+    root.style.setProperty("--btn-ghost-fg", "rgb(" + ghost.join(",") + ")");
     root.style.setProperty("--halo-rgb", ti < 0.5 ? "0,0,0" : "255,255,255");
     root.style.setProperty("--halo-a", haloA.toFixed(3));
   }
