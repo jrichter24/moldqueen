@@ -26,8 +26,11 @@ that speaks it. (Back to the [README](../README.md) · canonical state in
   `moldqueenesp.local`, and a **management page** at `moldqueenesp.local:8080` (status, restart,
   switch-to-setup, change-network) — all done and hardware-verified (`esp32-core/`; see
   [PROJECT.md](PROJECT.md) §6b). Pi mDNS (`moldqueenrasp.local` for linux-core) and the
-  binary/release pipeline (a downloadable `.bin`, published per `esp-v*` tag) are shipped too;
-  **Next:** serve-client-from-flash.
+  binary/release pipeline (a downloadable `.bin`, published per `esp-v*` tag) are shipped too.
+  The ESP32 core is now **complete**; serving the client from the board's own flash was
+  considered and **decided against** — it stays a pure radio core that a hosted client drives,
+  and the page-load asset burst coexisting with BLE on the shared 2.4 GHz radio (plus the
+  several-MB client vs limited flash) isn't worth the risk. See [PROJECT.md](PROJECT.md) §6b.
 
 ## Sensing & autonomy (new clients of the API)
 

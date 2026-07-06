@@ -28,21 +28,19 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   matching signing setup. ⚠️ **One-way door** — the F-Droid inclusion template warns this can't be
   enabled later once published with F-Droid's key. **Deliberate deferral**; revisit only when
   re-evaluating at a major version.
-- **ESP32 WiFi / standalone roadmap (cluster) — remaining future items.** Provisioning,
+- **ESP32 WiFi / standalone roadmap (cluster).** Provisioning,
   Group A (discovery + setup page), Group B (the management page), Pi mDNS, and the
-  **binary/release pipeline** are all **DONE** (moved to FINISHED below). Still future:
-  - **Serve the client from ESP32 flash** — **the next ESP32 task** (after the shipped release
-    pipeline). **Gated on the client-size
-    problem**: the full client (dashboard HTML/JS/CSS + images/GIFs/icons) may be several MB.
-    Either (a) aggressively size-limit the full client's assets, or (b) build a separate
-    **"light client"** (stripped dashboard, smaller assets) for embedded serving — full client
-    from Pi/dev, lean client from ESP32 flash. ⚠️ **Concern:** the browser page-load **asset
-    burst** coexisting with BLE on the shared 2.4 GHz radio is the heaviest moment + most likely
-    to stutter — measure if/when built. Needs a flash filesystem (SPIFFS/LittleFS) partition +
-    the `__WS_PORT__` / `__INIT_JSON__` injection the Pi/Android hosts do.
-  - **Operational AP mode** (distinct from provisioning's temporary config AP) — the ESP32 as
-    its *own* WiFi network you connect to and drive over, for true standalone with no home
-    network.
+  **binary/release pipeline** are all **DONE** (moved to FINISHED below).
+  - **Serve the client from ESP32 flash — DECIDED AGAINST (won't-do).** Long the "next ESP32"
+    item; now decided against. The ESP32 works cleanly as a **pure radio core** that any hosted
+    client (Pi / Docker / desktop / Android) drives, so an on-board client adds little value; and
+    the technical risk is real — the browser page-load **asset burst** coexisting with BLE on the
+    shared 2.4 GHz radio is the heaviest, most stutter-prone moment, on top of the client-size
+    problem (the full client is several MB vs the board's limited flash). Not worth the
+    complexity/risk for the value — the ESP32 stays a **thin-transport radio core** only.
+  - **Operational AP mode** (still genuinely future — distinct from provisioning's temporary
+    config AP) — the ESP32 as its *own* WiFi network you connect to and drive over, for true
+    standalone with no home network.
 
 ## RECURRING (every release)
 
@@ -52,12 +50,6 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## IN-PROGRESS
 
-- **esp32-core (ESP32-S3 radio core) — finishing.** The core is a usable standalone appliance
-  (control slices + provisioning + Group A + Group B all DONE + hardware-verified; see FINISHED
-  below). **Pi mDNS (`moldqueenrasp.local` for linux-core) is DONE**, and the
-  **binary/release pipeline is DONE** (`esp-v0.1.0` published — see FINISHED). The
-  remaining work is the **next ESP32 task: serve-client-from-flash** (see the FUTURE cluster).
-  Toolchain: ESP-IDF v5.5.4.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`, is **merged** and the
   app is now **available on F-Droid** at
@@ -72,6 +64,12 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## FINISHED (recent, for context)
 
+- **esp32-core (ESP32-S3 radio core) — COMPLETE.** All control slices + WiFi provisioning +
+  Group A + Group B, **Pi mDNS** (`moldqueenrasp.local`), and the **binary/release pipeline**
+  (`esp-v0.1.0` published) are DONE + hardware-verified (entries below). **No pending ESP32
+  task** — **serve-client-from-flash is decided against** (see FUTURE): the ESP32 stays a
+  thin-transport radio core that a hosted client (Pi / Docker / desktop / Android) drives.
+  Toolchain: ESP-IDF v5.5.4.
 - **Client Docker image — SHIPPED** (`.github/workflows/client-release.yml`, on main). A
   public **client-only** image, `ghcr.io/jrichter24/moldqueen-client`, serves the web UI
   (no radio) so you point it at a remote core's WS API. Triggered by a **separate `client-v*`**
@@ -94,8 +92,8 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   **`esp-v0.1.0`**, a FULL release, asset **`moldqueen-esp32-esp-v0.1.0.bin`** (~1.14 MB),
   flash command in the release body
   (`esptool.py --chip esp32s3 write_flash 0x0 moldqueen-esp32-<tag>.bin`). Releases:
-  <https://github.com/jrichter24/moldqueen/releases/tag/esp-v0.1.0>. (Next ESP32 task:
-  serve-client-from-flash.)
+  <https://github.com/jrichter24/moldqueen/releases/tag/esp-v0.1.0>. (The ESP32 core is now
+  complete; serve-client-from-flash was decided against — see FUTURE.)
 - **Pi mDNS discovery — `moldqueenrasp.local`** (linux-core, hardware-verified on the LAN). The
   Pi core is now reachable by a stable name (`ws://moldqueenrasp.local:8765`), mirroring the
   ESP32's `moldqueenesp.local`. Mechanism: an **additive avahi address-record alias**
@@ -124,7 +122,7 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   (double-reset / BOOT-hold) was evaluated and **dropped as unreliable** (GPIO0 is the boot
   strap; the EN reset clears RTC) — replaced by the software switch-to-setup. Shared branding
   factored into `mk4_webui`; seven components total. (Pi mDNS + the release pipeline shipped after
-  this — see above; next is serve-client-from-flash.)
+  this — see above; the ESP32 core is now complete, serve-client-from-flash decided against — see FUTURE.)
 - **Client WS-endpoint field fix** — `client/web/clientconfig.js`: the endpoint field no longer
   clears/overwrites itself while you're typing in it.
 - **v0.1.0 — first signed release** — the release pipeline is live: deterministic versioning

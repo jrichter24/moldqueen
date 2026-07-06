@@ -19,8 +19,12 @@ flashes it and enters their own WiFi) — all hardware-confirmed. The **binary/r
 is **live** and the **first release is published**: tag `esp-v*` and CI (GitHub Actions, the
 `espressif/idf:v5.5.4` container) builds the firmware and merges bootloader + partition table +
 app into **one flashable `.bin`** attached to a GitHub Release (flash the whole image to offset
-`0x0`). See the [releases page](https://github.com/jrichter24/moldqueen/releases). Still to come
-(owned by the `esp32-core-dev` agent): **serving the client from flash**.
+`0x0`). See the [releases page](https://github.com/jrichter24/moldqueen/releases). The ESP32 is a
+**radio core only** — **serving the client from flash was considered and decided against**: the
+full client is several MB against limited flash, and its page-load asset burst would have to
+coexist with BLE on the shared 2.4 GHz radio (the heaviest, most stutter-prone moment), for little
+value when any hosted client (Pi / Docker / desktop / Android) already drives it over WiFi. No
+remaining ESP32 client-serving work.
 
 ## Layout
 - `components/mouldking_crypt/` — the clean-room **C port of the MouldKing cipher**

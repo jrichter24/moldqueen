@@ -258,13 +258,14 @@ The **ESP32-S3 radio core** is now a working third sibling, a usable standalone 
 It drives real toys over WiFi today (clean-room C `MouldKingCrypt` port, NimBLE `0xFFF0`
 advertiser, 300 ms auto-neutral safety, WiFi WebSocket server mirroring the Pi's `api.py`),
 plus **WiFi provisioning** (no creds baked in: a fallback `moldqueen-setup` AP + a branded
-bilingual setup page), **mDNS discovery** as `moldqueenesp.local`, and a **management page**
-at `moldqueenesp.local:8080` (status, restart, switch-to-setup, change-network). What's still
-ahead:
+bilingual setup page), **mDNS discovery** as `moldqueenesp.local`, a **management page**
+at `moldqueenesp.local:8080` (status, restart, switch-to-setup, change-network), Pi mDNS
+(`moldqueenrasp.local` for linux-core), and a binary/release pipeline (a downloadable `.bin`,
+published per `esp-v*` tag). The ESP32 core is **complete** and stays a thin-transport radio
+core that a hosted client drives; **serving the client from the board's own flash was decided
+against** (the several-MB client vs limited flash, and the page-load asset burst coexisting with
+BLE on the shared 2.4 GHz radio). What's still ahead:
 
-- **ESP32 finishing:** Pi mDNS (`moldqueenrasp.local` for linux-core) and the binary/release
-  pipeline (a downloadable `.bin`, published per `esp-v*` tag) are shipped; serve-client-from-flash
-  is next.
 - **MK6 protocol support** — the greyed *MK6* card badges; second Mould King BLE variant.
 - **Camera, ToF sensor** — telemetry over/alongside the API.
 - **AI brain / console client** — an agent driving the toy through the same WebSocket API.

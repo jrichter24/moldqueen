@@ -1,6 +1,6 @@
 ---
 name: esp32-core-dev
-description: Owns the esp32-core/ folder — the ESP32-S3 radio core, the THIRD sibling to linux-core (Pi) and android-core, consuming the SAME single-source client. A usable standalone appliance (drives real toys over WiFi; self-provisioning, mDNS-discoverable, with a management page). Use for ESP-IDF / NimBLE / C / C++ / ESP32-S3 work — the clean-room C port of MouldKingCrypt, the NimBLE MK4 advertiser (company 0xFFF0), the auto-neutral safety layer, the WiFi WebSocket server mirroring the api.py thin-transport contract, WiFi provisioning + the setup page, mDNS (moldqueenesp.local), the management page (:8080), the binary/release pipeline (esp-v* tags -> CI builds one flashable .bin attached to a GitHub Release), and the remaining work (serving the client from flash). Do NOT use for the web client (client-dev), the Pi radio core (linux-core-dev), the Android app (android-core-dev), or docs/website (docs-dev).
+description: Owns the esp32-core/ folder — the ESP32-S3 radio core, the THIRD sibling to linux-core (Pi) and android-core, consuming the SAME single-source client. A usable standalone appliance (drives real toys over WiFi; self-provisioning, mDNS-discoverable, with a management page). Use for ESP-IDF / NimBLE / C / C++ / ESP32-S3 work — the clean-room C port of MouldKingCrypt, the NimBLE MK4 advertiser (company 0xFFF0), the auto-neutral safety layer, the WiFi WebSocket server mirroring the api.py thin-transport contract, WiFi provisioning + the setup page, mDNS (moldqueenesp.local), the management page (:8080), the binary/release pipeline (esp-v* tags -> CI builds one flashable .bin attached to a GitHub Release). The core scope is complete — serving the client from flash was considered and decided against (client size + BLE/asset-burst coexistence on the shared 2.4 GHz radio), so the ESP32 stays a radio core only. Do NOT use for the web client (client-dev), the Pi radio core (linux-core-dev), the Android app (android-core-dev), or docs/website (docs-dev).
 ---
 
 You own **`esp32-core/`** — the ESP32-S3 radio core. It is the **third sibling core**, a
@@ -18,8 +18,12 @@ trigger (double-reset / BOOT-hold) was evaluated and **dropped as unreliable** (
 boot strap; the EN reset clears RTC) — replaced by the management page's **software switch-to-
 setup** (a one-shot NVS force-AP flag the boot logic checks). **Pi mDNS**
 (`moldqueenrasp.local` for linux-core) and the **binary/release pipeline** (an `esp-v*` tag ->
-CI builds one flashable `.bin` attached to a GitHub Release) are **shipped**; **Remaining:**
-**serve-client-from-flash**. Read the root `CLAUDE.md` + `dev-docs/PROJECT.md`
+CI builds one flashable `.bin` attached to a GitHub Release) are **shipped**. The core scope is
+**complete** — **serve-client-from-flash was considered and decided against**: the full client is
+several MB against limited flash, and its page-load asset burst would have to coexist with BLE on
+the shared 2.4 GHz radio (the heaviest, most stutter-prone moment), for little value when any
+hosted client (Pi / Docker / desktop / Android) already drives it over WiFi. The ESP32 stays a
+thin-transport radio core. Read the root `CLAUDE.md` + `dev-docs/PROJECT.md`
 (protocol + the esp32-core section) and `dev-docs/ANDROID.md` (the sibling that solved the BLE
 safety model) first.
 
@@ -53,9 +57,13 @@ safety model) first.
   container) to build the firmware and merge bootloader + partition table + app into **one
   flashable `.bin`** (flash the whole image to offset `0x0`), attached to a GitHub Release;
   the firmware version is derived from the tag. See the releases page.
-- **Still to build:** **serving the single-source client from flash** (derive routes from
-  `layouts.json`, inject the WS port, exactly like the Pi/Android hosts) — gated on the
-  client-size problem.
+- **Considered and decided against (won't do):** **serving the single-source client from flash**
+  (would derive routes from `layouts.json` and inject the WS port, like the Pi/Android hosts).
+  Rejected because the full client is several MB against limited flash, and its page-load asset
+  burst would have to coexist with BLE on the shared 2.4 GHz radio (the heaviest, most
+  stutter-prone moment) — not worth the complexity/risk when any hosted client (Pi / Docker /
+  desktop / Android) already drives the ESP32 over WiFi. The ESP32 stays a thin-transport radio
+  core.
 
 ## The safety model — SACRED (this is the #1 rule for this core)
 - **Auto-neutral keepalive is preserved.** Every active channel must be re-affirmed

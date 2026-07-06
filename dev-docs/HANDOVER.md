@@ -3,9 +3,9 @@
 > Living "current state" doc for starting fresh sessions without losing context.
 > **Not** a project reference — that's [`PROJECT.md`](PROJECT.md). Read this first
 > (~30s) at the start of a session; update + commit it before ending one.
-> **Last updated: 2026-06-29.**
+> **Last updated: 2026-07-06.**
 
-## TL;DR — where we are right now (2026-06-29)
+## TL;DR — where we are right now (2026-07-06)
 
 - **Repo is PUBLIC** ([github.com/jrichter24/moldqueen](https://github.com/jrichter24/moldqueen)).
 - **Three radio cores, one WS contract:** Pi (`linux-core`), Android (`android-core`), and the
@@ -30,8 +30,9 @@
   prerelease flag keys off the stripped version (a dry-run `esp-v0.1.0-rc1` caught + fixed a
   prerelease bug first). First real release: **`esp-v0.1.0`**, FULL release, asset
   **`moldqueen-esp32-esp-v0.1.0.bin`** (~1.14 MB), flash command in the release body
-  (`esptool.py --chip esp32s3 write_flash 0x0 moldqueen-esp32-<tag>.bin`). **Next ESP32
-  task:** serve-client-from-flash.
+  (`esptool.py --chip esp32s3 write_flash 0x0 moldqueen-esp32-<tag>.bin`). **The ESP32 core is
+  now complete — no pending ESP32 task;** serve-client-from-flash was **decided against** (see
+  "Recent decisions still relevant" below).
 - **Client fix shipped:** the WS-endpoint field (`client/web/clientconfig.js`) no longer
   clears/overwrites while you're editing it.
 - **Process:** a read-only **`auditor`** agent + a **documentation-currency** rule now exist
@@ -238,13 +239,16 @@ mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/`. Target **ESP32-S3
   new scroll, and the page must also render raw via nginx). Static-only; verified live.
 
 ## In progress / next task
-- **esp32-core finishing — next is serve-from-flash.** The core is a usable standalone
-  appliance now (drives a real toy over WiFi; provisioning + Group A + Group B all done and
-  hardware-verified). **Pi mDNS is shipped** (`moldqueenrasp.local` for linux-core — additive
-  avahi alias via `scripts/mdns.sh` wired into `start.sh`, optional
-  `scripts/moldqueen-mdns.service`), and the **binary/release pipeline is shipped** too
-  (`.github/workflows/esp32-release.yml` builds one flashable `.bin` on `esp-v*` tags;
-  **`esp-v0.1.0` published**). Next: **serve-client-from-flash** (or Jens decides).
+- **esp32-core — COMPLETE (no pending ESP32 task).** The core is a usable standalone appliance
+  (drives a real toy over WiFi; provisioning + Group A + Group B all done and hardware-verified),
+  **Pi mDNS is shipped** (`moldqueenrasp.local` for linux-core — additive avahi alias via
+  `scripts/mdns.sh` wired into `start.sh`, optional `scripts/moldqueen-mdns.service`), and the
+  **binary/release pipeline is shipped** (`.github/workflows/esp32-release.yml` builds one
+  flashable `.bin` on `esp-v*` tags; **`esp-v0.1.0` published**). **serve-client-from-flash is
+  decided against** — the ESP32 stays a thin-transport radio core that a hosted client drives
+  (see "Recent decisions still relevant"). **No ESP32-specific next task**; the next move is
+  Jens's pick among the other future items (e.g. slot auto-detection, or the console/AI client
+  of the WS API).
 - **F-Droid MR !41291 — merged; app is live.** The MR at `fdroid/fdroiddata` is merged (maintainer
   linsui review addressed); MoldQueen is now **available on F-Droid** at
   [f-droid.org/packages/io.github.jrichter24.moldqueen](https://f-droid.org/packages/io.github.jrichter24.moldqueen/).
@@ -252,6 +256,12 @@ mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/`. Target **ESP32-S3
   sections + version badge and verify release-download links (see `WORKBOARD.md` → RECURRING).
 
 ## Recent decisions still relevant
+- **Serve-client-from-flash on ESP32 — DECIDED AGAINST (won't-do, 2026-07-06).** The long-
+  documented "next ESP32" item is now decided against. The ESP32 works cleanly as a pure radio
+  core that any hosted client (Pi / Docker / desktop / Android) drives, so an on-board client
+  adds little value; and the page-load asset burst coexisting with BLE on the shared 2.4 GHz
+  radio is the heaviest, most stutter-prone moment, on top of the client-size problem (several
+  MB vs limited flash). The ESP32 stays a thin-transport radio core. See PROJECT.md §6b.
 - **DUAL-RADIO finding (2026-06-19) — don't re-investigate.** The Mould King hub is
   **dual-radio**. **BLE** (company `0xFFF0`) = the MK+tech app path that moldqueen
   controls → reaches **FAST-FLASH** (drivable). The physical **remote** uses a

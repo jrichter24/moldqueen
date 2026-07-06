@@ -2,14 +2,15 @@
 
 > This is the authoritative project document. Where any other doc (the CLAUDE.md
 > files, or the snapshots in `linux-core/reference/`) disagrees, **this file wins.**
-> Last major update: 2026-06-29 (the **ESP32 binary/release pipeline is shipped** —
-> `.github/workflows/esp32-release.yml` builds one flashable `.bin` on `esp-v*` tags, and
-> **`esp-v0.1.0` is published**; the next ESP32 item is serve-client-from-flash. Prior
-> milestone: the **esp32-core** is a usable standalone appliance — WiFi provisioning, mDNS
-> discovery `moldqueenesp.local`, a management page on :8080, all hardware-verified; **Pi mDNS
-> `moldqueenrasp.local` shipped** for linux-core; signed Android releases v0.1.0-v0.1.2;
-> F-Droid MR !41291 merged (app now available on F-Droid); §1/§6b/§8 reconciled to the release-pipeline
-> milestone).
+> Last major update: 2026-07-06 (**serving the client from ESP32 flash is DECIDED AGAINST** —
+> the ESP32 stays a pure thin-transport radio core that a hosted client drives, so the ESP32
+> core is **complete with no pending task**; §1/§6b/§8 reconciled, decision record in §6b. Prior:
+> the **ESP32 binary/release pipeline is shipped** — `.github/workflows/esp32-release.yml` builds
+> one flashable `.bin` on `esp-v*` tags, and **`esp-v0.1.0` is published**. The **esp32-core** is
+> a usable standalone appliance — WiFi provisioning, mDNS discovery `moldqueenesp.local`, a
+> management page on :8080, all hardware-verified; **Pi mDNS `moldqueenrasp.local` shipped** for
+> linux-core; signed Android releases v0.1.0-v0.1.2; F-Droid MR !41291 merged (app now available
+> on F-Droid)).
 
 ---
 
@@ -53,8 +54,8 @@ camera, a TOF sensor, and a local AI "brain" that drives it through the same API
   on **`esp-v*`** tags, version from the tag; **`esp-v0.1.0` is published** (asset
   `moldqueen-esp32-esp-v0.1.0.bin`). See §6b.
 - 🔜 Next: finish the channel→function map (sweep placeholders); slot
-  auto-detection; esp32-core — serve-client-from-flash; a console/AI client; then the
-  camera/sensor/AI phases.
+  auto-detection; a console/AI client; then the camera/sensor/AI phases. (The **esp32-core is
+  complete** — serving the client from ESP32 flash is **decided against**; see §6b.)
 
 ---
 
@@ -380,6 +381,16 @@ hardware-verified):
 > management page); the next boot enters provisioning. The board also re-enters provisioning
 > **automatically** when the saved network is unreachable.
 
+> **Decision — serve-client-from-flash: DECIDED AGAINST (won't-do).** Serving the web client
+> from the ESP32's own flash (so the board would host the UI as well as the radio) was the
+> long-documented "next ESP32" item; it is now **decided against**. Rationale: the ESP32 works
+> cleanly as a **pure radio core** that any hosted client (Pi / Docker / desktop / Android)
+> drives, so an on-board client adds little value; and the technical risk is real — the browser
+> page-load **asset burst** coexisting with BLE on the shared 2.4 GHz radio is the heaviest,
+> most stutter-prone moment, on top of the client-size problem (the full client is several MB vs
+> the board's limited flash). Not worth the complexity/risk for the value. **The ESP32 stays a
+> thin-transport / radio core only**, with no pending ESP32-specific task.
+
 **Components** (seven) live in `esp32-core/components/{mouldking_crypt, mk4_advertiser,
 mk4_wifi, mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/` (`mk4_webui` holds the
 shared web-UI assets so the provisioning pages and the management page render as one product).
@@ -400,8 +411,10 @@ parity-checked) and the **prerelease flag keys off the stripped version** (a dry
 a FULL release, asset **`moldqueen-esp32-esp-v0.1.0.bin`** (~1.14 MB):
 <https://github.com/jrichter24/moldqueen/releases/tag/esp-v0.1.0>.
 
-**Remaining (honestly not-done):** **serving the client from flash** (today the client is
-served elsewhere and pointed at the ESP32's WS endpoint) — the next ESP32 item.
+**No pending ESP32 task.** Serving the client from the board's own flash was considered and
+**decided against** (see the decision record above) — the client stays hosted elsewhere (Pi /
+Docker / desktop / Android) and pointed at the ESP32's WS endpoint, and the ESP32 remains a
+thin-transport radio core.
 
 ---
 
@@ -453,7 +466,8 @@ see `mk4web/config.py`).
   see §6b). **Pi mDNS is also shipped** (`moldqueenrasp.local` for linux-core — additive avahi
   alias via `scripts/mdns.sh`/`start.sh`), and the **binary/release pipeline is shipped** too
   (`.github/workflows/esp32-release.yml` builds one flashable `.bin` on `esp-v*` tags;
-  **`esp-v0.1.0` published**). **Remaining:** serve-client-from-flash.
+  **`esp-v0.1.0` published**). **No pending ESP32 task** — serve-client-from-flash is **decided
+  against** (the ESP32 stays a thin-transport radio core; see the §6b decision record).
 - **Finish the channel map** — sweep the placeholder channels (slot-0 ch1–3, slot-1
   ch1/ch3+) and confirm each function by driving it via Settings → Test.
 - **Reverse-speed calibration** — `reverse_scale` defaults to identity; measure the
