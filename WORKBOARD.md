@@ -50,6 +50,16 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## IN-PROGRESS
 
+- **MK6 module support — protocol DONE + write-proven; integration is the active thrust.** The
+  actual **MK6 module** (a different hub from the MK4 13112 — byte/device model, not nibble/slot)
+  is fully reverse-engineered **and driving-proven on hardware** (same `0xFFF0` + MouldKingCrypt,
+  telegram `[0x61+device] ae 18 [c0..c3] 80 80 [0xFF-header]`, byte-per-channel `0x80`-center).
+  Spec + evidence: `linux-core/reference/mk6_protocol.md`; design + plan in PROJECT.md §3 + §8.
+  The RE spike was scratch (`/tmp`, **not committed**). **Build sequence:** (1) ✅ prove MK6 write —
+  **DONE**; (2) **NEXT — protocol abstraction** (MK4/MK6 seam + per-protocol value scaling,
+  server-side); (3) WS `protocol` in `set` + server scaling + asyncapi; (4) client
+  protocol-per-function + MK4/MK6 box-image UX; (5) broadcaster interleaves both keepalives on the
+  shared radio — hardware-verify LAST.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`, is **merged** and the
   app is now **available on F-Droid** at

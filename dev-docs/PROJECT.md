@@ -114,7 +114,27 @@ We spent a long time on J0EK3R/mkconnect-python's **MK6.0 per-device model**
 "device 1" by button promotion). Single-hub MK6.0 telegrams *did* move a hub, so it
 looked right — but **two-hub addressing via `0x62`/device-1 never worked**, because
 our hubs don't use that model. The app capture settled it: they're **MK4 nibble**.
-All MK6.0 "device-1 / promotion" guidance is **SUPERSEDED**.
+All MK6.0 "device-1 / promotion" guidance is **SUPERSEDED — *for the MK4 hubs***.
+
+### MK6 module — real, byte/device model (RE'd + write-proven, 2026-07)
+The MK6.0 "byte/device" model that was **wrong for the MK4 13112 hubs** is **correct for the
+actual MK6 module** — a *different* hub, reverse-engineered and **write-proven on hardware**.
+Don't let the detour warning above confuse the two: **MK4 hubs = nibble/slot; MK6 module =
+byte/device; both real, different hardware.**
+
+- **Same** company id `0xFFF0`, **same** MouldKingCrypt (every captured MK6 frame decoded
+  CRC-OK with the existing codec; our built frames re-encode byte-identical to the app's), and
+  the **same** connectionless broadcast/keepalive path. No new crypto.
+- **Motion telegram (raw):** `[header] ae 18 [c0] [c1] [c2] [c3] 80 80 [trailer]` where
+  `header = 0x61 + device` (`0x61/62/63` = device 0/1/2, button-selected like slots),
+  `trailer = 0xFF − header` (**computed** — dev0 `0x9e`, dev1 `0x9d`), bytes 2–3 = constant
+  `ae 18`, and `c0..c3` are **byte-per-channel** (`0x80` neutral → `0xFF`/`0x00` extremes,
+  proportional). Connect frames: shared `ad ae 18 80 80 80 f3 52` + MK6 base `6d ae 18 80 80 80 80 92`.
+- **Proven both ways:** decode (read) *and* a telegram **we built + broadcast drove the real
+  module's motor**, both directions, proportional, device 0, channel c0.
+- **Key deltas vs MK4** (for the abstraction, §8): byte-per-channel vs nibble; device-in-header
+  vs slot-in-nibble-block; computed trailer vs constant; ~6 channels vs 12. Full measured spec +
+  evidence: **[`../linux-core/reference/mk6_protocol.md`](../linux-core/reference/mk6_protocol.md)**.
 
 ---
 
@@ -454,6 +474,28 @@ see `mk4web/config.py`).
 
 ## 8. Open problems / next steps
 
+- **MK6 support — protocol DONE, integration is the active thrust.** The MK6 module is fully
+  reverse-engineered **and write-proven on hardware** (§3 + `linux-core/reference/mk6_protocol.md`);
+  the RE spike was scratch (`/tmp`, not committed). What remains is wiring it into the stack.
+  **Agreed design (decided in planning — don't re-derive):**
+  - **WS `set` carries `protocol` per-command:** `{protocol:"mk4"|"mk6", slot, channel, value}` —
+    per-command, *not* a session mode, so mixed MK4+MK6 (or switching toys mid-session) works.
+  - **Value stays NORMALIZED client-side; the SERVER scales per protocol** (MK4 nibble `-7..+7` /
+    MK6 byte `0x00–0xFF`, `0x80`-center). The client never learns wire resolution — stays thin.
+  - **Channel map gains `protocol` per function** (client-owned, like slot/channel/invert); the
+    user tags functions by picking their hub via **MK4/MK6 box images** in the connect UX.
+  - **"slot" stays the 0/1/2 concept for both** client-side; the server encodes it as an MK4
+    nibble-slot or an MK6 header-byte (`0x61+slot`). Minimal client change.
+  - **Broadcaster (goal):** hold BOTH protocols' state and **interleave both keepalives** on the
+    one shared `0xFFF0` radio (MK6 hubs also time out) — full simultaneous mixed support. Hardest,
+    hardware-sensitive piece → build + verify LAST.
+  - **Build sequence:** (1) ✅ **prove MK6 write** — DONE, hardware-verified. (2) **protocol
+    abstraction** — refactor telegram-building into a clean seam (MK4 + MK6 as two impls behind one
+    interface) + per-protocol value scaling, server-side, no client change. (3) **WS + server** —
+    add `protocol` to `set`, wire through `api.py`, scale normalized values, update `asyncapi.yaml`.
+    (4) **client** — protocol-per-function in the map + MK4/MK6 box-image selection UX (minimal).
+    (5) **mixed interleaving** — broadcaster holds + interleaves both keepalives; hardware-verify
+    (shared-radio coexistence is the stress point). LAST.
 - ✅ **RAW page + configurable API endpoint — SHIPPED.** The retired simple page was
   replaced by the dedicated **RAW** slot/channel layout (`/raw`), and the configurable WS
   endpoint (`clientconfig.js`, persisted in localStorage) ships alongside it — see §6.

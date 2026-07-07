@@ -1,4 +1,4 @@
-# linux-core/reference — MK4 protocol reference (working, version-controlled)
+# linux-core/reference — MK4 / MK6 protocol reference (working, version-controlled)
 
 Snapshot of the **proven** Mould King 13112 control method, copied from the scratch
 work area (`~/scratch/mk-refs/`) so the win is backed up in git. The working
@@ -8,6 +8,7 @@ webservice). **Canonical project doc: [`../../dev-docs/PROJECT.md`](../../dev-do
 | File | What it is |
 |------|------------|
 | [`CONNECT_PROCEDURE.md`](CONNECT_PROCEDURE.md) | The control procedure: MK4 nibble protocol, exact telegram bytes, slots, two-hub method. |
+| [`mk6_protocol.md`](mk6_protocol.md) | **MK6 module** protocol (byte/device model) — RE'd + **write-proven on hardware** (2026-07). Same `0xFFF0` + MouldKingCrypt as MK4; different telegram shape. |
 | [`channel_map.md`](channel_map.md) | Channel/slot → function map (confirmed + TBD). |
 | [`mouldking_crypt.py`](mouldking_crypt.py) | The verified codec — `encode()`/`decode()`, reproduces the app's bytes exactly (13/13 self-tests). Self-contained. |
 | [`mk4_test.py`](mk4_test.py) | Scratch transmit tool used to drive the hubs (builds telegrams + `hcitool` broadcast). |

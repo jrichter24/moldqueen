@@ -3,13 +3,22 @@
 > Living "current state" doc for starting fresh sessions without losing context.
 > **Not** a project reference — that's [`PROJECT.md`](PROJECT.md). Read this first
 > (~30s) at the start of a session; update + commit it before ending one.
-> **Last updated: 2026-07-06.**
+> **Last updated: 2026-07-08.**
 
-## TL;DR — where we are right now (2026-07-06)
+## TL;DR — where we are right now (2026-07-08)
 
 - **Repo is PUBLIC** ([github.com/jrichter24/moldqueen](https://github.com/jrichter24/moldqueen)).
 - **Three radio cores, one WS contract:** Pi (`linux-core`), Android (`android-core`), and the
   **ESP32-S3** (`esp32-core`) — all consuming the same single-source client.
+- **MK6 protocol REVERSE-ENGINEERED + WRITE-PROVEN on hardware (2026-07-08) — NOT yet in the
+  stack.** The actual **MK6 module** is a *different* hub from our MK4 13112 (byte/device model,
+  not nibble/slot) — same `0xFFF0` + same MouldKingCrypt, different telegram shape
+  (`[0x61+device] ae 18 [c0..c3] 80 80 [0xFF-header]`, byte-per-channel `0x80`-center). A telegram
+  **we built + broadcast drove the real module's motor**, both directions, proportional. Full spec
+  + evidence: `linux-core/reference/mk6_protocol.md`; §3 + §8 of PROJECT.md. The RE was a **scratch
+  spike in `/tmp` — deliberately NOT committed** (this doc + the reference file are the record).
+  **NEXT = MK6 build step 2 (protocol abstraction)** — see PROJECT.md §8 for the agreed design +
+  the 5-step sequence (step 1 done).
 - **Shipped:** signed Android releases **v0.1.0 / v0.1.1 / v0.1.2** via the gated CI release
   workflow; package renamed to **`io.github.jrichter24.moldqueen`**.
 - **F-Droid MR !41291** is **merged** at `fdroid/fdroiddata` (maintainer linsui review
@@ -246,9 +255,15 @@ mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/`. Target **ESP32-S3
   **binary/release pipeline is shipped** (`.github/workflows/esp32-release.yml` builds one
   flashable `.bin` on `esp-v*` tags; **`esp-v0.1.0` published**). **serve-client-from-flash is
   decided against** — the ESP32 stays a thin-transport radio core that a hosted client drives
-  (see "Recent decisions still relevant"). **No ESP32-specific next task**; the next move is
-  Jens's pick among the other future items (e.g. slot auto-detection, or the console/AI client
-  of the WS API).
+  (see "Recent decisions still relevant"). **No ESP32-specific next task.**
+- **MK6 integration — the active thrust (protocol DONE, write-proven).** MK6 is fully
+  reverse-engineered and driving-proven on hardware (see the TL;DR + PROJECT.md §3/§8 +
+  `linux-core/reference/mk6_protocol.md`). **Step 1 (prove MK6 write) is DONE.** **NEXT = step 2:
+  the protocol abstraction** — refactor telegram-building into a clean MK4/MK6 seam + per-protocol
+  value scaling, server-side, no client change. Then steps 3 (WS `protocol` + server scaling),
+  4 (client protocol-per-function + MK4/MK6 box-image UX), 5 (broadcaster interleaves both
+  keepalives — hardware-verify LAST). The full agreed design is in **PROJECT.md §8**. The RE spike
+  was scratch (`/tmp`, not committed).
 - **F-Droid MR !41291 — merged; app is live.** The MR at `fdroid/fdroiddata` is merged (maintainer
   linsui review addressed); MoldQueen is now **available on F-Droid** at
   [f-droid.org/packages/io.github.jrichter24.moldqueen](https://f-droid.org/packages/io.github.jrichter24.moldqueen/).
@@ -286,6 +301,9 @@ mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/`. Target **ESP32-S3
   (swapped from placeholders by the 2026-06-17 hardware test).
 
 ## Open / deferred (non-urgent)
+- **Doc-vs-reality nit:** the docs say the Pi's onboard BT is disabled via `dtoverlay=disable-bt`,
+  but it still **enumerates as `hci2`** (Bus UART) — the overlay isn't actually applied. Harmless
+  (it's DOWN; control is the USB dongle by MAC) and unrelated to MK6; fix the overlay or the doc later.
 - systemd auto-start of the service.
 - Cosmetic: `cmd:info`'s `hci` field reads the config default, not the broadcaster's
   real bound adapter.
