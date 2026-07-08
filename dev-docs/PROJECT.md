@@ -486,16 +486,20 @@ see `mk4web/config.py`).
     user tags functions by picking their hub via **MK4/MK6 box images** in the connect UX.
   - **"slot" stays the 0/1/2 concept for both** client-side; the server encodes it as an MK4
     nibble-slot or an MK6 header-byte (`0x61+slot`). Minimal client change.
-  - **Broadcaster (goal):** hold BOTH protocols' state and **interleave both keepalives** on the
-    one shared `0xFFF0` radio (MK6 hubs also time out) — full simultaneous mixed support. Hardest,
-    hardware-sensitive piece → build + verify LAST.
-  - **Build sequence:** (1) ✅ **prove MK6 write** — DONE, hardware-verified. (2) **protocol
-    abstraction** — refactor telegram-building into a clean seam (MK4 + MK6 as two impls behind one
-    interface) + per-protocol value scaling, server-side, no client change. (3) **WS + server** —
-    add `protocol` to `set`, wire through `api.py`, scale normalized values, update `asyncapi.yaml`.
-    (4) **client** — protocol-per-function in the map + MK4/MK6 box-image selection UX (minimal).
-    (5) **mixed interleaving** — broadcaster holds + interleaves both keepalives; hardware-verify
-    (shared-radio coexistence is the stress point). LAST.
+  - **Broadcaster (✅ DONE):** the raw-blind broadcaster holds a LIST of opaque telegram entries
+    and **interleaves them** on the one shared `0xFFF0` radio (round-robin, one advertiser
+    time-multiplexed) — full simultaneous mixed support. **Hardware-verified 2026-07-08:** MK4
+    (nibble) + MK6-device0 (byte) driven at once, ~20 frames/s combined, **both boxes smooth (no
+    stutter)**; STOP + the coarse dead-man neutral EVERY entry (STOP-neutrals-both verified live).
+  - **Build sequence:** (1) ✅ **prove MK6 write** — DONE, hardware-verified. (2) ✅ **protocol
+    abstraction** — clean seam (MK4 + MK6 as two impls behind one Protocol interface) + per-protocol
+    value scaling, server-side (`telegram.py`). (3) ✅ **WS + server EMIT MK4/MK6** — `protocol`/
+    `device` on `setup`/`set`, raw-blind broadcaster, `asyncapi.yaml`; **hardware-verified** (MK4
+    regression + MK6 c0 both directions; MK6 bind = base frame `6dae188080808092`). (4) **client
+    (NEXT, DESKTOP/client-dev)** — protocol-per-function in the map + MK4/MK6 box-image selection UX.
+    (5) ✅ **mixed interleaving** — broadcaster interleaves a raw list; simultaneous MK4+MK6
+    **hardware-verified smooth** (shared-radio coexistence, the stress point, holds). Server build
+    (1/2/3/5) is COMPLETE + on `origin/main` (`bd48c7a`); only the client (4) remains.
 - ✅ **RAW page + configurable API endpoint — SHIPPED.** The retired simple page was
   replaced by the dedicated **RAW** slot/channel layout (`/raw`), and the configurable WS
   endpoint (`clientconfig.js`, persisted in localStorage) ships alongside it — see §6.

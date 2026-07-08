@@ -60,6 +60,21 @@ Corroborated by J0EK3R/mkconnect-python (MIT). **Canonical doc:
 - *(The reverse-engineering spike was a scratch script in `/tmp` — deliberately **not**
   committed; this file is the durable record.)*
 
+## Integration status — server build COMPLETE (steps 1/2/3/5), hardware-verified
+MK6 is fully integrated into the `mk4web` control stack (Protocol seam in `telegram.py`;
+raw-blind broadcaster; WS `protocol`/`device` on `setup`/`set`). **On `origin/main` at `bd48c7a`.**
+- **Bind:** broadcasting the device-0 connect frame `6dae188080808092` binds a box in pairing mode
+  (see *Connect / handshake frames* above); then `0x61`-header motion drives it.
+- **Simultaneous MIXED MK4 + MK6 — hardware-verified 2026-07-08.** The broadcaster holds a LIST of
+  telegram entries and **interleaves** them on the one shared `0xFFF0` radio (round-robin, one
+  advertiser time-multiplexed, ~20 frames/s combined for two protocols so each keeps its ~10/s
+  keepalive). Measured: **MK4 (nibble) and MK6-device0 (byte) drive BOTH boxes at once, SMOOTH — no
+  stutter / dropout** (shared-radio coexistence holds). STOP and the coarse dead-man neutral **every**
+  entry (STOP-neutrals-both confirmed live). The single-entry case is byte/cadence-identical to the
+  MK4-only path (regression preserved).
+- **Remaining:** the CLIENT (channel-map `protocol` per function + MK4/MK6 box-image selection UX) —
+  `client/`, not this core.
+
 ## MK6 vs MK4 — for the protocol abstraction
 | | MK4 hubs (13112) | MK6 module |
 |---|---|---|

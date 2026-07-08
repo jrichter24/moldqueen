@@ -50,19 +50,18 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
 
 ## IN-PROGRESS
 
-- **MK6 module support — protocol DONE + write-proven; integration is the active thrust.** The
-  actual **MK6 module** (a different hub from the MK4 13112 — byte/device model, not nibble/slot)
-  is fully reverse-engineered **and driving-proven on hardware** (same `0xFFF0` + MouldKingCrypt,
-  telegram `[0x61+device] ae 18 [c0..c3] 80 80 [0xFF-header]`, byte-per-channel `0x80`-center).
-  Spec + evidence: `linux-core/reference/mk6_protocol.md`; design + plan in PROJECT.md §3 + §8.
-  The RE spike was scratch (`/tmp`, **not committed**). **Build sequence:** (1) ✅ prove MK6 write —
-  **DONE**; (2) ✅ **protocol abstraction** (MK4/MK6 seam in `telegram.py` + per-protocol scaling) —
-  **DONE**; (3) ✅ **server EMITS MK4/MK6** (raw-blind broadcaster, IPC carries built raw, WS
-  `protocol`/`device` on `setup`/`set`, asyncapi) — **DONE + hardware-verified 2026-07-08** (MK4
-  regression + MK6 c0 both directions; MK6 bind telegram = base frame `6dae188080808092`, NOT the
-  MK4 `adae18...`); (4) **NEXT — client** protocol-per-function + MK4/MK6 box-image UX; (5)
-  broadcaster interleaves both keepalives on the shared radio (simultaneous MK4+MK6) — hardware-verify
-  LAST. Single protocol per session through step 4; step 5 adds the mix. Commit `866976a` (linux-core).
+- **MK6 module support — SERVER BUILD COMPLETE (steps 1/2/3/5 done + hardware-verified); only the
+  CLIENT (step 4) remains.** The actual **MK6 module** (a different hub from the MK4 13112 —
+  byte/device model, not nibble/slot) is fully reverse-engineered, driving-proven, AND now emitted
+  through the real server stack incl. **simultaneous mixed MK4+MK6**. Spec + evidence:
+  `linux-core/reference/mk6_protocol.md`; design in PROJECT.md §3 + §8. **Build sequence:**
+  (1) ✅ prove MK6 write; (2) ✅ protocol abstraction (`telegram.py` seam); (3) ✅ server EMITS
+  MK4/MK6 (raw-blind broadcaster, WS `protocol`/`device`, asyncapi; MK6 bind = base frame
+  `6dae188080808092`, NOT the MK4 `adae18...`); (5) ✅ **mixed interleaving** — broadcaster
+  interleaves a raw list on the one shared radio, **hardware-verified 2026-07-08: MK4 + MK6
+  driven at once, ~20 fps combined, BOTH boxes smooth (no stutter); STOP neutrals both.** On
+  `origin/main` (`bd48c7a`). **(4) NEXT — CLIENT (desktop/client-dev):** protocol-per-function in
+  the channel map + MK4/MK6 box-image selection UX. This is the ONLY remaining MK6 piece.
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`, is **merged** and the
   app is now **available on F-Droid** at

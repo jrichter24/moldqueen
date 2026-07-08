@@ -10,21 +10,24 @@
 - **Repo is PUBLIC** ([github.com/jrichter24/moldqueen](https://github.com/jrichter24/moldqueen)).
 - **Three radio cores, one WS contract:** Pi (`linux-core`), Android (`android-core`), and the
   **ESP32-S3** (`esp32-core`) — all consuming the same single-source client.
-- **MK6 module NOW DRIVES THROUGH THE REAL STACK (steps 1-3 done, HARDWARE-VERIFIED 2026-07-08).**
-  The actual **MK6 module** is a *different* hub from our MK4 13112 (byte/device model, not
-  nibble/slot) — same `0xFFF0` + same MouldKingCrypt, different telegram shape
-  (`[0x61+device] ae 18 [c0..c3] 80 80 [0xFF-header]`, byte-per-channel `0x80`-center). Build
-  progress: **step 1** (write-proof) ✅, **step 2** (Protocol seam in `telegram.py`) ✅, **step 3**
-  (server EMITS MK4/MK6; raw-blind broadcaster; `protocol`/`device` on the WS `setup`/`set`) ✅ and
-  **hardware-verified** — MK4 hub still drives identically (regression), and the MK6 module **binds
-  + drives c0 both directions** through the real api/broadcaster path. **KEY MK6 CONNECT FINDING:**
-  the MK6 device-0 **bind telegram is the base frame `6dae188080808092`** (broadcast while the box
-  is in blue+green pairing mode → it binds to device 0, LED → single fast blue flash) — **NOT** the
-  MK4 shared connect `adae18...` (that binds MK4 nibble hubs; an attempt with it left the box
-  blinking + never bound). Full spec + evidence: `linux-core/reference/mk6_protocol.md`; §3 + §8 of
-  PROJECT.md. **NEXT = MK6 build step 4** (client: protocol-per-function in the channel map + MK4/MK6
-  box-image selection UX) — see PROJECT.md §8. (Step 5 = broadcaster interleaves BOTH protocols'
-  keepalives on the shared radio — simultaneous MK4+MK6 — hardware-verify LAST.)
+- **MK6 SERVER BUILD COMPLETE — steps 1/2/3/5 done + HARDWARE-VERIFIED, on origin/main (`bd48c7a`).**
+  The server now drives **MK4, MK6, AND simultaneous mixed MK4+MK6**. The actual **MK6 module** is a
+  *different* hub from our MK4 13112 (byte/device model, not nibble/slot) — same `0xFFF0` + same
+  MouldKingCrypt, different telegram shape (`[0x61+device] ae 18 [c0..c3] 80 80 [0xFF-header]`,
+  byte-per-channel `0x80`-center). Build progress: **step 1** (write-proof) ✅, **step 2** (Protocol
+  seam in `telegram.py`) ✅, **step 3** (server EMITS MK4/MK6; raw-blind broadcaster; `protocol`/
+  `device` on the WS `setup`/`set`) ✅, **step 5** (broadcaster INTERLEAVES a raw list — simultaneous
+  MK4+MK6 on the one shared radio) ✅. **Hardware-verified 2026-07-08:** MK4 hub drives identically
+  (regression); MK6 module binds + drives c0 both ways; and **the MIX drives BOTH boxes at once,
+  ~20 frames/s combined, smooth with NO stutter** (shared-radio coexistence holds); STOP + the
+  coarse dead-man neutral EVERY entry (STOP-neutrals-both verified live). **KEY MK6 CONNECT
+  FINDING:** the MK6 device-0 **bind telegram is the base frame `6dae188080808092`** (broadcast
+  while the box is in blue+green pairing mode → it binds to device 0, LED → single fast blue flash)
+  — **NOT** the MK4 shared connect `adae18...` (that binds MK4 nibble hubs; an attempt with it left
+  the box blinking + never bound). Full spec + evidence: `linux-core/reference/mk6_protocol.md`;
+  §3 + §8 of PROJECT.md. **NEXT = MK6 build step 4, the ONLY remaining piece, which is DESKTOP/
+  client-dev work** (client: protocol-per-function in the channel map + MK4/MK6 box-image selection
+  UX) — see PROJECT.md §8.
 - **Shipped:** signed Android releases **v0.1.0 / v0.1.1 / v0.1.2** via the gated CI release
   workflow; package renamed to **`io.github.jrichter24.moldqueen`**.
 - **F-Droid MR !41291** is **merged** at `fdroid/fdroiddata` (maintainer linsui review
@@ -262,16 +265,17 @@ mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/`. Target **ESP32-S3
   flashable `.bin` on `esp-v*` tags; **`esp-v0.1.0` published**). **serve-client-from-flash is
   decided against** — the ESP32 stays a thin-transport radio core that a hosted client drives
   (see "Recent decisions still relevant"). **No ESP32-specific next task.**
-- **MK6 integration — the active thrust (steps 1-3 DONE + hardware-verified).** MK6 is fully
-  reverse-engineered, driving-proven, and now **emitted through the real server stack** (see the
+- **MK6 integration — SERVER BUILD COMPLETE (steps 1/2/3/5 done + hardware-verified); only the
+  CLIENT (step 4) remains, and that's DESKTOP work.** MK6 is reverse-engineered, driving-proven, and
+  fully **emitted through the real server stack incl. the simultaneous mixed MK4+MK6** (see the
   TL;DR + PROJECT.md §3/§8 + `linux-core/reference/mk6_protocol.md`). **Step 1** (write-proof) ✅,
-  **step 2** (Protocol seam) ✅, **step 3** (server EMITS MK4/MK6 via the seam; raw-blind broadcaster;
-  IPC carries built raw + neutral_raw; `protocol`/`device` on WS `setup`/`set`; single protocol per
-  session) ✅ hardware-verified. **NEXT = step 4:** client — protocol-per-function in the channel
-  map + MK4/MK6 box-image selection UX. Then **step 5:** the broadcaster holds BOTH protocols' state
-  + interleaves both keepalives on the shared radio (simultaneous MK4+MK6) — **hardware-verify LAST**.
-  Full agreed design in **PROJECT.md §8**. Commit: `866976a` (linux-core; from the Pi — desktop needs
-  a `git pull`).
+  **step 2** (Protocol seam) ✅, **step 3** (server EMITS MK4/MK6; raw-blind broadcaster; IPC carries
+  built raw + neutral_raw; `protocol`/`device` on WS `setup`/`set`) ✅, **step 5** (broadcaster holds
+  a LIST of entries + interleaves them — simultaneous MK4+MK6 on the one shared radio) ✅ — all
+  hardware-verified (the MIX drives BOTH boxes smoothly, ~20 fps combined, no stutter; STOP neutrals
+  both). On `origin/main` (`bd48c7a`). **NEXT = step 4 (DESKTOP/client-dev):** client —
+  protocol-per-function in the channel map + MK4/MK6 box-image selection UX. Full agreed design in
+  **PROJECT.md §8**. (These commits came from the Pi — desktop needs a `git pull`.)
 - **F-Droid MR !41291 — merged; app is live.** The MR at `fdroid/fdroiddata` is merged (maintainer
   linsui review addressed); MoldQueen is now **available on F-Droid** at
   [f-droid.org/packages/io.github.jrichter24.moldqueen](https://f-droid.org/packages/io.github.jrichter24.moldqueen/).
@@ -309,6 +313,19 @@ mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/`. Target **ESP32-S3
   (swapped from placeholders by the 2026-06-17 hardware test).
 
 ## Open / deferred (non-urgent)
+- **WS keepalive ping-timeout under idle + Pi-load (FOLLOW-UP, observed 2026-07-08, step-5 test).**
+  During a multi-minute IDLE wait with the Pi under load, a driver's WS connection **ping-timed-out**
+  (~20 s asyncio event-loop stall) and disconnected → the API's `clients=0` path fired **NEUTRAL on
+  ALL active protocols** (both boxes neutralized). It **FAILED SAFE** — correct safety behavior, not
+  a driving bug. In real use the client streams ~10/s so the link stays warm; this only surfaced
+  under idle + load. **Deferred options (decide later, don't act now):** (a) tune the API's WS
+  keepalive/ping tolerance so a brief event-loop stall doesn't drop an otherwise-live client, OR
+  (b) formally document idle-disconnect→neutral as correct-by-design (a silent client SHOULD fail
+  safe). Record both; **not urgent.**
+- **MK4 default per-function `max` reads 7, should be 5 (CLIENT-side, deferred).** Observed during
+  the step-3/5 hardware tests: the client drove full `+7` where the intended default is `5`. This is
+  a client channel-map / resolver default (the server never caps — thin transport), so it's **step-4
+  / client-dev** territory. Not a server bug; noted, ignored for now.
 - **Doc-vs-reality nit:** the docs say the Pi's onboard BT is disabled via `dtoverlay=disable-bt`,
   but it still **enumerates as `hci2`** (Bus UART) — the overlay isn't actually applied. Harmless
   (it's DOWN; control is the USB dongle by MAC) and unrelated to MK6; fix the overlay or the doc later.
