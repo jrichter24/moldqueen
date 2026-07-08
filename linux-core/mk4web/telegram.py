@@ -56,3 +56,68 @@ def ad_bytes(raw_hex):
 
 def ad_hex(raw_hex):
     return ' '.join(f'{b:02x}' for b in ad_bytes(raw_hex))
+
+
+# ───────────────────────── protocol seam (MK4 today, MK6 alongside) ─────────────────────────
+# Telegram-building is protocol-pluggable: each Protocol maps a NORMALIZED value (-7..+7, what
+# the WS `set` primitive carries) to its per-channel WIRE unit, and assembles wire units into a
+# raw telegram hex. The crypt/advertising wrap (ad_bytes/ad_hex/encode) is protocol-AGNOSTIC and
+# shared — it just crypts the raw bytes. This is the buildable+tested seam (MK6 build step 2);
+# NOTHING in the running stack calls the MK6 impl yet (the wiring is steps 3/5). `MK4Protocol` is
+# a ZERO-behavior-change wrapper of the functions above; MK6 per reference/mk6_protocol.md.
+
+class Protocol:
+    """A radio protocol: normalized value <-> wire unit, and wire units -> raw telegram hex."""
+    name = "base"
+    n_channels = 0
+    neutral_unit = 0
+    connect_raw = CONNECT_RAW
+    def value_to_wire(self, value): raise NotImplementedError
+    def wire_to_value(self, wire): raise NotImplementedError
+    def build_motion_raw(self, state): raise NotImplementedError
+
+
+class MK4Protocol(Protocol):
+    """MK4 12-channel NIBBLE (our 13112 hubs). Delegates to the module functions above, so its
+    output is BYTE-IDENTICAL to the current code — the running stack is unaffected."""
+    name = "mk4"
+    n_channels = N_CHANNELS            # 12
+    neutral_unit = NEUTRAL             # 0x8
+    connect_raw = CONNECT_RAW          # adae18808080f352
+    def value_to_wire(self, value):   return value_to_nibble(value)   # 0x8 + clamp(-7,7)
+    def wire_to_value(self, wire):    return nibble_to_value(wire)     # wire - 0x8
+    def build_motion_raw(self, state): return motion_raw(state)        # 7dae18 + 6 packed bytes + 82
+
+
+class MK6Protocol(Protocol):
+    """MK6 module: 6-channel BYTE, device-in-header — validated + write-proven on hardware
+    (reference/mk6_protocol.md). raw = [0x61+device] ae 18 <6 channel bytes> [0xFF-header];
+    byte-per-channel, 0x80 = neutral. device 0/1/2 (button-selected, like MK4 slots)."""
+    name = "mk6"
+    n_channels = 6                     # c0..c3 drivable + offsets 7-8 padding (app holds them 0x80)
+    neutral_unit = 0x80
+    connect_raw = CONNECT_RAW          # the shared MK4/MK6 connect
+    base_raw = "6dae188080808092"      # MK6 base/handshake frame (observed alongside connect)
+    _HDR0 = 0x61                       # 0x61/0x62/0x63 = device 0/1/2
+
+    def __init__(self, device=0):
+        if not (0 <= int(device) <= 2):
+            raise ValueError("MK6 device must be 0, 1, or 2")
+        self.device = int(device)
+        self.header = self._HDR0 + self.device
+        self.trailer = (0xFF - self.header) & 0xFF     # dev0 0x9e, dev1 0x9d, dev2 0x9c (computed)
+
+    def value_to_wire(self, value):
+        # normalized -7..+7 -> 8-bit byte, 0x80 center, +7 -> 0xFF, -7 -> 0x01 (proportional).
+        # (Same normalized domain the client sends today; a finer client range is a later refinement.)
+        v = max(-7, min(7, int(value)))
+        return max(0x01, min(0xFF, 0x80 + round(v * 127 / 7)))
+
+    def wire_to_value(self, wire):
+        return max(-7, min(7, round((int(wire) - 0x80) * 7 / 127)))
+
+    def build_motion_raw(self, state):
+        if len(state) != self.n_channels:
+            raise ValueError("MK6 build_motion_raw needs %d channel bytes" % self.n_channels)
+        body = bytes(b & 0xFF for b in state)          # offsets 3-8 (c0..c3 + 2 padding at 0x80)
+        return "%02xae18%s%02x" % (self.header, body.hex(), self.trailer)
