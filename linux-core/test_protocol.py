@@ -57,8 +57,9 @@ def _mk6_state(c0=0x80, c1=0x80, c2=0x80, c3=0x80, c4=0x80, c5=0x80):
 def test_mk6_metadata_and_trailer():
     p = MK6Protocol()                    # device 0 default
     assert p.name == "mk6" and p.n_channels == 6 and p.neutral_unit == 0x80
-    assert p.connect_raw == CONNECT_RAW  # shared connect
     assert p.base_raw == "6dae188080808092"
+    assert p.connect_raw == "6dae188080808092"   # MK6 connect = the base/bind frame, NOT the MK4 shared connect
+    assert p.connect_raw != CONNECT_RAW          # explicitly distinct from the MK4 connect (adae18...)
     assert p.device == 0 and p.header == 0x61 and p.trailer == 0x9e     # 0xFF - 0x61
     assert MK6Protocol(1).header == 0x62 and MK6Protocol(1).trailer == 0x9d
     assert MK6Protocol(2).header == 0x63 and MK6Protocol(2).trailer == 0x9c

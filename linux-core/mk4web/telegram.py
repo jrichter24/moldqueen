@@ -75,6 +75,7 @@ class Protocol:
     def value_to_wire(self, value): raise NotImplementedError
     def wire_to_value(self, wire): raise NotImplementedError
     def build_motion_raw(self, state): raise NotImplementedError
+    def channel_index(self, slot, channel): raise NotImplementedError   # (slot,channel) -> state index
 
 
 class MK4Protocol(Protocol):
@@ -87,6 +88,7 @@ class MK4Protocol(Protocol):
     def value_to_wire(self, value):   return value_to_nibble(value)   # 0x8 + clamp(-7,7)
     def wire_to_value(self, wire):    return nibble_to_value(wire)     # wire - 0x8
     def build_motion_raw(self, state): return motion_raw(state)        # 7dae18 + 6 packed bytes + 82
+    def channel_index(self, slot, channel): return slot * 4 + channel  # 3 slots x 4 -> 0..11
 
 
 class MK6Protocol(Protocol):
@@ -96,8 +98,13 @@ class MK6Protocol(Protocol):
     name = "mk6"
     n_channels = 6                     # c0..c3 drivable + offsets 7-8 padding (app holds them 0x80)
     neutral_unit = 0x80
-    connect_raw = CONNECT_RAW          # the shared MK4/MK6 connect
-    base_raw = "6dae188080808092"      # MK6 base/handshake frame (observed alongside connect)
+    # The MK6 CONNECT/BIND telegram is the "base" frame `6dae188080808092` (our `ae 18` analog of
+    # J0EK3R's device-0 connect `6d7ba78080808092`): broadcast it while the box is in pairing mode
+    # and the box binds to device 0 (MKtech_reverse_engineering_report.md §5-6). This is NOT the
+    # MK4 shared connect `adae18...` (that binds MK4 nibble hubs). Device 1/2 use a device-dependent
+    # connect prefix that is still TBD — only device-0 bind is proven, so keep the base for now.
+    base_raw = "6dae188080808092"      # MK6 device-0 base / connect-bind frame
+    connect_raw = base_raw             # <- MK6 connect = the base frame (device 0)
     _HDR0 = 0x61                       # 0x61/0x62/0x63 = device 0/1/2
 
     def __init__(self, device=0):
@@ -121,3 +128,20 @@ class MK6Protocol(Protocol):
             raise ValueError("MK6 build_motion_raw needs %d channel bytes" % self.n_channels)
         body = bytes(b & 0xFF for b in state)          # offsets 3-8 (c0..c3 + 2 padding at 0x80)
         return "%02xae18%s%02x" % (self.header, body.hex(), self.trailer)
+
+    def channel_index(self, slot, channel):
+        # single device per session THIS STEP: channel 0-3 -> c0..c3; slot picks the device,
+        # which is fixed at setup (multi-device = multiple headers = step 5). So slot is ignored
+        # here and the state index is just the channel.
+        return channel
+
+
+def make_protocol(name, device=0):
+    """Instantiate the active Protocol for a session. name in {"mk4","mk6"} (default mk4 for
+    back-compat); `device` (0/1/2) applies to MK6 only (sets header/trailer)."""
+    key = (name or "mk4").lower()
+    if key == "mk4":
+        return MK4Protocol()
+    if key == "mk6":
+        return MK6Protocol(device=int(device or 0))
+    raise ValueError("unknown protocol %r (expected 'mk4' or 'mk6')" % name)

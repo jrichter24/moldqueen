@@ -5,8 +5,9 @@ caps, or labels. The CLIENT owns all semantics (function -> slot/channel/value, 
 caps, reverse_scale, device-swap, the map, labels) and sends only low-level `set`.
 
 Client -> server:
-  {"cmd":"setup","action":"connect"|"ready"|"reset"}   drive the lifecycle
-  {"cmd":"set","slot":0-2,"channel":0-3,"value":-7..7}  raw motion (ONLY motion primitive; READY only)
+  {"cmd":"setup","action":"connect"|"ready"|"reset","protocol"?:"mk4"|"mk6","device"?:0-2}
+                                                        drive the lifecycle (+ pick the session protocol)
+  {"cmd":"set","slot":0-2,"channel":0-3,"value":-7..7,"protocol"?}  raw motion (ONLY motion primitive; READY only)
   {"cmd":"stop"}                                         all neutral (any state)
   {"cmd":"state"}                                        request current state
   {"cmd":"info"}                                         server-info (tiered)
@@ -16,9 +17,10 @@ Server -> client (pushed):
   {"type":"info",...}                                    (to requester)
 
 Lifecycle is owned here (the GUI drives the transitions) and forwarded to the
-broadcaster, which enacts the radio. `set` -> value_to_nibble -> nibble; the telegram
-build + crypt (telegram.py / mouldking_crypt.py) is the transport. The broadcaster
-stays thin transport (12 nibbles only).
+broadcaster. `set` -> the active Protocol's value_to_wire (MK4 nibble / MK6 byte) -> the
+API BUILDS the raw telegram (telegram.py / mouldking_crypt.py) and hands the opaque bytes
+to the RAW-BLIND broadcaster, which just repeats them. Protocol is a session setting
+chosen at `setup` (default MK4); ONE active protocol per session (mixing is step 5).
 
 SAFETY: on a client disconnect (or no clients), command the broadcaster to NEUTRAL.
 
@@ -29,15 +31,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from websockets.asyncio.server import serve
 
-from .telegram import (value_to_nibble, nibble_to_value, channel_index, N_CHANNELS, NEUTRAL,
-                       motion_raw, ad_hex)
+from .telegram import MK4Protocol, make_protocol, ad_hex
 from .config import (HOST, HTTP_PORT, WS_PORT, SOCK_PATH,
                      WEB_DIR, ASSETS_DIR, SERVE_CLIENT, RADIO_BACKEND, HCI, INFO_LEVEL, DRY_RUN, VERSION)
 
 log = logging.getLogger("api")
 # The web client is an independent peer (client/), located via config.WEB_DIR
 # (MK4_WEB_DIR override). asyncapi.yaml stays here server-side (beside api.py).
-NEUTRAL_STATE = [NEUTRAL] * N_CHANNELS
 IDLE, CONNECTING, READY = "IDLE", "CONNECTING", "READY"
 
 # ---- layout manifest (single source of truth: web/layouts.json) --------------
@@ -140,44 +140,83 @@ class IPCClient:
             log.warning("IPC: broadcaster not reachable at %s", self.path)
             return False
 
-    def setup(self, action):   self._send({"cmd": action})         # connect|ready|reset
-    def send_state(self, nb):  self._send({"state": nb})
+    # The broadcaster is RAW-BLIND (step 3): the API builds the telegram via the active
+    # Protocol and hands over opaque hex — current-raw to broadcast + the protocol's
+    # neutral-raw (for the coarse dead-man / STOP reconnect). The broadcaster knows
+    # nothing about protocols/nibbles/bytes.
+    def connect(self, connect_raw, neutral_raw):
+        self._send({"cmd": "connect", "connect_raw": connect_raw, "neutral_raw": neutral_raw})
+    def ready(self):           self._send({"cmd": "ready"})
+    def reset(self):           self._send({"cmd": "reset"})
+    def send_frame(self, raw, neutral_raw):   self._send({"raw": raw, "neutral_raw": neutral_raw})
     def send_neutral(self):    self._send({"neutral": True})
     def hard_stop(self):       self._send({"killreconnect": True})  # STOP: tear down radio + reconnect at neutral
 
 
 class App:
-    """Thin-transport state: a lifecycle + the 12 raw nibbles. The server knows NOTHING
-    about functions, channel maps, invert/caps, or labels — the client owns all that and
-    sends only low-level `set` (slot/channel/value). Motion is honored only in READY."""
+    """Thin-transport state: a lifecycle + the active Protocol's per-channel WIRE units
+    (MK4: 12 nibbles @ 0x8; MK6: 6 bytes @ 0x80). The server knows NOTHING about functions,
+    channel maps, invert/caps, or labels — the client owns all that and sends only low-level
+    `set` (slot/channel/value). Motion is honored only in READY. The protocol is chosen at
+    `setup` (default MK4 for back-compat); ONE active protocol per session (step 3 — the
+    simultaneous MK4+MK6 mix is step 5). The raw telegram is BUILT here via the Protocol and
+    handed to the raw-blind broadcaster."""
     def __init__(self):
         self.lifecycle = IDLE
-        self.nibbles = list(NEUTRAL_STATE)
-        self.last_refresh = [0.0] * N_CHANNELS   # per-channel: last time a `set` refreshed it (dead-man)
+        self.protocol = MK4Protocol()            # session default (MK4 byte-identical to before)
+        self._reset_state()
+
+    def _reset_state(self):
+        p = self.protocol
+        self.state = [p.neutral_unit] * p.n_channels
+        self.last_refresh = [0.0] * p.n_channels   # per-channel: last time a `set` refreshed it (dead-man)
+
+    def set_protocol(self, proto):
+        """Switch the active protocol (from setup) and re-neutral the state to its shape."""
+        self.protocol = proto
+        self._reset_state()
+
+    def neutral_state(self):
+        p = self.protocol
+        return [p.neutral_unit] * p.n_channels
+
+    def build_raw(self):
+        return self.protocol.build_motion_raw(self.state)
+
+    def neutral_raw(self):
+        return self.protocol.build_motion_raw(self.neutral_state())
 
     def slots_grid(self):
-        return [[nibble_to_value(self.nibbles[s * 4 + c]) for c in range(4)] for s in range(3)]
+        # RAW-console display: per-channel VALUES (-7..+7), padded/reshaped to a 3x4 grid.
+        # MK4 (12 units) -> exact 3x4 as before; MK6 (6 units) -> first 6 + neutral pad.
+        p = self.protocol
+        vals = [p.wire_to_value(u) for u in self.state]
+        vals = (vals + [0] * 12)[:12]
+        return [[vals[s * 4 + c] for c in range(4)] for s in range(3)]
 
     def set(self, slot, channel, value, now):
+        p = self.protocol
         if isinstance(slot, int) and isinstance(channel, int) and 0 <= slot <= 2 and 0 <= channel <= 3:
-            ci = channel_index(slot, channel)
-            self.nibbles[ci] = value_to_nibble(value)
-            self.last_refresh[ci] = now          # affirmative-keepalive: this channel is actively driven
+            ci = p.channel_index(slot, channel)
+            if 0 <= ci < p.n_channels:
+                self.state[ci] = p.value_to_wire(value)
+                self.last_refresh[ci] = now      # affirmative-keepalive: this channel is actively driven
 
     def reap_stale(self, now, timeout):
         """Per-channel dead-man's-switch: NEUTRALIZE any non-neutral channel not refreshed
         within `timeout`. A channel is held alive ONLY by active client refresh — gamepad
         death, frozen axis, stalled loop or client death all stop the refresh -> neutral.
         Returns True if anything changed."""
+        p = self.protocol
         changed = False
-        for ci in range(N_CHANNELS):
-            if self.nibbles[ci] != NEUTRAL and (now - self.last_refresh[ci]) > timeout:
-                self.nibbles[ci] = NEUTRAL
+        for ci in range(p.n_channels):
+            if self.state[ci] != p.neutral_unit and (now - self.last_refresh[ci]) > timeout:
+                self.state[ci] = p.neutral_unit
                 changed = True
         return changed
 
     def stop(self):
-        self.nibbles = list(NEUTRAL_STATE)
+        self._reset_state()
 
 
 ipc = IPCClient(SOCK_PATH)
@@ -193,8 +232,9 @@ CHANNEL_TIMEOUT = float(os.environ.get("MK4_CHANNEL_TIMEOUT", "0.3"))
 def state_json():
     # include the resulting motion telegram (raw + on-air AD) so the RAW debug
     # console can show exact bytes without reinventing the crypt client-side.
-    raw = motion_raw(app.nibbles)
-    return json.dumps({"type": "state", "slots": app.slots_grid(),
+    # BUILT via the active Protocol (MK4 nibble telegram / MK6 byte telegram).
+    raw = app.build_raw()
+    return json.dumps({"type": "state", "protocol": app.protocol.name, "slots": app.slots_grid(),
                        "raw": raw, "ad": ad_hex(raw)})
 
 
@@ -251,7 +291,7 @@ async def channel_watchdog():
         await asyncio.sleep(0.05)
         if app.lifecycle == READY and app.reap_stale(time.monotonic(), CHANNEL_TIMEOUT):
             log.warning("channel(s) not refreshed > %dms -> NEUTRAL (dead-man's-switch)", int(CHANNEL_TIMEOUT * 1000))
-            ipc.send_state(app.nibbles)
+            ipc.send_frame(app.build_raw(), app.neutral_raw())
             await push(state_json())
 
 
@@ -270,16 +310,39 @@ async def handler(websocket):
             if cmd == "setup":
                 action = msg.get("action")
                 if action in ("connect", "ready", "reset"):
+                    # Protocol selection is a SESSION setting chosen at setup (default MK4 for
+                    # back-compat). Applied whenever `protocol` is present; `device` (0/1/2)
+                    # applies to MK6 (header/trailer). Re-neutrals the state to the new shape.
+                    proto_name = msg.get("protocol")
+                    if proto_name:
+                        try:
+                            app.set_protocol(make_protocol(proto_name, msg.get("device", 0)))
+                        except (ValueError, TypeError) as e:
+                            await websocket.send(json.dumps({"type": "error", "error": str(e)}))
+                            continue
                     app.lifecycle = {"connect": CONNECTING, "ready": READY, "reset": IDLE}[action]
                     if action == "reset":
                         app.stop()
-                    ipc.setup(action)
+                    if action == "connect":
+                        ipc.connect(app.protocol.connect_raw, app.neutral_raw())
+                    elif action == "ready":
+                        ipc.ready()
+                    else:
+                        ipc.reset()
                     await push(lifecycle_json())
                     await push(state_json())
             elif cmd == "set":                    # the ONLY motion primitive (raw slot/channel/value)
                 if app.lifecycle == READY:        # motion only when READY
+                    # optional per-command protocol MUST match the session's active protocol
+                    # this step (single-protocol; mixing MK4+MK6 is step 5).
+                    pc = msg.get("protocol")
+                    if pc and pc != app.protocol.name:
+                        await websocket.send(json.dumps({"type": "error",
+                            "error": "protocol %r != active %r (single-protocol per session; mixing is step 5)"
+                                     % (pc, app.protocol.name)}))
+                        continue
                     app.set(msg.get("slot"), msg.get("channel"), msg.get("value"), time.monotonic())
-                    ipc.send_state(app.nibbles)
+                    ipc.send_frame(app.build_raw(), app.neutral_raw())
                     await push(state_json())
             elif cmd == "stop":
                 app.stop()
@@ -425,7 +488,7 @@ def main():
     try:
         asyncio.run(amain(serve_client, http_port))
     except KeyboardInterrupt:
-        ipc.setup("reset")
+        ipc.reset()
         log.info("api stopped (sent reset)")
 
 

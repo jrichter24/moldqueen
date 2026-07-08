@@ -154,11 +154,13 @@ components:
       required: [cmd, slot, channel, value]
       properties:
         cmd:     { type: string, const: set }
-        slot:    { type: integer, minimum: 0, maximum: 2, description: '0 = ch0-3, 1 = ch4-7, 2 = ch8-11.' }
+        slot:    { type: integer, minimum: 0, maximum: 2, description: 'MK4: 0 = ch0-3, 1 = ch4-7, 2 = ch8-11. MK6: device select (single device/session this step).' }
         channel: { type: integer, minimum: 0, maximum: 3 }
-        value:   { type: integer, minimum: -7, maximum: 7, description: 'nibble = 0x8 + value.' }
+        value:   { type: integer, minimum: -7, maximum: 7, description: 'NORMALIZED. Server scales per protocol: MK4 nibble = 0x8 + value; MK6 byte = 0x80-centered (+7 → 0xFF, -7 → 0x01).' }
+        protocol: { type: string, enum: [mk4, mk6], description: 'OPTIONAL. If present, MUST match the session protocol chosen at setup (single-protocol per session).' }
       examples:
         - { cmd: set, slot: 1, channel: 0, value: 5 }
+        - { cmd: set, slot: 0, channel: 0, value: 7, protocol: mk6 }
 
     StopPayload:
       type: object
@@ -225,8 +227,11 @@ components:
       properties:
         cmd:    { type: string, const: setup }
         action: { type: string, enum: [connect, ready, reset] }
+        protocol: { type: string, enum: [mk4, mk6], description: 'OPTIONAL session protocol (default mk4). Chosen at setup; ONE active protocol per session (mixing MK4+MK6 is a later step).' }
+        device: { type: integer, minimum: 0, maximum: 2, description: 'OPTIONAL, MK6 only (default 0): the button-selected device → telegram header/trailer.' }
       examples:
         - { cmd: setup, action: connect }
+        - { cmd: setup, action: connect, protocol: mk6, device: 0 }
         - { cmd: setup, action: ready }
         - { cmd: setup, action: reset }
 
@@ -246,9 +251,10 @@ components:
       required: [type, slots]
       properties:
         type: { type: string, const: state }
+        protocol: { type: string, enum: [mk4, mk6], description: 'The session protocol that built this frame.' }
         slots:
           type: array
-          description: '3 slots × 4 channels of current signed values (-7..7). slots[slot][channel].'
+          description: '3 slots × 4 channels of current signed values (-7..7). slots[slot][channel]. For MK6 (6 channels) the values fill the grid and the remainder are neutral (display-only).'
           minItems: 3
           maxItems: 3
           items:
@@ -256,5 +262,7 @@ components:
             minItems: 4
             maxItems: 4
             items: { type: integer, minimum: -7, maximum: 7 }
+        raw: { type: string, description: 'The built motion telegram (hex) — MK4 nibble / MK6 byte frame.' }
+        ad:  { type: string, description: 'The on-air advertising-data bytes (space-separated hex) after the crypt wrap.' }
       examples:
-        - { type: state, slots: [[0, 0, 0, 0], [5, 0, 0, 0], [0, 0, 0, 0]] }
+        - { type: state, protocol: mk4, slots: [[0, 0, 0, 0], [5, 0, 0, 0], [0, 0, 0, 0]] }
