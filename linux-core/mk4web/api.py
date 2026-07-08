@@ -16,11 +16,12 @@ Server -> client (pushed):
   {"type":"state","slots":[[v,v,v,v] x3],"raw":hex,"ad":hex}
   {"type":"info",...}                                    (to requester)
 
-Lifecycle is owned here (the GUI drives the transitions) and forwarded to the
-broadcaster. `set` -> the active Protocol's value_to_wire (MK4 nibble / MK6 byte) -> the
-API BUILDS the raw telegram (telegram.py / mouldking_crypt.py) and hands the opaque bytes
-to the RAW-BLIND broadcaster, which just repeats them. Protocol is a session setting
-chosen at `setup` (default MK4); ONE active protocol per session (mixing is step 5).
+Lifecycle is owned here (the GUI drives the transitions) and forwarded to the broadcaster.
+`set` -> the target Protocol's value_to_wire (MK4 nibble / MK6 byte) -> the API BUILDS the
+raw telegram (telegram.py / mouldking_crypt.py) and hands the RAW-BLIND broadcaster the LIST
+of active protocols' entries to interleave. MULTIPLE protocols can be active at once (step 5):
+MK4 and MK6-device0 drive SIMULTANEOUSLY, each `set` routes to its own protocol state; the
+active set grows as protocols are used.
 
 SAFETY: on a client disconnect (or no clients), command the broadcaster to NEUTRAL.
 
@@ -140,30 +141,25 @@ class IPCClient:
             log.warning("IPC: broadcaster not reachable at %s", self.path)
             return False
 
-    # The broadcaster is RAW-BLIND (step 3): the API builds the telegram via the active
-    # Protocol and hands over opaque hex — current-raw to broadcast + the protocol's
-    # neutral-raw (for the coarse dead-man / STOP reconnect). The broadcaster knows
-    # nothing about protocols/nibbles/bytes.
-    def connect(self, connect_raw, neutral_raw):
-        self._send({"cmd": "connect", "connect_raw": connect_raw, "neutral_raw": neutral_raw})
-    def ready(self):           self._send({"cmd": "ready"})
-    def reset(self):           self._send({"cmd": "reset"})
-    def send_frame(self, raw, neutral_raw):   self._send({"raw": raw, "neutral_raw": neutral_raw})
-    def send_neutral(self):    self._send({"neutral": True})
-    def hard_stop(self):       self._send({"killreconnect": True})  # STOP: tear down radio + reconnect at neutral
+    # The broadcaster is RAW-BLIND (steps 3 + 5): the API builds every telegram via its
+    # Protocols and hands over a LIST of opaque entries {current, neutral, connect}. The
+    # broadcaster interleaves the list; it knows nothing about protocols/nibbles/bytes.
+    def set_lifecycle(self, state, entries):   # connect/ready/reset -> lifecycle + full entry list
+        self._send({"cmd": "lc", "state": state, "entries": entries})
+    def send_entries(self, entries):           # motion update -> the full (rebuilt) entry list
+        self._send({"entries": entries})
+    def send_neutral(self):    self._send({"neutral": True})         # client disconnect -> all neutral
+    def hard_stop(self):       self._send({"killreconnect": True})   # STOP: tear down radio + reconnect ALL at neutral
 
 
-class App:
-    """Thin-transport state: a lifecycle + the active Protocol's per-channel WIRE units
-    (MK4: 12 nibbles @ 0x8; MK6: 6 bytes @ 0x80). The server knows NOTHING about functions,
-    channel maps, invert/caps, or labels — the client owns all that and sends only low-level
-    `set` (slot/channel/value). Motion is honored only in READY. The protocol is chosen at
-    `setup` (default MK4 for back-compat); ONE active protocol per session (step 3 — the
-    simultaneous MK4+MK6 mix is step 5). The raw telegram is BUILT here via the Protocol and
-    handed to the raw-blind broadcaster."""
-    def __init__(self):
-        self.lifecycle = IDLE
-        self.protocol = MK4Protocol()            # session default (MK4 byte-identical to before)
+class ProtoState:
+    """One active protocol's per-channel WIRE state (MK4: 12 nibbles @ 0x8; MK6 device d:
+    6 bytes @ 0x80), plus its connect/bind phase. Builds its own motion / neutral / bind
+    telegrams via its Protocol. The broadcaster interleaves one entry() per active ProtoState."""
+    def __init__(self, protocol, device=0):
+        self.protocol = protocol
+        self.device = device
+        self.phase = "connecting"                 # "connecting" -> broadcast bind; "ready" -> broadcast motion
         self._reset_state()
 
     def _reset_state(self):
@@ -171,24 +167,27 @@ class App:
         self.state = [p.neutral_unit] * p.n_channels
         self.last_refresh = [0.0] * p.n_channels   # per-channel: last time a `set` refreshed it (dead-man)
 
-    def set_protocol(self, proto):
-        """Switch the active protocol (from setup) and re-neutral the state to its shape."""
-        self.protocol = proto
-        self._reset_state()
-
     def neutral_state(self):
         p = self.protocol
         return [p.neutral_unit] * p.n_channels
 
-    def build_raw(self):
+    def motion_raw(self):
         return self.protocol.build_motion_raw(self.state)
 
     def neutral_raw(self):
         return self.protocol.build_motion_raw(self.neutral_state())
 
+    def current_raw(self):
+        # while CONNECTING broadcast the bind telegram; while READY broadcast the motion.
+        return self.protocol.connect_raw if self.phase == "connecting" else self.motion_raw()
+
+    def entry(self):
+        """The opaque telegram entry the raw-blind broadcaster interleaves for this protocol."""
+        return {"current": self.current_raw(), "neutral": self.neutral_raw(),
+                "connect": self.protocol.connect_raw}
+
     def slots_grid(self):
         # RAW-console display: per-channel VALUES (-7..+7), padded/reshaped to a 3x4 grid.
-        # MK4 (12 units) -> exact 3x4 as before; MK6 (6 units) -> first 6 + neutral pad.
         p = self.protocol
         vals = [p.wire_to_value(u) for u in self.state]
         vals = (vals + [0] * 12)[:12]
@@ -203,10 +202,8 @@ class App:
                 self.last_refresh[ci] = now      # affirmative-keepalive: this channel is actively driven
 
     def reap_stale(self, now, timeout):
-        """Per-channel dead-man's-switch: NEUTRALIZE any non-neutral channel not refreshed
-        within `timeout`. A channel is held alive ONLY by active client refresh — gamepad
-        death, frozen axis, stalled loop or client death all stop the refresh -> neutral.
-        Returns True if anything changed."""
+        """Per-channel dead-man: NEUTRALIZE any non-neutral channel not refreshed within
+        `timeout`. Returns True if anything changed."""
         p = self.protocol
         changed = False
         for ci in range(p.n_channels):
@@ -217,6 +214,66 @@ class App:
 
     def stop(self):
         self._reset_state()
+
+
+class App:
+    """Thin-transport state: a session lifecycle + a SET of active protocols (step 5), keyed by
+    (protocol_name, device) so MK4 and MK6-device0 are distinct entries. Each is a ProtoState.
+    The server knows NOTHING about functions / channel maps / invert / caps / labels — the client
+    owns all that and sends only low-level `set`. The active set GROWS: a session may start
+    MK4-only, and MK6 joins the moment its first `set` (or `setup connect protocol=mk6`) arrives;
+    once active a protocol STAYS in the interleave (broadcast at neutral if idle) until STOP /
+    session end. The API BUILDS every telegram and hands the raw-blind broadcaster the whole
+    entry list to interleave on the one shared radio."""
+    def __init__(self):
+        self.lifecycle = IDLE
+        self.protocols = {}                        # (name, device) -> ProtoState (insertion-ordered)
+
+    def activate(self, name, device, phase):
+        """Ensure (name, device) is active; set its connect/ready phase; return its ProtoState."""
+        key = (name, int(device))
+        ps = self.protocols.get(key)
+        if ps is None:
+            ps = ProtoState(make_protocol(name, device), device=int(device))
+            self.protocols[key] = ps
+        ps.phase = phase
+        return ps
+
+    def route_set(self, name, device, slot, channel, value, now):
+        """Route a `set` to its protocol's state, ACTIVATING it (in ready phase) on first use —
+        this is how MK6 joins the interleave when its first motion arrives (default mk4)."""
+        name = name or "mk4"
+        ps = self.protocols.get((name, int(device)))
+        if ps is None:
+            ps = self.activate(name, device, phase="ready")
+        ps.set(slot, channel, value, now)
+        return ps
+
+    def entries(self):
+        return [ps.entry() for ps in self.protocols.values()]
+
+    def ready_all(self):
+        for ps in self.protocols.values():
+            ps.phase = "ready"
+
+    def reap_all(self, now, timeout):
+        """Per-protocol, per-channel dead-man (each protocol neutralizes independently)."""
+        changed = False
+        for ps in self.protocols.values():
+            if ps.reap_stale(now, timeout):
+                changed = True
+        return changed
+
+    def stop_all(self):
+        for ps in self.protocols.values():
+            ps.stop()
+
+    def reset(self):
+        self.lifecycle = IDLE
+        self.protocols = {}
+
+    def primary(self):
+        return next(iter(self.protocols.values()), None)
 
 
 ipc = IPCClient(SOCK_PATH)
@@ -230,12 +287,20 @@ CHANNEL_TIMEOUT = float(os.environ.get("MK4_CHANNEL_TIMEOUT", "0.3"))
 
 
 def state_json():
-    # include the resulting motion telegram (raw + on-air AD) so the RAW debug
-    # console can show exact bytes without reinventing the crypt client-side.
-    # BUILT via the active Protocol (MK4 nibble telegram / MK6 byte telegram).
-    raw = app.build_raw()
-    return json.dumps({"type": "state", "protocol": app.protocol.name, "slots": app.slots_grid(),
-                       "raw": raw, "ad": ad_hex(raw)})
+    # The RAW console shows exact bytes without reinventing the crypt client-side. Back-compat:
+    # the top-level protocol/slots/raw/ad reflect the PRIMARY (first-activated) protocol, and a
+    # `protocols` array lists every active protocol's motion frame (step 5 — MK4 + MK6 at once).
+    primary = app.primary()
+    if primary is not None:
+        raw = primary.motion_raw()
+        out = {"type": "state", "protocol": primary.protocol.name, "slots": primary.slots_grid(),
+               "raw": raw, "ad": ad_hex(raw)}
+    else:
+        out = {"type": "state", "protocol": "mk4", "slots": [[0] * 4 for _ in range(3)], "raw": "", "ad": ""}
+    out["protocols"] = [{"protocol": ps.protocol.name, "device": ps.device, "phase": ps.phase,
+                         "slots": ps.slots_grid(), "raw": ps.motion_raw(), "ad": ad_hex(ps.motion_raw())}
+                        for ps in app.protocols.values()]
+    return json.dumps(out)
 
 
 def lifecycle_json():
@@ -289,9 +354,9 @@ async def channel_watchdog():
     axis, stalled loop AND client death — a held control stays alive only while refreshed."""
     while True:
         await asyncio.sleep(0.05)
-        if app.lifecycle == READY and app.reap_stale(time.monotonic(), CHANNEL_TIMEOUT):
+        if app.lifecycle == READY and app.reap_all(time.monotonic(), CHANNEL_TIMEOUT):
             log.warning("channel(s) not refreshed > %dms -> NEUTRAL (dead-man's-switch)", int(CHANNEL_TIMEOUT * 1000))
-            ipc.send_frame(app.build_raw(), app.neutral_raw())
+            ipc.send_entries(app.entries())
             await push(state_json())
 
 
@@ -310,43 +375,46 @@ async def handler(websocket):
             if cmd == "setup":
                 action = msg.get("action")
                 if action in ("connect", "ready", "reset"):
-                    # Protocol selection is a SESSION setting chosen at setup (default MK4 for
-                    # back-compat). Applied whenever `protocol` is present; `device` (0/1/2)
-                    # applies to MK6 (header/trailer). Re-neutrals the state to the new shape.
-                    proto_name = msg.get("protocol")
-                    if proto_name:
+                    # PER-PROTOCOL connect (step 5): `setup connect protocol=P device=d` activates
+                    # (P,d) and puts it in CONNECTING (its bind telegram broadcasts); default mk4.
+                    # `ready` flips ALL active protocols to driving. `reset` clears the whole set.
+                    if action == "connect":
+                        name = msg.get("protocol") or "mk4"
                         try:
-                            app.set_protocol(make_protocol(proto_name, msg.get("device", 0)))
+                            app.activate(name, msg.get("device", 0), phase="connecting")
                         except (ValueError, TypeError) as e:
                             await websocket.send(json.dumps({"type": "error", "error": str(e)}))
                             continue
-                    app.lifecycle = {"connect": CONNECTING, "ready": READY, "reset": IDLE}[action]
-                    if action == "reset":
-                        app.stop()
-                    if action == "connect":
-                        ipc.connect(app.protocol.connect_raw, app.neutral_raw())
+                        # SAFETY (motion only in READY): entering a connect phase holds ALL protocols
+                        # at neutral — the connecting one broadcasts its bind, the others keepalive at
+                        # neutral (stay bound/alive while the new box pairs, but do NOT drive).
+                        app.stop_all()
+                        app.lifecycle = CONNECTING
+                        ipc.set_lifecycle(CONNECTING, app.entries())
                     elif action == "ready":
-                        ipc.ready()
-                    else:
-                        ipc.reset()
+                        app.ready_all()
+                        app.lifecycle = READY
+                        ipc.set_lifecycle(READY, app.entries())
+                    else:                          # reset
+                        app.reset()
+                        ipc.set_lifecycle(IDLE, [])
                     await push(lifecycle_json())
                     await push(state_json())
             elif cmd == "set":                    # the ONLY motion primitive (raw slot/channel/value)
                 if app.lifecycle == READY:        # motion only when READY
-                    # optional per-command protocol MUST match the session's active protocol
-                    # this step (single-protocol; mixing MK4+MK6 is step 5).
-                    pc = msg.get("protocol")
-                    if pc and pc != app.protocol.name:
-                        await websocket.send(json.dumps({"type": "error",
-                            "error": "protocol %r != active %r (single-protocol per session; mixing is step 5)"
-                                     % (pc, app.protocol.name)}))
+                    # ROUTE to the named protocol's state (default mk4), ACTIVATING it on first use
+                    # (that's how MK6 joins the interleave). Mixing MK4+MK6 is allowed now (step 5).
+                    try:
+                        app.route_set(msg.get("protocol"), msg.get("device", 0),
+                                      msg.get("slot"), msg.get("channel"), msg.get("value"), time.monotonic())
+                    except (ValueError, TypeError) as e:
+                        await websocket.send(json.dumps({"type": "error", "error": str(e)}))
                         continue
-                    app.set(msg.get("slot"), msg.get("channel"), msg.get("value"), time.monotonic())
-                    ipc.send_frame(app.build_raw(), app.neutral_raw())
+                    ipc.send_entries(app.entries())
                     await push(state_json())
             elif cmd == "stop":
-                app.stop()
-                ipc.hard_stop()        # KILL the radio + RECONNECT at neutral (no stale state can be repeated)
+                app.stop_all()
+                ipc.hard_stop()        # KILL the radio + RECONNECT ALL entries at neutral
                 await push(state_json())
             elif cmd == "state":
                 await websocket.send(lifecycle_json())
@@ -358,7 +426,7 @@ async def handler(websocket):
     finally:
         clients.discard(websocket)
         log.info("WS client disconnected; clients=%d -> NEUTRAL (safety)", len(clients))
-        app.stop()
+        app.stop_all()
         ipc.send_neutral()
         await push(state_json())
 
@@ -488,7 +556,7 @@ def main():
     try:
         asyncio.run(amain(serve_client, http_port))
     except KeyboardInterrupt:
-        ipc.reset()
+        ipc.set_lifecycle(IDLE, [])
         log.info("api stopped (sent reset)")
 
 

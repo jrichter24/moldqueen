@@ -1,116 +1,144 @@
-"""Pytest for the protocol-aware API state (MK6 build step 3).
+"""Pytest for the protocol-aware API state (MK6 build steps 3 + 5).
 
-Step 3 makes the server EMIT MK4 or MK6: `api.App` holds the active Protocol's per-channel
-WIRE units (MK4: 12 nibbles @ 0x8 / MK6: 6 bytes @ 0x80), scales the client's NORMALIZED
-value via the Protocol, and BUILDS the raw telegram (the broadcaster is raw-blind). These
-tests exercise that App end-to-end (set -> build) with NO radio involved:
+Step 3 made the server EMIT MK4 or MK6; step 5 makes it hold a SET of active protocols and
+build a LIST of telegram entries for the raw-blind broadcaster to interleave. These tests
+exercise `ProtoState` (one protocol's state) and `App` (the active set) end-to-end (set ->
+build) with NO radio:
 
-  1. MK4 regression: default App is byte-identical to before (12 @ 0x8; the same motion
-     telegrams). This is the guard that the refactor didn't move MK4.
-  2. MK6: switching the protocol re-shapes the state (6 @ 0x80) and the set->build path
-     produces the CAPTURED + WRITE-PROVEN frames (reference/mk6_protocol.md), device 0 and 1.
-  3. The per-channel dead-man (reap_stale) operates on the protocol-sized state.
+  1. MK4 regression: a single MK4 ProtoState is byte-identical to before (12 @ 0x8; the same
+     motion telegrams) — the guard that the refactor didn't move MK4.
+  2. MK6: a MK6 ProtoState produces the CAPTURED + WRITE-PROVEN frames (device 0 and 1).
+  3. Mix (step 5): MK4 + MK6 active together produce TWO correct entries (each with the right
+     current/neutral/connect); an MK6 `set` ACTIVATES MK6 on first use; the per-channel
+     dead-man runs PER protocol independently; stop/reset neutral/clear all.
 
 Run from linux-core/ so `mk4web` is importable.
 """
-from mk4web.api import App
-from mk4web.telegram import make_protocol, MK4Protocol, MK6Protocol
+from mk4web.api import App, ProtoState
+from mk4web.telegram import make_protocol, MK4Protocol
+
+MK4_NEUTRAL = "7dae18888888888888" + "82"
+MK4_CONNECT = "adae18808080f352"
+MK6_NEUTRAL = "61ae188080808080809e"
+MK6_BIND = "6dae188080808092"
 
 
-# ───────────────────────────── MK4 — regression (byte-identical) ─────────────────────────────
-def test_app_defaults_to_mk4_neutral():
+# ───────────────────────────── ProtoState — MK4 regression (byte-identical) ─────────────────────────────
+def test_protostate_mk4_neutral_and_motion():
+    ps = ProtoState(MK4Protocol(), device=0)
+    ps.phase = "ready"
+    assert ps.state == [0x8] * 12
+    assert ps.motion_raw() == MK4_NEUTRAL
+    assert ps.neutral_raw() == MK4_NEUTRAL
+    ps.set(0, 0, 7, now=1.0)                      # slot0/ch0 full -> nibble 0xF
+    assert ps.state[0] == 0xF
+    assert ps.motion_raw() == "7dae18f8888888888882"
+    ps.set(1, 0, -7, now=1.0)                     # slot1/ch0 = ch4 -> nibble 0x1 (byte2 high)
+    assert ps.motion_raw() == "7dae18f8881888888882"
+
+
+def test_protostate_mk4_connect_and_bind_phase():
+    ps = ProtoState(MK4Protocol(), device=0)      # default phase = connecting
+    assert ps.phase == "connecting"
+    assert ps.current_raw() == MK4_CONNECT        # while connecting -> the connect telegram
+    assert ps.entry() == {"current": MK4_CONNECT, "neutral": MK4_NEUTRAL, "connect": MK4_CONNECT}
+    ps.phase = "ready"
+    assert ps.current_raw() == MK4_NEUTRAL        # ready + no motion -> neutral
+
+
+# ───────────────────────────── ProtoState — MK6 proven frames ─────────────────────────────
+def test_protostate_mk6_frames():
+    ps = ProtoState(make_protocol("mk6", 0), device=0)
+    ps.phase = "ready"
+    assert ps.state == [0x80] * 6
+    assert ps.motion_raw() == MK6_NEUTRAL
+    ps.set(0, 0, 7, now=1.0)
+    assert ps.motion_raw() == "61ae18ff80808080809e"   # c0 forward-full (hardware-proven)
+    ps.set(0, 0, -7, now=1.0)
+    assert ps.motion_raw() == "61ae180180808080809e"   # c0 reverse-full
+
+
+def test_protostate_mk6_connect_is_the_bind_frame():
+    ps = ProtoState(make_protocol("mk6", 0), device=0)   # connecting
+    assert ps.current_raw() == MK6_BIND                  # MK6 bind telegram (NOT the MK4 connect)
+    assert ps.entry()["connect"] == MK6_BIND
+    ps.phase = "ready"
+    assert ps.current_raw() == MK6_NEUTRAL
+
+
+def test_protostate_mk6_device1():
+    ps = ProtoState(make_protocol("mk6", 1), device=1)
+    ps.phase = "ready"
+    ps.set(0, 2, -7, now=1.0)                     # dev1 header 0x62, c2=0x01, trailer 0x9d
+    assert ps.motion_raw() == "62ae188080018080809d"
+
+
+def test_protostate_reap_neutralizes_mk6():
+    ps = ProtoState(make_protocol("mk6", 0)); ps.phase = "ready"
+    ps.set(0, 0, 7, now=0.0)
+    assert ps.reap_stale(1.0, 0.3) is True
+    assert ps.state == [0x80] * 6
+    assert ps.reap_stale(2.0, 0.3) is False
+
+
+# ───────────────────────────── App — MK4-only single entry (regression) ─────────────────────────────
+def test_app_mk4_only_single_entry():
     app = App()
-    assert app.protocol.name == "mk4"
-    assert app.state == [0x8] * 12
-    assert app.build_raw() == "7dae18888888888888" + "82"       # neutral MK4 motion telegram
-    assert app.neutral_raw() == app.build_raw()
+    app.activate("mk4", 0, phase="connecting")
+    ent = app.entries()
+    assert len(ent) == 1
+    assert ent[0]["current"] == MK4_CONNECT and ent[0]["connect"] == MK4_CONNECT   # bind phase
+    app.ready_all(); app.lifecycle = "READY"
+    app.route_set(None, 0, 0, 0, 7, now=1.0)      # protocol-less set -> mk4 (back-compat)
+    ent = app.entries()
+    assert len(ent) == 1
+    assert ent[0]["current"] == "7dae18f8888888888882"
+    assert ent[0]["neutral"] == MK4_NEUTRAL
 
 
-def test_app_mk4_set_builds_same_nibble_telegram():
+# ───────────────────────────── App — the MIX (step 5) ─────────────────────────────
+def test_app_mix_two_entries_correct_raws():
     app = App()
+    app.activate("mk4", 0, phase="ready")
+    app.activate("mk6", 0, phase="ready")
     app.lifecycle = "READY"
-    app.set(0, 0, 7, now=1.0)                    # slot0/ch0 full one way -> nibble 0xF
-    assert app.state[0] == 0xF
-    assert app.build_raw() == "7dae18f8888888888882"
-    app.set(1, 0, -7, now=1.0)                   # slot1/ch0 = global ch4 -> nibble 0x1 (byte2 high)
-    assert app.state[4] == 0x1
-    assert app.build_raw() == "7dae18f8881888888882"
+    app.route_set("mk4", 0, 0, 0, 7, now=1.0)     # MK4 slot0/ch0 -> nibble F
+    app.route_set("mk6", 0, 0, 0, 7, now=1.0)     # MK6 c0 -> 0xFF
+    ent = app.entries()
+    assert len(ent) == 2
+    # activation order preserved: mk4 first, mk6 second
+    assert ent[0] == {"current": "7dae18f8888888888882", "neutral": MK4_NEUTRAL, "connect": MK4_CONNECT}
+    assert ent[1] == {"current": "61ae18ff80808080809e", "neutral": MK6_NEUTRAL, "connect": MK6_BIND}
 
 
-def test_app_mk4_channel_index_is_slot_times_4():
+def test_app_mk6_set_activates_on_first_use():
     app = App()
-    app.lifecycle = "READY"
-    app.set(2, 3, 7, now=1.0)                    # slot2/ch3 -> global ch11 (last nibble)
-    assert app.state[11] == 0xF
-    assert app.build_raw() == "7dae1888888888888f82"
+    app.activate("mk4", 0, phase="ready"); app.lifecycle = "READY"
+    assert len(app.entries()) == 1
+    app.route_set("mk6", 0, 0, 0, 7, now=1.0)     # first MK6 set -> MK6 JOINS the interleave
+    ent = app.entries()
+    assert len(ent) == 2 and ent[1]["current"] == "61ae18ff80808080809e"
 
 
-# ───────────────────────────── MK6 — protocol switch + proven frames ─────────────────────────────
-def test_app_switch_to_mk6_reshapes_state():
+def test_app_reap_all_independent_per_protocol():
     app = App()
-    app.set_protocol(make_protocol("mk6", 0))
-    assert app.protocol.name == "mk6"
-    assert app.state == [0x80] * 6
-    assert app.build_raw() == "61ae188080808080809e"            # dev0 neutral (captured + driven)
-    assert app.neutral_raw() == "61ae188080808080809e"
+    app.activate("mk4", 0, phase="ready"); app.activate("mk6", 0, phase="ready"); app.lifecycle = "READY"
+    app.route_set("mk4", 0, 0, 0, 7, now=0.0)
+    app.route_set("mk6", 0, 0, 0, 7, now=0.5)     # MK6 refreshed later
+    assert app.reap_all(0.4, 0.3) is True         # MK4 stale (0.4>0.3), MK6 not (0.4<0.5+0.3)
+    ent = app.entries()
+    assert ent[0]["current"] == ent[0]["neutral"]          # MK4 neutralized
+    assert ent[1]["current"] == "61ae18ff80808080809e"     # MK6 still driving
+    assert app.reap_all(1.0, 0.3) is True
+    assert app.entries()[1]["current"] == MK6_NEUTRAL      # now MK6 too
 
 
-def test_app_mk6_set_builds_driven_frames():
+def test_app_stop_all_and_reset():
     app = App()
-    app.set_protocol(make_protocol("mk6", 0))
-    app.lifecycle = "READY"
-    app.set(0, 0, 7, now=1.0)                    # c0 forward-full -> 0xFF (hardware-proven)
-    assert app.state[0] == 0xFF
-    assert app.build_raw() == "61ae18ff80808080809e"
-    app.set(0, 0, -7, now=1.0)                   # c0 reverse-full -> 0x01 (captured)
-    assert app.state[0] == 0x01
-    assert app.build_raw() == "61ae180180808080809e"
-    app.set(0, 0, 0, now=1.0)                    # back to neutral
-    assert app.build_raw() == "61ae188080808080809e"
-
-
-def test_app_mk6_channel_index_is_the_channel():
-    app = App()
-    app.set_protocol(make_protocol("mk6", 0))
-    app.lifecycle = "READY"
-    app.set(0, 2, -7, now=1.0)                   # c2 -> state[2]=0x01 (the captured dev-switch byte)
-    assert app.state[2] == 0x01
-    assert app.build_raw() == "61ae188080018080809e"
-
-
-def test_app_mk6_device1_header_and_trailer():
-    app = App()
-    app.set_protocol(make_protocol("mk6", 1))
-    app.lifecycle = "READY"
-    app.set(0, 2, -7, now=1.0)                   # dev1 (header 0x62), c2=0x01, trailer 0x9d
-    assert app.build_raw() == "62ae188080018080809d"
-
-
-# ───────────────────────────── the per-channel dead-man is protocol-sized ─────────────────────────────
-def test_reap_stale_neutralizes_mk6_bytes():
-    app = App()
-    app.set_protocol(make_protocol("mk6", 0))
-    app.lifecycle = "READY"
-    app.set(0, 0, 7, now=0.0)                    # drive c0
-    assert app.state[0] == 0xFF
-    assert app.reap_stale(now=1.0, timeout=0.3) is True     # 1.0s > 0.3s stale
-    assert app.state == [0x80] * 6                          # neutralized to MK6 neutral (0x80, not 0x8)
-    assert app.reap_stale(now=2.0, timeout=0.3) is False    # already neutral -> no change
-
-
-def test_reap_stale_neutralizes_mk4_nibbles():
-    app = App()
-    app.lifecycle = "READY"
-    app.set(0, 0, 7, now=0.0)
-    assert app.reap_stale(now=1.0, timeout=0.3) is True
-    assert app.state == [0x8] * 12
-
-
-def test_stop_reneutrals_current_protocol():
-    app = App()
-    app.set_protocol(make_protocol("mk6", 0))
-    app.lifecycle = "READY"
-    app.set(0, 0, 7, now=0.0)
-    app.stop()
-    assert app.state == [0x80] * 6
-    assert app.build_raw() == "61ae188080808080809e"
+    app.activate("mk4", 0, phase="ready"); app.activate("mk6", 0, phase="ready"); app.lifecycle = "READY"
+    app.route_set("mk4", 0, 0, 0, 7, now=1.0); app.route_set("mk6", 0, 0, 0, 7, now=1.0)
+    app.stop_all()
+    for e in app.entries():
+        assert e["current"] == e["neutral"]       # EVERY protocol neutral on stop
+    app.reset()
+    assert app.entries() == [] and app.lifecycle == "IDLE"

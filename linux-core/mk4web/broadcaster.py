@@ -1,34 +1,35 @@
 """Broadcaster process (A) — owns the radio + authoritative state, with an explicit
 connection lifecycle that the GUI drives (the service can't see the LED flashes).
 
-RAW-BLIND (MK6 build step 3): the broadcaster is protocol-agnostic. It holds opaque
-telegram hex handed over IPC by the API — current_raw (broadcast in READY), neutral_raw
-(the protocol's all-neutral frame, for the coarse dead-man + STOP), connect_raw — and
-knows NOTHING about protocols/nibbles/bytes. The API builds the telegram via the active
-Protocol (MK4 nibble / MK6 byte) and sends the bytes; the broadcaster just repeats them.
+RAW-BLIND, LIST-INTERLEAVE (MK6 build steps 3 + 5): the broadcaster is protocol-agnostic.
+It holds a LIST of opaque telegram ENTRIES handed over IPC by the API — each entry =
+{current, neutral, connect} — and knows NOTHING about protocols/nibbles/bytes. The API
+builds every frame via its Protocols (MK4 nibble / MK6 byte) and hands the whole list; the
+broadcaster INTERLEAVES it on the one shared 0xFFF0 radio (time-multiplexed, one advertiser).
+ONE entry = step-3 single-protocol behavior EXACTLY; TWO+ = round-robin so each protocol keeps
+its ~10/s keepalive (simultaneous MK4 + MK6).
 
 Lifecycle:
-  IDLE        advertising OFF, nothing transmitted.
-  CONNECTING  broadcasting connect_raw (the shared connect telegram). User does the
-              physical button promotion (one hub -> two flashes = slot 1) here.
-  READY       broadcasting ONE motion telegram (current_raw) reflecting current state;
-              motion controls active.
+  IDLE        advertising OFF, nothing transmitted (no active entries).
+  CONNECTING  advertising the connecting protocol's bind telegram (its entry's `current`).
+              User does the physical button promotion / box pairing here.
+  READY       interleaving each active protocol's motion telegram; controls active.
 
-Authoritative state: opaque current_raw / neutral_raw (built by the API). Transitions +
-frames come from the API over a local Unix socket (one-way).
+Authoritative state: the opaque entry LIST (built by the API). Transitions + frames come
+from the API over a local Unix socket (one-way).
 
 SAFETY:
-  - motion frames are only applied in READY;
-  - non-READY lifecycle forces neutral_raw;
-  - the coarse dead-man swaps to neutral_raw if the API goes silent;
-  - if the API process disconnects -> reset to IDLE (advertising OFF, neutral).
+  - motion updates are only applied in READY;
+  - STOP and the coarse dead-man neutral EVERY entry (never just one — the other box would
+    keep running); STOP = kill + reconnect with ALL entries at neutral;
+  - if the API process disconnects -> reset to IDLE (advertising OFF, all neutral).
 
---dry-run: log the telegrams it WOULD broadcast (on change), transmit nothing.
+--dry-run: log the telegrams it WOULD broadcast, transmit nothing.
 Run:  python -m mk4web.broadcaster [--dry-run] [--hci hci1]
 """
 import os, json, time, socket, threading, subprocess, argparse, logging
 
-from .telegram import CONNECT_RAW, ad_hex, ad_bytes
+from .telegram import ad_hex, ad_bytes
 from .config import SOCK_PATH, HCI, ADV_INTERVAL, REFRESH, RADIO_BACKEND
 
 log = logging.getLogger("broadcaster")
@@ -40,15 +41,16 @@ WATCHDOG_TIMEOUT = float(os.environ.get("MK4_BCAST_WATCHDOG", "0.5"))
 
 
 class Controller:
-    """Lifecycle + opaque RAW telegram state under one lock (RAW-BLIND). `version` bumps on
-    any change. Holds current_raw (broadcast in READY), neutral_raw (the active protocol's
-    all-neutral frame, supplied by the API), connect_raw (the connect telegram). The
-    broadcaster never builds these — the API hands them over IPC."""
+    """Lifecycle + a LIST of opaque telegram ENTRIES under one lock (RAW-BLIND, step 5). Each
+    entry = {current, neutral, connect}: `current` is the frame to broadcast for that protocol
+    right now (its bind telegram while CONNECTING, its motion while READY), `neutral` is that
+    protocol's all-neutral frame (dead-man / STOP target), `connect` is its connect/bind
+    telegram (re-sent on the STOP reconnect). The broadcaster INTERLEAVES the list on the one
+    shared radio (one entry = step-3 single-protocol behavior exactly). The API builds every
+    frame and hands the whole list over IPC; the broadcaster never builds or inspects them."""
     def __init__(self):
         self.lifecycle = IDLE
-        self.current_raw = None                 # the frame to broadcast in READY (built by the API)
-        self.neutral_raw = None                 # the protocol's neutral frame (dead-man / STOP target)
-        self.connect_raw = CONNECT_RAW          # default; the API overrides on connect (per protocol)
+        self.entries = []                       # [{current, neutral, connect}] — the interleave list
         self.version = 0
         self.last_activity = time.monotonic()   # last IPC from the API (coarse dead-man's-switch)
         self.restart = False                    # STOP requested a radio teardown + reconnect-at-neutral
@@ -58,11 +60,12 @@ class Controller:
         self.last_activity = time.monotonic()   # any IPC message = API alive
 
     def request_restart(self):
-        """STOP: force NEUTRAL and request a full radio kill+reconnect (the broadcast loop
-        tears the advertiser down and re-establishes a clean neutral, so the keepalive can
-        NEVER repeat a stale non-zero frame)."""
+        """STOP: force EVERY entry to NEUTRAL and request a full radio kill+reconnect (the
+        broadcast loop tears the advertiser down and re-establishes ALL entries at neutral, so
+        the interleave can NEVER repeat a stale non-zero frame for ANY protocol)."""
         with self._lock:
-            self.current_raw = self.neutral_raw
+            for e in self.entries:
+                e["current"] = e["neutral"]
             self.restart = True
             self.version += 1
 
@@ -70,49 +73,44 @@ class Controller:
         with self._lock:
             r = self.restart; self.restart = False; return r
 
-    def set_connect(self, connect_raw, neutral_raw):
-        """On connect: adopt the active protocol's connect + neutral frames."""
+    def set_lifecycle(self, lc, entries):
+        """Lifecycle change from the API (connect/ready/reset) carrying the full entry list.
+        IDLE clears the list; CONNECTING/READY adopt the entries the API built."""
         with self._lock:
-            if connect_raw:
-                self.connect_raw = connect_raw
-            if neutral_raw:
-                self.neutral_raw = neutral_raw
+            self.lifecycle = lc
+            if lc == IDLE:
+                self.entries = []
+            elif entries is not None:
+                self.entries = [dict(e) for e in entries]
+            self.version += 1
 
-    def set_lifecycle(self, lc):
+    def set_entries(self, entries):
+        """Motion update from the API (built frames). Applied only in READY (motion gate)."""
         with self._lock:
-            if lc != self.lifecycle:
-                self.lifecycle = lc
-                if lc != READY:
-                    self.current_raw = self.neutral_raw     # safety: only READY may be non-neutral
-                elif self.current_raw is None:
-                    self.current_raw = self.neutral_raw     # enter READY at neutral until the first frame
+            if self.lifecycle == READY and entries is not None:
+                self.entries = [dict(e) for e in entries]
                 self.version += 1
 
-    def set_raw(self, raw, neutral_raw):
-        """Motion frame from the API (already built via the active Protocol)."""
+    def neutral_all(self):
+        """Coarse dead-man / client-disconnect: force EVERY entry's current -> its neutral."""
         with self._lock:
-            if neutral_raw:
-                self.neutral_raw = neutral_raw
-            if self.lifecycle == READY and raw and raw != self.current_raw:   # motion only in READY
-                self.current_raw = raw
-                self.version += 1
-
-    def neutral(self):
-        with self._lock:
-            if self.neutral_raw is not None and self.current_raw != self.neutral_raw:
-                self.current_raw = self.neutral_raw
+            changed = False
+            for e in self.entries:
+                if e["current"] != e["neutral"]:
+                    e["current"] = e["neutral"]; changed = True
+            if changed:
                 self.version += 1
 
     def reset_idle(self):
         with self._lock:
-            if self.lifecycle != IDLE or self.current_raw != self.neutral_raw:
+            if self.lifecycle != IDLE or self.entries:
                 self.lifecycle = IDLE
-                self.current_raw = self.neutral_raw
+                self.entries = []
                 self.version += 1
 
     def snapshot(self):
         with self._lock:
-            return self.lifecycle, self.current_raw, self.connect_raw, self.neutral_raw, self.version
+            return self.lifecycle, [dict(e) for e in self.entries], self.version
 
 
 # ---------------------------------------------------------------- radio backends
@@ -218,19 +216,20 @@ def make_backend(name, hci):
 
 
 # ---------------------------------------------------------------- transition -> ops
-def _ops_for(prev, lc, current_raw, connect_raw):
-    """The exact ordered radio operations a lifecycle transition performs — the single
-    source of truth shared by live execution and the dry-run preview. Operates on the
-    opaque raw frames handed over IPC (RAW-BLIND — no telegram building here)."""
-    if lc == IDLE:
-        return [("adv", False)]
-    if lc == CONNECTING:
-        return [("adv", False), ("params", None), ("data", connect_raw), ("adv", True)]
-    if lc == READY:
-        if prev == CONNECTING:
-            return [("data", current_raw)]                           # advertising already on
-        return [("adv", False), ("params", None), ("data", current_raw), ("adv", True)]
-    return []
+def _advertise_on_ops(first_current):
+    """Fresh advertise: down -> params -> first frame -> up (the clean start choreography)."""
+    return [("adv", False), ("params", None), ("data", first_current), ("adv", True)]
+
+
+def _kill_reconnect_ops(entries):
+    """STOP: tear the advertiser DOWN, re-send EVERY entry's connect telegram, bring it UP, then
+    broadcast EVERY entry's neutral. For ONE entry this is EXACTLY the step-3 order
+    (down, params, connect, up, neutral). For N it re-affirms + neutrals all protocols."""
+    ops = [("adv", False), ("params", None)]
+    ops += [("data", e["connect"]) for e in entries if e.get("connect")]
+    ops += [("adv", True)]
+    ops += [("data", e["neutral"]) for e in entries]
+    return ops
 
 
 def _run_ops(backend, ops):
@@ -249,79 +248,94 @@ def _preview(backend, ops):
         log.info("[radio:%s] %s", backend.name, backend.plan(op, arg))
 
 
-def _enter(prev, lc, current_raw, connect_raw, backend, dry):
-    """Apply a lifecycle transition to the radio (or log it in dry-run). RAW-BLIND: it
-    broadcasts the opaque frames handed over IPC (connect_raw / current_raw)."""
-    ops = _ops_for(prev, lc, current_raw, connect_raw)
-    if lc == IDLE:
-        if dry:
-            log.info("[dry-run] -> IDLE (advertising OFF)")
-        else:
-            _run_ops(backend, ops)
-        log.info("lifecycle -> IDLE")
-    elif lc == CONNECTING:
-        if dry:
-            log.info("[dry-run] -> CONNECTING raw=%s | AD=%s", connect_raw, ad_hex(connect_raw))
-        else:
-            _run_ops(backend, ops)
-        log.info("lifecycle -> CONNECTING (broadcasting connect telegram)")
-    elif lc == READY:
-        if dry:
-            log.info("[dry-run] -> READY raw=%s | AD=%s", current_raw, ad_hex(current_raw) if current_raw else "-")
-        else:
-            _run_ops(backend, ops)
-        log.info("lifecycle -> READY (broadcasting motion; controls active)")
+def _enter_advertising(backend, entries, dry):
+    """Start the advertiser cleanly on the first active entry (down -> params -> frame -> up)."""
+    first = entries[0]["current"]
+    ops = _advertise_on_ops(first)
     if dry:
-        _preview(backend, ops)
-
-
-def _kill_reconnect(backend, connect_raw, neutral_raw, dry):
-    """STOP: tear the advertiser DOWN, then reconnect into a CLEAN neutral state — re-send the
-    connect telegram, then broadcast the (opaque) all-neutral motion telegram. The
-    repeated/keepalive state is now neutral, so no stale non-zero frame can survive anywhere."""
-    ops = [("adv", False), ("params", None), ("data", connect_raw), ("adv", True), ("data", neutral_raw)]
-    if dry:
-        log.warning("[dry-run] STOP kill+reconnect: adv OFF -> connect=%s -> neutral motion=%s",
-                    connect_raw, neutral_raw)
+        log.info("[dry-run] advertising ON (%d entr%s) first=%s | AD=%s", len(entries),
+                 "y" if len(entries) == 1 else "ies", first, ad_hex(first) if first else "-")
         _preview(backend, ops)
     else:
         _run_ops(backend, ops)
-        log.warning("STOP: radio torn down + reconnected at NEUTRAL (held = %s)", neutral_raw)
+
+
+def _kill_reconnect(backend, entries, dry):
+    """STOP: tear the advertiser DOWN, then reconnect with EVERY entry at neutral (re-send each
+    connect, then each neutral). No stale non-zero frame can survive for ANY protocol."""
+    ops = _kill_reconnect_ops(entries)
+    if dry:
+        log.warning("[dry-run] STOP kill+reconnect: %d entr%s -> ALL neutral", len(entries),
+                    "y" if len(entries) == 1 else "ies")
+        _preview(backend, ops)
+    else:
+        _run_ops(backend, ops)
+        log.warning("STOP: radio torn down + reconnected at NEUTRAL (%d entr%s)", len(entries),
+                    "y" if len(entries) == 1 else "ies")
 
 
 def broadcast_loop(ctrl, backend, dry, stop_evt):
-    prev_lc, last_ver, last_refresh = None, -1, 0.0
+    """RAW-BLIND interleave loop. ONE entry -> step-3 cadence EXACTLY (broadcast on change +
+    REFRESH keepalive floor). TWO+ entries -> round-robin one frame per ~50 ms tick, so each
+    active protocol keeps its ~10/s effective keepalive (~20/s total for two) on the one radio."""
+    prev_lc, advertising, last_ver, last_refresh, rot = None, False, -1, 0.0, 0
     while not stop_evt.is_set():
-        lc, current_raw, connect_raw, neutral_raw, ver = ctrl.snapshot()
+        lc, entries, ver = ctrl.snapshot()
         now = time.monotonic()
-        # STOP: kill the radio + reconnect at neutral (defeats the keepalive's stale-state repeat)
+        n = len(entries)
+
+        # STOP: kill radio + reconnect ALL entries at neutral (request_restart already neutraled them)
         if ctrl.take_restart():
-            if lc == READY:
-                _kill_reconnect(backend, connect_raw, neutral_raw, dry)
-            lc, current_raw, connect_raw, neutral_raw, ver = ctrl.snapshot()   # neutral now
-            prev_lc, last_ver, last_refresh = lc, ver, now   # resync (don't double-enter/re-broadcast)
+            if advertising or n:
+                _kill_reconnect(backend, entries, dry)
+                advertising = True
+            lc, entries, ver = ctrl.snapshot()
+            prev_lc, last_ver, last_refresh, rot = lc, ver, now, 0
             time.sleep(0.05); continue
-        # coarse dead-man's-switch (defense in depth): API silent while READY+non-neutral -> NEUTRAL
-        if lc == READY and neutral_raw is not None and current_raw != neutral_raw \
+
+        # coarse dead-man (READY only, like step 3): API silent while ANY entry non-neutral -> neutral ALL
+        if lc == READY and n and any(e["current"] != e["neutral"] for e in entries) \
                 and (now - ctrl.last_activity) > WATCHDOG_TIMEOUT:
-            log.warning("API silent > %dms while READY -> NEUTRAL (broadcaster watchdog)", int(WATCHDOG_TIMEOUT * 1000))
-            ctrl.neutral()
-            lc, current_raw, connect_raw, neutral_raw, ver = ctrl.snapshot()   # re-read -> broadcast neutral
+            log.warning("API silent > %dms while READY -> NEUTRAL all (broadcaster watchdog)", int(WATCHDOG_TIMEOUT * 1000))
+            ctrl.neutral_all()
+            lc, entries, ver = ctrl.snapshot(); n = len(entries)
+
         if lc != prev_lc:
-            _enter(prev_lc, lc, current_raw, connect_raw, backend, dry)
-            prev_lc, last_ver, last_refresh = lc, ver, now
-        elif lc == READY and ver != last_ver:
+            log.info("lifecycle -> %s (%d protocol%s)", lc, n, "" if n == 1 else "s")
+
+        want_adv = lc in (CONNECTING, READY) and n > 0
+        if want_adv and not advertising:
+            _enter_advertising(backend, entries, dry)
+            advertising = True; last_ver = ver; last_refresh = now; rot = 0
+        elif not want_adv and advertising:
             if dry:
-                log.info("[dry-run] READY state v%d -> raw=%s | AD=%s", ver, current_raw,
-                         ad_hex(current_raw) if current_raw else "-")
-            elif current_raw:
-                backend.set_data(current_raw)
-            last_ver, last_refresh = ver, now
-        elif not dry and lc in (CONNECTING, READY) and (now - last_refresh) >= REFRESH:
-            frame = connect_raw if lc == CONNECTING else current_raw
-            if frame:
-                backend.set_data(frame)
-            last_refresh = now
+                log.info("[dry-run] advertising OFF")
+            else:
+                backend.adv(False)
+            advertising = False
+        elif advertising and n:
+            if n == 1:
+                # SINGLE entry = step-3 cadence EXACTLY: broadcast on change + REFRESH floor
+                cur = entries[0]["current"]
+                if ver != last_ver:
+                    if dry:
+                        log.info("[dry-run] v%d -> raw=%s | AD=%s", ver, cur, ad_hex(cur) if cur else "-")
+                    elif cur:
+                        backend.set_data(cur)
+                    last_ver, last_refresh = ver, now
+                elif not dry and cur and (now - last_refresh) >= REFRESH:
+                    backend.set_data(cur); last_refresh = now
+            else:
+                # INTERLEAVE: one frame per tick, round-robin (each entry ~= tick*n period)
+                idx = rot % n
+                cur = entries[idx]["current"]
+                if dry:
+                    if ver != last_ver:
+                        log.info("[dry-run] interleave v%d [%d/%d] -> raw=%s", ver, idx, n, cur)
+                elif cur:
+                    backend.set_data(cur)
+                rot += 1; last_ver = ver
+        prev_lc = lc
         time.sleep(0.05)
 
 
@@ -373,19 +387,14 @@ def ipc_server(ctrl, stop_evt):
                         continue
                     ctrl.touch()                       # any IPC = API alive (feeds the coarse watchdog)
                     cmd = msg.get("cmd")
-                    if cmd == "connect":
-                        ctrl.set_connect(msg.get("connect_raw"), msg.get("neutral_raw"))
-                        ctrl.set_lifecycle(CONNECTING)
-                    elif cmd == "ready":
-                        ctrl.set_lifecycle(READY)
-                    elif cmd == "reset":
-                        ctrl.reset_idle()
+                    if cmd == "lc":                    # lifecycle change + the full entry list
+                        ctrl.set_lifecycle(msg.get("state"), msg.get("entries"))
                     elif msg.get("killreconnect"):
-                        ctrl.request_restart()         # STOP: kill the radio + reconnect at neutral
+                        ctrl.request_restart()         # STOP: kill the radio + reconnect ALL at neutral
                     elif msg.get("neutral"):
-                        ctrl.neutral()
-                    elif "raw" in msg:                 # RAW-BLIND motion frame (built by the API)
-                        ctrl.set_raw(msg.get("raw"), msg.get("neutral_raw"))
+                        ctrl.neutral_all()             # client disconnect -> every entry neutral
+                    elif "entries" in msg:             # RAW-BLIND motion update (built by the API)
+                        ctrl.set_entries(msg["entries"])
         finally:
             conn.close()
             ctrl.reset_idle()      # SAFETY: API gone -> IDLE (advertising OFF, neutral)
