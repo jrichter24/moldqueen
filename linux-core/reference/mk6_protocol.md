@@ -36,9 +36,16 @@ Corroborated by J0EK3R/mkconnect-python (MIT). **Canonical doc:
 - **offsets 7–8** = `0x80` padding (constant across all captures).
 
 ## Connect / handshake frames observed
-- Shared MK4/MK6 connect: `ad ae 18 80 80 80 f3 52`.
-- MK6 base: `6d ae 18 80 80 80 80 92`.
-- The app broadcasts connect **then** motion; the write-proof mirrored that ordering.
+- **MK6 device-0 CONNECT/BIND telegram = the base frame `6d ae 18 80 80 80 80 92`.** Broadcast it
+  while the box is in pairing mode (blinking blue+green) and the box **binds to device 0** (LED →
+  single fast blue flash). This is the `ae 18` analog of J0EK3R's device-0 connect
+  `6d 7b a7 80 80 80 80 92` (MKtech_reverse_engineering_report.md §5-6). **HARDWARE-CONFIRMED
+  2026-07-08**: this frame is what binds the box; then `0x61…`-header motion drives it.
+- **NOT** the MK4 shared connect `ad ae 18 80 80 80 f3 52` — that binds MK4 *nibble* hubs (it does
+  nothing for the MK6 box; an early attempt using it left the box blinking + never bound).
+- The app broadcasts connect **then** motion; the working drive mirrors that ordering.
+- Device 1/2 connect prefix is **device-dependent and still TBD** (only device-0 bind is proven);
+  motion header is `0x61 + device`, but the dev1/2 *connect* prefix is not yet captured.
 
 ## Evidence — measured, not proposed
 - **READ:** passive captures (idle baseline vs app-driving) on the spare dongle (hci1); every

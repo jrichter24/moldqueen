@@ -56,10 +56,13 @@ between sections as work **starts** (→ IN-PROGRESS), **stalls/blocks** (→ ST
   telegram `[0x61+device] ae 18 [c0..c3] 80 80 [0xFF-header]`, byte-per-channel `0x80`-center).
   Spec + evidence: `linux-core/reference/mk6_protocol.md`; design + plan in PROJECT.md §3 + §8.
   The RE spike was scratch (`/tmp`, **not committed**). **Build sequence:** (1) ✅ prove MK6 write —
-  **DONE**; (2) **NEXT — protocol abstraction** (MK4/MK6 seam + per-protocol value scaling,
-  server-side); (3) WS `protocol` in `set` + server scaling + asyncapi; (4) client
-  protocol-per-function + MK4/MK6 box-image UX; (5) broadcaster interleaves both keepalives on the
-  shared radio — hardware-verify LAST.
+  **DONE**; (2) ✅ **protocol abstraction** (MK4/MK6 seam in `telegram.py` + per-protocol scaling) —
+  **DONE**; (3) ✅ **server EMITS MK4/MK6** (raw-blind broadcaster, IPC carries built raw, WS
+  `protocol`/`device` on `setup`/`set`, asyncapi) — **DONE + hardware-verified 2026-07-08** (MK4
+  regression + MK6 c0 both directions; MK6 bind telegram = base frame `6dae188080808092`, NOT the
+  MK4 `adae18...`); (4) **NEXT — client** protocol-per-function + MK4/MK6 box-image UX; (5)
+  broadcaster interleaves both keepalives on the shared radio (simultaneous MK4+MK6) — hardware-verify
+  LAST. Single protocol per session through step 4; step 5 adds the mix. Commit `866976a` (linux-core).
 - **F-Droid submission** — MR [!41291](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/41291)
   at `fdroid/fdroiddata` (*New app: MoldQueen*), v0.1.2 / commit `fad0c20`, is **merged** and the
   app is now **available on F-Droid** at
