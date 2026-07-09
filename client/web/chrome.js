@@ -39,6 +39,21 @@ window.MK4Chrome = (function () {
     let grid = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
     const tr = () => MK4I18N.dict(lang);
 
+    // ---- MK6 build 4a: single-box protocol selection ("which box do you have?") ----
+    // The SMART CLIENT declares which radio protocol the thin-transport server binds/drives: MK4
+    // (default) or MK6, chosen ONCE in the connect wizard (the "MK4 box / MK6 box" picker — the only
+    // protocol UI anywhere). The server DEFAULTS to MK4, so the MK4 path stays byte-for-byte today's
+    // behavior (nothing stamped). MK6 is single-device (device 0, no UI) this step; mixed/multi-box
+    // is a later step.
+    const PROTO_KEY = "mk4_protocol";
+    function getProtocol() { return localStorage.getItem(PROTO_KEY) === "mk6" ? "mk6" : "mk4"; }
+    function setProtocol(p) { localStorage.setItem(PROTO_KEY, p === "mk6" ? "mk6" : "mk4"); }
+    // Stamp an outbound setup/set message with the selected protocol. MK4 = server default -> leave
+    // the message UNCHANGED (back-compat); MK6 -> add {protocol:"mk6", device:<the function's slot>}
+    // so an mk6 function on slot 1 drives MK6 device 1. `set` messages carry the per-function slot;
+    // `setup` (connect/ready) has no slot -> `undefined | 0` = device 0. Mutates + returns o.
+    function stampProto(o) { if (getProtocol() === "mk6") { o.protocol = "mk6"; o.device = o.slot | 0; } return o; }
+
     // ---- channel map helpers (client-authoritative active map) ----
     function validMap(mp) {
       if (!mp || typeof mp !== "object" || !mp.functions) return false;
@@ -170,7 +185,7 @@ window.MK4Chrome = (function () {
       if (v !== 0 && lastVal[fn] === v) return;                 // dedup NON-ZERO only; a 0 is always sent
       lastVal[fn] = v;
       const r = resolveDrive(fn, v);
-      if (r) send({ cmd: "set", slot: r.slot, channel: r.channel, value: r.value });
+      if (r) send(stampProto({ cmd: "set", slot: r.slot, channel: r.channel, value: r.value }));
     }
     const REFRESH_MS = 100;
     function refreshActive() {
@@ -180,7 +195,7 @@ window.MK4Chrome = (function () {
         const v = intent[fn] | 0;
         if (v === 0) continue;
         const r = resolveDrive(fn, v);
-        if (r) send({ cmd: "set", slot: r.slot, channel: r.channel, value: r.value });
+        if (r) send(stampProto({ cmd: "set", slot: r.slot, channel: r.channel, value: r.value }));
       }
     }
     function neutralizeAll() {
@@ -223,7 +238,7 @@ window.MK4Chrome = (function () {
       wizardOnLifecycle(state);
       startupOnUpdate();
       if (autoReady) {
-        if (state === "CONNECTING") send({ cmd: "setup", action: "ready" });
+        if (state === "CONNECTING") send(stampProto({ cmd: "setup", action: "ready" }));
         else if (state === "READY") { autoReady = false; closeWizard(); closeStartup(); }
       }
     }
@@ -383,7 +398,7 @@ window.MK4Chrome = (function () {
       else if (state === "IDLE" && wizardStep > 1) { wizardStep = 1; buildWizard(); }
     }
     function wizardNext() {
-      if (wizardStep === 1) { send({ cmd: "setup", action: "connect" }); wizardStep = 2; }
+      if (wizardStep === 1) { send(stampProto({ cmd: "setup", action: "connect" })); wizardStep = 2; }
       else if (wizardStep === 2) wizardStep = 3;
       buildWizard();
     }
@@ -396,8 +411,25 @@ window.MK4Chrome = (function () {
       clearStopLatch();
       if (lifecycle === "READY") { autoReady = false; closeWizard(); closeStartup(); return; }
       autoReady = true;
-      if (lifecycle === "CONNECTING") send({ cmd: "setup", action: "ready" });
-      else send({ cmd: "setup", action: "connect" });
+      if (lifecycle === "CONNECTING") send(stampProto({ cmd: "setup", action: "ready" }));
+      else send(stampProto({ cmd: "setup", action: "connect" }));
+    }
+    // ---- MK6 build 4a: protocol picker ("which box do you have?"), rendered into wizard step 1 ----
+    // Two labeled box buttons (MK4 / MK6); the choice sets the session protocol and persists
+    // immediately (localStorage), read by stampProto when the wizard fires connect/ready + every set.
+    // Step 1 is otherwise identical for both protocols. Real box photos would live in client/assets/
+    // (e.g. /assets/boxes/mk4.png) and replace the .boxph placeholder content.
+    function protoPickerHtml(t, proto) {
+      const m = t.mk6 || {};
+      const box = (id, cap) => `<button type="button" class="protobtn${proto === id ? " on" : ""}" data-proto="${id}" aria-pressed="${proto === id}">
+          <span class="boxph"><span class="boxcap">${cap}</span></span><span class="protolab">${id.toUpperCase()}</span></button>`;
+      return `<div class="protopick" id="protoPick">
+          <div class="protohd">${m.protocolLabel || "Protocol"}</div>
+          <div class="protorow">${box("mk4", m.mk4Box || "MK4 box")}${box("mk6", m.mk6Box || "MK6 box")}</div></div>`;
+    }
+    function wireProtoPicker() {
+      const pp = $("protoPick"); if (!pp) return;
+      pp.querySelectorAll(".protobtn").forEach(b => { b.onclick = () => { setProtocol(b.dataset.proto); buildWizard(); }; });
     }
     function buildWizard() {
       const t = tr(), s = wizardStep, w = t.wiz["w" + s];
@@ -406,19 +438,30 @@ window.MK4Chrome = (function () {
       else if (s === 2) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wBack">${t.wiz.back}</button><button class="apply" id="wNext">${t.wiz.next}</button>`;
       else if (s === 3) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wBack">${t.wiz.back}</button><button class="apply" id="wReady">${t.wiz.readyBtn}</button>`;
       else btns = `<button class="apply" id="wDone">${t.wiz.startDriving}</button>`;
+      // Step media is IMAGE-ONLY divergence: MK4 keeps today's per-step flash gifs; MK6 shows its OWN
+      // labeled placeholder image per step (steps 1/2/3). The COPY (w) is identical for both protocols —
+      // no MK6 text/prompt/field. A real photo dropped at /assets/boxes/mk6-step{1,2,3}.gif appears with no
+      // code change; if absent the <img> onerror removes it, revealing the labeled placeholder — NEVER the
+      // MK4 gif. Step 4 has no media (gif undefined). The step-1 box choice stays the only protocol touchpoint.
       const gif = { 1: "long_flash", 2: "short_flash", 3: "double_short_flash" }[s];
-      const media = gif ? `<div class="media"><img src="/assets/${gif}.gif" alt=""></div>` : "";
+      const media = (getProtocol() === "mk6" && gif)
+        ? `<div class="media mk6media"><img class="mk6img" id="mk6StepImg" src="/assets/boxes/mk6-step${s}.gif" alt=""><span class="mk6phlabel">${(t.mk6 || {}).stepImgPlaceholder || "MK6 box — image coming soon"}</span></div>`
+        : (gif ? `<div class="media"><img src="/assets/${gif}.gif" alt=""></div>` : "");
       const wt = config.wizardText ? config.wizardText(t) : null;
       const wizTitle = (wt && wt.wizTitle) || t.wiz.title;
+      const protoPick = s === 1 ? protoPickerHtml(t, getProtocol()) : "";   // "which box?" — pick MK4/MK6 BEFORE connect
       $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
         <h2>${wizTitle}</h2>
         <div class="wsteps">${[1, 2, 3, 4].map(n => `<span class="wdot${n === s ? " on" : n < s ? " done" : ""}"></span>`).join("")}</div>
         ${media}<h3 class="wt">${w.t}</h3><p class="wbody">${w.b}</p>
+        ${protoPick}
         ${s === 3 && config.zeroBoxHint ? '<p class="gx-zero">' + config.zeroBoxHint(t) + "</p>" : ""}
         <div class="actions wactions">${btns}</div></div>`;
       const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
       on("wCancel", wizardCancel); on("wBack", wizardBack); on("wNext", wizardNext);
-      on("wReady", () => send({ cmd: "setup", action: "ready" })); on("wAlready", skipToReady); on("wDone", closeWizard);
+      on("wReady", () => send(stampProto({ cmd: "setup", action: "ready" }))); on("wAlready", skipToReady); on("wDone", closeWizard);
+      if (s === 1) wireProtoPicker();
+      const mimg = $("mk6StepImg"); if (mimg) mimg.onerror = () => mimg.remove();   // MK6 step 1/2/3: 404 -> reveal labeled placeholder (never the MK4 gif)
     }
 
     // ---- startup overlay: reach the API, then connect the toy (skippable) ----
@@ -738,12 +781,12 @@ window.MK4Chrome = (function () {
         e.preventDefault(); if (lifecycle !== "READY") return;
         const a = editMap.functions[fn]; if (a.slot == null || a.channel == null) return;
         tb.classList.add("held");
-        send({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: a.max_fwd || 5 });
+        send(stampProto({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: a.max_fwd || 5 }));
       };
       const stop = () => {
         if (!tb.classList.contains("held")) return;
         const a = editMap.functions[fn]; tb.classList.remove("held");
-        if (a.slot != null && a.channel != null) send({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: 0 });
+        if (a.slot != null && a.channel != null) send(stampProto({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: 0 }));
       };
       tb.addEventListener("pointerdown", start);
       tb.addEventListener("pointerup", stop);

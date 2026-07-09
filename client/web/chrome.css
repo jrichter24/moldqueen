@@ -193,3 +193,25 @@ table.padmap .padlive { text-align: center; color: #ffd56b; font-variant-numeric
   color: #eaf2ff; background: rgba(20,26,36,.96); border: 1px solid #3a4456;
   box-shadow: 0 10px 30px rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
 #mqToast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---- MK6 build 4a: protocol picker — "which box?" (connect wizard step 1) ---- */
+.protopick { margin: .2rem 0 .6rem; }
+.protohd { font-size: .78rem; color: #8e9cb2; margin: 0 0 .4rem; text-transform: uppercase; letter-spacing: .05em; }
+.protorow { display: flex; gap: .6rem; justify-content: center; }
+.protobtn { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: .35rem;
+  padding: .55rem .5rem; cursor: pointer; color: #e8eef6; background: #23272f;
+  border: 1px solid #3a414e; border-radius: .5rem; font: inherit; }
+.protobtn:hover { border-color: #4f93e0; }
+.protobtn.on { background: #1d3a4d; border-color: #2f6f93; box-shadow: 0 0 0 2px rgba(60,140,200,.25); }
+/* labeled PLACEHOLDER box slot — swap the caption for a real photo, e.g. <img src="/assets/boxes/mk4.png"> */
+.protobtn .boxph { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 4 / 3;
+  max-height: 5.5rem; border: 1px dashed #4a5364; border-radius: .4rem; background: #171b22; }
+.protobtn .boxcap { font-size: .78rem; color: #9fb0c6; }
+.protobtn .protolab { font-weight: 700; font-size: .95rem; letter-spacing: .03em; }
+/* MK6 connect-wizard step media (steps 1/2/3): labeled placeholder shown UNTIL a real
+   /assets/boxes/mk6-step{1,2,3}.gif is dropped in — the <img> covers the label when it loads; on 404
+   the img is removed (onerror) revealing the label. It never falls back to an MK4 gif. IMAGE-ONLY. */
+.mk6media .mk6phlabel { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: .8rem; font-size: .88rem; font-weight: 600; color: #9fb0c6;
+  background: #171b22; border: 1px dashed #4a5364; border-radius: inherit; }
+.mk6media .mk6img { position: absolute; inset: 0; z-index: 1; }
