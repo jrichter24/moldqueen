@@ -73,6 +73,18 @@ def test_protostate_mk6_device1():
     assert ps.motion_raw() == "62ae188080018080809d"
 
 
+def test_protostate_mk6_set_accepts_channels_4_and_5():
+    # the `set` channel range is now 0-5 (api.py widened): MK6 c4/c5 reachable via set{channel:4/5}.
+    ps = ProtoState(make_protocol("mk6", 0), device=0)
+    ps.phase = "ready"
+    ps.set(0, 4, 7, now=1.0)                      # c4 -> offset 7
+    assert ps.state[4] == 0xFF
+    assert ps.motion_raw() == "61ae1880808080ff809e"
+    ps.set(0, 5, -7, now=1.0)                     # c5 -> offset 8
+    assert ps.state[5] == 0x01
+    assert ps.motion_raw() == "61ae1880808080ff019e"
+
+
 def test_protostate_reap_neutralizes_mk6():
     ps = ProtoState(make_protocol("mk6", 0)); ps.phase = "ready"
     ps.set(0, 0, 7, now=0.0)

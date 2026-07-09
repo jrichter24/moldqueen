@@ -35,7 +35,6 @@
       "category": "generic",
       "active": true,
       "protocols": ["mk4", "mk6"],
-      "protocolsSoon": ["mk6"],
       "functions": ["lstick_v", "lstick_h", "rstick_v", "rstick_h", "laxis", "raxis", "dpad_v", "dpad_h", "btn_13", "btn_24", "face_v", "face_h"],
       "files": { "html": "generic_brick.html", "js": "generic.js", "css": "generic.css" }
     },
@@ -49,7 +48,6 @@
       "category": "generic",
       "active": true,
       "protocols": ["mk4", "mk6"],
-      "protocolsSoon": ["mk6"],
       "functions": ["lstick_v", "lstick_h", "rstick_v", "rstick_h", "laxis", "raxis", "dpad_v", "dpad_h", "btn_13", "btn_24", "face_v", "face_h"],
       "files": { "html": "generic_12axis.html", "js": "generic.js", "css": "generic.css" }
     },

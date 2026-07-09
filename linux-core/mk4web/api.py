@@ -195,7 +195,10 @@ class ProtoState:
 
     def set(self, slot, channel, value, now):
         p = self.protocol
-        if isinstance(slot, int) and isinstance(channel, int) and 0 <= slot <= 2 and 0 <= channel <= 3:
+        # channel 0-5: MK6 has 6 byte-channels (c0..c5); MK4 clients only ever send 0-3, and the
+        # `ci < p.n_channels` guard below bounds each protocol (MK6 ci<6, MK4 ci<12), so widening
+        # the accepted range is safe for MK4 (unchanged in practice) and unlocks MK6 c4/c5.
+        if isinstance(slot, int) and isinstance(channel, int) and 0 <= slot <= 2 and 0 <= channel <= 5:
             ci = p.channel_index(slot, channel)
             if 0 <= ci < p.n_channels:
                 self.state[ci] = p.value_to_wire(value)

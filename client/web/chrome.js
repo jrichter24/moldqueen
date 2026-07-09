@@ -53,6 +53,11 @@ window.MK4Chrome = (function () {
     // so an mk6 function on slot 1 drives MK6 device 1. `set` messages carry the per-function slot;
     // `setup` (connect/ready) has no slot -> `undefined | 0` = device 0. Mutates + returns o.
     function stampProto(o) { if (getProtocol() === "mk6") { o.protocol = "mk6"; o.device = o.slot | 0; } return o; }
+    // Per-protocol CHANNEL range: MK6 = 6 byte-channels c0..c5 (0-5); MK4 = 4 nibble-channels (0-3).
+    // Keyed off the session protocol (no per-function machinery). Drives the editor <select>s + the
+    // validator so a user can MAP a function to c4/c5 on a modded MK6 box; DEFAULT maps are unchanged.
+    function maxChannel() { return getProtocol() === "mk6" ? 5 : 3; }
+    function chanRange() { return Array.from({ length: maxChannel() + 1 }, (_, n) => n); }
 
     // ---- channel map helpers (client-authoritative active map) ----
     function validMap(mp) {
@@ -63,7 +68,7 @@ window.MK4Chrome = (function () {
         if (!a) return false;
         if (a.slot == null && a.channel == null) continue;   // UNMAPPED (generic) — allowed; excavator never has nulls
         if (!Number.isInteger(a.slot) || a.slot < 0 || a.slot > 2) return false;
-        if (!Number.isInteger(a.channel) || a.channel < 0 || a.channel > 3) return false;
+        if (!Number.isInteger(a.channel) || a.channel < 0 || a.channel > maxChannel()) return false;   // MK6: 0-5, MK4: 0-3
         const key = a.slot + "/" + a.channel;
         if (seen[key]) return false; seen[key] = f;
       }
@@ -555,7 +560,7 @@ window.MK4Chrome = (function () {
         const rows = Object.keys(assignRows).map(m => {
           const a = assignRows[m];
           const slots = [0, 1, 2].map(n => `<option value="${n}"${a.slot === n ? " selected" : ""}>${n}</option>`).join("");
-          const chans = [0, 1, 2, 3].map(n => `<option value="${n}"${a.channel === n ? " selected" : ""}>${n}</option>`).join("");
+          const chans = chanRange().map(n => `<option value="${n}"${a.channel === n ? " selected" : ""}>${n}</option>`).join("");   // MK6: 0-5, MK4: 0-3
           return `<tr data-m="${m}"><td class="fn">${esc(AA.motorLabel ? AA.motorLabel(m) : m)}</td>
             <td><select class="ar-slot">${slots}</select></td><td><select class="ar-ch">${chans}</select></td>
             <td style="text-align:center"><input type="checkbox" class="ar-inv"${a.invert ? " checked" : ""}></td></tr>`;
@@ -640,7 +645,7 @@ window.MK4Chrome = (function () {
         const opt = (n, sel) => `<option value="${n}"${n === sel ? " selected" : ""}>${n}</option>`;
         const blank = sel => `<option value=""${sel == null ? " selected" : ""}>—</option>`;
         const slots = blank(a.slot) + [0, 1, 2].map(n => opt(n, a.slot)).join("");
-        const chans = blank(a.channel) + [0, 1, 2, 3].map(n => opt(n, a.channel)).join("");
+        const chans = blank(a.channel) + chanRange().map(n => opt(n, a.channel)).join("");   // MK6: 0-5, MK4: 0-3
         return `<tr data-fn="${fn}">
           <td class="fn">${esc(funcLabel(fn))}<br><span class="muted">${fn}</span></td>
           <td><select class="e-slot">${slots}</select></td>
