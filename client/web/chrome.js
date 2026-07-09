@@ -390,9 +390,16 @@ window.MK4Chrome = (function () {
     }
 
     // ---- connect lifecycle wizard (cold-start IDLE→CONNECTING→READY) ----
-    let wizardStep = 0;
+    // wizardStep 0 = box-SELECTION pre-screen (which box do you have?); 1-4 = the pairing steps.
+    let wizardStep = 0, boxPicked = false;
+    // REOPEN RULE: a FRESH open (session IDLE, not yet connecting) -> screen 0 (box select); a reopen
+    // while already CONNECTING -> pairing step 3 (skip screen 0 — the box is already chosen); READY ->
+    // step 4. So screen 0 shows ONLY for a fresh connect. On a fresh open the must-pick gate is
+    // pre-satisfied iff a box was chosen before (PROTO_KEY present) — a first-ever open must pick.
     function openWizard() {
-      wizardStep = (lifecycle === "READY") ? 4 : (lifecycle === "CONNECTING") ? 3 : 1;
+      if (lifecycle === "READY") wizardStep = 4;
+      else if (lifecycle === "CONNECTING") wizardStep = 3;
+      else { wizardStep = 0; boxPicked = (localStorage.getItem(PROTO_KEY) != null); }
       buildWizard(); $("wizard").classList.remove("hidden");
     }
     function closeWizard() { wizardStep = 0; $("wizard").classList.add("hidden"); }
@@ -419,54 +426,79 @@ window.MK4Chrome = (function () {
       if (lifecycle === "CONNECTING") send(stampProto({ cmd: "setup", action: "ready" }));
       else send(stampProto({ cmd: "setup", action: "connect" }));
     }
-    // ---- MK6 build 4a: protocol picker ("which box do you have?"), rendered into wizard step 1 ----
-    // Two labeled box buttons (MK4 / MK6); the choice sets the session protocol and persists
-    // immediately (localStorage), read by stampProto when the wizard fires connect/ready + every set.
-    // Step 1 is otherwise identical for both protocols. Real box photos would live in client/assets/
-    // (e.g. /assets/boxes/mk4.png) and replace the .boxph placeholder content.
+    // ---- SCREEN 0: box selection ("which box do you have?"), rendered on wizardStep 0 (fresh connect) ----
+    // Each choice shows the box's PREVIEW PHOTO (the box itself, NOT a flashing gif); a missing preview
+    // onerror-falls-back to the label (never a broken image). The pick sets the session protocol
+    // (setProtocol/PROTO_KEY), read by stampProto on connect/ready + every set. This box choice is the
+    // ONLY protocol touchpoint. Real box photos are on disk at /assets/mk6/mk{4,6}_preview.png.
+    const BOX_PREVIEW = { mk4: "/assets/mk6/mk4_preview.png", mk6: "/assets/mk6/mk6_preview.png" };
     function protoPickerHtml(t, proto) {
       const m = t.mk6 || {};
-      const box = (id, cap) => `<button type="button" class="protobtn${proto === id ? " on" : ""}" data-proto="${id}" aria-pressed="${proto === id}">
-          <span class="boxph"><span class="boxcap">${cap}</span></span><span class="protolab">${id.toUpperCase()}</span></button>`;
+      const box = (id, cap) => `<button type="button" class="protobtn boxsel${proto === id ? " on" : ""}" data-proto="${id}" aria-pressed="${proto === id}">
+          <span class="boxph"><img class="boxprev" src="${BOX_PREVIEW[id]}" alt=""><span class="boxcap">${cap}</span></span><span class="protolab">${id.toUpperCase()}</span></button>`;
       return `<div class="protopick" id="protoPick">
-          <div class="protohd">${m.protocolLabel || "Protocol"}</div>
           <div class="protorow">${box("mk4", m.mk4Box || "MK4 box")}${box("mk6", m.mk6Box || "MK6 box")}</div></div>`;
     }
-    function wireProtoPicker() {
+    function wireProtoPicker(onPick) {
       const pp = $("protoPick"); if (!pp) return;
-      pp.querySelectorAll(".protobtn").forEach(b => { b.onclick = () => { setProtocol(b.dataset.proto); buildWizard(); }; });
+      pp.querySelectorAll(".protobtn").forEach(b => {
+        b.onclick = () => { setProtocol(b.dataset.proto); if (onPick) onPick(); };
+        const im = b.querySelector(".boxprev"); if (im) im.onerror = () => im.remove();   // missing preview -> label, not a broken image
+      });
     }
     function buildWizard() {
-      const t = tr(), s = wizardStep, w = t.wiz["w" + s];
+      const t = tr(), s = wizardStep;
+      if (s === 0) return buildBoxSelect(t);   // screen 0 = box selection (pre-pairing; fresh connect only)
+      const m6 = t.mk6 || {}, isMk6 = getProtocol() === "mk6";
+      // MK6 step 1 gets its OWN "ready to connect" copy (protocol-conditional at step 1 ONLY); steps
+      // 2/3/4 share the existing copy. No other text divergence — the box choice (screen 0) is the only
+      // protocol touchpoint.
+      const w = (s === 1 && isMk6) ? { t: m6.mk6Step1T || t.wiz.w1.t, b: m6.mk6Step1B || t.wiz.w1.b } : t.wiz["w" + s];
       let btns;
       if (s === 1) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wAlready">${t.wiz.already}</button><button class="apply" id="wNext">${t.wiz.next}</button>`;
       else if (s === 2) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wBack">${t.wiz.back}</button><button class="apply" id="wNext">${t.wiz.next}</button>`;
       else if (s === 3) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wBack">${t.wiz.back}</button><button class="apply" id="wReady">${t.wiz.readyBtn}</button>`;
       else btns = `<button class="apply" id="wDone">${t.wiz.startDriving}</button>`;
       // Step media is IMAGE-ONLY divergence: MK4 keeps today's per-step flash gifs; MK6 shows its OWN
-      // labeled placeholder image per step (steps 1/2/3). The COPY (w) is identical for both protocols —
-      // no MK6 text/prompt/field. A real photo dropped at /assets/boxes/mk6-step{1,2,3}.gif appears with no
-      // code change; if absent the <img> onerror removes it, revealing the labeled placeholder — NEVER the
-      // MK4 gif. Step 4 has no media (gif undefined). The step-1 box choice stays the only protocol touchpoint.
+      // per-step pairing gif from a MAP (real filenames differ per step — a single interpolation can't
+      // reproduce them). onerror removes the <img>, revealing the labeled placeholder — 404 -> the label,
+      // NEVER the MK4 gif. Step 4 has no media (both maps undefined).
       const gif = { 1: "long_flash", 2: "short_flash", 3: "double_short_flash" }[s];
-      const media = (getProtocol() === "mk6" && gif)
-        ? `<div class="media mk6media"><img class="mk6img" id="mk6StepImg" src="/assets/boxes/mk6-step${s}.gif" alt=""><span class="mk6phlabel">${(t.mk6 || {}).stepImgPlaceholder || "MK6 box — image coming soon"}</span></div>`
+      const mk6gif = { 1: "step_1_mk6_ready_to_connect", 2: "step_2_mk6_short_flash", 3: "step_3_mk6_double_short_flash" }[s];
+      const media = (isMk6 && mk6gif)
+        ? `<div class="media mk6media"><img class="mk6img" id="mk6StepImg" src="/assets/mk6/${mk6gif}.gif" alt=""><span class="mk6phlabel">${m6.stepImgPlaceholder || "MK6 box — image coming soon"}</span></div>`
         : (gif ? `<div class="media"><img src="/assets/${gif}.gif" alt=""></div>` : "");
       const wt = config.wizardText ? config.wizardText(t) : null;
       const wizTitle = (wt && wt.wizTitle) || t.wiz.title;
-      const protoPick = s === 1 ? protoPickerHtml(t, getProtocol()) : "";   // "which box?" — pick MK4/MK6 BEFORE connect
       $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
         <h2>${wizTitle}</h2>
         <div class="wsteps">${[1, 2, 3, 4].map(n => `<span class="wdot${n === s ? " on" : n < s ? " done" : ""}"></span>`).join("")}</div>
         ${media}<h3 class="wt">${w.t}</h3><p class="wbody">${w.b}</p>
-        ${protoPick}
         ${s === 3 && config.zeroBoxHint ? '<p class="gx-zero">' + config.zeroBoxHint(t) + "</p>" : ""}
         <div class="actions wactions">${btns}</div></div>`;
       const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
       on("wCancel", wizardCancel); on("wBack", wizardBack); on("wNext", wizardNext);
       on("wReady", () => send(stampProto({ cmd: "setup", action: "ready" }))); on("wAlready", skipToReady); on("wDone", closeWizard);
-      if (s === 1) wireProtoPicker();
       const mimg = $("mk6StepImg"); if (mimg) mimg.onerror = () => mimg.remove();   // MK6 step 1/2/3: 404 -> reveal labeled placeholder (never the MK4 gif)
+    }
+    // Screen 0 — box selection. MUST-PICK GATE: "Next" (wPick) is disabled until a box is chosen (removes
+    // the silent-MK4 default). Picking sets the protocol + highlights; Next then advances to pairing step 1.
+    function buildBoxSelect(t) {
+      const m6 = t.mk6 || {};
+      const picked = boxPicked ? getProtocol() : null;   // highlight only an ACTIVE pick (no silent default)
+      $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
+        <h2>${m6.chooseTitle || t.wiz.title}</h2>
+        <div class="wsteps">${[1, 2, 3, 4].map(() => `<span class="wdot"></span>`).join("")}</div>
+        ${m6.chooseBody ? `<p class="wbody">${m6.chooseBody}</p>` : ""}
+        ${protoPickerHtml(t, picked)}
+        <div class="actions wactions">
+          <button id="wCancel">${t.wiz.cancel}</button>
+          <button class="apply" id="wPick"${boxPicked ? "" : " disabled"}>${t.wiz.next}</button>
+        </div></div>`;
+      const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
+      on("wCancel", wizardCancel);
+      on("wPick", () => { if (boxPicked) { wizardStep = 1; buildWizard(); } });
+      wireProtoPicker(() => { boxPicked = true; buildBoxSelect(t); });   // pick -> set protocol + re-render (highlight + enable Next)
     }
 
     // ---- startup overlay: reach the API, then connect the toy (skippable) ----

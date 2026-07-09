@@ -59,8 +59,12 @@
              w2: { t: "Step 2 — Connecting…", b: "Sending the connect signal — both hubs should now <b>fast-flash</b>." },
              w3: { t: "Step 3 — Assign slots", b: "Press <b>ONE</b> hub's button until it shows <b>two fast flashes</b> (slot&nbsp;1). Leave the other on one flash (slot&nbsp;0)." },
              w4: { t: "Ready ✓", b: "Connected — controls unlocked. You can start driving." } },
-      // ---- MK6 build 4a: connect-flow protocol picker ("which box do you have?") ----
-      mk6: { protocolLabel: "Protocol", mk4Box: "MK4 box", mk6Box: "MK6 box", stepImgPlaceholder: "MK6 box — image coming soon" },
+      // ---- MK6 build 4a: connect-flow box selection (screen 0) + MK6 step-1 copy ----
+      mk6: { protocolLabel: "Protocol", mk4Box: "MK4 box", mk6Box: "MK6 box", stepImgPlaceholder: "MK6 box — image coming soon",
+             chooseTitle: "Which box do you have?",
+             chooseBody: "Pick your controller box to pair it — this sets the radio protocol.",
+             mk6Step1T: "Step 1 — Ready to connect",
+             mk6Step1B: "Power on the MK6 box and set it <b>ready to connect</b> (pairing mode), then press <b>Next</b>." },
       // ---- chooser (landing) ----
       chooseLayout: "Choose your layout", badgeGeneric: "Generic", badgeReal: "Model", jumpLabel: "Jump to layout", protocolSoon: "Coming soon",
       ctaOpen: "Open ▸", ctaContribute: "Contribute ▸",
@@ -176,8 +180,12 @@
              w2: { t: "Schritt 2 — Verbinden…", b: "Verbindungssignal wird gesendet — beide Hubs sollten jetzt <b>schnell blinken</b>." },
              w3: { t: "Schritt 3 — Slots zuweisen", b: "<b>EINEN</b> Hub auf <b>zwei schnelle Blinks</b> stellen (Slot&nbsp;1). Den anderen auf einem Blink lassen (Slot&nbsp;0)." },
              w4: { t: "Bereit ✓", b: "Verbunden — Steuerung entsperrt. Du kannst losfahren." } },
-      // ---- MK6 build 4a: Protokoll-Auswahl im Verbindungsablauf („Welche Box hast du?“) ----
-      mk6: { protocolLabel: "Protokoll", mk4Box: "MK4-Box", mk6Box: "MK6-Box", stepImgPlaceholder: "MK6-Box — Bild folgt" },
+      // ---- MK6 build 4a: Box-Auswahl im Verbindungsablauf (Screen 0) + MK6-Schritt-1-Text ----
+      mk6: { protocolLabel: "Protokoll", mk4Box: "MK4-Box", mk6Box: "MK6-Box", stepImgPlaceholder: "MK6-Box — Bild folgt",
+             chooseTitle: "Welche Box hast du?",
+             chooseBody: "Wähle deine Controller-Box zum Koppeln — das legt das Funkprotokoll fest.",
+             mk6Step1T: "Schritt 1 — Bereit zum Verbinden",
+             mk6Step1B: "Die MK6-Box einschalten und <b>bereit zum Verbinden</b> schalten (Kopplungsmodus), dann <b>Weiter</b> drücken." },
       chooseLayout: "Wähle dein Layout", badgeGeneric: "Generisch", badgeReal: "Modell", jumpLabel: "Zu Layout springen", protocolSoon: "Bald verfügbar",
       ctaOpen: "Öffnen ▸", ctaContribute: "Mitmachen ▸",
       actAbout: "Über", actFullscreen: "⛶ Vollbild",
