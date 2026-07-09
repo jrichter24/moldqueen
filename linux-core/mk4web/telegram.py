@@ -96,7 +96,7 @@ class MK6Protocol(Protocol):
     (reference/mk6_protocol.md). raw = [0x61+device] ae 18 <6 channel bytes> [0xFF-header];
     byte-per-channel, 0x80 = neutral. device 0/1/2 (button-selected, like MK4 slots)."""
     name = "mk6"
-    n_channels = 6                     # c0..c3 drivable + offsets 7-8 padding (app holds them 0x80)
+    n_channels = 6                     # 6 drivable byte-channels c0..c5 (c0..c3 -> offsets 3-6, c4/c5 -> offsets 7-8)
     neutral_unit = 0x80
     # The MK6 CONNECT/BIND telegram is the "base" frame `6dae188080808092` (our `ae 18` analog of
     # J0EK3R's device-0 connect `6d7ba78080808092`): broadcast it while the box is in pairing mode
@@ -126,13 +126,20 @@ class MK6Protocol(Protocol):
     def build_motion_raw(self, state):
         if len(state) != self.n_channels:
             raise ValueError("MK6 build_motion_raw needs %d channel bytes" % self.n_channels)
-        body = bytes(b & 0xFF for b in state)          # offsets 3-8 (c0..c3 + 2 padding at 0x80)
+        # ALL 6 byte-channels are written: state = [c0,c1,c2,c3,c4,c5] -> offsets 3-8.
+        #   c0..c3 -> offsets 3-6 (unchanged), c4 -> offset 7, c5 -> offset 8.
+        # c4/c5 are the M-0019 6.0's 5th/6th channels (J0EK3R's 6-channel frame); our own captures
+        # only ever drove c0..c3, so offsets 7-8 read 0x80 (neutral) there.
+        body = bytes(b & 0xFF for b in state)
         return "%02xae18%s%02x" % (self.header, body.hex(), self.trailer)
 
     def channel_index(self, slot, channel):
-        # single device per session THIS STEP: channel 0-3 -> c0..c3; slot picks the device,
-        # which is fixed at setup (multi-device = multiple headers = step 5). So slot is ignored
-        # here and the state index is just the channel.
+        # MK6 addresses by DEVICE-in-header (the `device` field selects the box / ProtoState), so the
+        # `channel` field selects the byte DIRECTLY: channel 0..5 -> c0..c5 (state index 0..5).
+        # `slot` is NOT a channel selector for MK6 (the client sends device=slot: slot picks the box,
+        # channel picks the byte). NOTE: the WS `set` API still validates channel 0-3 (api.py) and the
+        # client's map uses channel 0-3, so c4/c5 aren't reachable END-TO-END until that range (+ the
+        # client) is widened — telegram.py is ready; the api/client cap is the remaining gate.
         return channel
 
 

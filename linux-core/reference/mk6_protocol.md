@@ -25,15 +25,19 @@ Corroborated by J0EK3R/mkconnect-python (MIT). **Canonical doc:
 
 ## MK6 motion telegram (raw, pre-crypt) — MEASURED
 ```
-[header] ae 18 [c0] [c1] [c2] [c3] 80 80 [trailer]        (10 raw bytes)
+[header] ae 18 [c0] [c1] [c2] [c3] [c4] [c5] [trailer]     (10 raw bytes)
 ```
 - **header** = `0x61 + device` → `0x61` / `0x62` / `0x63` = device **0 / 1 / 2**, selected by the
   hub button (analogous to MK4 slots).
 - **trailer** = `0xFF − header` — **computed, not constant**: dev0 `0x61`→`0x9e`, dev1 `0x62`→`0x9d`
   (verified for every frame, independent of the channel bytes).
-- **c0..c3** = **BYTE-per-channel (8-bit): `0x80` = neutral**, →`0xFF` one way, →`0x00/0x01` the
-  other, proportional in between. (MK4 is nibble / 4-bit / `0x8`-center.)
-- **offsets 7–8** = `0x80` padding (constant across all captures).
+- **c0..c5** = **6 BYTE-per-channel (8-bit): `0x80` = neutral**, →`0xFF` one way, →`0x00/0x01` the
+  other, proportional in between. (MK4 is nibble / 4-bit / `0x8`-center.) `c0..c3` -> offsets 3-6,
+  **`c4` -> offset 7, `c5` -> offset 8**.
+- **offsets 7–8 = c4, c5** — the 5th/6th channels. The **M-0019 6.0 module is 6-channel** and
+  J0EK3R's frame drives all six. Our OWN captures/write-proof only ever exercised **c0..c3**, so
+  offsets 7-8 read `0x80` (neutral) there; **c4/c5 are per the J0EK3R 6-channel spec, not yet
+  individually write-proven by us** (Jens verifies live).
 
 ## Connect / handshake frames observed
 - **MK6 device-0 CONNECT/BIND telegram = the base frame `6d ae 18 80 80 80 80 92`.** Broadcast it

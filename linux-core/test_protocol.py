@@ -49,7 +49,7 @@ def test_mk4_build_motion_raw_is_motion_raw():
 
 
 # ───────────────────────── MK6Protocol — byte-match vs proven frames ─────────────────────────
-# state = the 6 channel BYTES (c0..c3 + 2 padding). Neutral = all 0x80.
+# state = the 6 channel BYTES c0..c5 (c0..c3 -> offsets 3-6, c4/c5 -> offsets 7-8). Neutral = all 0x80.
 def _mk6_state(c0=0x80, c1=0x80, c2=0x80, c3=0x80, c4=0x80, c5=0x80):
     return [c0, c1, c2, c3, c4, c5]
 
@@ -83,6 +83,51 @@ def test_mk6_device1_frame_matches_capture():
     # captured during the device-switch: dev1 (header 0x62), c2=0x01, trailer 0x9d
     p = MK6Protocol(device=1)
     assert p.build_motion_raw(_mk6_state(c2=0x01)) == "62ae188080018080809d"
+
+
+# ───────────────────────── MK6 — 6 channels (c4/c5 at offsets 7-8) ─────────────────────────
+def test_mk6_c4_c5_map_to_offsets_7_and_8():
+    p = MK6Protocol()   # device 0, trailer 0x9e
+    # c4 -> offset 7 (the 5th body byte); c0..c3 + c5 stay neutral
+    assert p.build_motion_raw(_mk6_state(c4=0xFF)) == "61ae1880808080ff809e"
+    assert p.build_motion_raw(_mk6_state(c4=0x40)) == "61ae188080808040809e"
+    # c5 -> offset 8 (the 6th/last body byte)
+    assert p.build_motion_raw(_mk6_state(c5=0xFF)) == "61ae188080808080ff9e"
+    assert p.build_motion_raw(_mk6_state(c5=0x01)) == "61ae188080808080019e"
+    # c4 AND c5 together (distinct offsets, not swapped/merged)
+    assert p.build_motion_raw(_mk6_state(c4=0x40, c5=0xC0)) == "61ae188080808040c09e"
+
+
+def test_mk6_all_six_channels_driven():
+    p = MK6Protocol()
+    # every channel a distinct value -> proves all 6 offsets are independently written
+    assert p.build_motion_raw(_mk6_state(c0=0x01, c1=0x40, c2=0xC0, c3=0xFF, c4=0x40, c5=0xC0)) \
+        == "61ae180140c0ff40c09e"
+
+
+def test_mk6_c4_c5_on_device1():
+    p = MK6Protocol(device=1)   # header 0x62, trailer 0x9d
+    assert p.build_motion_raw(_mk6_state(c4=0xFF)) == "62ae1880808080ff809d"
+    assert p.build_motion_raw(_mk6_state(c5=0x01)) == "62ae188080808080019d"
+
+
+def test_mk6_channel_index_maps_channel_directly_0_to_5():
+    p = MK6Protocol()
+    # `channel` selects the byte directly: channel N -> state index N (c0..c5); slot is ignored.
+    for ch in range(6):
+        assert p.channel_index(0, ch) == ch
+        assert p.channel_index(2, ch) == ch          # slot does not change the mapping for MK6
+
+
+def test_mk6_c0_to_c3_frames_unchanged_regression():
+    # c0..c3 frames are BYTE-IDENTICAL to the pre-6-channel behavior (c4/c5 held neutral) — the
+    # captured/driven frames still hold, so widening to 6 did not move c0..c3.
+    p = MK6Protocol()
+    assert p.build_motion_raw(_mk6_state()) == "61ae188080808080809e"           # neutral
+    assert p.build_motion_raw(_mk6_state(c0=0xC0)) == "61ae18c080808080809e"     # hardware-driven c0
+    assert p.build_motion_raw(_mk6_state(c0=0xFF)) == "61ae18ff80808080809e"
+    assert p.build_motion_raw(_mk6_state(c0=0x01)) == "61ae180180808080809e"
+    assert p.build_motion_raw(_mk6_state(c2=0x01)) == "61ae188080018080809e"
 
 
 def test_mk6_build_motion_raw_bad_length():
