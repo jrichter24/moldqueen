@@ -39,25 +39,61 @@ window.MK4Chrome = (function () {
     let grid = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
     const tr = () => MK4I18N.dict(lang);
 
-    // ---- MK6 build 4a: single-box protocol selection ("which box do you have?") ----
-    // The SMART CLIENT declares which radio protocol the thin-transport server binds/drives: MK4
-    // (default) or MK6, chosen ONCE in the connect wizard (the "MK4 box / MK6 box" picker — the only
-    // protocol UI anywhere). The server DEFAULTS to MK4, so the MK4 path stays byte-for-byte today's
-    // behavior (nothing stamped). MK6 is single-device (device 0, no UI) this step; mixed/multi-box
-    // is a later step.
+    // ---- MIXED MODE: protocol is PER-SLOT (per physical box) ----
+    // A function inherits its protocol from the box on its slot, so ONE layout can drive an MK4 box on
+    // one slot and an MK6 box on another at once (the server already does per-command mixed). slotProto
+    // = { "<slot>": "mk4"|"mk6" }, PERSISTED per-layout (same mechanism/key shape as the active channel
+    // map, mk4_active_map_<id>). This REPLACES a single session protocol as the DRIVING source: each
+    // function-bearing `set` stamps ITS slot's protocol + device. MK4 slots are left untouched (server
+    // default mk4/device0) -> byte-identical MK4 telegrams. PROTO_KEY is kept only as the legacy
+    // migration source (existing single-mk6 users had a session pick, no slotProto yet).
     const PROTO_KEY = "mk4_protocol";
-    function getProtocol() { return localStorage.getItem(PROTO_KEY) === "mk6" ? "mk6" : "mk4"; }
-    function setProtocol(p) { localStorage.setItem(PROTO_KEY, p === "mk6" ? "mk6" : "mk4"); }
-    // Stamp an outbound setup/set message with the selected protocol. MK4 = server default -> leave
-    // the message UNCHANGED (back-compat); MK6 -> add {protocol:"mk6", device:<the function's slot>}
-    // so an mk6 function on slot 1 drives MK6 device 1. `set` messages carry the per-function slot;
-    // `setup` (connect/ready) has no slot -> `undefined | 0` = device 0. Mutates + returns o.
-    function stampProto(o) { if (getProtocol() === "mk6") { o.protocol = "mk6"; o.device = o.slot | 0; } return o; }
-    // Per-protocol CHANNEL range: MK6 = 6 byte-channels c0..c5 (0-5); MK4 = 4 nibble-channels (0-3).
-    // Keyed off the session protocol (no per-function machinery). Drives the editor <select>s + the
-    // validator so a user can MAP a function to c4/c5 on a modded MK6 box; DEFAULT maps are unchanged.
-    function maxChannel() { return getProtocol() === "mk6" ? 5 : 3; }
-    function chanRange() { return Array.from({ length: maxChannel() + 1 }, (_, n) => n); }
+    const SLOT_PROTO_KEY = "mk4_slot_proto_" + LAYOUT_ID;   // per-layout, mirrors mk4_active_map_<id>
+    function getProtocol() { return localStorage.getItem(PROTO_KEY) === "mk6" ? "mk6" : "mk4"; }   // legacy default only
+    function getSlotProto() { try { const o = JSON.parse(localStorage.getItem(SLOT_PROTO_KEY) || "{}"); return (o && typeof o === "object") ? o : {}; } catch { return {}; } }
+    function setSlotProto(o) { localStorage.setItem(SLOT_PROTO_KEY, JSON.stringify(o || {})); }
+    // "none" | "mk6" | "mk4": EXPLICIT "none" (unused box, mixed-only) -> "none"; "mk6" -> "mk6";
+    // ABSENT / anything-else -> "mk4" (default, back-compat). "none" is DISTINCT from absent-default-mk4.
+    function protoForSlot(slot) { const p = getSlotProto()[String(slot)]; return p === "mk6" ? "mk6" : p === "none" ? "none" : "mk4"; }
+    function usedSlots(mp) {   // distinct integer slots the layout's functions occupy (slot != null)
+      const m = mp || activeMap, set = new Set();
+      if (m && m.functions) for (const f of FN) { const a = m.functions[f]; if (a && a.slot != null) set.add(a.slot | 0); }
+      return [...set].sort((x, y) => x - y);
+    }
+    const ALL_SLOTS = [0, 1, 2];
+    // Slots that have a BOX (to connect + drive): every slot the user EXPLICITLY assigned mk4/mk6 in the
+    // mixed picker, PLUS any function-occupied slot NOT marked None (back-compat: primary/all-mk4 layouts
+    // have functions but may store no per-slot pick). None + empty slots are excluded. The connect
+    // enumeration is driven by ASSIGNMENT (this), NOT by usedSlots(): a box assigned to a slot that has no
+    // functions yet still connects — fixes the "only one box pairs when a box sits on a function-less slot" bug.
+    function boxSlots() {
+      const sp = getSlotProto(), set = new Set();
+      ALL_SLOTS.forEach(s => { const p = sp[String(s)]; if (p === "mk4" || p === "mk6") set.add(s); });
+      usedSlots().forEach(s => { if (sp[String(s)] !== "none") set.add(s); });
+      return [...set].sort((x, y) => x - y);
+    }
+    function allUsedProto() {   // protocol of the assigned boxes: "mk4" | "mk6" | "mixed"
+      const ps = [...new Set(boxSlots().map(protoForSlot))];
+      return ps.length <= 1 ? (ps[0] || "mk4") : "mixed";
+    }
+    function hasChosen() { const sp = getSlotProto(); return usedSlots().every(s => { const p = sp[String(s)]; return p === "mk4" || p === "mk6" || p === "none"; }); }
+    // Back-compat migration: fill any UNSET used-slot from the legacy session pick — but ONLY for a legacy
+    // user (PROTO_KEY present). A fresh user's slotProto stays empty so screen-0 must-pick still fires.
+    function ensureSlotProto(mp) {
+      if (localStorage.getItem(PROTO_KEY) == null) return;
+      const sp = getSlotProto(), dflt = getProtocol(); let changed = false;
+      for (const s of usedSlots(mp)) { const k = String(s); if (sp[k] !== "mk4" && sp[k] !== "mk6") { sp[k] = dflt; changed = true; } }
+      if (changed) setSlotProto(sp);
+    }
+    // Stamp a function-bearing `set` with ITS slot's protocol. o.slot = the resolved, deviceSwap-adjusted
+    // slot that ALSO becomes the mk6 device, so protocol+device stay consistent for that physical box.
+    // MK4 slot -> o UNCHANGED (server default mk4/device0). `setup` connect/ready are enumerated
+    // separately (NOT stamped here). Mutates + returns o.
+    function stampProto(o) { if (protoForSlot(o.slot) === "mk6") { o.protocol = "mk6"; o.device = o.slot | 0; } return o; }
+    // Per-PROTOCOL channel range: MK6 = 6 byte-channels (0-5); MK4 = 4 nibble-channels (0-3). Applied
+    // PER-FUNCTION off the function's slot protocol (an mk6-slot fn may map c4/c5; mk4 stays capped at 3).
+    function maxChannelFor(proto) { return proto === "mk6" ? 5 : 3; }
+    function chanRangeFor(proto) { return Array.from({ length: maxChannelFor(proto) + 1 }, (_, n) => n); }
 
     // ---- channel map helpers (client-authoritative active map) ----
     function validMap(mp) {
@@ -68,8 +104,10 @@ window.MK4Chrome = (function () {
         if (!a) return false;
         if (a.slot == null && a.channel == null) continue;   // UNMAPPED (generic) — allowed; excavator never has nulls
         if (!Number.isInteger(a.slot) || a.slot < 0 || a.slot > 2) return false;
-        if (!Number.isInteger(a.channel) || a.channel < 0 || a.channel > maxChannel()) return false;   // MK6: 0-5, MK4: 0-3
-        const key = a.slot + "/" + a.channel;
+        const proto = protoForSlot(a.slot);   // per-slot protocol -> per-function channel range
+        if (proto === "none") continue;   // None slot (unused box): function is inert -> accept, skip range + dedup (re-checked if slot later set to mk4/mk6)
+        if (!Number.isInteger(a.channel) || a.channel < 0 || a.channel > maxChannelFor(proto)) return false;   // mk6 slot: 0-5, mk4: 0-3
+        const key = proto + "/" + a.slot + "/" + a.channel;   // mk4 box + mk6 box on the same slot/channel = DIFFERENT boxes, allowed
         if (seen[key]) return false; seen[key] = f;
       }
       return true;
@@ -102,7 +140,11 @@ window.MK4Chrome = (function () {
       return m;
     }
     function loadStoredMap() {
-      try { const m = JSON.parse(localStorage.getItem(MAP_KEY) || "null"); return validMap(m) ? withDefaults(m) : null; } catch { return null; }
+      try {
+        const m = JSON.parse(localStorage.getItem(MAP_KEY) || "null");
+        if (m && m.functions) ensureSlotProto(m);   // legacy migration: fill slotProto for this map's slots BEFORE validation
+        return validMap(m) ? withDefaults(m) : null;
+      } catch { return null; }
     }
     function saveActive() { localStorage.setItem(MAP_KEY, JSON.stringify(activeMap)); }
     function placeholderMap() {
@@ -173,6 +215,7 @@ window.MK4Chrome = (function () {
       if (a.slot == null || a.channel == null) return null;   // D6: UNMAPPED -> no cmd:set (no motion)
       let slot = a.slot | 0; const ch = a.channel | 0;
       if (deviceSwap && (slot === 0 || slot === 1)) slot = 1 - slot;
+      if (protoForSlot(slot) === "none") return null;   // None slot (unused box): NO set — drive + keepalive both null-check this, so NOTHING reaches stampProto (never the mk4/device0 default)
       let mag = Math.abs(v | 0);
       if (v < 0 && typeof a.reverse_scale === "number" && a.reverse_scale !== 1)
         mag = Math.max(0, Math.min(7, Math.round(mag * a.reverse_scale)));
@@ -242,10 +285,7 @@ window.MK4Chrome = (function () {
       rebuildOpenSettings();
       wizardOnLifecycle(state);
       startupOnUpdate();
-      if (autoReady) {
-        if (state === "CONNECTING") send(stampProto({ cmd: "setup", action: "ready" }));
-        else if (state === "READY") { autoReady = false; closeWizard(); closeStartup(); }
-      }
+      if (autoReady && state === "READY") { autoReady = false; closeWizard(); closeStartup(); }   // skipToReady sends its own connects+ready; this just auto-closes
     }
 
     // ---- surface (control widgets) — the ONLY per-layout code ----
@@ -390,16 +430,64 @@ window.MK4Chrome = (function () {
     }
 
     // ---- connect lifecycle wizard (cold-start IDLE→CONNECTING→READY) ----
-    // wizardStep 0 = box-SELECTION pre-screen (which box do you have?); 1-4 = the pairing steps.
-    let wizardStep = 0, boxPicked = false;
-    // REOPEN RULE: a FRESH open (session IDLE, not yet connecting) -> screen 0 (box select); a reopen
-    // while already CONNECTING -> pairing step 3 (skip screen 0 — the box is already chosen); READY ->
-    // step 4. So screen 0 shows ONLY for a fresh connect. On a fresh open the must-pick gate is
-    // pre-satisfied iff a box was chosen before (PROTO_KEY present) — a first-ever open must pick.
+    // wizardStep 0 = box-SELECTION pre-screen; 1-4 = single-box pairing steps; 5 = per-box connect loop (mixed / multi-box).
+    let wizardStep = 0;
+    let boxMode = null, mixedSel = {};             // screen-0 selection state (this open): "mk4"|"mk6"|"mixed" + per-slot toggles
+    let connectQueue = [], connectIdx = 0;         // the ordered connect enumeration, built at pairing start
+    const BOX_PREVIEW = { mk4: "/assets/mk6/mk4_preview.png", mk6: "/assets/mk6/mk6_preview.png" };   // box photos (on disk)
+    function fmt(str, vals) { return String(str).replace(/\{(\w+)\}/g, (mm, k) => (k in vals ? vals[k] : mm)); }
+    function mk6MediaHtml(basename, m6) {
+      return `<div class="media mk6media"><img class="mk6img" id="mk6StepImg" src="/assets/mk6/${basename}.gif" alt=""><span class="mk6phlabel">${m6.stepImgPlaceholder || "MK6 box — image coming soon"}</span></div>`;
+    }
+    // CONNECT ENUMERATION (server semantics: `setup connect protocol=P device=d` activates (P,d) + holds
+    // all others neutral (CONNECTING); connects ACCUMULATE; one global `setup ready` flips ALL active to
+    // driving). MK4 binds via ONE shared connect at device 0 (slot lives in the nibble telegram, not the
+    // device) -> a SINGLE bare `setup connect` covers ALL mk4 slots (identical to today). Each MK6 slot
+    // binds its OWN device -> one `setup connect protocol=mk6 device=<slot>` per mk6 slot (this fixes the
+    // old "mk6 only ever bound device 0" gap). Order: mk4-shared first, then each mk6 slot ascending.
+    // Enumerated over boxSlots() (ASSIGNMENT), so a box on a function-less slot still connects. A "none"
+    // slot is excluded by boxSlots. MK4 collapses to ONE shared bare connect (device 0; slot lives in the
+    // nibble telegram, hubs button-assigned) — do NOT add per-slot mk4 connects. Each MK6 slot -> its own
+    // device connect. Count ("box i of N") + next-connect index both read this SAME filtered queue.
+    function buildConnectQueue() {
+      const slots = boxSlots(), q = [];
+      const anyMk4 = slots.length === 0 || slots.some(s => protoForSlot(s) === "mk4");   // empty (RAW) -> bare mk4 connect (today)
+      if (anyMk4) q.push({ kind: "mk4", slot: null, msg: { cmd: "setup", action: "connect" } });   // bare mk4 shared connect
+      slots.filter(s => protoForSlot(s) === "mk6").forEach(s => q.push({ kind: "mk6", slot: s, msg: { cmd: "setup", action: "connect", protocol: "mk6", device: s } }));
+      return q;
+    }
+    // Mixed screen-0 shows ALL THREE slots. initMixedSel: an UNUSED slot (no functions) DEFAULTS to "none"
+    // (the user isn't forced to decide slots nothing uses); a USED slot keeps its stored pick or stays UNSET
+    // (must be picked explicitly — None is a valid pick). derivedMode: the mode implied by stored slotProto
+    // for reopen pre-select — any "none" (or a genuine mix) -> "mixed", else the uniform primary.
+    function initMixedSel() {
+      const sp = getSlotProto(), used = usedSlots(), sel = {};
+      ALL_SLOTS.forEach(s => {
+        const k = String(s), stored = sp[k];
+        if (stored === "mk4" || stored === "mk6" || stored === "none") sel[k] = stored;   // keep an explicit prior pick
+        else if (used.indexOf(s) === -1) sel[k] = "none";                                  // UNUSED slot -> default None
+        // else: USED slot with no prior pick -> leave unset (gate forces an explicit pick)
+      });
+      return sel;
+    }
+    function derivedMode() {
+      const sp = getSlotProto();
+      if (ALL_SLOTS.some(s => sp[String(s)] === "none")) return "mixed";   // an explicit None -> the user was in mixed
+      const protos = [...new Set(boxSlots().map(protoForSlot))];           // protocols of the assigned boxes
+      if (!protos.length) return "mk4";                                    // nothing assigned -> default primary
+      return protos.length === 1 ? protos[0] : "mixed";
+    }
+    // REOPEN RULE: FRESH open (IDLE) -> screen 0 (box select); reopen while CONNECTING -> resume the
+    // per-box loop if one is in progress (multi-box), else pairing step 3 (skip screen 0 — box already
+    // chosen); READY -> step 4. Screen 0 shows ONLY for a fresh connect.
     function openWizard() {
       if (lifecycle === "READY") wizardStep = 4;
-      else if (lifecycle === "CONNECTING") wizardStep = 3;
-      else { wizardStep = 0; boxPicked = (localStorage.getItem(PROTO_KEY) != null); }
+      else if (lifecycle === "CONNECTING") wizardStep = (connectQueue.length > 1 && connectIdx < connectQueue.length) ? 5 : 3;
+      else {
+        wizardStep = 0;
+        boxMode = hasChosen() ? derivedMode() : null;   // pre-select from an existing choice so returning users aren't re-gated
+        mixedSel = initMixedSel();                      // unused slots -> None; stored picks kept; used-unset stays unset
+      }
       buildWizard(); $("wizard").classList.remove("hidden");
     }
     function closeWizard() { wizardStep = 0; $("wizard").classList.add("hidden"); }
@@ -407,52 +495,123 @@ window.MK4Chrome = (function () {
     function wizardOnLifecycle(state) {
       if ($("wizard").classList.contains("hidden")) return;
       if (state === "READY") { wizardStep = 4; buildWizard(); }
-      else if (state === "IDLE" && wizardStep > 1) { wizardStep = 1; buildWizard(); }
+      else if (state === "IDLE" && wizardStep > 1 && wizardStep !== 5) { wizardStep = 1; buildWizard(); }
     }
     function wizardNext() {
-      if (wizardStep === 1) { send(stampProto({ cmd: "setup", action: "connect" })); wizardStep = 2; }
-      else if (wizardStep === 2) wizardStep = 3;
-      buildWizard();
+      if (wizardStep === 1) {
+        connectQueue = buildConnectQueue(); connectIdx = 0;
+        if (!connectQueue.length) { send({ cmd: "setup", action: "ready" }); return; }   // all-None (no box to bind) -> straight to ready (READY push -> step 4); no connect
+        send(connectQueue[0].msg);                 // first connect (bare mk4, or first mk6 slot)
+        wizardStep = (connectQueue.length > 1) ? 5 : 2;   // multi-box -> per-box loop; single -> today's flow
+        buildWizard();
+      } else if (wizardStep === 2) {
+        wizardStep = 3; buildWizard();
+      } else if (wizardStep === 5) {               // per-box loop: advance / finish
+        connectIdx++;
+        if (connectIdx < connectQueue.length) { send(connectQueue[connectIdx].msg); buildWizard(); }
+        else send({ cmd: "setup", action: "ready" });   // all boxes bound -> ONE global ready (READY push -> step 4)
+      }
     }
     function wizardBack() {
       if (wizardStep === 2) { send({ cmd: "setup", action: "reset" }); wizardStep = 1; }
       else if (wizardStep === 3) wizardStep = 2;
       buildWizard();
     }
-    function skipToReady() {
+    function skipToReady() {   // "toy already connected": enumerate every box's connect (accumulate), then ready
       clearStopLatch();
       if (lifecycle === "READY") { autoReady = false; closeWizard(); closeStartup(); return; }
-      autoReady = true;
-      if (lifecycle === "CONNECTING") send(stampProto({ cmd: "setup", action: "ready" }));
-      else send(stampProto({ cmd: "setup", action: "connect" }));
+      autoReady = true;                            // auto-CLOSE the wizard/startup once READY arrives
+      buildConnectQueue().forEach(e => send(e.msg));
+      send({ cmd: "setup", action: "ready" });
     }
-    // ---- SCREEN 0: box selection ("which box do you have?"), rendered on wizardStep 0 (fresh connect) ----
-    // Each choice shows the box's PREVIEW PHOTO (the box itself, NOT a flashing gif); a missing preview
-    // onerror-falls-back to the label (never a broken image). The pick sets the session protocol
-    // (setProtocol/PROTO_KEY), read by stampProto on connect/ready + every set. This box choice is the
-    // ONLY protocol touchpoint. Real box photos are on disk at /assets/mk6/mk{4,6}_preview.png.
-    const BOX_PREVIEW = { mk4: "/assets/mk6/mk4_preview.png", mk6: "/assets/mk6/mk6_preview.png" };
-    function protoPickerHtml(t, proto) {
-      const m = t.mk6 || {};
-      const box = (id, cap) => `<button type="button" class="protobtn boxsel${proto === id ? " on" : ""}" data-proto="${id}" aria-pressed="${proto === id}">
+    // ---- SCREEN 0: box selection, rendered on wizardStep 0 (fresh connect) ----
+    // Three options: MK4 / MK6 (primary box photos) + a smaller MIXED (MK4 + MK6). MK4/MK6 set EVERY used
+    // slot to that protocol; MIXED reveals a per-slot MK4|MK6 toggle per used box. MUST-PICK gate: Next
+    // enabled only when every used slot is assigned. The pick persists to slotProto (per-layout). Real box
+    // photos on disk at /assets/mk6/mk{4,6}_preview.png; a missing preview onerror-falls-back to the label.
+    function boxSelectReady() {
+      if (boxMode === "mk4" || boxMode === "mk6") return true;
+      // MIXED: every slot (0-2) must be assigned MK4/MK6/None. Unused slots pre-default None (pre-satisfied);
+      // a USED slot with no pick blocks Next. None IS a valid pick, so slot0=None + slot1=MK4 + slot2=MK6 proceeds.
+      if (boxMode === "mixed") return ALL_SLOTS.every(s => { const v = mixedSel[String(s)]; return v === "mk4" || v === "mk6" || v === "none"; });
+      return usedSlots().length === 0;             // nothing to assign (RAW / unmapped) -> nothing to gate
+    }
+    function commitBoxSelect() {                    // persist the current selection into slotProto (live)
+      const sp = getSlotProto();
+      if (boxMode === "mixed") ALL_SLOTS.forEach(s => { const v = mixedSel[String(s)]; if (v) sp[String(s)] = v; });   // persist per-slot incl. explicit "none"
+      else if (boxMode === "mk4" || boxMode === "mk6") {
+        // Single protocol: every USED slot = boxMode, and DELETE non-used slot entries (clear any stale mixed
+        // per-slot assignment). NOT set-all: setting a function-less slot to mk6 would make boxSlots() emit a
+        // spurious per-slot mk6 connect (mk6 binds per device; mk4 shared-collapses). So single-MK6 on slots 0,1
+        // gives exactly two mk6 connects (dev0,dev1), not three.
+        const used = usedSlots();
+        ALL_SLOTS.forEach(s => { const k = String(s); if (used.indexOf(s) === -1) delete sp[k]; else sp[k] = boxMode; });
+        localStorage.setItem(PROTO_KEY, boxMode);
+      }
+      setSlotProto(sp);
+    }
+    function buildBoxSelect(t) {
+      const m6 = t.mk6 || {};
+      const prim = (id, cap) => `<button type="button" class="protobtn boxsel${boxMode === id ? " on" : ""}" data-mode="${id}">
           <span class="boxph"><img class="boxprev" src="${BOX_PREVIEW[id]}" alt=""><span class="boxcap">${cap}</span></span><span class="protolab">${id.toUpperCase()}</span></button>`;
-      return `<div class="protopick" id="protoPick">
-          <div class="protorow">${box("mk4", m.mk4Box || "MK4 box")}${box("mk6", m.mk6Box || "MK6 box")}</div></div>`;
-    }
-    function wireProtoPicker(onPick) {
-      const pp = $("protoPick"); if (!pp) return;
-      pp.querySelectorAll(".protobtn").forEach(b => {
-        b.onclick = () => { setProtocol(b.dataset.proto); if (onPick) onPick(); };
-        const im = b.querySelector(".boxprev"); if (im) im.onerror = () => im.remove();   // missing preview -> label, not a broken image
+      const mixedBtn = `<button type="button" class="mixbtn${boxMode === "mixed" ? " on" : ""}" data-mode="mixed">${m6.mixedOption || "Mixed (MK4 + MK6)"}</button>`;
+      const noneLab = m6.noneLabel || "None";
+      const mixHint = (boxMode === "mixed" && m6.mixedHint) ? `<p class="sub mixhint">${m6.mixedHint}</p>` : "";   // shown ONLY for Mixed
+      const mixRows = boxMode === "mixed" ? `${mixHint}<div class="mixrows">${ALL_SLOTS.map(s => {
+          const cur = mixedSel[String(s)];
+          const seg = p => `<button type="button" class="segbtn${cur === p ? " on" : ""}" data-slot="${s}" data-proto="${p}">${p === "none" ? noneLab : p.toUpperCase()}</button>`;
+          return `<div class="mixrow"><span class="mixlab">${fmt(m6.boxOnSlot || "Box on slot {n}", { n: s })}</span><span class="seg">${seg("mk4")}${seg("mk6")}${seg("none")}</span></div>`;
+        }).join("")}</div>` : "";
+      $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
+        <h2>${m6.chooseTitle || t.wiz.title}</h2>
+        <div class="wsteps">${[1, 2, 3, 4].map(() => `<span class="wdot"></span>`).join("")}</div>
+        ${m6.chooseBody ? `<p class="wbody">${m6.chooseBody}</p>` : ""}
+        <div class="protopick" id="protoPick"><div class="protorow">${prim("mk4", m6.mk4Box || "MK4 box")}${prim("mk6", m6.mk6Box || "MK6 box")}</div>
+          <div class="mixline">${mixedBtn}</div>${mixRows}</div>
+        <div class="actions wactions">
+          <button id="wCancel">${t.wiz.cancel}</button>
+          <button class="apply" id="wPick"${boxSelectReady() ? "" : " disabled"}>${t.wiz.next}</button>
+        </div></div>`;
+      const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
+      on("wCancel", wizardCancel);
+      on("wPick", () => { if (boxSelectReady()) { commitBoxSelect(); wizardStep = 1; buildWizard(); } });
+      $("wizard").querySelectorAll(".protobtn[data-mode], .mixbtn").forEach(b => {
+        b.onclick = () => {
+          boxMode = b.dataset.mode;
+          if (boxMode === "mixed") mixedSel = initMixedSel();   // (re)default: unused slots -> None, stored picks kept, used-unset stays unset
+          commitBoxSelect(); buildBoxSelect(t);
+        };
       });
+      $("wizard").querySelectorAll(".segbtn").forEach(b => {
+        b.onclick = () => { mixedSel[b.dataset.slot] = b.dataset.proto; commitBoxSelect(); buildBoxSelect(t); };
+      });
+      $("wizard").querySelectorAll(".boxprev").forEach(im => { im.onerror = () => im.remove(); });   // missing preview -> label, not a broken image
+    }
+    // Step 5 — per-box connect loop (mixed / multi-box). Sends the current box's connect on entry/advance
+    // and guides the user to physically pair THAT box during ITS connect window (each box binds only while
+    // its own connect broadcasts). Next advances; on the last box it sends the one global ready.
+    function buildBoxConnect(t) {
+      const m6 = t.mk6 || {}, ce = connectQueue[connectIdx] || connectQueue[0] || { kind: "mk4", slot: null };
+      const n = connectQueue.length, i = connectIdx + 1, last = connectIdx >= n - 1, isMk6 = ce.kind === "mk6";
+      const title = fmt(m6.pairBoxTitle || "Pair box {i} of {n}", { i, n });
+      const body = isMk6 ? fmt(m6.pairBoxMk6 || "Put the MK6 box for slot {slot} into pairing mode — it binds (single fast flash).", { slot: ce.slot })
+                         : (m6.pairBoxMk4 || "Broadcasting the shared MK4 connect — power on your MK4 box(es); set each to its slot by its button.");
+      const media = isMk6 ? mk6MediaHtml("step_1_mk6_ready_to_connect", m6) : `<div class="media"><img src="/assets/short_flash.gif" alt=""></div>`;
+      const wizTitle = (config.wizardText && config.wizardText(t).wizTitle) || t.wiz.title;
+      $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
+        <h2>${wizTitle}</h2>
+        <div class="wsteps">${connectQueue.map((_, k) => `<span class="wdot${k === connectIdx ? " on" : k < connectIdx ? " done" : ""}"></span>`).join("")}</div>
+        ${media}<h3 class="wt">${title}</h3><p class="wbody">${body}</p>
+        <div class="actions wactions"><button id="wCancel">${t.wiz.cancel}</button><button class="apply" id="wNext">${last ? t.wiz.readyBtn : (m6.pairNext || t.wiz.next)}</button></div></div>`;
+      const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
+      on("wCancel", wizardCancel); on("wNext", wizardNext);
+      const mimg = $("mk6StepImg"); if (mimg) mimg.onerror = () => mimg.remove();
     }
     function buildWizard() {
       const t = tr(), s = wizardStep;
-      if (s === 0) return buildBoxSelect(t);   // screen 0 = box selection (pre-pairing; fresh connect only)
-      const m6 = t.mk6 || {}, isMk6 = getProtocol() === "mk6";
-      // MK6 step 1 gets its OWN "ready to connect" copy (protocol-conditional at step 1 ONLY); steps
-      // 2/3/4 share the existing copy. No other text divergence — the box choice (screen 0) is the only
-      // protocol touchpoint.
+      if (s === 0) return buildBoxSelect(t);        // screen 0 = box selection (pre-pairing; fresh connect only)
+      if (s === 5) return buildBoxConnect(t);       // per-box connect loop (mixed / multi-box)
+      const m6 = t.mk6 || {}, isMk6 = allUsedProto() === "mk6";   // single-box path: mk6 media/copy when all used slots are mk6
       const w = (s === 1 && isMk6) ? { t: m6.mk6Step1T || t.wiz.w1.t, b: m6.mk6Step1B || t.wiz.w1.b } : t.wiz["w" + s];
       let btns;
       if (s === 1) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wAlready">${t.wiz.already}</button><button class="apply" id="wNext">${t.wiz.next}</button>`;
@@ -460,14 +619,11 @@ window.MK4Chrome = (function () {
       else if (s === 3) btns = `<button id="wCancel">${t.wiz.cancel}</button><button id="wBack">${t.wiz.back}</button><button class="apply" id="wReady">${t.wiz.readyBtn}</button>`;
       else btns = `<button class="apply" id="wDone">${t.wiz.startDriving}</button>`;
       // Step media is IMAGE-ONLY divergence: MK4 keeps today's per-step flash gifs; MK6 shows its OWN
-      // per-step pairing gif from a MAP (real filenames differ per step — a single interpolation can't
-      // reproduce them). onerror removes the <img>, revealing the labeled placeholder — 404 -> the label,
-      // NEVER the MK4 gif. Step 4 has no media (both maps undefined).
+      // per-step pairing gif from a MAP. onerror removes the <img>, revealing the labeled placeholder —
+      // 404 -> the label, NEVER the MK4 gif. Step 4 has no media (both maps undefined).
       const gif = { 1: "long_flash", 2: "short_flash", 3: "double_short_flash" }[s];
       const mk6gif = { 1: "step_1_mk6_ready_to_connect", 2: "step_2_mk6_short_flash", 3: "step_3_mk6_double_short_flash" }[s];
-      const media = (isMk6 && mk6gif)
-        ? `<div class="media mk6media"><img class="mk6img" id="mk6StepImg" src="/assets/mk6/${mk6gif}.gif" alt=""><span class="mk6phlabel">${m6.stepImgPlaceholder || "MK6 box — image coming soon"}</span></div>`
-        : (gif ? `<div class="media"><img src="/assets/${gif}.gif" alt=""></div>` : "");
+      const media = (isMk6 && mk6gif) ? mk6MediaHtml(mk6gif, m6) : (gif ? `<div class="media"><img src="/assets/${gif}.gif" alt=""></div>` : "");
       const wt = config.wizardText ? config.wizardText(t) : null;
       const wizTitle = (wt && wt.wizTitle) || t.wiz.title;
       $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
@@ -478,27 +634,8 @@ window.MK4Chrome = (function () {
         <div class="actions wactions">${btns}</div></div>`;
       const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
       on("wCancel", wizardCancel); on("wBack", wizardBack); on("wNext", wizardNext);
-      on("wReady", () => send(stampProto({ cmd: "setup", action: "ready" }))); on("wAlready", skipToReady); on("wDone", closeWizard);
+      on("wReady", () => send({ cmd: "setup", action: "ready" })); on("wAlready", skipToReady); on("wDone", closeWizard);
       const mimg = $("mk6StepImg"); if (mimg) mimg.onerror = () => mimg.remove();   // MK6 step 1/2/3: 404 -> reveal labeled placeholder (never the MK4 gif)
-    }
-    // Screen 0 — box selection. MUST-PICK GATE: "Next" (wPick) is disabled until a box is chosen (removes
-    // the silent-MK4 default). Picking sets the protocol + highlights; Next then advances to pairing step 1.
-    function buildBoxSelect(t) {
-      const m6 = t.mk6 || {};
-      const picked = boxPicked ? getProtocol() : null;   // highlight only an ACTIVE pick (no silent default)
-      $("wizard").innerHTML = `<div class="backdrop"></div><div class="sheet wiz">
-        <h2>${m6.chooseTitle || t.wiz.title}</h2>
-        <div class="wsteps">${[1, 2, 3, 4].map(() => `<span class="wdot"></span>`).join("")}</div>
-        ${m6.chooseBody ? `<p class="wbody">${m6.chooseBody}</p>` : ""}
-        ${protoPickerHtml(t, picked)}
-        <div class="actions wactions">
-          <button id="wCancel">${t.wiz.cancel}</button>
-          <button class="apply" id="wPick"${boxPicked ? "" : " disabled"}>${t.wiz.next}</button>
-        </div></div>`;
-      const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
-      on("wCancel", wizardCancel);
-      on("wPick", () => { if (boxPicked) { wizardStep = 1; buildWizard(); } });
-      wireProtoPicker(() => { boxPicked = true; buildBoxSelect(t); });   // pick -> set protocol + re-render (highlight + enable Next)
     }
 
     // ---- startup overlay: reach the API, then connect the toy (skippable) ----
@@ -592,7 +729,7 @@ window.MK4Chrome = (function () {
         const rows = Object.keys(assignRows).map(m => {
           const a = assignRows[m];
           const slots = [0, 1, 2].map(n => `<option value="${n}"${a.slot === n ? " selected" : ""}>${n}</option>`).join("");
-          const chans = chanRange().map(n => `<option value="${n}"${a.channel === n ? " selected" : ""}>${n}</option>`).join("");   // MK6: 0-5, MK4: 0-3
+          const chans = [0, 1, 2, 3].map(n => `<option value="${n}"${a.channel === n ? " selected" : ""}>${n}</option>`).join("");   // auto-assign is protocol-blind (4-per-slot); protocol comes from slotProto
           return `<tr data-m="${m}"><td class="fn">${esc(AA.motorLabel ? AA.motorLabel(m) : m)}</td>
             <td><select class="ar-slot">${slots}</select></td><td><select class="ar-ch">${chans}</select></td>
             <td style="text-align:center"><input type="checkbox" class="ar-inv"${a.invert ? " checked" : ""}></td></tr>`;
@@ -672,15 +809,21 @@ window.MK4Chrome = (function () {
 
     // ---- Channels tab: assignment table (+ device-swap gated) + actions + auto-assign entry ----
     function channelsPanel(t) {
+      const noneLab = (t.mk6 && t.mk6.noneLabel) || "None";
       const rows = FN.map(fn => {
         const a = editMap.functions[fn];
         const opt = (n, sel) => `<option value="${n}"${n === sel ? " selected" : ""}>${n}</option>`;
         const blank = sel => `<option value=""${sel == null ? " selected" : ""}>—</option>`;
+        const proto = protoForSlot(a.slot);   // per-slot: mk6 box -> 0-5, mk4 box -> 0-3
         const slots = blank(a.slot) + [0, 1, 2].map(n => opt(n, a.slot)).join("");
-        const chans = blank(a.channel) + chanRange().map(n => opt(n, a.channel)).join("");   // MK6: 0-5, MK4: 0-3
+        const chans = blank(a.channel) + chanRangeFor(proto).map(n => opt(n, a.channel)).join("");
+        // EDITABLE per-slot protocol (None / MK4 / MK6): edits slotProto for THIS SLOT (live), same source
+        // as screen-0. Gated on a.slot != null (an unmapped function has no slot -> no dropdown, like the old badge).
+        const popt = (v, lbl) => `<option value="${v}"${v === proto ? " selected" : ""}>${lbl}</option>`;
+        const protoSel = a.slot == null ? "" : ` <select class="e-proto" title="${t.slot} ${a.slot}">${popt("none", noneLab)}${popt("mk4", "MK4")}${popt("mk6", "MK6")}</select>`;
         return `<tr data-fn="${fn}">
           <td class="fn">${esc(funcLabel(fn))}<br><span class="muted">${fn}</span></td>
-          <td><select class="e-slot">${slots}</select></td>
+          <td><select class="e-slot">${slots}</select>${protoSel}</td>
           <td><select class="e-ch">${chans}</select></td>
           <td><input type="number" class="e-maxf" min="1" max="7" value="${a.max_fwd || 5}"></td>
           <td><input type="number" class="e-maxr" min="1" max="7" value="${a.max_rev || 5}"></td>
@@ -718,6 +861,7 @@ window.MK4Chrome = (function () {
         trEl.querySelector(".e-maxr").onchange = e => { a.max_rev = clamp(+e.target.value | 0, 1, 7); e.target.value = a.max_rev; };
         trEl.querySelector(".e-rev").onchange = e => { a.reverse_scale = clamp(+e.target.value || 1, 0.25, 4); e.target.value = a.reverse_scale; };
         trEl.querySelector(".e-inv").onchange = e => { a.invert = e.target.checked; };
+        const pSel = trEl.querySelector(".e-proto"); if (pSel) pSel.onchange = e => setSlotProtoEditor(a.slot, e.target.value);
         bindTest(trEl.querySelector(".test"), fn);
       });
       const sw = $("swapChk");
@@ -817,13 +961,14 @@ window.MK4Chrome = (function () {
       const start = e => {
         e.preventDefault(); if (lifecycle !== "READY") return;
         const a = editMap.functions[fn]; if (a.slot == null || a.channel == null) return;
+        if (protoForSlot(swapAdj(a.slot)) === "none") return;   // None slot -> test sends nothing
         tb.classList.add("held");
         send(stampProto({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: a.max_fwd || 5 }));
       };
       const stop = () => {
         if (!tb.classList.contains("held")) return;
         const a = editMap.functions[fn]; tb.classList.remove("held");
-        if (a.slot != null && a.channel != null) send(stampProto({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: 0 }));
+        if (a.slot != null && a.channel != null && protoForSlot(swapAdj(a.slot)) !== "none") send(stampProto({ cmd: "set", slot: swapAdj(a.slot), channel: a.channel, value: 0 }));
       };
       tb.addEventListener("pointerdown", start);
       tb.addEventListener("pointerup", stop);
@@ -834,12 +979,30 @@ window.MK4Chrome = (function () {
       document.querySelectorAll(".test.held").forEach(tb => { tb.classList.remove("held"); send({ cmd: "stop" }); });
     }
     function assignCell(fn, slot, channel) {
+      if (slot != null && channel != null) {   // clamp channel into the (new) slot's protocol range (mk6 0-5 / mk4 0-3)
+        const mx = maxChannelFor(protoForSlot(slot));
+        if (channel > mx) channel = mx;
+      }
       if (slot != null && channel != null) {
         const other = FN.find(f => f !== fn && editMap.functions[f].slot === slot && editMap.functions[f].channel === channel);
         if (other) { editMap.functions[other].slot = editMap.functions[fn].slot; editMap.functions[other].channel = editMap.functions[fn].channel; }
       }
       editMap.functions[fn].slot = slot;
       editMap.functions[fn].channel = channel;
+      buildSettings();
+    }
+    // Channels-tab per-slot protocol edit: LIVE-write slotProto for THIS SLOT (single source shared with
+    // screen-0), then re-render so EVERY same-slot row shows the new protocol + updated channel range.
+    // Narrowing (mk6 -> mk4/none) clamps channel 4/5 -> 3 for ALL functions on the slot (reusing the
+    // assignCell clamp logic) in BOTH the staged editMap AND the live activeMap (+ persist), so live
+    // driving stays in range and a reload never rejects the saved map against the live slotProto.
+    function setSlotProtoEditor(slot, proto) {
+      if (slot == null || !(proto === "mk4" || proto === "mk6" || proto === "none")) return;
+      const sp = getSlotProto(); sp[String(slot)] = proto; setSlotProto(sp);
+      const mx = maxChannelFor(protoForSlot(slot));
+      const clampMap = m => { if (m && m.functions) FN.forEach(f => { const a = m.functions[f]; if (a && a.slot != null && (a.slot | 0) === (slot | 0) && a.channel != null && a.channel > mx) a.channel = mx; }); };
+      clampMap(editMap); clampMap(activeMap);
+      if (activeMap) saveActive();
       buildSettings();
     }
     function okMsg(text) { const m = $("mapMsg"); if (m) { m.className = "ok"; m.textContent = text; } }
@@ -1024,6 +1187,7 @@ window.MK4Chrome = (function () {
     function applyMaps(def) {
       defaultMap = withDefaults(def);
       activeMap = loadStoredMap() || withDefaults(def);
+      ensureSlotProto(activeMap);   // legacy migration: existing single-mk6 users (PROTO_KEY=mk6) -> all used slots mk6
       rebuildSurface(); rebuildOpenSettings();
       // First-run onboarding: a generic layout with NO channels assigned shows the auto-assign
       // wizard FIRST (mapping needs no connection); the connect guide then follows on close.

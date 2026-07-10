@@ -211,6 +211,24 @@ table.padmap .padlive { text-align: center; color: #ffd56b; font-variant-numeric
 .protobtn .boxprev { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1; background: #171b22; }
 .protobtn .boxcap { font-size: .78rem; color: #9fb0c6; }
 .protobtn .protolab { font-weight: 700; font-size: .95rem; letter-spacing: .03em; }
+/* MIXED (MK4 + MK6): a SMALLER / secondary third option under the two primary box photos */
+.mixline { display: flex; justify-content: center; margin: .5rem 0 .1rem; }
+.mixbtn { font: inherit; font-size: .8rem; cursor: pointer; color: #c0ccdc; background: transparent;
+  border: 1px dashed #3a414e; border-radius: .4rem; padding: .28rem .7rem; }
+.mixbtn:hover { border-color: #4f93e0; color: #e8eef6; }
+.mixbtn.on { color: #e8eef6; border-style: solid; border-color: #2f6f93; background: #1d3a4d; }
+/* per-slot MK4|MK6 assignment rows (only shown when Mixed is selected) */
+.mixhint { margin: .5rem 0 .2rem; text-align: center; }
+.mixrows { display: flex; flex-direction: column; gap: .35rem; margin: .5rem 0 .1rem; }
+.mixrow { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+.mixlab { font-size: .85rem; color: #d6e6fb; }
+.seg { display: inline-flex; border: 1px solid #3a414e; border-radius: .4rem; overflow: hidden; }   /* MK4 | MK6 | None */
+.segbtn { font: inherit; font-size: .8rem; cursor: pointer; color: #c0ccdc; background: #23272f; border: 0;
+  padding: .28rem .6rem; }
+.segbtn + .segbtn { border-left: 1px solid #3a414e; }
+.segbtn.on { color: #fff; background: #2f6f93; }
+/* editable per-slot protocol dropdown (None / MK4 / MK6) in the Channels editor, inline after the slot select */
+.e-proto { margin-left: .25rem; font-size: .78rem; }
 /* MK6 connect-wizard step media (steps 1/2/3): the real per-step pairing gifs live at
    /assets/mk6/step_{1,2,3}_mk6_*.gif — the <img> covers the label when it loads; on 404 the img is
    removed (onerror) revealing the label. It never falls back to an MK4 gif. IMAGE-ONLY. */
