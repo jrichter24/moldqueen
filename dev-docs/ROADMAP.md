@@ -8,11 +8,16 @@ that speaks it. (Back to the [README](../README.md) · canonical state in
 
 ## Protocol
 
-- **MK6 protocol support.** Our hubs are the MK4 12-channel nibble variant; Mould King also
-  ships an **MK6 per-byte** protocol on other hubs. Adding an MK6 codec + telegram path
-  (behind the same thin-transport `set` contract) would let moldqueen drive MK6 toys. This
-  is what the **greyed "MK6" badges** on the generic chooser cards promise — present in the
-  UI, not yet wired to a radio.
+- **MK6: delivered on the Pi + client; still ahead on ESP32 & Android.** Our first hubs are
+  the MK4 12-channel nibble variant; Mould King also ships an **MK6 per-byte** protocol on
+  other hubs. The MK6 codec + telegram path now ships on the **Raspberry Pi radio core and
+  the web client**, which also drive an MK4 box and an MK6 box **simultaneously** (mixed
+  mode), hardware-verified 2026-07-08. That is why the **"MK6" badges** on the generic
+  chooser cards are now live, not greyed. What is left is bringing the MK6 telegram path to
+  the **ESP32 and Android** radios (both MK4-only today). See
+  [MIXED_MODE.md](MIXED_MODE.md) for the plain-language explainer and
+  [`../linux-core/reference/mk6_protocol.md`](../linux-core/reference/mk6_protocol.md) for
+  the protocol-level detail.
 
 ## Radio cores (more transports behind the same contract)
 

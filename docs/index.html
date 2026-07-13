@@ -149,7 +149,7 @@
         <div class="tiles" id="tiles">
           <noscript><div class="tiles-fail">Enable JavaScript to load the live layouts, or browse them in the <a href="https://github.com/jrichter24/moldqueen/tree/main/client/web" rel="noopener" target="_blank">repository</a>.</div></noscript>
         </div>
-        <p class="tiles-note" data-i18n="ix.tiles.note">Cards are pulled live from the project manifest. The badges match the app: <strong>Generic</strong> or <strong>Model</strong>, plus the supported protocol. <strong>MK4</strong> works today; a greyed-out <strong>MK6</strong> is on the <a href="#roadmap">roadmap</a>. Hover a card to expand it.</p>
+        <p class="tiles-note" data-i18n="ix.tiles.note">Cards are pulled live from the project manifest. The badges match the app: <strong>Generic</strong> or <strong>Model</strong>, plus the supported protocol. Both <strong>MK4</strong> and <strong>MK6</strong> are live now (the generic layouts carry both); MK6 ships on the Raspberry Pi and the web client. Hover a card to expand it.</p>
       </div>
     </section>
 
@@ -177,6 +177,7 @@
             <div class="num" data-i18n="ix.and.num">Android · standalone app</div>
             <h3 data-i18n="ix.and.h3">Everything on the phone.</h3>
             <p data-i18n="ix.and.p">A self-contained app. It uses the phone's own Bluetooth radio, serves the interface on the device, and needs neither a Pi nor a network.</p>
+            <p class="muted" data-i18n="ix.and.proto">Speaks <b>MK4</b>. MK6 and mixed MK4+MK6 are on the Raspberry Pi core for now.</p>
             <p>
               <a class="btn btn-primary" href="https://github.com/jrichter24/moldqueen/releases/latest" rel="noopener" target="_blank"><span data-i18n="ix.and.btnGet">Download the Android App</span> <span class="arr">→</span></a>
               <a class="fdroid-badge" href="https://f-droid.org/packages/io.github.jrichter24.moldqueen/" rel="noopener" target="_blank"><img src="assets/fdroid-badge.png" alt="Get it on F-Droid" loading="lazy" /></a>
@@ -203,6 +204,7 @@ cd moldqueen
 scripts/start.sh
 <span class="c"># then open http://&lt;pi&gt;:8080/</span></pre>
             <p class="muted" data-i18n="ix.pi.muted">The full setup, from unboxing to the first drive, is in the <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/QUICKSTART.md" rel="noopener" target="_blank">Quickstart</a>.</p>
+            <p class="muted" data-i18n="ix.pi.proto">Speaks both <b>MK4</b> and <b>MK6</b>, and can drive an MK4 box and an MK6 box at the same time. It's the only core that does.</p>
           </div>
         </div>
 
@@ -218,6 +220,7 @@ scripts/start.sh
 cd esp32-core
 idf.py flash monitor</pre>
             <p class="muted" data-i18n="ix.esp.muted">First boot opens a setup WiFi (<code>moldqueen-setup</code>) to enter your network; after that the board is discoverable as <code>moldqueenesp.local</code> with a built-in management page at <a href="#esp-setup">moldqueenesp.local:8080</a>. Walk the setup below, or see the <a href="https://github.com/jrichter24/moldqueen/tree/main/esp32-core" rel="noopener" target="_blank">esp32-core</a> folder.</p>
+            <p class="muted" data-i18n="ix.esp.proto">Speaks <b>MK4</b>. MK6 and mixed MK4+MK6 are on the Raspberry Pi core for now.</p>
           </div>
         </div>
 
@@ -234,6 +237,7 @@ idf.py flash monitor</pre>
                 <th scope="col" class="cap-corner"><span data-i18n="ix.combine.col0">Build</span></th>
                 <th scope="col" data-i18n="ix.combine.colServer">Server (radio)</th>
                 <th scope="col" data-i18n="ix.combine.colClient">Client (UI)</th>
+                <th scope="col" data-i18n="ix.combine.colProto">Radio protocols</th>
               </tr>
             </thead>
             <tbody>
@@ -241,41 +245,49 @@ idf.py flash monitor</pre>
                 <th scope="row" data-i18n="ix.combine.rAndroid">Android app</th>
                 <td data-label="Server" class="yes" aria-label="yes">✓</td>
                 <td data-label="Client" class="yes" aria-label="yes">✓</td>
+                <td data-label="Protocols" class="protos">MK4</td>
               </tr>
               <tr>
                 <th scope="row" data-i18n="ix.combine.rPi">Raspberry Pi <a class="cap-fn" href="#combine-note" aria-describedby="combine-note"><sup>1</sup></a></th>
                 <td data-label="Server" class="yes" aria-label="yes">✓</td>
                 <td data-label="Client" class="yes" aria-label="yes">✓</td>
+                <td data-label="Protocols" class="protos" data-i18n="ix.combine.protoPi">MK4 + MK6 + mixed</td>
               </tr>
               <tr>
                 <th scope="row" data-i18n="ix.combine.rEsp">ESP32</th>
                 <td data-label="Server" class="yes" aria-label="yes">✓</td>
                 <td data-label="Client" class="no" aria-label="no">−</td>
+                <td data-label="Protocols" class="protos">MK4</td>
               </tr>
               <tr>
                 <th scope="row" data-i18n="ix.combine.rDesktop">Desktop dev client</th>
                 <td data-label="Server" class="no" aria-label="no">−</td>
                 <td data-label="Client" class="yes" aria-label="yes">✓</td>
+                <td data-label="Protocols" class="no" aria-label="not applicable">−</td>
               </tr>
               <tr>
                 <th scope="row" data-i18n="ix.combine.rDocker">Docker image</th>
                 <td data-label="Server" class="no" aria-label="no">−</td>
                 <td data-label="Client" class="yes" aria-label="yes">✓</td>
+                <td data-label="Protocols" class="no" aria-label="not applicable">−</td>
               </tr>
               <tr class="planned">
                 <th scope="row"><span data-i18n="ix.combine.rAndroidS">Android (server-only)</span> <span class="cap-soon" data-i18n="ix.combine.planned">planned</span></th>
                 <td data-label="Server" class="yes" aria-label="yes">✓</td>
                 <td data-label="Client" class="no" aria-label="no">−</td>
+                <td data-label="Protocols" class="protos">MK4</td>
               </tr>
               <tr class="planned">
                 <th scope="row"><span data-i18n="ix.combine.rAndroidC">Android (client-only)</span> <span class="cap-soon" data-i18n="ix.combine.planned">planned</span></th>
                 <td data-label="Server" class="no" aria-label="no">−</td>
                 <td data-label="Client" class="yes" aria-label="yes">✓</td>
+                <td data-label="Protocols" class="no" aria-label="not applicable">−</td>
               </tr>
               <tr class="planned">
                 <th scope="row"><span data-i18n="ix.combine.rApple">iPhone / Mac client</span> <span class="cap-soon" data-i18n="ix.combine.planned">planned</span></th>
                 <td data-label="Server" class="no" aria-label="no">−</td>
                 <td data-label="Client" class="yes" aria-label="yes">✓</td>
+                <td data-label="Protocols" class="no" aria-label="not applicable">−</td>
               </tr>
             </tbody>
           </table>
@@ -409,7 +421,7 @@ idf.py flash monitor</pre>
           <div class="dline"><div class="k" data-i18n="ix.dev.k4">Docker</div><div class="v" data-i18n="ix.dev.v4">A published, public client-only image, one command, no build. See the <a href="#docker">Docker client</a> section. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/REMOTE_CLIENT.md" rel="noopener" target="_blank">REMOTE_CLIENT.md</a></div></div>
         </div>
         <div class="callout" data-i18n="ix.dev.callout">
-          <strong>The protocol.</strong> Control rides on manufacturer-specific Bluetooth-LE advertisements: a twelve-channel nibble telegram (MK4) that drives every connected hub at once. The codec is verified byte-exact against the official app. Full reference in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/PROJECT.md" rel="noopener" target="_blank">PROJECT.md</a> and the machine-readable <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/mk4web/asyncapi.yaml" rel="noopener" target="_blank">AsyncAPI</a>.
+          <strong>The protocol.</strong> Control rides on manufacturer-specific Bluetooth-LE advertisements: a twelve-channel nibble telegram (MK4) that drives every connected hub at once. On the Raspberry Pi and the web client it also speaks MK6 (a byte-per-channel, device-addressed telegram) and can drive an MK4 box and an MK6 box at the same time; the ESP32 and Android cores are MK4-only for now. The codec is verified byte-exact against the official app. Full reference in <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/PROJECT.md" rel="noopener" target="_blank">PROJECT.md</a> and the machine-readable <a href="https://github.com/jrichter24/moldqueen/blob/main/linux-core/mk4web/asyncapi.yaml" rel="noopener" target="_blank">AsyncAPI</a>.
         </div>
         <p data-i18n="ix.dev.p">Want to add your own toy? A layout is just client files: a manifest entry, a thin page, and a channel map. The shared chrome (menu, settings, connect wizard, gamepad, STOP) comes for free. See <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/ADDING_A_LAYOUT.md" rel="noopener" target="_blank">Adding a layout</a> and the rest of the <a href="https://github.com/jrichter24/moldqueen/tree/main/dev-docs" rel="noopener" target="_blank">developer docs</a>. Issues and pull requests are welcome on <a href="https://github.com/jrichter24/moldqueen" rel="noopener" target="_blank">GitHub</a>.</p>
       </div>
@@ -439,7 +451,7 @@ idf.py flash monitor</pre>
           <p class="lead" data-i18n="ix.rm.lead">A direction, not a set of promises. The common thread is the API-first design: each item is either a new radio core behind the same contract, or a new client that speaks it.</p>
         </div>
         <ul class="roadmap">
-          <li data-i18n="ix.rm.mk6"><b>MK6 protocol.</b> <span>A second telegram codec for Mould King's per-byte MK6 hubs. It's what the greyed-out MK6 badges on the generic layouts are reserved for.</span></li>
+          <li data-i18n="ix.rm.mk6"><b>MK6 on the ESP32 &amp; Android cores.</b> <span>MK6 (Mould King's per-byte protocol) and simultaneous mixed MK4+MK6 already ship on the Raspberry Pi and the web client, which is why the generic layouts carry a live MK6 badge. What's left is bringing the MK6 telegram path to the ESP32 and Android radios. <a href="https://github.com/jrichter24/moldqueen/blob/main/dev-docs/MIXED_MODE.md" rel="noopener" target="_blank">How mixed mode works</a>.</span></li>
           <li data-i18n="ix.rm.esp"><b>ESP32 core: complete.</b> <span>The ESP32 is a full standalone radio core: WiFi setup on the board, discovery as <code>moldqueenesp.local</code>, a management page, Pi mDNS (<code>moldqueenrasp.local</code> for the Raspberry Pi core), and a binary/release pipeline (a downloadable <code>.bin</code>) are all in. It stays a thin radio core that a hosted client drives; serving the client from the board's own flash was considered and set aside.</span></li>
           <li data-i18n="ix.rm.cam"><b>Camera (FPV).</b> <span>A first-person video feed from the machine, so you drive by what it sees. The same stream could feed an autonomous driver later.</span></li>
           <li data-i18n="ix.rm.tof"><b>Time-of-flight sensor.</b> <span>Distance and obstacle awareness as telemetry, alongside the control API.</span></li>

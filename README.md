@@ -180,7 +180,7 @@ depth in **[`dev-docs/REMOTE_CLIENT.md`](dev-docs/REMOTE_CLIENT.md)**.
   - **RAW** (debug): a protocol bench over the raw `set`/`stop` path (slot/channel/value,
     telegram + on-air bytes console).
 - **Chooser / start page** — cards with a **Generic / Model** badge and **MK4 / MK6**
-  protocol badges (MK6 greyed = coming soon), a **jump-to-layout** dropdown, and the RAW
+  protocol badges (both **MK4** and **MK6** are live; MK6 ships on the Pi + web client), a **jump-to-layout** dropdown, and the RAW
   bench behind a debug icon.
 - **One shared chrome (MK4Chrome)** — every layout gets the same menu, settings, connect
   wizard, status light, language picker, keyboard STOP, and gamepad path.
@@ -237,10 +237,14 @@ client/        # the INDEPENDENT smart web client (chooser · layouts · MK4Chro
 </p>
 
 The client resolves *function → channel* and sends only low-level `set`; the core makes a
-nibble, crypts it (`MouldKingCrypt`), and broadcasts the BLE telegram. One telegram drives
-all hubs at once (12 nibbles = 3 slots × 4 channels). Deep dive — protocol, crypto, the
-dual-radio finding, the WS contract: **[`dev-docs/PROJECT.md`](dev-docs/PROJECT.md)** (the
-source of truth) and the machine-readable **[`asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml)**.
+nibble, crypts it (`MouldKingCrypt`), and broadcasts the BLE telegram. One MK4 telegram
+drives all hubs at once (12 nibbles = 3 slots × 4 channels). The **Raspberry Pi + web
+client** also speak **MK6** (a byte-per-channel, per-device-addressed telegram) and can
+drive an MK4 box and an MK6 box **at the same time**, which the official Mould King app
+can't do ([how mixed mode works](dev-docs/MIXED_MODE.md)); the ESP32 and Android cores are
+MK4-only for now. Deep dive: protocol, crypto, the dual-radio finding, the WS contract:
+**[`dev-docs/PROJECT.md`](dev-docs/PROJECT.md)** (the source of truth) and the
+machine-readable **[`asyncapi.yaml`](linux-core/mk4web/asyncapi.yaml)**.
 
 | Run it… | How | Detail |
 |---|---|---|
@@ -266,7 +270,7 @@ core that a hosted client drives; **serving the client from the board's own flas
 against** (the several-MB client vs limited flash, and the page-load asset burst coexisting with
 BLE on the shared 2.4 GHz radio). What's still ahead:
 
-- **MK6 protocol support** — the greyed *MK6* card badges; second Mould King BLE variant.
+- **MK6 on the ESP32 & Android cores.** MK6 (and simultaneous mixed MK4+MK6) already ships on the Pi + web client; the remaining work is the MK6 telegram path on the ESP32 and Android radios.
 - **Camera, ToF sensor** — telemetry over/alongside the API.
 - **AI brain / console client** — an agent driving the toy through the same WebSocket API.
 

@@ -2,8 +2,8 @@
 
 > An open-source system to control Mould King (and, by design, other) Bluetooth-LE
 > building-block RC toys through one documented WebSocket API. It pairs a single smart
-> web client with swappable radio cores (Raspberry Pi, a standalone Android app, an
-> ESP32 core planned), all behind the identical contract.
+> web client with swappable radio cores (Raspberry Pi, a standalone Android app, and a
+> standalone ESP32-S3 core), all behind the identical contract.
 
 This file gives an LLM accurate context about the project. Repo:
 https://github.com/jrichter24/moldqueen · Website: https://jrichter24.github.io/moldqueen/ ·
@@ -13,9 +13,12 @@ MIT licensed.
 
 moldqueen drives the Bluetooth-LE hubs inside Mould King building-block RC models
 (excavators, vehicles, cranes) from software. Control is by *broadcasting* manufacturer
-BLE advertisements, not over a GATT connection: one telegram (12 channel nibbles = 3
-slots x 4 channels, the MK4 protocol) drives every connected hub at once. The cipher and
-telegram codec are verified byte-exact against the official MK+tech app.
+BLE advertisements, not over a GATT connection: one MK4 telegram (12 channel nibbles = 3
+slots x 4 channels) drives every connected hub at once. The Raspberry Pi core and the web
+client also speak MK6 (a byte-per-channel, per-device-addressed telegram) and can drive an
+MK4 box and an MK6 box simultaneously (mixed mode, hardware-verified); the ESP32 and
+Android cores are MK4-only for now. The cipher and telegram codec are verified byte-exact
+against the official MK+tech app.
 
 ## The architecture: thin transport, smart client
 
@@ -31,7 +34,9 @@ This is the project's defining design, and it is unusual in a good way.
   layouts and labels and i18n, and owns the safety model. The server resolves nothing.
 - **Swappable radio cores behind the same contract.** A Raspberry Pi (Python, raw
   Bluetooth HCI) and a standalone Android app (Kotlin, native BLE `AdvertisingSet`) both
-  expose the identical WebSocket API and serve the same client. An ESP32 core is planned.
+  expose the identical WebSocket API and serve the same client. A standalone ESP32-S3 core
+  (C, ESP-IDF + NimBLE, over WiFi) has since shipped (release esp-v0.1.0); it is a radio
+  core only and is MK4-only.
 
 Why this matters: the toy never knows which radio is driving it, and the UI is written
 once and reused across every core. You can add a new radio (new hardware, new language)
