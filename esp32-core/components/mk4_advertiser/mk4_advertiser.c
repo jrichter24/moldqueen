@@ -56,18 +56,26 @@ static void push_ad(void)
     }
 }
 
+/* Nibble map (hub-corrected, ASYMMETRIC): value +k -> 0x8+k (0x9..0xF, forward, verified
+   monotonic), value -k -> k (0x1..0x7, reverse — the hub reads that half inverted, so encode
+   by magnitude), value 0 -> 0x8. Mirrors linux-core/mk4web/telegram.py value_to_nibble. */
+static int mk4_value_to_nibble(int v)
+{
+    if (v > 7) v = 7;
+    if (v < -7) v = -7;
+    if (v > 0) return 0x8 + v;
+    if (v < 0) return -v;
+    return 0x8;
+}
+
 /* Build the 10-byte motion raw telegram from channel values:
-   7d ae 18 <6 channel bytes> 82; nibble = 0x8 + value, even index = high nibble. */
+   7d ae 18 <6 channel bytes> 82; even index = high nibble. */
 static void motion_from_channels(const int8_t ch[12], uint8_t raw[10])
 {
     raw[0] = 0x7d; raw[1] = 0xae; raw[2] = 0x18;
     for (int i = 0; i < 6; i++) {
-        int hi = 0x8 + ch[2 * i];
-        int lo = 0x8 + ch[2 * i + 1];
-        if (hi < 0x1) hi = 0x1;
-        if (hi > 0xF) hi = 0xF;
-        if (lo < 0x1) lo = 0x1;
-        if (lo > 0xF) lo = 0xF;
+        int hi = mk4_value_to_nibble(ch[2 * i]);
+        int lo = mk4_value_to_nibble(ch[2 * i + 1]);
         raw[3 + i] = (uint8_t)((hi << 4) | lo);
     }
     raw[9] = 0x82;

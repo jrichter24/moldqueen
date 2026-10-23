@@ -48,6 +48,29 @@ def test_mk4_build_motion_raw_is_motion_raw():
     assert p.build_motion_raw([0x8] * 12) == "7dae18888888888888" + "82"
 
 
+def test_mk4_value_to_nibble_corrected_asymmetric_map():
+    """Regression: the MK4 value->nibble map is ASYMMETRIC (hub-corrected).
+
+    The forward nibbles 0x9..0xF are monotonic (higher nibble = faster). The hub reads the
+    reverse nibbles 0x1..0x7 as a reverse-speed level where 0x7 = fastest and 0x1 = slowest
+    (verified on-device, RAW mode, 13112: "nibble 1-7 verkehrt herum, 9-F korrekt"). So the
+    reverse side is encoded by magnitude (-k -> k): value -k -> nibble k, keeping speed
+    monotonic with |value| on both halves. A 'symmetric 0x8+v' regression would map -7 -> 0x1
+    (slowest) and -1 -> 0x7 (fastest), flipping the reverse speed curve — this test pins the
+    corrected map and its exact inverse.
+    """
+    assert value_to_nibble(0) == 0x8
+    for k in range(1, 8):            # forward half: value +k -> nibble 0x8+k (higher = faster)
+        assert value_to_nibble(k) == 0x8 + k
+    for k in range(1, 8):            # reverse half: value -k -> nibble k (hub: 0x7 = fastest)
+        assert value_to_nibble(-k) == k
+    assert value_to_nibble(99) == 0xF and value_to_nibble(-99) == 0x7      # clamped
+    for v in range(-7, 8):           # exact inverse round-trip over the full domain
+        assert nibble_to_value(value_to_nibble(v)) == v
+    assert nibble_to_value(0x8) == 0 and nibble_to_value(0xF) == 7
+    assert nibble_to_value(0x1) == -1 and nibble_to_value(0x7) == -7
+
+
 # ───────────────────────── MK6Protocol — byte-match vs proven frames ─────────────────────────
 # state = the 6 channel BYTES c0..c5 (c0..c3 -> offsets 3-6, c4/c5 -> offsets 7-8). Neutral = all 0x80.
 def _mk6_state(c0=0x80, c1=0x80, c2=0x80, c3=0x80, c4=0x80, c5=0x80):

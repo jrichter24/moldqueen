@@ -3,10 +3,19 @@
 > Living "current state" doc for starting fresh sessions without losing context.
 > **Not** a project reference — that's [`PROJECT.md`](PROJECT.md). Read this first
 > (~30s) at the start of a session; update + commit it before ending one.
-> **Last updated: 2026-07-08.**
+> **Last updated: 2026-10-24.**
 
-## TL;DR — where we are right now (2026-07-08)
+## TL;DR — where we are right now (2026-10-24)
 
+- **MK4 REVERSE-SPEED BUG FIXED + hardware-verified (2026-10-24).** The long-standing "reverse
+  goes the wrong way" issue was **not** hub/motor PWM (as the 2026-06-18 audit concluded). A
+  decisive RAW-mode capture (single TX, phone off) proved the **hub reads the reverse nibbles
+  `0x1..0x7` INVERTED** (nibble `0x7` = fastest reverse step, `0x1` = slowest) while the forward
+  nibbles `0x9..0xF` are correct. Fix: the value↔nibble map is now **hub-corrected/asymmetric**
+  in all three cores — `value +k → 0x8+k` (`0x9..0xF`), `value −k → k` (`0x1..0x7`), `0 → 0x8`
+  — so reverse speed is monotonic with deflection like forward. Files: `linux-core/mk4web/
+  telegram.py`, `android-core/…/Mk4Telegrams.kt`, `esp32-core/…/mk4_advertiser.c`,
+  `client/web/raw.js` (+ regression tests + docs). See PROJECT.md §3/§5.
 - **Repo is PUBLIC** ([github.com/jrichter24/moldqueen](https://github.com/jrichter24/moldqueen)).
 - **Three radio cores, one WS contract:** Pi (`linux-core`), Android (`android-core`), and the
   **ESP32-S3** (`esp32-core`) — all consuming the same single-source client.
@@ -181,6 +190,11 @@ mk4_ws_server, mk4_provision, mk4_mgmt, mk4_webui}` + `main/`. Target **ESP32-S3
   full extreme 0x1 can't be boosted). **NEXT (pivot off stock capture):** drive KNOWN nibbles via the
   RAW layout `/raw` (phone off, single TX) — slot1/ch0 at value +7 (0xF) vs -7 (0x1), watch motor
   speed each way → isolates motor-vs-nibble symmetry directly. Broadcaster left IDLE.
+  **SUPERSEDED (2026-10-24):** the "hub/motor reverse-PWM asymmetry, not encoding" conclusion
+  above was **WRONG**. A decisive RAW-mode capture (single TX, phone off) showed the hub reads
+  the reverse nibbles `0x1..0x7` **inverted** (0x7 = fastest, 0x1 = slowest) — the **encoding**
+  WAS the root cause, not the motor. Fixed in all three cores via the asymmetric hub-corrected
+  value↔nibble map (see PROJECT.md §3/§5).
 - **Gamepad / DualSense control (2026-06-18):** client-only (dashboard.js + dashboard.css,
   NO Pi/API change). Gamepad API rAF poll loop reads a controller paired to the CLIENT
   device and calls the SAME `driveFn` (WS drive-by-function) as the joysticks → reuses

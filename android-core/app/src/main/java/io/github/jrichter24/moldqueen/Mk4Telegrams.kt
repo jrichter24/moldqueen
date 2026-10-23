@@ -9,7 +9,9 @@ package io.github.jrichter24.moldqueen
  *   The 6 channel bytes hold 12 nibbles = 3 slots x 4 channels.
  *   global nibble index = slot * 4 + channel  (0..11)
  *   byte offset in the 6-byte block = index / 2; even index = high nibble, odd = low.
- *   nibble value = 0x8 + value, value in -7..+7 (0 = neutral/stop).
+ *   nibble map (hub-corrected, ASYMMETRIC): value +k -> 0x8+k (0x9..0xF), value -k -> k (0x1..0x7),
+ *   value 0 -> 0x8. The hub reads the low nibbles 0x1..0x7 inverted, so the reverse half is encoded
+ *   by magnitude to keep speed monotonic with |value| on both halves (see telegram.py).
  * ONE telegram drives all hubs at once; a hub obeys whichever 4-nibble slot block
  * it is on (selected by its physical button).
  */
@@ -21,17 +23,29 @@ object Mk4Telegrams {
 
     const val N_CHANNELS = 12
     const val NEUTRAL = 0x8                 // neutral nibble
-    private const val NEUTRAL_NIBBLE = 0x8
     // Full on-air advertising-data prefix the Pi/stock app use: Flags AD (02 01 02) +
     // manufacturer AD header (len 1b, type ff, company f0 ff = 0xFFF0). The 24 crypted
     // bytes follow. Mirrors linux-core/mk4web/telegram.py _AD_PREFIX.
     private const val AD_PREFIX_HEX = "1f0201021bfff0ff"
 
-    /** value (-7..+7) -> nibble (0x1..0xF); 0 -> 0x8 neutral. Clamps out-of-range. */
-    fun valueToNibble(value: Int): Int = NEUTRAL + value.coerceIn(-7, 7)
+    /** value (-7..+7) -> nibble (0x1..0xF); 0 -> 0x8 neutral. Clamps out-of-range.
+     *  Hub-corrected, ASYMMETRIC: forward +v -> 0x8+v (0x9..0xF); reverse -v -> v (0x1..0x7,
+     *  the hub reads that half inverted). Mirrors linux-core/mk4web/telegram.py. */
+    fun valueToNibble(value: Int): Int {
+        val v = value.coerceIn(-7, 7)
+        return when {
+            v > 0 -> NEUTRAL + v      // forward / high nibbles 0x9..0xF (verified monotonic)
+            v < 0 -> -v               // reverse / low nibbles 0x1..0x7 (hub reads inverted -> magnitude)
+            else -> NEUTRAL
+        }
+    }
 
-    /** nibble (0x1..0xF) -> signed value (-7..+7). */
-    fun nibbleToValue(nibble: Int): Int = nibble - NEUTRAL
+    /** nibble (0x1..0xF) -> signed value (-7..+7). Exact inverse of valueToNibble. */
+    fun nibbleToValue(nibble: Int): Int = when {
+        nibble > NEUTRAL -> nibble - NEUTRAL
+        nibble < NEUTRAL -> -nibble
+        else -> 0
+    }
 
     /** (slot 0-2, channel 0-3) -> global channel index 0-11. */
     fun channelIndex(slot: Int, channel: Int): Int = slot * 4 + channel
@@ -81,7 +95,7 @@ object Mk4Telegrams {
         for (index in 0 until 12) {
             val v = values[index]
             require(v in -7..7) { "channel $index value out of range -7..7 (was $v)" }
-            val nibble = NEUTRAL_NIBBLE + v
+            val nibble = valueToNibble(v)
             val byteIdx = index / 2
             bytes[byteIdx] = bytes[byteIdx] or if (index % 2 == 0) nibble shl 4 else nibble
         }

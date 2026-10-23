@@ -33,8 +33,9 @@ def test_protostate_mk4_neutral_and_motion():
     ps.set(0, 0, 7, now=1.0)                      # slot0/ch0 full -> nibble 0xF
     assert ps.state[0] == 0xF
     assert ps.motion_raw() == "7dae18f8888888888882"
-    ps.set(1, 0, -7, now=1.0)                     # slot1/ch0 = ch4 -> nibble 0x1 (byte2 high)
-    assert ps.motion_raw() == "7dae18f8881888888882"
+    ps.set(1, 0, -7, now=1.0)                     # slot1/ch0 = ch4 -> nibble 0x7 (byte2 high); reverse half = magnitude
+    assert ps.state[4] == 0x7
+    assert ps.motion_raw() == "7dae18f8887888888882"
 
 
 def test_protostate_mk4_connect_and_bind_phase():
