@@ -18,7 +18,7 @@ let apiSpec = null;                                  // cached /asyncapi.yaml te
 let booted = false, lastLc = null;
 
 const tr = () => (A ? A.dict() : MK4I18N.dict());
-const toNib = v => (NEUTRAL_NIB + clamp(v | 0, -7, 7)) & 0xF;   // value<->nibble (same map as telegram.py)
+const toNib = v => { const n = clamp(v | 0, -7, 7); return n > 0 ? NEUTRAL_NIB + n : (n < 0 ? -n : NEUTRAL_NIB); };  // value->nibble (hub-corrected, same map as telegram.py): +k->0x8+k, -k->k
 function motionRaw() {
   let hex = "7dae18";
   for (let s = 0; s < 3; s++) for (let c = 0; c < 4; c += 2) {

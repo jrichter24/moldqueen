@@ -11,12 +11,13 @@ The 6 channel bytes hold 12 nibbles = 3 slots x 4 channels:
 
 Nibble value: 0x8 = neutral/stop.
 
-VALUE<->NIBBLE MAP (exact):
-  nibble = 0x8 + value, with value in [-7, +7]  ->  nibble in [0x1, 0xF]
-    value  0 -> 0x8 (neutral)
-    value +7 -> 0xF (full, one direction)
-    value -7 -> 0x1 (full, other direction)
-  (0x0 is unused.)
+VALUE<->NIBBLE MAP (exact; reverse half corrected per on-device RAW test):
+  forward (value > 0):  nibble = 0x8 + value   ->  value +7 -> 0xF ... value +1 -> 0x9
+  reverse (value < 0):  nibble = -value        ->  value -1 -> 0x1 ... value -7 -> 0x7
+  neutral (value == 0): nibble = 0x8
+  Why asymmetric: the hub reads the low nibbles 0x1..0x7 INVERTED (nibble 0x7 is the
+  fastest reverse step), so the reverse side is encoded by magnitude to keep speed
+  monotonic with |value| on both halves. (0x0 is unused.)
 """
 from . import mouldking_crypt
 
@@ -29,12 +30,31 @@ _AD_PREFIX = bytes.fromhex("1f0201021bfff0ff")
 
 
 def value_to_nibble(value):
+    """value (-7..+7) -> nibble (0x1..0xF); 0 -> 0x8 neutral. Clamps out-of-range.
+
+    The hub's speed response is NOT symmetric about 0x8. Verified on-device (RAW mode,
+    13112): the forward nibbles 0x9..0xF map monotonically (higher nibble = faster), but
+    the reverse nibbles 0x1..0x7 are read INVERTED by the hub — nibble 0x7 is the fastest
+    reverse step, 0x1 the slowest. We keep the forward side as 0x8+value and encode the
+    reverse side by magnitude (-k -> k), so increasing |value| always moves the nibble
+    toward the hub's faster end on BOTH halves.
+    """
     v = max(-7, min(7, int(value)))
-    return NEUTRAL + v
+    if v > 0:
+        return NEUTRAL + v    # forward / high nibbles 0x9..0xF (verified monotonic)
+    if v < 0:
+        return -v             # reverse / low nibbles 0x1..0x7 (hub reads inverted -> magnitude)
+    return NEUTRAL
 
 
 def nibble_to_value(nib):
-    return int(nib) - NEUTRAL
+    """nibble (0x1..0xF) -> signed value (-7..+7). Exact inverse of value_to_nibble."""
+    n = int(nib)
+    if n > NEUTRAL:
+        return n - NEUTRAL
+    if n < NEUTRAL:
+        return -n
+    return 0
 
 
 def channel_index(slot, channel):
@@ -85,8 +105,8 @@ class MK4Protocol(Protocol):
     n_channels = N_CHANNELS            # 12
     neutral_unit = NEUTRAL             # 0x8
     connect_raw = CONNECT_RAW          # adae18808080f352
-    def value_to_wire(self, value):   return value_to_nibble(value)   # 0x8 + clamp(-7,7)
-    def wire_to_value(self, wire):    return nibble_to_value(wire)     # wire - 0x8
+    def value_to_wire(self, value):   return value_to_nibble(value)   # asymmetric: +v->0x8+v, -v->-v (hub-corrected)
+    def wire_to_value(self, wire):    return nibble_to_value(wire)     # exact inverse of value_to_nibble
     def build_motion_raw(self, state): return motion_raw(state)        # 7dae18 + 6 packed bytes + 82
     def channel_index(self, slot, channel): return slot * 4 + channel  # 3 slots x 4 -> 0..11
 

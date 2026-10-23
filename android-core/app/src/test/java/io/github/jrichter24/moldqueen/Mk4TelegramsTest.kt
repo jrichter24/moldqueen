@@ -8,7 +8,8 @@ import org.junit.Test
  * actually broadcasts. Connect: ad ae 18 80 80 80 f3 52. Motion: 7d ae 18
  * <6 channel bytes> 82, where the 6 bytes hold 12 nibbles (3 slots x 4 ch),
  * global nibble index = slot*4 + channel, even index = high nibble, odd = low,
- * byte offset = 3 + index/2, nibble value = 0x8 + value (value -7..+7).
+ * byte offset = 3 + index/2; nibble map is hub-corrected/asymmetric (value +k -> 0x8+k,
+ * value -k -> k), so the reverse half 0x1..0x7 is encoded by magnitude.
  */
 class Mk4TelegramsTest {
 
@@ -32,9 +33,9 @@ class Mk4TelegramsTest {
     @Test fun drive_slot1_ch0_plus5_offsets_to_byte5() =
         assertEquals("7dae18" + "8888" + "d8" + "888888" + "82", Mk4Telegrams.motionRawHexSingle(1, 0, 5))
 
-    // negative direction: slot0 ch0 = -7 -> 0x8-7 = 0x1 -> 0x18
+    // negative direction: slot0 ch0 = -7 -> nibble 0x7 (reverse half = magnitude; hub: 0x7 = fastest) -> 0x78
     @Test fun drive_slot0_ch0_minus7_sets_low_value_nibble() =
-        assertEquals("7dae18" + "18" + "8888888888" + "82", Mk4Telegrams.motionRawHexSingle(0, 0, -7))
+        assertEquals("7dae18" + "78" + "8888888888" + "82", Mk4Telegrams.motionRawHexSingle(0, 0, -7))
 
     @Test fun connect_encodes_to_24_byte_onair() =
         assertEquals(24, Mk4Telegrams.connect().size)

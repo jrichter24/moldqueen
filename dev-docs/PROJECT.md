@@ -94,8 +94,12 @@ decoding the official **MK+tech** app's BLE adverts. This is *the* key result.
 - **ONE telegram drives ALL hubs at once.** A hub is addressed by *which nibble
   block* moves: slot 0 = ch0–3, slot 1 = ch4–7, slot 2 = ch8–11. **No** per-device
   byte, **no** MK6 "device 0/1", **no** promotion, and **one radio is enough.**
-- **value ↔ nibble map** (used by the API): `nibble = 0x8 + value`, value `-7..+7`
-  → nibble `0x1..0xF` (`0`=`0x8` neutral, `+7`=`0xF`, `-7`=`0x1`).
+- **value ↔ nibble map** (used by the API) — **ASYMMETRIC** (hub-corrected, 2026-10-24):
+  forward `value +k` → nibble `0x8+k` (`0x9..0xF`); reverse `value −k` → nibble `k`
+  (`0x1..0x7`); `0` → `0x8` neutral. The hub reads the low nibbles `0x1..0x7` **inverted**
+  (nibble `0x7` = fastest reverse step), so the reverse half is encoded by magnitude to keep
+  speed monotonic with |value| on both halves. (Verified on-device, RAW mode: "nibble 1-7
+  verkehrt, 9-F korrekt".)
 - These are OUR hubs' *exact* captured bytes; they differ from the generic
   J0EK3R/mkconnect-python MK4 in bytes 1–2 (`ae 18` vs `7b a7`) and connect byte 6
   (`f3` vs `4f`) — a specific MK4 variant.
@@ -184,13 +188,18 @@ box → shovel) **and** `ch4=0xb` (track box → left track) moved both at once 
 
 - **`invert`** negates a function's value (flip a motor's direction).
 - **`reverse_scale`** (default `1.0` = identity) is a **reverse-speed trim** applied
-  at resolution: the nibble map (`0x8 + value`) is byte-symmetric (verified against
-  the app capture and the mkconnect encoder: `0xFF` fwd / `0x00` rev / `0x80` stop),
-  so any forward/reverse *speed* difference is the **hub PWM curve / motor**, not the
-  encoding. `reverse_scale > 1` boosts reverse magnitude to match forward; calibrate
-  by driving. **`max_fwd` / `max_rev`** cap full-deflection speed per direction (1–7);
-  **both default to 5** (gentle, controllable, anti-stall) — raise per-channel in the
-  Channels tab. (Legacy single `max` migrates to both.)
+  at resolution. **Note (2026-10-24):** the earlier claim that "the nibble map (`0x8 + value`)
+  is byte-symmetric … any forward/reverse *speed* difference is the **hub PWM curve / motor**,
+  not the encoding" was **WRONG for MK4** — `0xFF`/`0x00`/`0x80` are **MK6 byte** values
+  (`0x80`-center), and that MK6 byte observation was mis-attributed to the MK4 **nibble** map.
+  The MK4 nibble map is **not** symmetric: the hub reads the reverse nibbles `0x1..0x7`
+  **inverted**, which produced the reported "reverse speed goes the wrong way" bug (small
+  deflection = fast, full deflection = slow). The encoding is now **hub-corrected** (reverse
+  half encoded by magnitude, see §3), so reverse speed is monotonic with deflection like
+  forward. `reverse_scale` remains a fine trim for any residual forward/reverse mismatch.
+  **`max_fwd` / `max_rev`** cap full-deflection speed per direction (1–7); **both default to
+  5** (gentle, controllable, anti-stall) — raise per-channel in the Channels tab. (Legacy
+  single `max` migrates to both.)
 - **device-0/1 swap** (session-only, not persisted) swaps slots 0↔1 at resolution.
 
 > Reconciliation: `linux-core/reference/channel_map.md` and `…/CONNECT_PROCEDURE.md`

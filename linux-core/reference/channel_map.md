@@ -9,6 +9,10 @@ transmits. These are **OUR hubs' exact app-captured bytes**.
 - **Connect telegram (raw):** `ad ae 18 80 80 80 f3 52`
 - The 6 channel bytes hold **12 nibbles = 3 slots × 4 channels**.
 - Nibble: `0x8` = neutral/stop; `>0x8` = one direction, `<0x8` = the other (~`0x0`..`0xf`).
+- **Value↔nibble map (hub-corrected, 2026-10-24):** the hub reads the reverse nibbles
+  `0x1..0x7` **inverted** — so encode `value +k → 0x8+k` (`0x9..0xF`, forward) and
+  `value −k → k` (`0x1..0x7`, reverse, by magnitude). Full reverse `-7` = `0x7`, not `0x1`.
+  (Earlier "byte-symmetric" claims were wrong for MK4 — see `PROJECT.md` §3/§5 + `telegram.py`.)
 - Company id **`0xFFF0`**. **One telegram drives ALL slots at once.**
 
 ## Nibble → channel index
